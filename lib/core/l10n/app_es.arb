@@ -1,0 +1,265 @@
+{
+  "@@locale": "es",
+  "appTitle": "SimpleLog",
+  "homeTitle": "SimpleLog",
+  "addAction": "Agregar",
+  "languageLabel": "Idioma",
+  "languageSystem": "Sistema",
+  "languageEnglish": "Inglés",
+  "languageSpanish": "Español",
+  "screenMenu": "Pantallas",
+  "screenLogbook": "Libro de vuelo",
+  "logbookFilterAction": "Filtros",
+  "logbookFilterTitle": "Filtros",
+  "logbookFilterFromDate": "Desde",
+  "logbookFilterToDate": "Hasta",
+  "logbookFilterRange": "Rango de fechas",
+  "logbookFilterApply": "Aplicar filtros",
+  "logbookFilterPresetCustom": "Personalizado",
+  "logbookFilterPresetSinceFirstFlight": "Desde el primer vuelo",
+  "logbookFilterPresetLast7Days": "Últimos 7 días",
+  "logbookFilterPresetLast14Days": "Últimos 14 días",
+  "logbookFilterPresetLast21Days": "Últimos 21 días",
+  "logbookFilterPresetLast28Days": "Últimos 28 días",
+  "logbookFilterPresetLast365Days": "Últimos 365 días",
+  "logbookFilterPresetLastMonth": "Mes pasado",
+  "logbookFilterPresetLastYear": "Año pasado",
+  "logbookFilterPresetCurrentMonth": "Mes actual",
+  "logbookFilterPresetCurrentYear": "Año actual",
+  "logbookFilterEventTypes": "Tipos de evento",
+  "logbookFilterAdvanced": "Filtros avanzados (próximamente)",
+  "logbookEventFlight": "Vuelo",
+  "logbookEventSimulator": "Entrenamiento en simulador",
+  "logbookEventDuty": "Período de servicio",
+  "logbookEventDutyStart": "Inicio de servicio",
+  "logbookEventDutyEnd": "Fin de servicio",
+  "logbookEventPositioning": "Posicionamiento",
+  "logbookEventUnknown": "Evento",
+  "screenAircraft": "Aeronaves",
+  "screenAircraftTypes": "Tipos de aeronaves",
+  "screenAirports": "Aeropuertos",
+  "screenCrew": "Tripulación",
+  "screenReports": "Informes",
+  "screenDatabase": "Base de datos",
+  "screenSettings": "Ajustes",
+  "searchAircraft": "Buscar aeronaves",
+  "searchCrew": "Buscar tripulacion",
+  "searchAirports": "Buscar aeropuertos",
+  "searchAircraftTypes": "Buscar tipos de aeronaves",
+  "emptyResults": "No se encontraron resultados",
+  "lockAction": "Bloquear",
+  "editAction": "Editar",
+  "deleteAction": "Eliminar",
+  "cancelAction": "Cancelar",
+  "confirmDeleteTitle": "Confirmar eliminacion",
+  "confirmDeleteAircraftType": "Eliminar tipo de aeronave {code}?",
+  "confirmDeleteAircraft": "Eliminar aeronave {registration}?",
+  "@confirmDeleteAircraft": {
+    "placeholders": {
+      "registration": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteCrew": "Eliminar tripulante {name}?",
+  "@confirmDeleteCrew": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteAirport": "Eliminar aeropuerto {icao}?",
+  "@confirmDeleteAirport": {
+    "placeholders": {
+      "icao": {
+        "type": "String"
+      }
+    }
+  },
+  "@confirmDeleteAircraftType": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAppearance": "Apariencia",
+  "settingsDeveloper": "Desarrollo",
+  "themeSystem": "Seguir el sistema",
+  "themeLight": "Claro",
+  "themeDark": "Oscuro",
+  "editAircraftTypeTitle": "Editar tipo de aeronave",
+  "createAircraftTypeTitle": "Agregar tipo de aeronave",
+  "editAircraftTitle": "Editar aeronave",
+  "createAircraftTitle": "Agregar aeronave",
+  "editCrewTitle": "Editar tripulacion",
+  "createCrewTitle": "Agregar tripulacion",
+  "editAirportTitle": "Editar aeropuerto",
+  "createAirportTitle": "Agregar aeropuerto",
+  "saveAction": "Guardar",
+  "okAction": "Aceptar",
+  "validationErrorTitle": "Error de validacion",
+  "validationErrorGeneric": "Revise el formulario y vuelva a intentar.",
+  "codeRequired": "El codigo es obligatorio",
+  "nameRequired": "El nombre es obligatorio",
+  "codeDuplicateTitle": "Codigo duplicado",
+  "codeDuplicateMessage": "El codigo {code} ya existe.",
+  "deleteBlockedTitle": "Eliminacion bloqueada",
+  "deleteBlockedAircraftType": "Este tipo de aeronave se usa en {count} aeronaves y no se puede eliminar.",
+  "@deleteBlockedAircraftType": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@codeDuplicateMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "fieldCode": "Codigo",
+  "fieldRegistration": "Matricula",
+  "fieldAircraftType": "Tipo de aeronave",
+  "fieldFamily": "Familia",
+  "fieldLongName": "Nombre del tipo",
+  "fieldManufacturer": "Fabricante",
+  "fieldCategory": "Categoria",
+  "fieldEngineType": "Tipo de motor",
+  "fieldMtow": "MTOW",
+  "fieldEngineCount": "Numero de motores",
+  "fieldMultiPilot": "Multipiloto",
+  "fieldComplex": "Complejo",
+  "fieldEfis": "EFIS",
+  "fieldHighPerformance": "Alto rendimiento",
+  "fieldName": "Nombre",
+  "fieldEmail": "Correo",
+  "fieldPhone": "Telefono",
+  "fieldNotes": "Notas",
+  "fieldPicture": "Foto",
+  "pictureHint": "Toque para agregar/editar foto",
+  "photoCamera": "Camara",
+  "photoLibrary": "Galeria",
+  "removePicture": "Eliminar foto",
+  "cropPhotoTitle": "Editar foto",
+  "fieldIsSelf": "Propio",
+  "fieldIsFavorite": "Favorito",
+  "fieldIsSimulator": "Simulador",
+  "fieldIcao": "ICAO",
+  "fieldIata": "IATA",
+  "fieldCity": "Ciudad",
+  "fieldCountry": "Pais",
+  "fieldLatitude": "Latitud",
+  "fieldLongitude": "Longitud",
+  "aircraftTypeRequired": "Seleccione un tipo de aeronave",
+  "registrationDuplicateTitle": "Matricula duplicada",
+  "registrationDuplicateMessage": "La matricula {registration} ya existe.",
+  "@registrationDuplicateMessage": {
+    "placeholders": {
+      "registration": {
+        "type": "String"
+      }
+    }
+  },
+  "nameDuplicateTitle": "Nombre duplicado",
+  "nameDuplicateMessage": "El nombre {name} ya existe.",
+  "@nameDuplicateMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "icaoLengthError": "El ICAO debe tener 4 caracteres",
+  "icaoDuplicateTitle": "ICAO duplicado",
+  "icaoDuplicateMessage": "El ICAO {icao} ya existe.",
+  "@icaoDuplicateMessage": {
+    "placeholders": {
+      "icao": {
+        "type": "String"
+      }
+    }
+  },
+  "callNumber": "Llamar",
+  "textNumber": "Enviar mensaje",
+  "copyNumber": "Copiar numero",
+  "sendEmail": "Enviar correo",
+  "copyEmail": "Copiar correo",
+  "seedTestData": "Insertar datos de prueba",
+  "seedDataDone": "Datos de prueba insertados",
+  "databaseSyncTitle": "Sincronizacion local",
+  "databaseSyncStartLocal": "Iniciar sincronizacion local",
+  "databaseSyncFoundTitle": "Dispositivos disponibles",
+  "databaseSyncSearching": "Buscando dispositivos en Wi‑Fi...",
+  "databaseSyncSendAction": "Enviar al dispositivo",
+  "databaseSyncPullAction": "Traer del dispositivo",
+  "databaseSyncConfirmTitle": "Confirmar reemplazo",
+  "databaseSyncConfirmMessage": "⚠️ Esto reemplazara todos los datos en {device}.",
+  "@databaseSyncConfirmMessage": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "databaseSyncConfirmAction": "Confirmar",
+  "databaseSyncConnected": "Conectado: {device}",
+  "databaseSyncWaiting": "Esperando transferencia...",
+  "databaseSyncSchemaMismatchTitle": "Version de base de datos distinta",
+  "databaseSyncSchemaMismatchMessage": "No se puede sincronizar porque las versiones son distintas. Este dispositivo usa v{local} y el otro usa v{remote}. Actualice ambas apps y vuelva a intentar.",
+  "@databaseSyncSchemaMismatchMessage": {
+    "placeholders": {
+      "local": {},
+      "remote": {}
+    }
+  },
+  "databaseSyncCopyDebug": "Copiar depuracion",
+  "databaseSyncCopied": "Depuracion copiada",
+  "databaseSyncLocalServer": "Servidor local",
+  "databaseSyncTestServer": "Probar servidor local",
+  "@databaseSyncConnected": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "databaseSyncSessionInfo": "Inicie una sesion en un dispositivo y unase desde otro.",
+  "databaseSyncStartSession": "Iniciar sesion",
+  "databaseSyncStopSession": "Detener sesion",
+  "databaseSyncJoinSession": "Conectar dispositivo",
+  "databaseSyncHosting": "Sesion en curso",
+  "databaseSyncEnterAddress": "Ingresar direccion",
+  "databaseSyncAddressHint": "simplelog://sync?host=192.168.1.10&port=49200",
+  "databaseSyncConnectedLabel": "Conectado a",
+  "databaseSyncNotConnected": "Sin conexion",
+  "databaseSyncConnectHint": "Para enviar desde este dispositivo, conecte primero al otro dispositivo.",
+  "databaseSyncSend": "Enviar base de datos",
+  "databaseSyncEnterLastTwo": "Ingrese los ultimos dos grupos de IP",
+  "databaseSyncOctet3": "Tercer grupo",
+  "databaseSyncOctet4": "Cuarto grupo",
+  "databaseSyncInstruction": "En el otro dispositivo, ingrese solo los ultimos dos numeros: {octet3}.{octet4} (prefijo {prefix}, puerto 54742).",
+  "@databaseSyncInstruction": {
+    "placeholders": {
+      "prefix": {
+        "type": "String"
+      },
+      "octet3": {
+        "type": "String"
+      },
+      "octet4": {
+        "type": "String"
+      }
+    }
+  },
+  "databaseSyncSuccess": "Sincronizacion completa",
+  "databaseSyncInvalidSession": "No se pudo conectar a esa sesion.",
+  "databaseSyncNoNetwork": "No se encontro una red local.",
+  "databaseSyncScanQr": "Escanear codigo QR",
+  "databaseSyncDisconnected": "Se desconecto del otro dispositivo."
+  ,
+  "databaseSyncStopWarning": "Detener la sesion desconectara a otros dispositivos. Continuar?"
+}

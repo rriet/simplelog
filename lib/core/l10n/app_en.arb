@@ -1,0 +1,265 @@
+{
+  "@@locale": "en",
+  "appTitle": "SimpleLog",
+  "homeTitle": "SimpleLog",
+  "addAction": "Add",
+  "languageLabel": "Language",
+  "languageSystem": "System",
+  "languageEnglish": "English",
+  "languageSpanish": "Spanish",
+  "screenMenu": "Screens",
+  "screenLogbook": "Logbook",
+  "logbookFilterAction": "Filters",
+  "logbookFilterTitle": "Filters",
+  "logbookFilterFromDate": "From date",
+  "logbookFilterToDate": "To date",
+  "logbookFilterRange": "Date range",
+  "logbookFilterApply": "Apply filters",
+  "logbookFilterPresetCustom": "Custom",
+  "logbookFilterPresetSinceFirstFlight": "Since first flight",
+  "logbookFilterPresetLast7Days": "Last 7 days",
+  "logbookFilterPresetLast14Days": "Last 14 days",
+  "logbookFilterPresetLast21Days": "Last 21 days",
+  "logbookFilterPresetLast28Days": "Last 28 days",
+  "logbookFilterPresetLast365Days": "Last 365 days",
+  "logbookFilterPresetLastMonth": "Last month",
+  "logbookFilterPresetLastYear": "Last year",
+  "logbookFilterPresetCurrentMonth": "Current month",
+  "logbookFilterPresetCurrentYear": "Current year",
+  "logbookFilterEventTypes": "Event types",
+  "logbookFilterAdvanced": "Advanced filters (coming soon)",
+  "logbookEventFlight": "Flight",
+  "logbookEventSimulator": "Simulator training",
+  "logbookEventDuty": "Duty period",
+  "logbookEventDutyStart": "Duty start",
+  "logbookEventDutyEnd": "Duty end",
+  "logbookEventPositioning": "Positioning",
+  "logbookEventUnknown": "Event",
+  "screenAircraft": "Aircraft",
+  "screenAircraftTypes": "Aircraft Types",
+  "screenAirports": "Airports",
+  "screenCrew": "Crew",
+  "screenReports": "Reports",
+  "screenDatabase": "Database",
+  "screenSettings": "Settings",
+  "searchAircraft": "Search aircraft",
+  "searchCrew": "Search crew",
+  "searchAirports": "Search airports",
+  "searchAircraftTypes": "Search aircraft types",
+  "emptyResults": "No results found",
+  "lockAction": "Lock",
+  "editAction": "Edit",
+  "deleteAction": "Delete",
+  "cancelAction": "Cancel",
+  "confirmDeleteTitle": "Confirm delete",
+  "confirmDeleteAircraftType": "Delete aircraft type {code}?",
+  "confirmDeleteAircraft": "Delete aircraft {registration}?",
+  "@confirmDeleteAircraft": {
+    "placeholders": {
+      "registration": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteCrew": "Delete crew member {name}?",
+  "@confirmDeleteCrew": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteAirport": "Delete airport {icao}?",
+  "@confirmDeleteAirport": {
+    "placeholders": {
+      "icao": {
+        "type": "String"
+      }
+    }
+  },
+  "@confirmDeleteAircraftType": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAppearance": "Appearance",
+  "settingsDeveloper": "Developer",
+  "themeSystem": "Follow system",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "editAircraftTypeTitle": "Edit aircraft type",
+  "createAircraftTypeTitle": "Add aircraft type",
+  "editAircraftTitle": "Edit aircraft",
+  "createAircraftTitle": "Add aircraft",
+  "editCrewTitle": "Edit crew",
+  "createCrewTitle": "Add crew",
+  "editAirportTitle": "Edit airport",
+  "createAirportTitle": "Add airport",
+  "saveAction": "Save",
+  "okAction": "OK",
+  "validationErrorTitle": "Validation error",
+  "validationErrorGeneric": "Please check the form and try again.",
+  "codeRequired": "Code is required",
+  "nameRequired": "Name is required",
+  "codeDuplicateTitle": "Duplicate code",
+  "codeDuplicateMessage": "Code {code} already exists.",
+  "deleteBlockedTitle": "Delete blocked",
+  "deleteBlockedAircraftType": "This aircraft type is used by {count} aircraft and can't be deleted.",
+  "@deleteBlockedAircraftType": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@codeDuplicateMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "fieldCode": "Code",
+  "fieldRegistration": "Registration",
+  "fieldAircraftType": "Aircraft type",
+  "fieldFamily": "Family",
+  "fieldLongName": "Type Name",
+  "fieldManufacturer": "Manufacturer",
+  "fieldCategory": "Category",
+  "fieldEngineType": "Engine type",
+  "fieldMtow": "MTOW",
+  "fieldEngineCount": "Engine count",
+  "fieldMultiPilot": "Multi-pilot",
+  "fieldComplex": "Complex",
+  "fieldEfis": "EFIS",
+  "fieldHighPerformance": "High performance",
+  "fieldName": "Name",
+  "fieldEmail": "Email",
+  "fieldPhone": "Phone",
+  "fieldNotes": "Notes",
+  "fieldPicture": "Picture",
+  "pictureHint": "Click to add/edit photo",
+  "photoCamera": "Camera",
+  "photoLibrary": "Photo Library",
+  "removePicture": "Remove photo",
+  "cropPhotoTitle": "Edit photo",
+  "fieldIsSelf": "Self",
+  "fieldIsFavorite": "Favorite",
+  "fieldIsSimulator": "Simulator",
+  "fieldIcao": "ICAO",
+  "fieldIata": "IATA",
+  "fieldCity": "City",
+  "fieldCountry": "Country",
+  "fieldLatitude": "Latitude",
+  "fieldLongitude": "Longitude",
+  "aircraftTypeRequired": "Select an aircraft type",
+  "registrationDuplicateTitle": "Duplicate registration",
+  "registrationDuplicateMessage": "Registration {registration} already exists.",
+  "@registrationDuplicateMessage": {
+    "placeholders": {
+      "registration": {
+        "type": "String"
+      }
+    }
+  },
+  "nameDuplicateTitle": "Duplicate name",
+  "nameDuplicateMessage": "Name {name} already exists.",
+  "@nameDuplicateMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "icaoLengthError": "ICAO must be 4 characters",
+  "icaoDuplicateTitle": "Duplicate ICAO",
+  "icaoDuplicateMessage": "ICAO {icao} already exists.",
+  "@icaoDuplicateMessage": {
+    "placeholders": {
+      "icao": {
+        "type": "String"
+      }
+    }
+  },
+  "callNumber": "Call number",
+  "textNumber": "Text message",
+  "copyNumber": "Copy number",
+  "sendEmail": "Send email",
+  "copyEmail": "Copy email",
+  "seedTestData": "Seed test data",
+  "seedDataDone": "Test data inserted",
+  "databaseSyncTitle": "Local sync",
+  "databaseSyncStartLocal": "Start Local Sync",
+  "databaseSyncFoundTitle": "Available devices",
+  "databaseSyncSearching": "Searching for devices on Wi‑Fi...",
+  "databaseSyncSendAction": "Send to device",
+  "databaseSyncPullAction": "Pull from device",
+  "databaseSyncConfirmTitle": "Confirm overwrite",
+  "databaseSyncConfirmMessage": "⚠️ This will replace all data on {device}.",
+  "@databaseSyncConfirmMessage": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "databaseSyncConfirmAction": "Confirm",
+  "databaseSyncConnected": "Connected: {device}",
+  "databaseSyncWaiting": "Waiting for transfer...",
+  "databaseSyncSchemaMismatchTitle": "Database version mismatch",
+  "databaseSyncSchemaMismatchMessage": "Cannot sync because the database versions differ. This device uses v{local} and the other device uses v{remote}. Update both apps and try again.",
+  "@databaseSyncSchemaMismatchMessage": {
+    "placeholders": {
+      "local": {},
+      "remote": {}
+    }
+  },
+  "databaseSyncCopyDebug": "Copy debug info",
+  "databaseSyncCopied": "Debug info copied",
+  "databaseSyncLocalServer": "Local server",
+  "databaseSyncTestServer": "Test local server",
+  "@databaseSyncConnected": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "databaseSyncSessionInfo": "Start a session on one device and join from another.",
+  "databaseSyncStartSession": "Start session",
+  "databaseSyncStopSession": "Stop session",
+  "databaseSyncJoinSession": "Connect device",
+  "databaseSyncHosting": "Hosting session",
+  "databaseSyncEnterAddress": "Enter address",
+  "databaseSyncAddressHint": "simplelog://sync?host=192.168.1.10&port=49200",
+  "databaseSyncConnectedLabel": "Connected to",
+  "databaseSyncNotConnected": "Not connected",
+  "databaseSyncConnectHint": "To send from this device, connect to the other device first.",
+  "databaseSyncSend": "Send database",
+  "databaseSyncEnterLastTwo": "Enter last two IP groups",
+  "databaseSyncOctet3": "Third group",
+  "databaseSyncOctet4": "Fourth group",
+  "databaseSyncInstruction": "On the other device, enter only the last two numbers: {octet3}.{octet4} (prefix {prefix}, port 54742).",
+  "@databaseSyncInstruction": {
+    "placeholders": {
+      "prefix": {
+        "type": "String"
+      },
+      "octet3": {
+        "type": "String"
+      },
+      "octet4": {
+        "type": "String"
+      }
+    }
+  },
+  "databaseSyncSuccess": "Sync complete",
+  "databaseSyncInvalidSession": "Unable to connect to that session.",
+  "databaseSyncNoNetwork": "No local network IP found.",
+  "databaseSyncScanQr": "Scan QR code",
+  "databaseSyncDisconnected": "Disconnected from the other device."
+  ,
+  "databaseSyncStopWarning": "Stopping will disconnect other devices. Continue?"
+}
