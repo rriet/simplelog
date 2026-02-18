@@ -69,7 +69,7 @@ extension TestDataSeeder on AppDatabase {
           AircraftsCompanion.insert(
             aircraftTypeId: randomFrom(aircraftTypeIds),
             registration: 'N${randomInt(1000, 9999)}',
-            mtow: randomInt(800, 8000),
+            mtow: Value(randomInt(800, 8000)),
             isSimulator: randomBool(),
             isFavorite: randomBool(),
             isLocked: false,

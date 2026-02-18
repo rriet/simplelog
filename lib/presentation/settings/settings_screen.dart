@@ -4,6 +4,9 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 
 import 'widgets/theme_mode_selector.dart';
 import 'widgets/seed_data_button.dart';
+import 'widgets/simulator_default_position_selector.dart';
+import 'widgets/flight_takeoff_landing_switch.dart';
+import 'widgets/time_fields_settings_tab.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -12,23 +15,52 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          l10n.settingsAppearance,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 12),
-        const ThemeModeSelector(),
-        const SizedBox(height: 24),
-        Text(
-          l10n.settingsDeveloper,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        const SeedDataButton(),
-      ],
+    return DefaultTabController(
+      length: 3,
+      child: Column(
+        children: [
+          const TabBar(
+            tabs: [
+              Tab(text: 'General'),
+              Tab(text: 'Time Fields'),
+              Tab(text: 'Developer'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Text(
+                      l10n.settingsAppearance,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    const ThemeModeSelector(),
+                    const SizedBox(height: 12),
+                    const SimulatorDefaultPositionSelector(),
+                    const SizedBox(height: 12),
+                    const FlightTakeoffLandingSwitch(),
+                  ],
+                ),
+                const TimeFieldsSettingsTab(),
+                ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Text(
+                      l10n.settingsDeveloper,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    const SeedDataButton(),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

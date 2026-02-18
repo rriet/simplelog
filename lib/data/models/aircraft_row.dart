@@ -10,4 +10,5 @@ class AircraftRow {
   String get registration => aircraft.registration;
   bool get isFavorite => aircraft.isFavorite;
   bool get isLocked => aircraft.isLocked;
+  int get effectiveMtow => aircraft.mtow ?? type?.mtow ?? 0;
 }

@@ -15,11 +15,12 @@ class SimpleLogImportOptionsDialog extends StatefulWidget {
   static Future<SimpleLogImportOptions?> show(
     BuildContext context, {
     required String fileName,
+    SimpleLogImportOptions initial = const SimpleLogImportOptions(),
   }) {
     return showDialog<SimpleLogImportOptions>(
       context: context,
       builder: (context) =>
-          SimpleLogImportOptionsDialog(fileName: fileName),
+          SimpleLogImportOptionsDialog(fileName: fileName, initial: initial),
     );
   }
 
@@ -81,116 +82,153 @@ class _SimpleLogImportOptionsDialogState
   @override
   Widget build(BuildContext context) {
     final titleStyle = Theme.of(context).textTheme.titleMedium;
-    return AlertDialog(
-      title: const Text('Import Options'),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: SingleChildScrollView(
+    return Dialog(
+      child: SizedBox(
+        width: 560,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('File: ${widget.fileName}'),
-              const SizedBox(height: 8),
-              const Text(
-                'Defaults: No recalculation. Existing data is kept.',
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Import Options',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              Text('Recalculate', style: titleStyle),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Night time'),
-                value: _recalcNight,
-                onChanged: (value) =>
-                    setState(() => _recalcNight = value ?? false),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('File: ${widget.fileName}'),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Defaults: No recalculation. Existing data is kept.',
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Recalculate', style: titleStyle),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Night time'),
+                        value: _recalcNight,
+                        onChanged: (value) =>
+                            setState(() => _recalcNight = value ?? false),
+                      ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Total time (updates PIC/SIC/etc)'),
+                        value: _recalcTotal,
+                        onChanged: (value) =>
+                            setState(() => _recalcTotal = value ?? false),
+                      ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Takeoff / Landing day-night'),
+                        value: _recalcTakeoffLanding,
+                        onChanged: (value) => setState(
+                            () => _recalcTakeoffLanding = value ?? false),
+                      ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Cross-country'),
+                        value: _recalcCrossCountry,
+                        onChanged: (value) => setState(
+                            () => _recalcCrossCountry = value ?? false),
+                      ),
+                      _NumberField(
+                        label: 'Cross-country threshold (NM)',
+                        controller: _crossCountryThresholdController,
+                        enabled: _recalcCrossCountry,
+                      ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Instrument time'),
+                        value: _recalcInstrument,
+                        onChanged: (value) =>
+                            setState(() => _recalcInstrument = value ?? false),
+                      ),
+                      _NumberField(
+                        label: 'Instrument percent (0-100)',
+                        controller: _instrumentPercentController,
+                        enabled: _recalcInstrument,
+                      ),
+                      _NumberField(
+                        label: 'Instrument minimum minutes',
+                        controller: _instrumentMinController,
+                        enabled: _recalcInstrument,
+                      ),
+                      _NumberField(
+                        label: 'Instrument subtract minutes',
+                        controller: _instrumentSubtractController,
+                        enabled: _recalcInstrument,
+                      ),
+                      const SizedBox(height: 12),
+                      Text('Merge strategy', style: titleStyle),
+                      const SizedBox(height: 8),
+                      _StrategyDropdown(
+                        label: 'Airports',
+                        value: _airportStrategy,
+                        onChanged: (value) =>
+                            setState(() => _airportStrategy = value),
+                      ),
+                      _StrategyDropdown(
+                        label: 'Crew',
+                        value: _crewStrategy,
+                        onChanged: (value) =>
+                            setState(() => _crewStrategy = value),
+                      ),
+                      _StrategyDropdown(
+                        label: 'Aircraft',
+                        value: _aircraftStrategy,
+                        onChanged: (value) =>
+                            setState(() => _aircraftStrategy = value),
+                      ),
+                      _StrategyDropdown(
+                        label: 'Aircraft Type',
+                        value: _aircraftTypeStrategy,
+                        onChanged: (value) =>
+                            setState(() => _aircraftTypeStrategy = value),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Total time (updates PIC/SIC/etc)'),
-                value: _recalcTotal,
-                onChanged: (value) =>
-                    setState(() => _recalcTotal = value ?? false),
-              ),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Takeoff / Landing day-night'),
-                value: _recalcTakeoffLanding,
-                onChanged: (value) => setState(
-                    () => _recalcTakeoffLanding = value ?? false),
-              ),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Cross-country'),
-                value: _recalcCrossCountry,
-                onChanged: (value) => setState(
-                    () => _recalcCrossCountry = value ?? false),
-              ),
-              _NumberField(
-                label: 'Cross-country threshold (NM)',
-                controller: _crossCountryThresholdController,
-                enabled: _recalcCrossCountry,
-              ),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Instrument time'),
-                value: _recalcInstrument,
-                onChanged: (value) =>
-                    setState(() => _recalcInstrument = value ?? false),
-              ),
-              _NumberField(
-                label: 'Instrument percent (0-100)',
-                controller: _instrumentPercentController,
-                enabled: _recalcInstrument,
-              ),
-              _NumberField(
-                label: 'Instrument minimum minutes',
-                controller: _instrumentMinController,
-                enabled: _recalcInstrument,
-              ),
-              _NumberField(
-                label: 'Instrument subtract minutes',
-                controller: _instrumentSubtractController,
-                enabled: _recalcInstrument,
-              ),
-              const SizedBox(height: 12),
-              Text('Merge strategy', style: titleStyle),
-              const SizedBox(height: 8),
-              _StrategyDropdown(
-                label: 'Airports',
-                value: _airportStrategy,
-                onChanged: (value) =>
-                    setState(() => _airportStrategy = value),
-              ),
-              _StrategyDropdown(
-                label: 'Crew',
-                value: _crewStrategy,
-                onChanged: (value) => setState(() => _crewStrategy = value),
-              ),
-              _StrategyDropdown(
-                label: 'Aircraft',
-                value: _aircraftStrategy,
-                onChanged: (value) =>
-                    setState(() => _aircraftStrategy = value),
-              ),
-              _StrategyDropdown(
-                label: 'Aircraft Type',
-                value: _aircraftTypeStrategy,
-                onChanged: (value) =>
-                    setState(() => _aircraftTypeStrategy = value),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(_buildOptions()),
+                      child: const Text('Import'),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(null),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(_buildOptions()),
-          child: const Text('Import'),
-        ),
-      ],
     );
   }
 

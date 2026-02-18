@@ -173,94 +173,49 @@ class FlightCalculations {
     return (latNext, longNext);
   }
 
-  /// OPTIMIZED: Calculate precise night time with adaptive step size
+  /// Calculate precise night time minute-by-minute along the great-circle path.
+  /// This intentionally matches the legacy SimpleLog behavior.
   int _calculatePreciseNightTime() {
-    // Handle edge case: zero or negative flight time
     if (flightTimeMinutes <= 0) {
       return dayTakeOff ? 0 : 1;
     }
 
-    var nightTime = 0;
-
-    final depTime = DateTime.fromMillisecondsSinceEpoch(
+    var nightTime = dayTakeOff ? 0 : 1;
+    var now = DateTime.fromMillisecondsSinceEpoch(
       depTimeEpochSeconds * 1000,
+      isUtc: true,
+    );
+    final arr = DateTime.fromMillisecondsSinceEpoch(
+      arrTimeEpochSeconds * 1000,
       isUtc: true,
     );
     var latNow = latDep;
     var longNow = longDep;
     final milesPerMinute = flightDistanceNm / flightTimeMinutes;
-    var isDayNow = dayTakeOff;
+    var isDayState = dayTakeOff;
 
-    // Adaptive step size for performance
-    int step = 5; // Start with 5-minute increments
-    int lastTransitionMinute = -100;
-    double cachedBearing = flightBearing(latNow, longNow, latArr, longArr);
-    int bearingUpdateCounter = 0;
+    while (now.isBefore(arr)) {
+      now = now.add(const Duration(minutes: 1));
 
-    for (int minute = 0; minute < flightTimeMinutes;) {
-      final currentTime = depTime.add(Duration(minutes: minute));
-
-      // Update bearing every 10 minutes (it changes slowly)
-      if (bearingUpdateCounter % 10 == 0) {
-        cachedBearing = flightBearing(latNow, longNow, latArr, longArr);
-      }
-      bearingUpdateCounter++;
-
-      // Calculate position
-      final stepUsed = min(step, flightTimeMinutes - minute);
-      final distance = milesPerMinute * stepUsed;
-      final (newLat, newLon) = flightNextWaypoint(
+      final bearing = flightBearing(latNow, longNow, latArr, longArr);
+      final (nextLat, nextLon) = flightNextWaypoint(
         latNow,
         longNow,
-        cachedBearing,
-        distance,
+        bearing,
+        milesPerMinute,
       );
-      latNow = newLat;
-      longNow = newLon;
+      latNow = nextLat;
+      longNow = nextLon;
 
-      // Check day/night status
-      final epochSeconds = currentTime.millisecondsSinceEpoch ~/ 1000;
+      final epochSeconds = now.millisecondsSinceEpoch ~/ 1000;
       final sunriseNow = calcSunriseUTC(epochSeconds, latNow, longNow);
       final sunsetNow = calcSunsetUTC(epochSeconds, latNow, longNow);
-      final dayNow = isDay(epochSeconds, sunriseNow, sunsetNow, latNow);
+      final isDayNow = isDay(epochSeconds, sunriseNow, sunsetNow, latNow);
 
-      // If transition detected and we're in coarse mode, switch to fine mode
-      if (isDayNow != dayNow && step > 1) {
-        // Backtrack and recalculate with 1-minute precision
-        minute -= step;
-        step = 1;
-        lastTransitionMinute = minute;
-        bearingUpdateCounter = 0;
-        
-        // Recalculate position from departure
-        latNow = latDep;
-        longNow = longDep;
-        for (int m = 1; m <= minute; m++) {
-          final bearing = flightBearing(latNow, longNow, latArr, longArr);
-          final (lat, lon) = flightNextWaypoint(
-            latNow,
-            longNow,
-            bearing,
-            milesPerMinute,
-          );
-          latNow = lat;
-          longNow = lon;
-        }
-        continue;
+      if (isDayState == isDayNow && !isDayState && now.isBefore(arr)) {
+        nightTime += 1;
       }
-
-      // Count night minutes
-      if (!dayNow && minute > 0) {
-        nightTime += stepUsed;
-      }
-
-      // Return to coarse stepping after transition (120 minutes later)
-      if (step == 1 && minute > lastTransitionMinute + 120) {
-        step = 5;
-      }
-
-      isDayNow = dayNow;
-      minute += stepUsed;
+      isDayState = isDayNow;
     }
 
     return nightTime;

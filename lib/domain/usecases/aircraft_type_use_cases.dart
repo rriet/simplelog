@@ -1,0 +1,90 @@
+import 'package:drift/drift.dart';
+import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/models/aircraft_type_row.dart';
+import 'package:simplelog/domain/common/domain_validation.dart';
+import 'package:simplelog/domain/repositories/aircraft_type_repository_contract.dart';
+
+class AircraftTypeUseCases {
+  AircraftTypeUseCases(this._repository);
+
+  final AircraftTypeRepositoryContract _repository;
+
+  Stream<List<AircraftTypeRow>> watchAircraftTypes(String query) {
+    return _repository.watchAircraftTypes(query);
+  }
+
+  Stream<List<String>> watchFamilies() {
+    return _repository.watchFamilies();
+  }
+
+  Future<void> toggleLock(AircraftType item) => _repository.toggleLock(item);
+  Future<int> countAircraftForType(int typeId) =>
+      _repository.countAircraftForType(typeId);
+  Future<void> delete(AircraftType item) => _repository.delete(item);
+  Future<int> create(AircraftTypesCompanion companion) =>
+      _repository.create(companion);
+  Future<void> update(AircraftType item) => _repository.update(item);
+  Future<int> countDuplicateCodes(String code, int currentId) =>
+      _repository.countDuplicateCodes(code, currentId);
+
+  Future<DomainValidation> validateCreate(AircraftTypesCompanion companion) async {
+    final code = companion.code.value.trim();
+    if (code.isEmpty) {
+      return const DomainValidation.error('Code is required.');
+    }
+    final duplicate = await _repository.countDuplicateCodes(code, -1);
+    if (duplicate > 0) {
+      return const DomainValidation.error('Code already exists.');
+    }
+    return const DomainValidation.ok();
+  }
+
+  Future<DomainValidation> validateUpdate(AircraftType item) async {
+    final code = item.code.trim();
+    if (code.isEmpty) {
+      return const DomainValidation.error('Code is required.');
+    }
+    final duplicate = await _repository.countDuplicateCodes(code, item.id);
+    if (duplicate > 0) {
+      return const DomainValidation.error('Code already exists.');
+    }
+    return const DomainValidation.ok();
+  }
+
+  Future<DomainValidation> validateDelete(AircraftType item) async {
+    if (item.isLocked) {
+      return const DomainValidation.error('This aircraft type is locked.');
+    }
+    final count = await _repository.countAircraftForType(item.id);
+    if (count > 0) {
+      return const DomainValidation.error('This type is used by aircraft.');
+    }
+    return const DomainValidation.ok();
+  }
+
+  AircraftTypesCompanion normalizeCompanion(AircraftTypesCompanion companion) {
+    final code = companion.code.value.trim();
+    final familyRaw = companion.family.value.trim();
+    final longNameRaw = companion.longName.value.trim();
+    final family = familyRaw.isEmpty ? code : familyRaw;
+    final longName = longNameRaw.isEmpty ? code : longNameRaw;
+    return companion.copyWith(
+      code: Value(code),
+      family: Value(family),
+      longName: Value(longName),
+    );
+  }
+
+  AircraftType normalizeItem(AircraftType item) {
+    final code = item.code.trim();
+    final familyRaw = item.family.trim();
+    final longNameRaw = item.longName.trim();
+    final family = familyRaw.isEmpty ? code : familyRaw;
+    final longName = longNameRaw.isEmpty ? code : longNameRaw;
+    return item.copyWith(
+      code: code,
+      family: family,
+      longName: longName,
+    );
+  }
+}

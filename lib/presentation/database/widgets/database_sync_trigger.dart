@@ -4,8 +4,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/data/database/enums/crew_position.dart';
+import 'package:simplelog/data/import/import_operation_result.dart';
 import 'package:simplelog/data/import/simplelog_csv_importer.dart';
+import 'package:simplelog/presentation/database/widgets/import_options_preferences.dart';
+import 'package:simplelog/presentation/database/widgets/southwest_import_options_dialog.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
+import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
 import 'local_sync_dialog.dart';
 import 'simplelog_import_options_dialog.dart';
@@ -66,21 +71,25 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     if (!context.mounted) return;
 
     if (type == _CsvImportType.simpleLogOld) {
+      final initialOptions = await ImportOptionsPreferences.loadSimpleLog();
+      if (!context.mounted) return;
       final options = await SimpleLogImportOptionsDialog.show(
         context,
         fileName: file.name,
+        initial: initialOptions,
       );
       if (options == null || !context.mounted) return;
+      await ImportOptionsPreferences.saveSimpleLog(options);
+      if (!context.mounted) return;
       final db = ref.read(databaseProvider);
       final importer = SimpleLogCsvImporter(db);
       final progress = ValueNotifier<_ImportProgress>(
         const _ImportProgress(processed: 0, total: 0),
       );
       _showImportProgressDialog(context, progress);
-      SimpleLogImportResult? stats;
-      Object? error;
+      ImportOperationResult<SimpleLogImportResult>? outcome;
       try {
-        stats = await importer.importCsv(
+        outcome = await importer.importCsvSafely(
           content,
           options: options,
           onProgress: (processed, total) =>
@@ -89,29 +98,68 @@ class DatabaseSyncTrigger extends ConsumerWidget {
                 total: total,
               ),
         );
-      } catch (err) {
-        error = err;
       } finally {
         progress.dispose();
       }
       if (!context.mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
       if (!context.mounted) return;
-      if (error != null) {
+      if (!outcome.isSuccess) {
+        final message = _buildImportErrorMessage(outcome.failure);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Import failed: $error')),
+          SnackBar(content: Text(message)),
         );
         return;
       }
-      if (stats != null) {
-        await _showImportSummary(context, stats);
-      }
+      await _showImportSummary(context, outcome.data!);
     } else if (type == _CsvImportType.swapa) {
-      await _showOptionsDialog(context, type, file.name);
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Import not implemented yet.')),
+      final defaultPosition = await ref.read(
+        simulatorDefaultCrewPositionProvider.future,
       );
+      final initialOptions = await ImportOptionsPreferences.loadSouthwest(
+        fallbackPosition: defaultPosition == CrewPosition.unknown
+            ? CrewPosition.sic
+            : defaultPosition,
+      );
+      if (!context.mounted) return;
+      final options = await SouthwestImportOptionsDialog.show(
+        context,
+        fileName: file.name,
+        initial: initialOptions,
+      );
+      if (options == null || !context.mounted) return;
+      await ImportOptionsPreferences.saveSouthwest(options);
+      if (!context.mounted) return;
+      final db = ref.read(databaseProvider);
+      final importer = SimpleLogCsvImporter(db);
+      final progress = ValueNotifier<_ImportProgress>(
+        const _ImportProgress(processed: 0, total: 0),
+      );
+      _showImportProgressDialog(context, progress);
+      ImportOperationResult<SimpleLogImportResult>? outcome;
+      try {
+        outcome = await importer.importSouthwestCsvSafely(
+          content,
+          options: options,
+          onProgress: (processed, total) => progress.value = _ImportProgress(
+            processed: processed,
+            total: total,
+          ),
+        );
+      } finally {
+        progress.dispose();
+      }
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      if (!context.mounted) return;
+      if (!outcome.isSuccess) {
+        final message = _buildImportErrorMessage(outcome.failure);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+        return;
+      }
+      await _showImportSummary(context, outcome.data!);
     } else {
       await _showOptionsDialog(context, type, file.name);
       if (!context.mounted) return;
@@ -168,6 +216,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         content: Text(
           'Rows: ${stats.totalRows}\n'
           'Flights: ${stats.flights}\n'
+          'Positionings: ${stats.positionings}\n'
           'Simulators: ${stats.simulators}\n'
           'Airports: ${stats.airports}\n'
           'Aircraft Types: ${stats.aircraftTypes}\n'
@@ -275,6 +324,18 @@ class DatabaseSyncTrigger extends ConsumerWidget {
 
   String _normalizeHeader(String header) {
     return header.replaceAll('"', '').replaceAll(' ', '');
+  }
+
+  String _buildImportErrorMessage(ImportFailure? failure) {
+    if (failure == null) return 'Import failed.';
+    final prefix = switch (failure.type) {
+      ImportFailureType.invalidFormat => 'Import failed: invalid CSV format.',
+      ImportFailureType.parseError => 'Import failed while parsing data.',
+      ImportFailureType.databaseError => 'Import failed while saving to database.',
+      ImportFailureType.unexpected => 'Import failed due to an unexpected error.',
+    };
+    if (failure.message.isEmpty) return prefix;
+    return '$prefix ${failure.message}';
   }
 }
 

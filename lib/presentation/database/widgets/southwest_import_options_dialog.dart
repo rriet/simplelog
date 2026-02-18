@@ -1,0 +1,244 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:simplelog/data/database/enums/crew_position.dart';
+import 'package:simplelog/data/import/southwest_import_options.dart';
+
+class SouthwestImportOptionsDialog extends StatefulWidget {
+  const SouthwestImportOptionsDialog({
+    super.key,
+    required this.fileName,
+    required this.initial,
+  });
+
+  final String fileName;
+  final SouthwestImportOptions initial;
+
+  static Future<SouthwestImportOptions?> show(
+    BuildContext context, {
+    required String fileName,
+    required SouthwestImportOptions initial,
+  }) {
+    return showDialog<SouthwestImportOptions>(
+      context: context,
+      builder: (context) => SouthwestImportOptionsDialog(
+        fileName: fileName,
+        initial: initial,
+      ),
+    );
+  }
+
+  @override
+  State<SouthwestImportOptionsDialog> createState() =>
+      _SouthwestImportOptionsDialogState();
+}
+
+class _SouthwestImportOptionsDialogState
+    extends State<SouthwestImportOptionsDialog> {
+  late CrewPosition _defaultSelfPosition;
+  late bool _recalcBlock;
+  late bool _recalcNight;
+  late bool _recalcIfr;
+  late bool _recalcCrossCountry;
+  late bool _recalcInstrument;
+  late bool _overrideExisting;
+  late bool _addCopilotStaff;
+  late bool _addFlightNumber;
+  late final TextEditingController _crossCountryController;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initial;
+    _defaultSelfPosition = initial.defaultSelfPosition;
+    _recalcBlock = initial.recalculateBlockTime;
+    _recalcNight = initial.recalculateNightTime;
+    _recalcIfr = initial.recalculateIfrTime;
+    _recalcCrossCountry = initial.recalculateCrossCountry;
+    _recalcInstrument = initial.recalculateInstrumentTime;
+    _overrideExisting = initial.overrideExistingData;
+    _addCopilotStaff = initial.addCopilotStaffNumberToNotes;
+    _addFlightNumber = initial.addFlightNumberToNotes;
+    _crossCountryController = TextEditingController(
+      text: initial.crossCountryThresholdNm.toString(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _crossCountryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: SizedBox(
+        width: 560,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Southwest Import Options',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('File: ${widget.fileName}'),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<CrewPosition>(
+                        initialValue: _defaultSelfPosition,
+                        decoration: const InputDecoration(
+                          labelText: 'Default self position',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: CrewPosition.pic,
+                            child: Text('PIC'),
+                          ),
+                          DropdownMenuItem(
+                            value: CrewPosition.sic,
+                            child: Text('SIC'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _defaultSelfPosition = value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Re-calculate Block time'),
+                        value: _recalcBlock,
+                        onChanged: (value) =>
+                            setState(() => _recalcBlock = value ?? true),
+                      ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Calculate night time'),
+                        value: _recalcNight,
+                        onChanged: (value) =>
+                            setState(() => _recalcNight = value ?? true),
+                      ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Calculate IFR time'),
+                        value: _recalcIfr,
+                        onChanged: (value) =>
+                            setState(() => _recalcIfr = value ?? true),
+                      ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Calculate Cross-country time'),
+                        value: _recalcCrossCountry,
+                        onChanged: (value) => setState(
+                          () => _recalcCrossCountry = value ?? true,
+                        ),
+                      ),
+                      TextField(
+                        controller: _crossCountryController,
+                        enabled: _recalcCrossCountry,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        decoration: const InputDecoration(
+                          labelText: 'Cross-country threshold (NM)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Calculate Instrument time'),
+                        value: _recalcInstrument,
+                        onChanged: (value) => setState(
+                          () => _recalcInstrument = value ?? false,
+                        ),
+                      ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Override existing data'),
+                        value: _overrideExisting,
+                        onChanged: (value) =>
+                            setState(() => _overrideExisting = value ?? false),
+                      ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Add CoPilot staff number to crew notes'),
+                        value: _addCopilotStaff,
+                        onChanged: (value) =>
+                            setState(() => _addCopilotStaff = value ?? true),
+                      ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Add flight number to notes'),
+                        value: _addFlightNumber,
+                        onChanged: (value) =>
+                            setState(() => _addFlightNumber = value ?? true),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop(
+                        SouthwestImportOptions(
+                          defaultSelfPosition: _defaultSelfPosition,
+                          recalculateBlockTime: _recalcBlock,
+                          recalculateNightTime: _recalcNight,
+                          recalculateIfrTime: _recalcIfr,
+                          recalculateCrossCountry: _recalcCrossCountry,
+                          crossCountryThresholdNm:
+                              int.tryParse(_crossCountryController.text.trim()) ?? 50,
+                          recalculateInstrumentTime: _recalcInstrument,
+                          overrideExistingData: _overrideExisting,
+                          addCopilotStaffNumberToNotes: _addCopilotStaff,
+                          addFlightNumberToNotes: _addFlightNumber,
+                        ),
+                      ),
+                      child: const Text('Import'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

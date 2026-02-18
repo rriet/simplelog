@@ -10,5 +10,6 @@ class Positionings extends Table {
   IntColumn get departureDateTimeId => integer().references(TimeLines, #id)();
   DateTimeColumn get arrivalDateTime => dateTime().nullable()();
   IntColumn get timeTotalMinutes => integer()();
+  TextColumn get notes => text().withDefault(const Constant(''))();
   BoolColumn get isLocked => boolean()();
 }

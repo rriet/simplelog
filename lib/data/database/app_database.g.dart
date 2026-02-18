@@ -870,9 +870,9 @@ class $AircraftsTable extends Aircrafts
   late final GeneratedColumn<int> mtow = GeneratedColumn<int>(
     'mtow',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.int,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _isSimulatorMeta = const VerificationMeta(
     'isSimulator',
@@ -978,8 +978,6 @@ class $AircraftsTable extends Aircrafts
         _mtowMeta,
         mtow.isAcceptableOrUnknown(data['mtow']!, _mtowMeta),
       );
-    } else if (isInserting) {
-      context.missing(_mtowMeta);
     }
     if (data.containsKey('is_simulator')) {
       context.handle(
@@ -1038,7 +1036,7 @@ class $AircraftsTable extends Aircrafts
       mtow: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}mtow'],
-      )!,
+      ),
       isSimulator: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_simulator'],
@@ -1068,7 +1066,7 @@ class Aircraft extends DataClass implements Insertable<Aircraft> {
   final int id;
   final int aircraftTypeId;
   final String registration;
-  final int mtow;
+  final int? mtow;
   final bool isSimulator;
   final bool isFavorite;
   final bool isLocked;
@@ -1077,7 +1075,7 @@ class Aircraft extends DataClass implements Insertable<Aircraft> {
     required this.id,
     required this.aircraftTypeId,
     required this.registration,
-    required this.mtow,
+    this.mtow,
     required this.isSimulator,
     required this.isFavorite,
     required this.isLocked,
@@ -1089,7 +1087,9 @@ class Aircraft extends DataClass implements Insertable<Aircraft> {
     map['id'] = Variable<int>(id);
     map['aircraft_type_id'] = Variable<int>(aircraftTypeId);
     map['registration'] = Variable<String>(registration);
-    map['mtow'] = Variable<int>(mtow);
+    if (!nullToAbsent || mtow != null) {
+      map['mtow'] = Variable<int>(mtow);
+    }
     map['is_simulator'] = Variable<bool>(isSimulator);
     map['is_favorite'] = Variable<bool>(isFavorite);
     map['is_locked'] = Variable<bool>(isLocked);
@@ -1104,7 +1104,7 @@ class Aircraft extends DataClass implements Insertable<Aircraft> {
       id: Value(id),
       aircraftTypeId: Value(aircraftTypeId),
       registration: Value(registration),
-      mtow: Value(mtow),
+      mtow: mtow == null && nullToAbsent ? const Value.absent() : Value(mtow),
       isSimulator: Value(isSimulator),
       isFavorite: Value(isFavorite),
       isLocked: Value(isLocked),
@@ -1123,7 +1123,7 @@ class Aircraft extends DataClass implements Insertable<Aircraft> {
       id: serializer.fromJson<int>(json['id']),
       aircraftTypeId: serializer.fromJson<int>(json['aircraftTypeId']),
       registration: serializer.fromJson<String>(json['registration']),
-      mtow: serializer.fromJson<int>(json['mtow']),
+      mtow: serializer.fromJson<int?>(json['mtow']),
       isSimulator: serializer.fromJson<bool>(json['isSimulator']),
       isFavorite: serializer.fromJson<bool>(json['isFavorite']),
       isLocked: serializer.fromJson<bool>(json['isLocked']),
@@ -1137,7 +1137,7 @@ class Aircraft extends DataClass implements Insertable<Aircraft> {
       'id': serializer.toJson<int>(id),
       'aircraftTypeId': serializer.toJson<int>(aircraftTypeId),
       'registration': serializer.toJson<String>(registration),
-      'mtow': serializer.toJson<int>(mtow),
+      'mtow': serializer.toJson<int?>(mtow),
       'isSimulator': serializer.toJson<bool>(isSimulator),
       'isFavorite': serializer.toJson<bool>(isFavorite),
       'isLocked': serializer.toJson<bool>(isLocked),
@@ -1149,7 +1149,7 @@ class Aircraft extends DataClass implements Insertable<Aircraft> {
     int? id,
     int? aircraftTypeId,
     String? registration,
-    int? mtow,
+    Value<int?> mtow = const Value.absent(),
     bool? isSimulator,
     bool? isFavorite,
     bool? isLocked,
@@ -1158,7 +1158,7 @@ class Aircraft extends DataClass implements Insertable<Aircraft> {
     id: id ?? this.id,
     aircraftTypeId: aircraftTypeId ?? this.aircraftTypeId,
     registration: registration ?? this.registration,
-    mtow: mtow ?? this.mtow,
+    mtow: mtow.present ? mtow.value : this.mtow,
     isSimulator: isSimulator ?? this.isSimulator,
     isFavorite: isFavorite ?? this.isFavorite,
     isLocked: isLocked ?? this.isLocked,
@@ -1229,7 +1229,7 @@ class AircraftsCompanion extends UpdateCompanion<Aircraft> {
   final Value<int> id;
   final Value<int> aircraftTypeId;
   final Value<String> registration;
-  final Value<int> mtow;
+  final Value<int?> mtow;
   final Value<bool> isSimulator;
   final Value<bool> isFavorite;
   final Value<bool> isLocked;
@@ -1248,14 +1248,13 @@ class AircraftsCompanion extends UpdateCompanion<Aircraft> {
     this.id = const Value.absent(),
     required int aircraftTypeId,
     required String registration,
-    required int mtow,
+    this.mtow = const Value.absent(),
     required bool isSimulator,
     required bool isFavorite,
     required bool isLocked,
     this.notes = const Value.absent(),
   }) : aircraftTypeId = Value(aircraftTypeId),
        registration = Value(registration),
-       mtow = Value(mtow),
        isSimulator = Value(isSimulator),
        isFavorite = Value(isFavorite),
        isLocked = Value(isLocked);
@@ -1285,7 +1284,7 @@ class AircraftsCompanion extends UpdateCompanion<Aircraft> {
     Value<int>? id,
     Value<int>? aircraftTypeId,
     Value<String>? registration,
-    Value<int>? mtow,
+    Value<int?>? mtow,
     Value<bool>? isSimulator,
     Value<bool>? isFavorite,
     Value<bool>? isLocked,
@@ -4251,6 +4250,16 @@ class $PositioningsTable extends Positionings
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _isLockedMeta = const VerificationMeta(
     'isLocked',
   );
@@ -4273,6 +4282,7 @@ class $PositioningsTable extends Positionings
     departureDateTimeId,
     arrivalDateTime,
     timeTotalMinutes,
+    notes,
     isLocked,
   ];
   @override
@@ -4343,6 +4353,12 @@ class $PositioningsTable extends Positionings
     } else if (isInserting) {
       context.missing(_timeTotalMinutesMeta);
     }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
     if (data.containsKey('is_locked')) {
       context.handle(
         _isLockedMeta,
@@ -4384,6 +4400,10 @@ class $PositioningsTable extends Positionings
         DriftSqlType.int,
         data['${effectivePrefix}time_total_minutes'],
       )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      )!,
       isLocked: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_locked'],
@@ -4404,6 +4424,7 @@ class Positioning extends DataClass implements Insertable<Positioning> {
   final int departureDateTimeId;
   final DateTime? arrivalDateTime;
   final int timeTotalMinutes;
+  final String notes;
   final bool isLocked;
   const Positioning({
     required this.id,
@@ -4412,6 +4433,7 @@ class Positioning extends DataClass implements Insertable<Positioning> {
     required this.departureDateTimeId,
     this.arrivalDateTime,
     required this.timeTotalMinutes,
+    required this.notes,
     required this.isLocked,
   });
   @override
@@ -4425,6 +4447,7 @@ class Positioning extends DataClass implements Insertable<Positioning> {
       map['arrival_date_time'] = Variable<DateTime>(arrivalDateTime);
     }
     map['time_total_minutes'] = Variable<int>(timeTotalMinutes);
+    map['notes'] = Variable<String>(notes);
     map['is_locked'] = Variable<bool>(isLocked);
     return map;
   }
@@ -4439,6 +4462,7 @@ class Positioning extends DataClass implements Insertable<Positioning> {
           ? const Value.absent()
           : Value(arrivalDateTime),
       timeTotalMinutes: Value(timeTotalMinutes),
+      notes: Value(notes),
       isLocked: Value(isLocked),
     );
   }
@@ -4457,6 +4481,7 @@ class Positioning extends DataClass implements Insertable<Positioning> {
       ),
       arrivalDateTime: serializer.fromJson<DateTime?>(json['arrivalDateTime']),
       timeTotalMinutes: serializer.fromJson<int>(json['timeTotalMinutes']),
+      notes: serializer.fromJson<String>(json['notes']),
       isLocked: serializer.fromJson<bool>(json['isLocked']),
     );
   }
@@ -4470,6 +4495,7 @@ class Positioning extends DataClass implements Insertable<Positioning> {
       'departureDateTimeId': serializer.toJson<int>(departureDateTimeId),
       'arrivalDateTime': serializer.toJson<DateTime?>(arrivalDateTime),
       'timeTotalMinutes': serializer.toJson<int>(timeTotalMinutes),
+      'notes': serializer.toJson<String>(notes),
       'isLocked': serializer.toJson<bool>(isLocked),
     };
   }
@@ -4481,6 +4507,7 @@ class Positioning extends DataClass implements Insertable<Positioning> {
     int? departureDateTimeId,
     Value<DateTime?> arrivalDateTime = const Value.absent(),
     int? timeTotalMinutes,
+    String? notes,
     bool? isLocked,
   }) => Positioning(
     id: id ?? this.id,
@@ -4491,6 +4518,7 @@ class Positioning extends DataClass implements Insertable<Positioning> {
         ? arrivalDateTime.value
         : this.arrivalDateTime,
     timeTotalMinutes: timeTotalMinutes ?? this.timeTotalMinutes,
+    notes: notes ?? this.notes,
     isLocked: isLocked ?? this.isLocked,
   );
   Positioning copyWithCompanion(PositioningsCompanion data) {
@@ -4511,6 +4539,7 @@ class Positioning extends DataClass implements Insertable<Positioning> {
       timeTotalMinutes: data.timeTotalMinutes.present
           ? data.timeTotalMinutes.value
           : this.timeTotalMinutes,
+      notes: data.notes.present ? data.notes.value : this.notes,
       isLocked: data.isLocked.present ? data.isLocked.value : this.isLocked,
     );
   }
@@ -4524,6 +4553,7 @@ class Positioning extends DataClass implements Insertable<Positioning> {
           ..write('departureDateTimeId: $departureDateTimeId, ')
           ..write('arrivalDateTime: $arrivalDateTime, ')
           ..write('timeTotalMinutes: $timeTotalMinutes, ')
+          ..write('notes: $notes, ')
           ..write('isLocked: $isLocked')
           ..write(')'))
         .toString();
@@ -4537,6 +4567,7 @@ class Positioning extends DataClass implements Insertable<Positioning> {
     departureDateTimeId,
     arrivalDateTime,
     timeTotalMinutes,
+    notes,
     isLocked,
   );
   @override
@@ -4549,6 +4580,7 @@ class Positioning extends DataClass implements Insertable<Positioning> {
           other.departureDateTimeId == this.departureDateTimeId &&
           other.arrivalDateTime == this.arrivalDateTime &&
           other.timeTotalMinutes == this.timeTotalMinutes &&
+          other.notes == this.notes &&
           other.isLocked == this.isLocked);
 }
 
@@ -4559,6 +4591,7 @@ class PositioningsCompanion extends UpdateCompanion<Positioning> {
   final Value<int> departureDateTimeId;
   final Value<DateTime?> arrivalDateTime;
   final Value<int> timeTotalMinutes;
+  final Value<String> notes;
   final Value<bool> isLocked;
   const PositioningsCompanion({
     this.id = const Value.absent(),
@@ -4567,6 +4600,7 @@ class PositioningsCompanion extends UpdateCompanion<Positioning> {
     this.departureDateTimeId = const Value.absent(),
     this.arrivalDateTime = const Value.absent(),
     this.timeTotalMinutes = const Value.absent(),
+    this.notes = const Value.absent(),
     this.isLocked = const Value.absent(),
   });
   PositioningsCompanion.insert({
@@ -4576,6 +4610,7 @@ class PositioningsCompanion extends UpdateCompanion<Positioning> {
     required int departureDateTimeId,
     this.arrivalDateTime = const Value.absent(),
     required int timeTotalMinutes,
+    this.notes = const Value.absent(),
     required bool isLocked,
   }) : departurePlaceId = Value(departurePlaceId),
        arrivalPlaceId = Value(arrivalPlaceId),
@@ -4589,6 +4624,7 @@ class PositioningsCompanion extends UpdateCompanion<Positioning> {
     Expression<int>? departureDateTimeId,
     Expression<DateTime>? arrivalDateTime,
     Expression<int>? timeTotalMinutes,
+    Expression<String>? notes,
     Expression<bool>? isLocked,
   }) {
     return RawValuesInsertable({
@@ -4599,6 +4635,7 @@ class PositioningsCompanion extends UpdateCompanion<Positioning> {
         'departure_date_time_id': departureDateTimeId,
       if (arrivalDateTime != null) 'arrival_date_time': arrivalDateTime,
       if (timeTotalMinutes != null) 'time_total_minutes': timeTotalMinutes,
+      if (notes != null) 'notes': notes,
       if (isLocked != null) 'is_locked': isLocked,
     });
   }
@@ -4610,6 +4647,7 @@ class PositioningsCompanion extends UpdateCompanion<Positioning> {
     Value<int>? departureDateTimeId,
     Value<DateTime?>? arrivalDateTime,
     Value<int>? timeTotalMinutes,
+    Value<String>? notes,
     Value<bool>? isLocked,
   }) {
     return PositioningsCompanion(
@@ -4619,6 +4657,7 @@ class PositioningsCompanion extends UpdateCompanion<Positioning> {
       departureDateTimeId: departureDateTimeId ?? this.departureDateTimeId,
       arrivalDateTime: arrivalDateTime ?? this.arrivalDateTime,
       timeTotalMinutes: timeTotalMinutes ?? this.timeTotalMinutes,
+      notes: notes ?? this.notes,
       isLocked: isLocked ?? this.isLocked,
     );
   }
@@ -4644,6 +4683,9 @@ class PositioningsCompanion extends UpdateCompanion<Positioning> {
     if (timeTotalMinutes.present) {
       map['time_total_minutes'] = Variable<int>(timeTotalMinutes.value);
     }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
     if (isLocked.present) {
       map['is_locked'] = Variable<bool>(isLocked.value);
     }
@@ -4659,6 +4701,7 @@ class PositioningsCompanion extends UpdateCompanion<Positioning> {
           ..write('departureDateTimeId: $departureDateTimeId, ')
           ..write('arrivalDateTime: $arrivalDateTime, ')
           ..write('timeTotalMinutes: $timeTotalMinutes, ')
+          ..write('notes: $notes, ')
           ..write('isLocked: $isLocked')
           ..write(')'))
         .toString();
@@ -7402,7 +7445,7 @@ typedef $$AircraftsTableCreateCompanionBuilder =
       Value<int> id,
       required int aircraftTypeId,
       required String registration,
-      required int mtow,
+      Value<int?> mtow,
       required bool isSimulator,
       required bool isFavorite,
       required bool isLocked,
@@ -7413,7 +7456,7 @@ typedef $$AircraftsTableUpdateCompanionBuilder =
       Value<int> id,
       Value<int> aircraftTypeId,
       Value<String> registration,
-      Value<int> mtow,
+      Value<int?> mtow,
       Value<bool> isSimulator,
       Value<bool> isFavorite,
       Value<bool> isLocked,
@@ -7819,7 +7862,7 @@ class $$AircraftsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<int> aircraftTypeId = const Value.absent(),
                 Value<String> registration = const Value.absent(),
-                Value<int> mtow = const Value.absent(),
+                Value<int?> mtow = const Value.absent(),
                 Value<bool> isSimulator = const Value.absent(),
                 Value<bool> isFavorite = const Value.absent(),
                 Value<bool> isLocked = const Value.absent(),
@@ -7839,7 +7882,7 @@ class $$AircraftsTableTableManager
                 Value<int> id = const Value.absent(),
                 required int aircraftTypeId,
                 required String registration,
-                required int mtow,
+                Value<int?> mtow = const Value.absent(),
                 required bool isSimulator,
                 required bool isFavorite,
                 required bool isLocked,
@@ -10038,6 +10081,7 @@ typedef $$PositioningsTableCreateCompanionBuilder =
       required int departureDateTimeId,
       Value<DateTime?> arrivalDateTime,
       required int timeTotalMinutes,
+      Value<String> notes,
       required bool isLocked,
     });
 typedef $$PositioningsTableUpdateCompanionBuilder =
@@ -10048,6 +10092,7 @@ typedef $$PositioningsTableUpdateCompanionBuilder =
       Value<int> departureDateTimeId,
       Value<DateTime?> arrivalDateTime,
       Value<int> timeTotalMinutes,
+      Value<String> notes,
       Value<bool> isLocked,
     });
 
@@ -10137,6 +10182,11 @@ class $$PositioningsTableFilterComposer
 
   ColumnFilters<int> get timeTotalMinutes => $composableBuilder(
     column: $table.timeTotalMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10239,6 +10289,11 @@ class $$PositioningsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isLocked => $composableBuilder(
     column: $table.isLocked,
     builder: (column) => ColumnOrderings(column),
@@ -10335,6 +10390,9 @@ class $$PositioningsTableAnnotationComposer
     column: $table.timeTotalMinutes,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
 
   GeneratedColumn<bool> get isLocked =>
       $composableBuilder(column: $table.isLocked, builder: (column) => column);
@@ -10447,6 +10505,7 @@ class $$PositioningsTableTableManager
                 Value<int> departureDateTimeId = const Value.absent(),
                 Value<DateTime?> arrivalDateTime = const Value.absent(),
                 Value<int> timeTotalMinutes = const Value.absent(),
+                Value<String> notes = const Value.absent(),
                 Value<bool> isLocked = const Value.absent(),
               }) => PositioningsCompanion(
                 id: id,
@@ -10455,6 +10514,7 @@ class $$PositioningsTableTableManager
                 departureDateTimeId: departureDateTimeId,
                 arrivalDateTime: arrivalDateTime,
                 timeTotalMinutes: timeTotalMinutes,
+                notes: notes,
                 isLocked: isLocked,
               ),
           createCompanionCallback:
@@ -10465,6 +10525,7 @@ class $$PositioningsTableTableManager
                 required int departureDateTimeId,
                 Value<DateTime?> arrivalDateTime = const Value.absent(),
                 required int timeTotalMinutes,
+                Value<String> notes = const Value.absent(),
                 required bool isLocked,
               }) => PositioningsCompanion.insert(
                 id: id,
@@ -10473,6 +10534,7 @@ class $$PositioningsTableTableManager
                 departureDateTimeId: departureDateTimeId,
                 arrivalDateTime: arrivalDateTime,
                 timeTotalMinutes: timeTotalMinutes,
+                notes: notes,
                 isLocked: isLocked,
               ),
           withReferenceMapper: (p0) => p0

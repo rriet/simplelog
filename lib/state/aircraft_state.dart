@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'package:simplelog/presentation/aircraft/aircraft_screen.dart';
-import 'package:simplelog/presentation/aircraft_types/aircraft_types_screen.dart';
-import 'package:simplelog/presentation/airports/airport_screen.dart';
-import 'package:simplelog/presentation/crew/crew_screen.dart';
+import 'package:simplelog/features/aircraft/presentation/aircraft_screen.dart';
+import 'package:simplelog/features/aircraft_types/presentation/aircraft_types_screen.dart';
+import 'package:simplelog/features/airports/presentation/airport_screen.dart';
+import 'package:simplelog/features/crew/presentation/crew_screen.dart';
 import 'package:simplelog/presentation/database/database_screen.dart';
-import 'package:simplelog/presentation/logbook/logbook_screen.dart';
+import 'package:simplelog/features/logbook/presentation/logbook_screen.dart';
 import 'package:simplelog/presentation/reports/reports_screen.dart';
 import 'package:simplelog/presentation/settings/settings_screen.dart';
 

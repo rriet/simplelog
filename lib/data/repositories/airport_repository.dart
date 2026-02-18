@@ -1,9 +1,13 @@
+// ignore_for_file: annotate_overrides
+
 import 'package:drift/drift.dart';
+import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/data/models/airport_row.dart';
+import 'package:simplelog/domain/repositories/airport_repository_contract.dart';
 
-class AirportRepository {
+class AirportRepository implements AirportRepositoryContract {
   AirportRepository(this._db);
 
   final AppDatabase _db;
@@ -12,50 +16,9 @@ class AirportRepository {
     String query,
     AirportFilters filters,
   ) {
-    final trimmed = query.trim();
-    final hasQuery = trimmed.isNotEmpty;
-    final term = '%$trimmed%';
+    final normalizedQuery = normalizeLooseSearch(query);
     final whereParts = <String>[];
     final variables = <Variable>[];
-
-    if (hasQuery) {
-      switch (filters.searchField) {
-        case AirportSearchField.all:
-          whereParts.add(
-            '(a.icao LIKE ? OR COALESCE(a.iata, \'\') LIKE ? OR '
-            'COALESCE(a.name, \'\') LIKE ? OR COALESCE(a.city, \'\') LIKE ? '
-            'OR COALESCE(a.country, \'\') LIKE ?)',
-          );
-          variables.addAll(List.filled(5, Variable.withString(term)));
-          break;
-        case AirportSearchField.icao:
-          whereParts.add('a.icao LIKE ?');
-          variables.add(Variable.withString(term));
-          break;
-        case AirportSearchField.iata:
-          whereParts.add('COALESCE(a.iata, \'\') LIKE ?');
-          variables.add(Variable.withString(term));
-          break;
-        case AirportSearchField.icaoOrIata:
-          whereParts.add(
-            '(a.icao LIKE ? OR COALESCE(a.iata, \'\') LIKE ?)',
-          );
-          variables.addAll(List.filled(2, Variable.withString(term)));
-          break;
-        case AirportSearchField.name:
-          whereParts.add('COALESCE(a.name, \'\') LIKE ?');
-          variables.add(Variable.withString(term));
-          break;
-        case AirportSearchField.city:
-          whereParts.add('COALESCE(a.city, \'\') LIKE ?');
-          variables.add(Variable.withString(term));
-          break;
-        case AirportSearchField.country:
-          whereParts.add('COALESCE(a.country, \'\') LIKE ?');
-          variables.add(Variable.withString(term));
-          break;
-      }
-    }
 
     if (filters.showOnlyVisited) {
       whereParts.add(
@@ -131,23 +94,54 @@ ORDER BY a.is_favorite DESC, $orderBy
     );
 
     return customQuery.watch().map((rows) {
-      return rows
-          .map((row) {
-            final airport = _db.airports.map(row.data);
-            final flightCount = row.read<int>('flight_count');
-            final positioningCount = row.read<int>('positioning_count');
-            final takeoffCount = row.read<int>('takeoff_count');
-            final landingCount = row.read<int>('landing_count');
-            return AirportRow(
-              airport,
-              flightCount: flightCount,
-              positioningCount: positioningCount,
-              takeoffCount: takeoffCount,
-              landingCount: landingCount,
-            );
-          })
-          .toList();
+      final mapped = rows.map((row) {
+        final airport = _db.airports.map(row.data);
+        final flightCount = row.read<int>('flight_count');
+        final positioningCount = row.read<int>('positioning_count');
+        final takeoffCount = row.read<int>('takeoff_count');
+        final landingCount = row.read<int>('landing_count');
+        return AirportRow(
+          airport,
+          flightCount: flightCount,
+          positioningCount: positioningCount,
+          takeoffCount: takeoffCount,
+          landingCount: landingCount,
+        );
+      });
+
+      if (normalizedQuery.isEmpty) {
+        return mapped.toList();
+      }
+
+      return mapped.where((row) {
+        final airport = row.airport;
+        switch (filters.searchField) {
+          case AirportSearchField.all:
+            return _containsLoose(airport.icao, normalizedQuery) ||
+                _containsLoose(airport.iata ?? '', normalizedQuery) ||
+                _containsLoose(airport.name ?? '', normalizedQuery) ||
+                _containsLoose(airport.city ?? '', normalizedQuery) ||
+                _containsLoose(airport.country ?? '', normalizedQuery);
+          case AirportSearchField.icao:
+            return _containsLoose(airport.icao, normalizedQuery);
+          case AirportSearchField.iata:
+            return _containsLoose(airport.iata ?? '', normalizedQuery);
+          case AirportSearchField.icaoOrIata:
+            return _containsLoose(airport.icao, normalizedQuery) ||
+                _containsLoose(airport.iata ?? '', normalizedQuery);
+          case AirportSearchField.name:
+            return _containsLoose(airport.name ?? '', normalizedQuery);
+          case AirportSearchField.city:
+            return _containsLoose(airport.city ?? '', normalizedQuery);
+          case AirportSearchField.country:
+            return _containsLoose(airport.country ?? '', normalizedQuery);
+        }
+      }).toList();
     });
+  }
+
+  bool _containsLoose(String source, String normalizedQuery) {
+    return normalizeLooseSearch(source).contains(normalizedQuery);
   }
 
   Future<void> toggleLock(Airport item) async {
@@ -181,6 +175,32 @@ ORDER BY a.is_favorite DESC, $orderBy
       ..where(
         _db.airports.icao.lower().equals(icao.toLowerCase()) &
             _db.airports.id.isNotIn([currentId]),
+      );
+    final row = await query.getSingle();
+    return row.read(countExpr) ?? 0;
+  }
+
+  @override
+  Future<int> countFlightsUsingAirport(int airportId) async {
+    final countExpr = _db.flights.id.count();
+    final query = _db.selectOnly(_db.flights)
+      ..addColumns([countExpr])
+      ..where(
+        _db.flights.departureAirportId.equals(airportId) |
+            _db.flights.arrivalAirportId.equals(airportId),
+      );
+    final row = await query.getSingle();
+    return row.read(countExpr) ?? 0;
+  }
+
+  @override
+  Future<int> countPositioningsUsingAirport(int airportId) async {
+    final countExpr = _db.positionings.id.count();
+    final query = _db.selectOnly(_db.positionings)
+      ..addColumns([countExpr])
+      ..where(
+        _db.positionings.departurePlaceId.equals(airportId) |
+            _db.positionings.arrivalPlaceId.equals(airportId),
       );
     final row = await query.getSingle();
     return row.read(countExpr) ?? 0;

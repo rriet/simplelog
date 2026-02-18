@@ -40,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'simplelog'));
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -317,6 +317,52 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 6) {
             await migrator.addColumn(aircrafts, aircrafts.notes);
+          }
+          if (from < 7) {
+            await migrator.addColumn(positionings, positionings.notes);
+          }
+          if (from < 8) {
+            await migrator.database.customStatement('''
+              CREATE TABLE aircrafts_new (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                aircraft_type_id INTEGER NOT NULL REFERENCES aircraft_types(id),
+                registration TEXT NOT NULL,
+                mtow INTEGER NULL,
+                is_simulator INTEGER NOT NULL,
+                is_favorite INTEGER NOT NULL,
+                is_locked INTEGER NOT NULL,
+                notes TEXT NULL,
+                CHECK ("is_simulator" IN (0, 1)),
+                CHECK ("is_favorite" IN (0, 1)),
+                CHECK ("is_locked" IN (0, 1))
+              );
+            ''');
+            await migrator.database.customStatement('''
+              INSERT INTO aircrafts_new (
+                id,
+                aircraft_type_id,
+                registration,
+                mtow,
+                is_simulator,
+                is_favorite,
+                is_locked,
+                notes
+              )
+              SELECT
+                id,
+                aircraft_type_id,
+                registration,
+                mtow,
+                is_simulator,
+                is_favorite,
+                is_locked,
+                notes
+              FROM aircrafts;
+            ''');
+            await migrator.database.customStatement('DROP TABLE aircrafts;');
+            await migrator.database.customStatement(
+              'ALTER TABLE aircrafts_new RENAME TO aircrafts;',
+            );
           }
         },
       );

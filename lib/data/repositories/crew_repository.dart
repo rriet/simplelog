@@ -1,8 +1,12 @@
+// ignore_for_file: annotate_overrides
+
 import 'package:drift/drift.dart';
+import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_row.dart';
+import 'package:simplelog/domain/repositories/crew_repository_contract.dart';
 
-class CrewRepository {
+class CrewRepository implements CrewRepositoryContract {
   CrewRepository(this._db);
 
   final AppDatabase _db;
@@ -10,31 +14,26 @@ class CrewRepository {
   Stream<List<CrewRow>> watchCrew(String query) {
     final request = _db.select(_db.crew)
       ..orderBy([
+        (table) => OrderingTerm.desc(table.isSelf),
         (table) => OrderingTerm.desc(table.isFavorite),
         (table) => OrderingTerm.asc(table.name),
       ]);
 
-    final normalizedQuery = _normalizeSearch(query);
-    if (normalizedQuery.isEmpty) {
-      return request.watch().map(
-            (rows) => rows.map(CrewRow.new).toList(),
-          );
-    }
+    final normalizedQuery = normalizeCrewSearch(query);
 
-    return request.watch().map((items) {
-      return items.where((item) {
-        final name = item.name.toLowerCase();
-        final email = (item.email ?? '').toLowerCase();
-        final phoneDigits = _digitsOnly(item.phone ?? '');
-        final queryDigits = _digitsOnly(normalizedQuery);
-
-        final matchesText = name.contains(normalizedQuery) ||
-            email.contains(normalizedQuery);
-        final matchesPhone = queryDigits.isNotEmpty &&
-            phoneDigits.contains(queryDigits);
-
-        return matchesText || matchesPhone;
-      }).map(CrewRow.new).toList();
+    return request.watch().map((rows) {
+      final mapped = rows.map(CrewRow.new);
+      if (normalizedQuery.isEmpty) {
+        return mapped.toList();
+      }
+      return mapped.where((row) {
+        final name = normalizeCrewSearch(row.crew.name);
+        final email = normalizeCrewSearch(row.crew.email ?? '');
+        final phone = normalizeCrewSearch(row.crew.phone ?? '');
+        return name.contains(normalizedQuery) ||
+            email.contains(normalizedQuery) ||
+            phone.contains(normalizedQuery);
+      }).toList();
     });
   }
 
@@ -88,7 +87,23 @@ class CrewRepository {
     return row.read(countExpr) ?? 0;
   }
 
-  String _normalizeSearch(String value) => value.trim().toLowerCase();
+  @override
+  Future<int> countFlightAssignmentsForCrew(int crewId) async {
+    final countExpr = _db.flightCrewAssignments.id.count();
+    final query = _db.selectOnly(_db.flightCrewAssignments)
+      ..addColumns([countExpr])
+      ..where(_db.flightCrewAssignments.crewId.equals(crewId));
+    final row = await query.getSingle();
+    return row.read(countExpr) ?? 0;
+  }
 
-  String _digitsOnly(String value) => value.replaceAll(RegExp(r'\D'), '');
+  @override
+  Future<int> countSimulatorAssignmentsForCrew(int crewId) async {
+    final countExpr = _db.simulatorCrewAssignments.id.count();
+    final query = _db.selectOnly(_db.simulatorCrewAssignments)
+      ..addColumns([countExpr])
+      ..where(_db.simulatorCrewAssignments.crewId.equals(crewId));
+    final row = await query.getSingle();
+    return row.read(countExpr) ?? 0;
+  }
 }

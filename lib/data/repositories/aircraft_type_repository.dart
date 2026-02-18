@@ -1,8 +1,12 @@
+// ignore_for_file: annotate_overrides
+
 import 'package:drift/drift.dart';
+import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
+import 'package:simplelog/domain/repositories/aircraft_type_repository_contract.dart';
 
-class AircraftTypeRepository {
+class AircraftTypeRepository implements AircraftTypeRepositoryContract {
   AircraftTypeRepository(this._db);
 
   final AppDatabase _db;
@@ -14,21 +18,27 @@ class AircraftTypeRepository {
         (table) => OrderingTerm.asc(table.code),
       ]);
 
-    final trimmed = query.trim();
-    if (trimmed.isNotEmpty) {
-      final term = '%$trimmed%';
-      request.where((table) {
-        final manufacturerMatches =
-            table.manufacturer.isNotNull() & table.manufacturer.like(term);
-        return table.code.like(term) |
-            table.family.like(term) |
-            table.longName.like(term) |
-            manufacturerMatches;
-      });
-    }
+    final normalizedQuery = normalizeLooseSearch(query);
 
     return request.watch().map(
-          (rows) => rows.map(AircraftTypeRow.new).toList(),
+          (rows) {
+            final mapped = rows.map(AircraftTypeRow.new);
+            if (normalizedQuery.isEmpty) {
+              return mapped.toList();
+            }
+            return mapped.where((row) {
+              final code = normalizeLooseSearch(row.type.code);
+              final family = normalizeLooseSearch(row.type.family);
+              final longName = normalizeLooseSearch(row.type.longName);
+              final manufacturer = normalizeLooseSearch(
+                row.type.manufacturer ?? '',
+              );
+              return code.contains(normalizedQuery) ||
+                  family.contains(normalizedQuery) ||
+                  longName.contains(normalizedQuery) ||
+                  manufacturer.contains(normalizedQuery);
+            }).toList();
+          },
         );
   }
 
