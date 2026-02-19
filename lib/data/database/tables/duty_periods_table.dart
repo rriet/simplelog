@@ -7,6 +7,7 @@ class DutyPeriods extends Table {
   IntColumn get dutyStartTimeLineId => integer().references(TimeLines, #id)();
   IntColumn get dutyEndTimeLineId => integer().references(TimeLines, #id)();
   IntColumn get timeDutyMinutes => integer()();
+  IntColumn get restBeforeMinutes => integer().withDefault(const Constant(0))();
   IntColumn get timeFactoredDutyMinutes => integer()();
   BoolColumn get isLocked => boolean()();
 

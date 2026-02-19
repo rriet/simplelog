@@ -325,6 +325,8 @@ class LogbookUseCases {
       _repository.fetchEntriesForAirport(airportId);
   Future<List<LogbookEntry>> fetchEntriesForAircraft(int aircraftId) =>
       _repository.fetchEntriesForAircraft(aircraftId);
+  Future<List<LogbookEntry>> fetchEntriesForAircraftType(int aircraftTypeId) =>
+      _repository.fetchEntriesForAircraftType(aircraftTypeId);
   Future<List<LogbookEntry>> fetchEntriesForCrew(int crewId) =>
       _repository.fetchEntriesForCrew(crewId);
 

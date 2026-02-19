@@ -12,6 +12,8 @@ class AircraftTypesList extends StatelessWidget {
     required this.onToggleLock,
     required this.onEdit,
     required this.onDelete,
+    required this.onOpenDetails,
+    required this.onOpenFamilyDetails,
   });
 
   final List<FamilyGroup> groups;
@@ -19,6 +21,8 @@ class AircraftTypesList extends StatelessWidget {
   final ValueChanged<AircraftTypeRow> onToggleLock;
   final ValueChanged<AircraftTypeRow> onEdit;
   final ValueChanged<AircraftTypeRow> onDelete;
+  final ValueChanged<AircraftTypeRow> onOpenDetails;
+  final ValueChanged<FamilyGroup> onOpenFamilyDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +37,8 @@ class AircraftTypesList extends StatelessWidget {
           onToggleLock: onToggleLock,
           onEdit: onEdit,
           onDelete: onDelete,
+          onOpenDetails: onOpenDetails,
+          onOpenFamilyDetails: onOpenFamilyDetails,
         );
       },
     );

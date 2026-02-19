@@ -12,6 +12,10 @@ class AircraftUseCases {
     return _repository.watchAircraft(query);
   }
 
+  Future<List<AircraftRow>> fetchAircraftByType(int aircraftTypeId) {
+    return _repository.fetchAircraftByType(aircraftTypeId);
+  }
+
   Future<void> toggleLock(Aircraft item) => _repository.toggleLock(item);
   Future<void> toggleFavorite(Aircraft item) => _repository.toggleFavorite(item);
   Future<void> delete(Aircraft item) => _repository.delete(item);

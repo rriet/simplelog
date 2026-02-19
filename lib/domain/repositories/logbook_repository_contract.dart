@@ -168,6 +168,7 @@ abstract class LogbookRepositoryContract {
   Future<List<String>> fetchSimulatorCrewLabels(int simulatorId);
   Future<List<LogbookEntry>> fetchEntriesForAirport(int airportId);
   Future<List<LogbookEntry>> fetchEntriesForAircraft(int aircraftId);
+  Future<List<LogbookEntry>> fetchEntriesForAircraftType(int aircraftTypeId);
   Future<List<LogbookEntry>> fetchEntriesForCrew(int crewId);
 
   Future<void> deleteEntry(LogbookEntry entry);

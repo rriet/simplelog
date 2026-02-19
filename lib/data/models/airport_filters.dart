@@ -2,7 +2,7 @@ class AirportFilters {
   const AirportFilters({
     this.orderBy = AirportOrderBy.icao,
     this.searchField = AirportSearchField.all,
-    this.showOnlyVisited = true,
+    this.showOnlyVisited = false,
   });
 
   final AirportOrderBy orderBy;

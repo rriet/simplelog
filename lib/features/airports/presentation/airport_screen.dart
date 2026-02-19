@@ -19,6 +19,7 @@ import 'airport_edit_screen.dart';
 import 'widgets/airport_search_bar.dart';
 import 'widgets/airport_list.dart';
 import 'widgets/airport_filters_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart';
 
 class AirportsScreen extends ConsumerStatefulWidget {
   const AirportsScreen({super.key});
@@ -118,60 +119,82 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Airport'),
-        content: SizedBox(
+      builder: (context) => Dialog(
+        child: SizedBox(
           width: 480,
-          height: MediaQuery.of(context).size.height * 0.7,
+          height: MediaQuery.of(context).size.height * 0.75,
           child: Column(
             children: [
-              _AirportHeader(airport: airport),
-              const SizedBox(height: 8),
-              _AirportMap(airport: airport),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  l10n.screenLogbook,
-                  style: Theme.of(context).textTheme.titleSmall,
+              ListTile(
+                title: const Text('Airport'),
+                trailing: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Done'),
                 ),
               ),
-              const SizedBox(height: 8),
+              const Divider(height: 1),
               Expanded(
-                child: FutureBuilder<List<LogbookEntry>>(
-                  future: entriesFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                    final entries = snapshot.data ?? [];
-                    if (entries.isEmpty) {
-                      return Center(
-                        child: Text(l10n.emptyResults),
-                      );
-                    }
-                    return LogbookEntriesYearList(
-                      entries: entries,
-                      onEntryTap: (entry) => LogbookEntryDialogs.show(
-                        context,
-                        entry: entry,
-                        useCases: logbookUseCases,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      _AirportHeader(
+                        airport: airport,
+                        onOpenMap: () => _showAirportExpandedMapDialog(
+                          context,
+                          LatLng(airport.latitude, airport.longitude),
+                        ),
                       ),
-                    );
-                  },
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          l10n.screenLogbook,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: FutureBuilder<List<LogbookEntry>>(
+                          future: entriesFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            final entries = snapshot.data ?? [];
+                            if (entries.isEmpty) {
+                              return Center(
+                                child: Text(l10n.emptyResults),
+                              );
+                            }
+                            return Column(
+                              children: [
+                                LogbookSummaryPanel(entries: entries),
+                                const SizedBox(height: 8),
+                                Expanded(
+                                  child: LogbookEntriesYearList(
+                                    entries: entries,
+                                    onEntryTap: (entry) => LogbookEntryDialogs.show(
+                                      context,
+                                      entry: entry,
+                                      useCases: logbookUseCases,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
       ),
     );
   }
@@ -322,9 +345,13 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
 }
 
 class _AirportHeader extends StatelessWidget {
-  const _AirportHeader({required this.airport});
+  const _AirportHeader({
+    required this.airport,
+    required this.onOpenMap,
+  });
 
   final Airport airport;
+  final VoidCallback onOpenMap;
 
   @override
   Widget build(BuildContext context) {
@@ -349,191 +376,114 @@ class _AirportHeader extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall,
           ),
         const SizedBox(height: 6),
-        Text(
-          '${_formatLat(airport.latitude)} '
-          '${_formatLon(airport.longitude)}',
-          style: Theme.of(context).textTheme.bodySmall,
+        TextButton.icon(
+          onPressed:
+              (airport.latitude == 0 && airport.longitude == 0) ? null : onOpenMap,
+          icon: const Icon(Icons.map_outlined, size: 16),
+          label: Text(
+            '${_formatLat(airport.latitude)} ${_formatLon(airport.longitude)}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ),
       ],
     );
   }
 }
 
-class _AirportMap extends StatelessWidget {
-  const _AirportMap({required this.airport});
-
-  final Airport airport;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasCoords =
-        airport.latitude != 0 || airport.longitude != 0;
-    final borderRadius = BorderRadius.circular(12);
-    if (!hasCoords) {
-      return Container(
-        height: 160,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: borderRadius,
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'No map location available',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      );
-    }
-    final center = LatLng(airport.latitude, airport.longitude);
-    return ClipRRect(
-      borderRadius: borderRadius,
+Future<void> _showAirportExpandedMapDialog(
+  BuildContext context,
+  LatLng center,
+) async {
+  final controller = MapController();
+  await showDialog<void>(
+    context: context,
+    builder: (context) => Dialog(
       child: SizedBox(
-        height: 160,
-        child: Stack(
+        width: 600,
+        height: 500,
+        child: Column(
           children: [
-            FlutterMap(
-              options: MapOptions(
-                initialCenter: center,
-                initialZoom: 9,
-                interactionOptions:
-                    const InteractionOptions(flags: InteractiveFlag.drag),
+            ListTile(
+              title: const Text('Map'),
+              trailing: TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Done'),
               ),
-              children: [
-                TileLayer(
-                  urlTemplate:
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'simplelog',
-                ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: center,
-                      width: 36,
-                      height: 36,
-                      child: Icon(
-                        Icons.location_on,
-                        color: Theme.of(context).colorScheme.primary,
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: Stack(
+                children: [
+                  FlutterMap(
+                    mapController: controller,
+                    options: MapOptions(
+                      initialCenter: center,
+                      initialZoom: 11,
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.drag |
+                            InteractiveFlag.pinchZoom |
+                            InteractiveFlag.doubleTapZoom |
+                            InteractiveFlag.scrollWheelZoom,
                       ),
                     ),
-                  ],
-                ),
-              ],
-            ),
-            Positioned.fill(
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => _showExpandedMap(context, center),
-                ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'simplelog',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: center,
+                            width: 36,
+                            height: 36,
+                            child: Icon(
+                              Icons.location_on,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    right: 12,
+                    bottom: 12,
+                    child: Column(
+                      children: [
+                        _MapZoomButton(
+                          icon: Icons.add,
+                          onPressed: () {
+                            final zoom = controller.camera.zoom + 1;
+                            controller.move(
+                              controller.camera.center,
+                              zoom,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        _MapZoomButton(
+                          icon: Icons.remove,
+                          onPressed: () {
+                            final zoom = controller.camera.zoom - 1;
+                            controller.move(
+                              controller.camera.center,
+                              zoom,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Future<void> _showExpandedMap(
-    BuildContext context,
-    LatLng center,
-  ) async {
-    final controller = MapController();
-    await showDialog<void>(
-      context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 600,
-          height: 500,
-          child: Column(
-            children: [
-              const SizedBox(height: 8),
-              Text(
-                'Map',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: Stack(
-                  children: [
-                    FlutterMap(
-                      mapController: controller,
-                      options: MapOptions(
-                        initialCenter: center,
-                        initialZoom: 11,
-                        interactionOptions: const InteractionOptions(
-                          flags: InteractiveFlag.drag |
-                              InteractiveFlag.pinchZoom |
-                              InteractiveFlag.doubleTapZoom |
-                              InteractiveFlag.scrollWheelZoom,
-                        ),
-                      ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'simplelog',
-                        ),
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              point: center,
-                              width: 36,
-                              height: 36,
-                              child: Icon(
-                                Icons.location_on,
-                                color:
-                                    Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Positioned(
-                      right: 12,
-                      bottom: 12,
-                      child: Column(
-                        children: [
-                          _MapZoomButton(
-                            icon: Icons.add,
-                            onPressed: () {
-                              final zoom = controller.camera.zoom + 1;
-                              controller.move(
-                                controller.camera.center,
-                                zoom,
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 8),
-                          _MapZoomButton(
-                            icon: Icons.remove,
-                            onPressed: () {
-                              final zoom = controller.camera.zoom - 1;
-                              controller.move(
-                                controller.camera.center,
-                                zoom,
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+    ),
+  );
 }
 
 class _MapZoomButton extends StatelessWidget {

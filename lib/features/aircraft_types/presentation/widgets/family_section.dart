@@ -12,6 +12,8 @@ class FamilySection extends StatelessWidget {
     required this.onToggleLock,
     required this.onEdit,
     required this.onDelete,
+    required this.onOpenDetails,
+    required this.onOpenFamilyDetails,
   });
 
   final FamilyGroup group;
@@ -19,20 +21,25 @@ class FamilySection extends StatelessWidget {
   final ValueChanged<AircraftTypeRow> onToggleLock;
   final ValueChanged<AircraftTypeRow> onEdit;
   final ValueChanged<AircraftTypeRow> onDelete;
+  final ValueChanged<AircraftTypeRow> onOpenDetails;
+  final ValueChanged<FamilyGroup> onOpenFamilyDetails;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
-          child: Text(
-            'Family: ${group.family}',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+        InkWell(
+          onTap: () => onOpenFamilyDetails(group),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
+            child: Text(
+              'Family: ${group.family}',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
           ),
         ),
         Card(
@@ -52,6 +59,7 @@ class FamilySection extends StatelessWidget {
                   onToggleLock: onToggleLock,
                   onEdit: onEdit,
                   onDelete: onDelete,
+                  onOpenDetails: onOpenDetails,
                 ),
                 if (i != group.rows.length - 1) const Divider(height: 1),
               ],

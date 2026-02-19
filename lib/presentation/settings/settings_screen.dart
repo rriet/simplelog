@@ -7,6 +7,7 @@ import 'widgets/seed_data_button.dart';
 import 'widgets/simulator_default_position_selector.dart';
 import 'widgets/flight_takeoff_landing_switch.dart';
 import 'widgets/time_fields_settings_tab.dart';
+import 'widgets/previous_experience_settings_tab.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -16,12 +17,13 @@ class SettingsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Column(
         children: [
           const TabBar(
             tabs: [
               Tab(text: 'General'),
+              Tab(text: 'Experience'),
               Tab(text: 'Time Fields'),
               Tab(text: 'Developer'),
             ],
@@ -44,6 +46,7 @@ class SettingsScreen extends ConsumerWidget {
                     const FlightTakeoffLandingSwitch(),
                   ],
                 ),
+                const PreviousExperienceSettingsTab(),
                 const TimeFieldsSettingsTab(),
                 ListView(
                   padding: const EdgeInsets.all(16),

@@ -12,6 +12,7 @@ class AircraftTypeRowTile extends StatelessWidget {
     required this.onToggleLock,
     required this.onEdit,
     required this.onDelete,
+    required this.onOpenDetails,
   });
 
   final AircraftTypeRow row;
@@ -19,6 +20,7 @@ class AircraftTypeRowTile extends StatelessWidget {
   final ValueChanged<AircraftTypeRow> onToggleLock;
   final ValueChanged<AircraftTypeRow> onEdit;
   final ValueChanged<AircraftTypeRow> onDelete;
+  final ValueChanged<AircraftTypeRow> onOpenDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +31,7 @@ class AircraftTypeRowTile extends StatelessWidget {
       onToggleLock: onToggleLock,
       onEdit: onEdit,
       onDelete: onDelete,
+      onOpenDetails: onOpenDetails,
     );
 
     return SlidableActions(
@@ -54,6 +57,7 @@ class AircraftTypeRowContent extends StatelessWidget {
     required this.onToggleLock,
     required this.onEdit,
     required this.onDelete,
+    required this.onOpenDetails,
   });
 
   final AircraftTypeRow row;
@@ -61,6 +65,7 @@ class AircraftTypeRowContent extends StatelessWidget {
   final ValueChanged<AircraftTypeRow> onToggleLock;
   final ValueChanged<AircraftTypeRow> onEdit;
   final ValueChanged<AircraftTypeRow> onDelete;
+  final ValueChanged<AircraftTypeRow> onOpenDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -71,77 +76,80 @@ class AircraftTypeRowContent extends StatelessWidget {
     final longName = item.longName.trim();
     final multiEngine = item.isMultiEngine;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: isCompact ? 96 : 130,
-            child: Text(
-              row.code,
-              style: Theme.of(context).textTheme.titleLarge,
+    return InkWell(
+      onTap: () => onOpenDetails(row),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: isCompact ? 96 : 130,
+              child: Text(
+                row.code,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
             ),
-          ),
-          if (!isCompact) ...[
-            Expanded(
+            if (!isCompact) ...[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _metaLine(
+                      context,
+                      l10n.fieldLongName,
+                      longName.isEmpty ? '-' : longName,
+                    ),
+                    _metaLine(
+                      context,
+                      l10n.fieldManufacturer,
+                      hasMaker ? maker : '-',
+                    ),
+                    _metaLine(
+                      context,
+                      l10n.fieldEngineType,
+                      item.engineType.name,
+                    ),
+                    _metaLine(
+                      context,
+                      l10n.fieldCategory,
+                      item.category.name,
+                    ),
+                    _metaLine(
+                      context,
+                      l10n.fieldMtow,
+                      item.mtow.toString(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
+            if (isCompact) const Spacer(),
+            SizedBox(
+              width: isCompact ? null : 120,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  _metaLine(
-                    context,
-                    l10n.fieldLongName,
-                    longName.isEmpty ? '-' : longName,
-                  ),
-                  _metaLine(
-                    context,
-                    l10n.fieldManufacturer,
-                    hasMaker ? maker : '-',
-                  ),
-                  _metaLine(
-                    context,
-                    l10n.fieldEngineType,
-                    item.engineType.name,
-                  ),
-                  _metaLine(
-                    context,
-                    l10n.fieldCategory,
-                    item.category.name,
-                  ),
-                  _metaLine(
-                    context,
-                    l10n.fieldMtow,
-                    item.mtow.toString(),
-                  ),
+                  _flagText(context, 'EFIS', item.efis),
+                  _flagText(context, 'Complex', item.complex),
+                  _flagText(context, 'HighPerf', item.highPerformance),
+                  _flagText(context, 'MultiPilot', item.multiPilot),
+                  _flagText(context, 'MultiEngine', multiEngine),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            if (!isCompact) ...[
+              const SizedBox(width: 8),
+              RowActions(
+                row: row,
+                onToggleLock: onToggleLock,
+                onEdit: onEdit,
+                onDelete: onDelete,
+              ),
+            ],
           ],
-          if (isCompact) const Spacer(),
-          SizedBox(
-            width: isCompact ? null : 120,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _flagText(context, 'EFIS', item.efis),
-                _flagText(context, 'Complex', item.complex),
-                _flagText(context, 'HighPerf', item.highPerformance),
-                _flagText(context, 'MultiPilot', item.multiPilot),
-                _flagText(context, 'MultiEngine', multiEngine),
-              ],
-            ),
-          ),
-          if (!isCompact) ...[
-            const SizedBox(width: 8),
-            RowActions(
-              row: row,
-              onToggleLock: onToggleLock,
-              onEdit: onEdit,
-              onDelete: onDelete,
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }

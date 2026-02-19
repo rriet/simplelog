@@ -13,6 +13,7 @@ import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
+import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 import 'crew_edit_screen.dart';
 import 'widgets/crew_search_bar.dart';
@@ -107,86 +108,104 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Crew'),
-        content: SizedBox(
+      builder: (context) => Dialog(
+        child: SizedBox(
           width: 420,
-          height: MediaQuery.of(context).size.height * 0.7,
+          height: MediaQuery.of(context).size.height * 0.75,
           child: Column(
             children: [
-              _CrewDetailHeader(
-                row: row,
-                onPhotoTap: () => _showLargePhoto(row),
-              ),
-              const SizedBox(height: 12),
-              if (phone.isNotEmpty)
-                InkWell(
-                  onTap: () => _showContactMenu(phone: phone, email: ''),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.phone, size: 18),
-                      const SizedBox(width: 8),
-                      Text('${l10n.fieldPhone}: $phone'),
-                    ],
-                  ),
-                ),
-              if (phone.isNotEmpty) const SizedBox(height: 6),
-              if (email.isNotEmpty)
-                InkWell(
-                  onTap: () => _showContactMenu(phone: '', email: email),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.email, size: 18),
-                      const SizedBox(width: 8),
-                      Text('${l10n.fieldEmail}: $email'),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  l10n.screenLogbook,
-                  style: Theme.of(context).textTheme.titleSmall,
+              ListTile(
+                title: const Text('Crew'),
+                trailing: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Done'),
                 ),
               ),
-              const SizedBox(height: 8),
+              const Divider(height: 1),
               Expanded(
-                child: FutureBuilder<List<LogbookEntry>>(
-                  future: entriesFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                    final entries = snapshot.data ?? [];
-                    if (entries.isEmpty) {
-                      return Center(
-                        child: Text(l10n.emptyResults),
-                      );
-                    }
-                    return LogbookEntriesYearList(
-                      entries: entries,
-                      onEntryTap: (entry) => LogbookEntryDialogs.show(
-                        context,
-                        entry: entry,
-                        useCases: logbookUseCases,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      _CrewDetailHeader(
+                        row: row,
+                        onPhotoTap: () => _showLargePhoto(row),
                       ),
-                    );
-                  },
+                      const SizedBox(height: 12),
+                      if (phone.isNotEmpty)
+                        InkWell(
+                          onTap: () => _showContactMenu(phone: phone, email: ''),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.phone, size: 18),
+                              const SizedBox(width: 8),
+                              Text('${l10n.fieldPhone}: $phone'),
+                            ],
+                          ),
+                        ),
+                      if (phone.isNotEmpty) const SizedBox(height: 6),
+                      if (email.isNotEmpty)
+                        InkWell(
+                          onTap: () => _showContactMenu(phone: '', email: email),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.email, size: 18),
+                              const SizedBox(width: 8),
+                              Text('${l10n.fieldEmail}: $email'),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          l10n.screenLogbook,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: FutureBuilder<List<LogbookEntry>>(
+                          future: entriesFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            final entries = snapshot.data ?? [];
+                            if (entries.isEmpty) {
+                              return Center(
+                                child: Text(l10n.emptyResults),
+                              );
+                            }
+                            return Column(
+                              children: [
+                                LogbookSummaryPanel(entries: entries),
+                                const SizedBox(height: 8),
+                                Expanded(
+                                  child: LogbookEntriesYearList(
+                                    entries: entries,
+                                    onEntryTap: (entry) => LogbookEntryDialogs.show(
+                                      context,
+                                      entry: entry,
+                                      useCases: logbookUseCases,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
       ),
     );
   }

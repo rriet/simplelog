@@ -4167,6 +4167,1180 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
   }
 }
 
+class $LimitRulesTable extends LimitRules
+    with TableInfo<$LimitRulesTable, LimitRule> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LimitRulesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ruleIdMeta = const VerificationMeta('ruleId');
+  @override
+  late final GeneratedColumn<int> ruleId = GeneratedColumn<int>(
+    'rule_id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _ruleNameMeta = const VerificationMeta(
+    'ruleName',
+  );
+  @override
+  late final GeneratedColumn<String> ruleName = GeneratedColumn<String>(
+    'rule_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _metricMeta = const VerificationMeta('metric');
+  @override
+  late final GeneratedColumn<String> metric = GeneratedColumn<String>(
+    'metric',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ruleTypeMeta = const VerificationMeta(
+    'ruleType',
+  );
+  @override
+  late final GeneratedColumn<String> ruleType = GeneratedColumn<String>(
+    'rule_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _windowTypeMeta = const VerificationMeta(
+    'windowType',
+  );
+  @override
+  late final GeneratedColumn<String> windowType = GeneratedColumn<String>(
+    'window_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _windowValueMeta = const VerificationMeta(
+    'windowValue',
+  );
+  @override
+  late final GeneratedColumn<int> windowValue = GeneratedColumn<int>(
+    'window_value',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _limitValueMeta = const VerificationMeta(
+    'limitValue',
+  );
+  @override
+  late final GeneratedColumn<double> limitValue = GeneratedColumn<double>(
+    'limit_value',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _limitUnitMeta = const VerificationMeta(
+    'limitUnit',
+  );
+  @override
+  late final GeneratedColumn<String> limitUnit = GeneratedColumn<String>(
+    'limit_unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _warnYellowBeforeMeta = const VerificationMeta(
+    'warnYellowBefore',
+  );
+  @override
+  late final GeneratedColumn<double> warnYellowBefore = GeneratedColumn<double>(
+    'warn_yellow_before',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _warnRedBeforeMeta = const VerificationMeta(
+    'warnRedBefore',
+  );
+  @override
+  late final GeneratedColumn<double> warnRedBefore = GeneratedColumn<double>(
+    'warn_red_before',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _warnYellowColorMeta = const VerificationMeta(
+    'warnYellowColor',
+  );
+  @override
+  late final GeneratedColumn<String> warnYellowColor = GeneratedColumn<String>(
+    'warn_yellow_color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('#FFC107'),
+  );
+  static const VerificationMeta _warnRedColorMeta = const VerificationMeta(
+    'warnRedColor',
+  );
+  @override
+  late final GeneratedColumn<String> warnRedColor = GeneratedColumn<String>(
+    'warn_red_color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('#DC3545'),
+  );
+  static const VerificationMeta _activeMeta = const VerificationMeta('active');
+  @override
+  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
+    'active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ruleId,
+    ruleName,
+    metric,
+    ruleType,
+    windowType,
+    windowValue,
+    limitValue,
+    limitUnit,
+    warnYellowBefore,
+    warnRedBefore,
+    warnYellowColor,
+    warnRedColor,
+    active,
+    notes,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'limit_rules';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LimitRule> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('rule_id')) {
+      context.handle(
+        _ruleIdMeta,
+        ruleId.isAcceptableOrUnknown(data['rule_id']!, _ruleIdMeta),
+      );
+    }
+    if (data.containsKey('rule_name')) {
+      context.handle(
+        _ruleNameMeta,
+        ruleName.isAcceptableOrUnknown(data['rule_name']!, _ruleNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ruleNameMeta);
+    }
+    if (data.containsKey('metric')) {
+      context.handle(
+        _metricMeta,
+        metric.isAcceptableOrUnknown(data['metric']!, _metricMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_metricMeta);
+    }
+    if (data.containsKey('rule_type')) {
+      context.handle(
+        _ruleTypeMeta,
+        ruleType.isAcceptableOrUnknown(data['rule_type']!, _ruleTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ruleTypeMeta);
+    }
+    if (data.containsKey('window_type')) {
+      context.handle(
+        _windowTypeMeta,
+        windowType.isAcceptableOrUnknown(data['window_type']!, _windowTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_windowTypeMeta);
+    }
+    if (data.containsKey('window_value')) {
+      context.handle(
+        _windowValueMeta,
+        windowValue.isAcceptableOrUnknown(
+          data['window_value']!,
+          _windowValueMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_windowValueMeta);
+    }
+    if (data.containsKey('limit_value')) {
+      context.handle(
+        _limitValueMeta,
+        limitValue.isAcceptableOrUnknown(data['limit_value']!, _limitValueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_limitValueMeta);
+    }
+    if (data.containsKey('limit_unit')) {
+      context.handle(
+        _limitUnitMeta,
+        limitUnit.isAcceptableOrUnknown(data['limit_unit']!, _limitUnitMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_limitUnitMeta);
+    }
+    if (data.containsKey('warn_yellow_before')) {
+      context.handle(
+        _warnYellowBeforeMeta,
+        warnYellowBefore.isAcceptableOrUnknown(
+          data['warn_yellow_before']!,
+          _warnYellowBeforeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('warn_red_before')) {
+      context.handle(
+        _warnRedBeforeMeta,
+        warnRedBefore.isAcceptableOrUnknown(
+          data['warn_red_before']!,
+          _warnRedBeforeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('warn_yellow_color')) {
+      context.handle(
+        _warnYellowColorMeta,
+        warnYellowColor.isAcceptableOrUnknown(
+          data['warn_yellow_color']!,
+          _warnYellowColorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('warn_red_color')) {
+      context.handle(
+        _warnRedColorMeta,
+        warnRedColor.isAcceptableOrUnknown(
+          data['warn_red_color']!,
+          _warnRedColorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('active')) {
+      context.handle(
+        _activeMeta,
+        active.isAcceptableOrUnknown(data['active']!, _activeMeta),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {ruleId};
+  @override
+  LimitRule map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LimitRule(
+      ruleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rule_id'],
+      )!,
+      ruleName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rule_name'],
+      )!,
+      metric: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}metric'],
+      )!,
+      ruleType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rule_type'],
+      )!,
+      windowType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}window_type'],
+      )!,
+      windowValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}window_value'],
+      )!,
+      limitValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}limit_value'],
+      )!,
+      limitUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}limit_unit'],
+      )!,
+      warnYellowBefore: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}warn_yellow_before'],
+      )!,
+      warnRedBefore: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}warn_red_before'],
+      )!,
+      warnYellowColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}warn_yellow_color'],
+      )!,
+      warnRedColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}warn_red_color'],
+      )!,
+      active: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}active'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+    );
+  }
+
+  @override
+  $LimitRulesTable createAlias(String alias) {
+    return $LimitRulesTable(attachedDatabase, alias);
+  }
+}
+
+class LimitRule extends DataClass implements Insertable<LimitRule> {
+  final int ruleId;
+  final String ruleName;
+  final String metric;
+  final String ruleType;
+  final String windowType;
+  final int windowValue;
+  final double limitValue;
+  final String limitUnit;
+  final double warnYellowBefore;
+  final double warnRedBefore;
+  final String warnYellowColor;
+  final String warnRedColor;
+  final bool active;
+  final String? notes;
+  const LimitRule({
+    required this.ruleId,
+    required this.ruleName,
+    required this.metric,
+    required this.ruleType,
+    required this.windowType,
+    required this.windowValue,
+    required this.limitValue,
+    required this.limitUnit,
+    required this.warnYellowBefore,
+    required this.warnRedBefore,
+    required this.warnYellowColor,
+    required this.warnRedColor,
+    required this.active,
+    this.notes,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['rule_id'] = Variable<int>(ruleId);
+    map['rule_name'] = Variable<String>(ruleName);
+    map['metric'] = Variable<String>(metric);
+    map['rule_type'] = Variable<String>(ruleType);
+    map['window_type'] = Variable<String>(windowType);
+    map['window_value'] = Variable<int>(windowValue);
+    map['limit_value'] = Variable<double>(limitValue);
+    map['limit_unit'] = Variable<String>(limitUnit);
+    map['warn_yellow_before'] = Variable<double>(warnYellowBefore);
+    map['warn_red_before'] = Variable<double>(warnRedBefore);
+    map['warn_yellow_color'] = Variable<String>(warnYellowColor);
+    map['warn_red_color'] = Variable<String>(warnRedColor);
+    map['active'] = Variable<bool>(active);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    return map;
+  }
+
+  LimitRulesCompanion toCompanion(bool nullToAbsent) {
+    return LimitRulesCompanion(
+      ruleId: Value(ruleId),
+      ruleName: Value(ruleName),
+      metric: Value(metric),
+      ruleType: Value(ruleType),
+      windowType: Value(windowType),
+      windowValue: Value(windowValue),
+      limitValue: Value(limitValue),
+      limitUnit: Value(limitUnit),
+      warnYellowBefore: Value(warnYellowBefore),
+      warnRedBefore: Value(warnRedBefore),
+      warnYellowColor: Value(warnYellowColor),
+      warnRedColor: Value(warnRedColor),
+      active: Value(active),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+    );
+  }
+
+  factory LimitRule.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LimitRule(
+      ruleId: serializer.fromJson<int>(json['ruleId']),
+      ruleName: serializer.fromJson<String>(json['ruleName']),
+      metric: serializer.fromJson<String>(json['metric']),
+      ruleType: serializer.fromJson<String>(json['ruleType']),
+      windowType: serializer.fromJson<String>(json['windowType']),
+      windowValue: serializer.fromJson<int>(json['windowValue']),
+      limitValue: serializer.fromJson<double>(json['limitValue']),
+      limitUnit: serializer.fromJson<String>(json['limitUnit']),
+      warnYellowBefore: serializer.fromJson<double>(json['warnYellowBefore']),
+      warnRedBefore: serializer.fromJson<double>(json['warnRedBefore']),
+      warnYellowColor: serializer.fromJson<String>(json['warnYellowColor']),
+      warnRedColor: serializer.fromJson<String>(json['warnRedColor']),
+      active: serializer.fromJson<bool>(json['active']),
+      notes: serializer.fromJson<String?>(json['notes']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ruleId': serializer.toJson<int>(ruleId),
+      'ruleName': serializer.toJson<String>(ruleName),
+      'metric': serializer.toJson<String>(metric),
+      'ruleType': serializer.toJson<String>(ruleType),
+      'windowType': serializer.toJson<String>(windowType),
+      'windowValue': serializer.toJson<int>(windowValue),
+      'limitValue': serializer.toJson<double>(limitValue),
+      'limitUnit': serializer.toJson<String>(limitUnit),
+      'warnYellowBefore': serializer.toJson<double>(warnYellowBefore),
+      'warnRedBefore': serializer.toJson<double>(warnRedBefore),
+      'warnYellowColor': serializer.toJson<String>(warnYellowColor),
+      'warnRedColor': serializer.toJson<String>(warnRedColor),
+      'active': serializer.toJson<bool>(active),
+      'notes': serializer.toJson<String?>(notes),
+    };
+  }
+
+  LimitRule copyWith({
+    int? ruleId,
+    String? ruleName,
+    String? metric,
+    String? ruleType,
+    String? windowType,
+    int? windowValue,
+    double? limitValue,
+    String? limitUnit,
+    double? warnYellowBefore,
+    double? warnRedBefore,
+    String? warnYellowColor,
+    String? warnRedColor,
+    bool? active,
+    Value<String?> notes = const Value.absent(),
+  }) => LimitRule(
+    ruleId: ruleId ?? this.ruleId,
+    ruleName: ruleName ?? this.ruleName,
+    metric: metric ?? this.metric,
+    ruleType: ruleType ?? this.ruleType,
+    windowType: windowType ?? this.windowType,
+    windowValue: windowValue ?? this.windowValue,
+    limitValue: limitValue ?? this.limitValue,
+    limitUnit: limitUnit ?? this.limitUnit,
+    warnYellowBefore: warnYellowBefore ?? this.warnYellowBefore,
+    warnRedBefore: warnRedBefore ?? this.warnRedBefore,
+    warnYellowColor: warnYellowColor ?? this.warnYellowColor,
+    warnRedColor: warnRedColor ?? this.warnRedColor,
+    active: active ?? this.active,
+    notes: notes.present ? notes.value : this.notes,
+  );
+  LimitRule copyWithCompanion(LimitRulesCompanion data) {
+    return LimitRule(
+      ruleId: data.ruleId.present ? data.ruleId.value : this.ruleId,
+      ruleName: data.ruleName.present ? data.ruleName.value : this.ruleName,
+      metric: data.metric.present ? data.metric.value : this.metric,
+      ruleType: data.ruleType.present ? data.ruleType.value : this.ruleType,
+      windowType: data.windowType.present
+          ? data.windowType.value
+          : this.windowType,
+      windowValue: data.windowValue.present
+          ? data.windowValue.value
+          : this.windowValue,
+      limitValue: data.limitValue.present
+          ? data.limitValue.value
+          : this.limitValue,
+      limitUnit: data.limitUnit.present ? data.limitUnit.value : this.limitUnit,
+      warnYellowBefore: data.warnYellowBefore.present
+          ? data.warnYellowBefore.value
+          : this.warnYellowBefore,
+      warnRedBefore: data.warnRedBefore.present
+          ? data.warnRedBefore.value
+          : this.warnRedBefore,
+      warnYellowColor: data.warnYellowColor.present
+          ? data.warnYellowColor.value
+          : this.warnYellowColor,
+      warnRedColor: data.warnRedColor.present
+          ? data.warnRedColor.value
+          : this.warnRedColor,
+      active: data.active.present ? data.active.value : this.active,
+      notes: data.notes.present ? data.notes.value : this.notes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LimitRule(')
+          ..write('ruleId: $ruleId, ')
+          ..write('ruleName: $ruleName, ')
+          ..write('metric: $metric, ')
+          ..write('ruleType: $ruleType, ')
+          ..write('windowType: $windowType, ')
+          ..write('windowValue: $windowValue, ')
+          ..write('limitValue: $limitValue, ')
+          ..write('limitUnit: $limitUnit, ')
+          ..write('warnYellowBefore: $warnYellowBefore, ')
+          ..write('warnRedBefore: $warnRedBefore, ')
+          ..write('warnYellowColor: $warnYellowColor, ')
+          ..write('warnRedColor: $warnRedColor, ')
+          ..write('active: $active, ')
+          ..write('notes: $notes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ruleId,
+    ruleName,
+    metric,
+    ruleType,
+    windowType,
+    windowValue,
+    limitValue,
+    limitUnit,
+    warnYellowBefore,
+    warnRedBefore,
+    warnYellowColor,
+    warnRedColor,
+    active,
+    notes,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LimitRule &&
+          other.ruleId == this.ruleId &&
+          other.ruleName == this.ruleName &&
+          other.metric == this.metric &&
+          other.ruleType == this.ruleType &&
+          other.windowType == this.windowType &&
+          other.windowValue == this.windowValue &&
+          other.limitValue == this.limitValue &&
+          other.limitUnit == this.limitUnit &&
+          other.warnYellowBefore == this.warnYellowBefore &&
+          other.warnRedBefore == this.warnRedBefore &&
+          other.warnYellowColor == this.warnYellowColor &&
+          other.warnRedColor == this.warnRedColor &&
+          other.active == this.active &&
+          other.notes == this.notes);
+}
+
+class LimitRulesCompanion extends UpdateCompanion<LimitRule> {
+  final Value<int> ruleId;
+  final Value<String> ruleName;
+  final Value<String> metric;
+  final Value<String> ruleType;
+  final Value<String> windowType;
+  final Value<int> windowValue;
+  final Value<double> limitValue;
+  final Value<String> limitUnit;
+  final Value<double> warnYellowBefore;
+  final Value<double> warnRedBefore;
+  final Value<String> warnYellowColor;
+  final Value<String> warnRedColor;
+  final Value<bool> active;
+  final Value<String?> notes;
+  const LimitRulesCompanion({
+    this.ruleId = const Value.absent(),
+    this.ruleName = const Value.absent(),
+    this.metric = const Value.absent(),
+    this.ruleType = const Value.absent(),
+    this.windowType = const Value.absent(),
+    this.windowValue = const Value.absent(),
+    this.limitValue = const Value.absent(),
+    this.limitUnit = const Value.absent(),
+    this.warnYellowBefore = const Value.absent(),
+    this.warnRedBefore = const Value.absent(),
+    this.warnYellowColor = const Value.absent(),
+    this.warnRedColor = const Value.absent(),
+    this.active = const Value.absent(),
+    this.notes = const Value.absent(),
+  });
+  LimitRulesCompanion.insert({
+    this.ruleId = const Value.absent(),
+    required String ruleName,
+    required String metric,
+    required String ruleType,
+    required String windowType,
+    required int windowValue,
+    required double limitValue,
+    required String limitUnit,
+    this.warnYellowBefore = const Value.absent(),
+    this.warnRedBefore = const Value.absent(),
+    this.warnYellowColor = const Value.absent(),
+    this.warnRedColor = const Value.absent(),
+    this.active = const Value.absent(),
+    this.notes = const Value.absent(),
+  }) : ruleName = Value(ruleName),
+       metric = Value(metric),
+       ruleType = Value(ruleType),
+       windowType = Value(windowType),
+       windowValue = Value(windowValue),
+       limitValue = Value(limitValue),
+       limitUnit = Value(limitUnit);
+  static Insertable<LimitRule> custom({
+    Expression<int>? ruleId,
+    Expression<String>? ruleName,
+    Expression<String>? metric,
+    Expression<String>? ruleType,
+    Expression<String>? windowType,
+    Expression<int>? windowValue,
+    Expression<double>? limitValue,
+    Expression<String>? limitUnit,
+    Expression<double>? warnYellowBefore,
+    Expression<double>? warnRedBefore,
+    Expression<String>? warnYellowColor,
+    Expression<String>? warnRedColor,
+    Expression<bool>? active,
+    Expression<String>? notes,
+  }) {
+    return RawValuesInsertable({
+      if (ruleId != null) 'rule_id': ruleId,
+      if (ruleName != null) 'rule_name': ruleName,
+      if (metric != null) 'metric': metric,
+      if (ruleType != null) 'rule_type': ruleType,
+      if (windowType != null) 'window_type': windowType,
+      if (windowValue != null) 'window_value': windowValue,
+      if (limitValue != null) 'limit_value': limitValue,
+      if (limitUnit != null) 'limit_unit': limitUnit,
+      if (warnYellowBefore != null) 'warn_yellow_before': warnYellowBefore,
+      if (warnRedBefore != null) 'warn_red_before': warnRedBefore,
+      if (warnYellowColor != null) 'warn_yellow_color': warnYellowColor,
+      if (warnRedColor != null) 'warn_red_color': warnRedColor,
+      if (active != null) 'active': active,
+      if (notes != null) 'notes': notes,
+    });
+  }
+
+  LimitRulesCompanion copyWith({
+    Value<int>? ruleId,
+    Value<String>? ruleName,
+    Value<String>? metric,
+    Value<String>? ruleType,
+    Value<String>? windowType,
+    Value<int>? windowValue,
+    Value<double>? limitValue,
+    Value<String>? limitUnit,
+    Value<double>? warnYellowBefore,
+    Value<double>? warnRedBefore,
+    Value<String>? warnYellowColor,
+    Value<String>? warnRedColor,
+    Value<bool>? active,
+    Value<String?>? notes,
+  }) {
+    return LimitRulesCompanion(
+      ruleId: ruleId ?? this.ruleId,
+      ruleName: ruleName ?? this.ruleName,
+      metric: metric ?? this.metric,
+      ruleType: ruleType ?? this.ruleType,
+      windowType: windowType ?? this.windowType,
+      windowValue: windowValue ?? this.windowValue,
+      limitValue: limitValue ?? this.limitValue,
+      limitUnit: limitUnit ?? this.limitUnit,
+      warnYellowBefore: warnYellowBefore ?? this.warnYellowBefore,
+      warnRedBefore: warnRedBefore ?? this.warnRedBefore,
+      warnYellowColor: warnYellowColor ?? this.warnYellowColor,
+      warnRedColor: warnRedColor ?? this.warnRedColor,
+      active: active ?? this.active,
+      notes: notes ?? this.notes,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ruleId.present) {
+      map['rule_id'] = Variable<int>(ruleId.value);
+    }
+    if (ruleName.present) {
+      map['rule_name'] = Variable<String>(ruleName.value);
+    }
+    if (metric.present) {
+      map['metric'] = Variable<String>(metric.value);
+    }
+    if (ruleType.present) {
+      map['rule_type'] = Variable<String>(ruleType.value);
+    }
+    if (windowType.present) {
+      map['window_type'] = Variable<String>(windowType.value);
+    }
+    if (windowValue.present) {
+      map['window_value'] = Variable<int>(windowValue.value);
+    }
+    if (limitValue.present) {
+      map['limit_value'] = Variable<double>(limitValue.value);
+    }
+    if (limitUnit.present) {
+      map['limit_unit'] = Variable<String>(limitUnit.value);
+    }
+    if (warnYellowBefore.present) {
+      map['warn_yellow_before'] = Variable<double>(warnYellowBefore.value);
+    }
+    if (warnRedBefore.present) {
+      map['warn_red_before'] = Variable<double>(warnRedBefore.value);
+    }
+    if (warnYellowColor.present) {
+      map['warn_yellow_color'] = Variable<String>(warnYellowColor.value);
+    }
+    if (warnRedColor.present) {
+      map['warn_red_color'] = Variable<String>(warnRedColor.value);
+    }
+    if (active.present) {
+      map['active'] = Variable<bool>(active.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LimitRulesCompanion(')
+          ..write('ruleId: $ruleId, ')
+          ..write('ruleName: $ruleName, ')
+          ..write('metric: $metric, ')
+          ..write('ruleType: $ruleType, ')
+          ..write('windowType: $windowType, ')
+          ..write('windowValue: $windowValue, ')
+          ..write('limitValue: $limitValue, ')
+          ..write('limitUnit: $limitUnit, ')
+          ..write('warnYellowBefore: $warnYellowBefore, ')
+          ..write('warnRedBefore: $warnRedBefore, ')
+          ..write('warnYellowColor: $warnYellowColor, ')
+          ..write('warnRedColor: $warnRedColor, ')
+          ..write('active: $active, ')
+          ..write('notes: $notes')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RuleSnapshotsTable extends RuleSnapshots
+    with TableInfo<$RuleSnapshotsTable, RuleSnapshot> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RuleSnapshotsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _snapshotIdMeta = const VerificationMeta(
+    'snapshotId',
+  );
+  @override
+  late final GeneratedColumn<int> snapshotId = GeneratedColumn<int>(
+    'snapshot_id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _ruleIdMeta = const VerificationMeta('ruleId');
+  @override
+  late final GeneratedColumn<int> ruleId = GeneratedColumn<int>(
+    'rule_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES limit_rules (rule_id)',
+    ),
+  );
+  static const VerificationMeta _computedAtMeta = const VerificationMeta(
+    'computedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> computedAt = GeneratedColumn<DateTime>(
+    'computed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _currentValueMeta = const VerificationMeta(
+    'currentValue',
+  );
+  @override
+  late final GeneratedColumn<double> currentValue = GeneratedColumn<double>(
+    'current_value',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    snapshotId,
+    ruleId,
+    computedAt,
+    currentValue,
+    status,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'rule_snapshots';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RuleSnapshot> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('snapshot_id')) {
+      context.handle(
+        _snapshotIdMeta,
+        snapshotId.isAcceptableOrUnknown(data['snapshot_id']!, _snapshotIdMeta),
+      );
+    }
+    if (data.containsKey('rule_id')) {
+      context.handle(
+        _ruleIdMeta,
+        ruleId.isAcceptableOrUnknown(data['rule_id']!, _ruleIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ruleIdMeta);
+    }
+    if (data.containsKey('computed_at')) {
+      context.handle(
+        _computedAtMeta,
+        computedAt.isAcceptableOrUnknown(data['computed_at']!, _computedAtMeta),
+      );
+    }
+    if (data.containsKey('current_value')) {
+      context.handle(
+        _currentValueMeta,
+        currentValue.isAcceptableOrUnknown(
+          data['current_value']!,
+          _currentValueMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_currentValueMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {snapshotId};
+  @override
+  RuleSnapshot map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RuleSnapshot(
+      snapshotId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}snapshot_id'],
+      )!,
+      ruleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rule_id'],
+      )!,
+      computedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}computed_at'],
+      )!,
+      currentValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}current_value'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+    );
+  }
+
+  @override
+  $RuleSnapshotsTable createAlias(String alias) {
+    return $RuleSnapshotsTable(attachedDatabase, alias);
+  }
+}
+
+class RuleSnapshot extends DataClass implements Insertable<RuleSnapshot> {
+  final int snapshotId;
+  final int ruleId;
+  final DateTime computedAt;
+  final double currentValue;
+  final String status;
+  const RuleSnapshot({
+    required this.snapshotId,
+    required this.ruleId,
+    required this.computedAt,
+    required this.currentValue,
+    required this.status,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['snapshot_id'] = Variable<int>(snapshotId);
+    map['rule_id'] = Variable<int>(ruleId);
+    map['computed_at'] = Variable<DateTime>(computedAt);
+    map['current_value'] = Variable<double>(currentValue);
+    map['status'] = Variable<String>(status);
+    return map;
+  }
+
+  RuleSnapshotsCompanion toCompanion(bool nullToAbsent) {
+    return RuleSnapshotsCompanion(
+      snapshotId: Value(snapshotId),
+      ruleId: Value(ruleId),
+      computedAt: Value(computedAt),
+      currentValue: Value(currentValue),
+      status: Value(status),
+    );
+  }
+
+  factory RuleSnapshot.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RuleSnapshot(
+      snapshotId: serializer.fromJson<int>(json['snapshotId']),
+      ruleId: serializer.fromJson<int>(json['ruleId']),
+      computedAt: serializer.fromJson<DateTime>(json['computedAt']),
+      currentValue: serializer.fromJson<double>(json['currentValue']),
+      status: serializer.fromJson<String>(json['status']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'snapshotId': serializer.toJson<int>(snapshotId),
+      'ruleId': serializer.toJson<int>(ruleId),
+      'computedAt': serializer.toJson<DateTime>(computedAt),
+      'currentValue': serializer.toJson<double>(currentValue),
+      'status': serializer.toJson<String>(status),
+    };
+  }
+
+  RuleSnapshot copyWith({
+    int? snapshotId,
+    int? ruleId,
+    DateTime? computedAt,
+    double? currentValue,
+    String? status,
+  }) => RuleSnapshot(
+    snapshotId: snapshotId ?? this.snapshotId,
+    ruleId: ruleId ?? this.ruleId,
+    computedAt: computedAt ?? this.computedAt,
+    currentValue: currentValue ?? this.currentValue,
+    status: status ?? this.status,
+  );
+  RuleSnapshot copyWithCompanion(RuleSnapshotsCompanion data) {
+    return RuleSnapshot(
+      snapshotId: data.snapshotId.present
+          ? data.snapshotId.value
+          : this.snapshotId,
+      ruleId: data.ruleId.present ? data.ruleId.value : this.ruleId,
+      computedAt: data.computedAt.present
+          ? data.computedAt.value
+          : this.computedAt,
+      currentValue: data.currentValue.present
+          ? data.currentValue.value
+          : this.currentValue,
+      status: data.status.present ? data.status.value : this.status,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RuleSnapshot(')
+          ..write('snapshotId: $snapshotId, ')
+          ..write('ruleId: $ruleId, ')
+          ..write('computedAt: $computedAt, ')
+          ..write('currentValue: $currentValue, ')
+          ..write('status: $status')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(snapshotId, ruleId, computedAt, currentValue, status);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RuleSnapshot &&
+          other.snapshotId == this.snapshotId &&
+          other.ruleId == this.ruleId &&
+          other.computedAt == this.computedAt &&
+          other.currentValue == this.currentValue &&
+          other.status == this.status);
+}
+
+class RuleSnapshotsCompanion extends UpdateCompanion<RuleSnapshot> {
+  final Value<int> snapshotId;
+  final Value<int> ruleId;
+  final Value<DateTime> computedAt;
+  final Value<double> currentValue;
+  final Value<String> status;
+  const RuleSnapshotsCompanion({
+    this.snapshotId = const Value.absent(),
+    this.ruleId = const Value.absent(),
+    this.computedAt = const Value.absent(),
+    this.currentValue = const Value.absent(),
+    this.status = const Value.absent(),
+  });
+  RuleSnapshotsCompanion.insert({
+    this.snapshotId = const Value.absent(),
+    required int ruleId,
+    this.computedAt = const Value.absent(),
+    required double currentValue,
+    required String status,
+  }) : ruleId = Value(ruleId),
+       currentValue = Value(currentValue),
+       status = Value(status);
+  static Insertable<RuleSnapshot> custom({
+    Expression<int>? snapshotId,
+    Expression<int>? ruleId,
+    Expression<DateTime>? computedAt,
+    Expression<double>? currentValue,
+    Expression<String>? status,
+  }) {
+    return RawValuesInsertable({
+      if (snapshotId != null) 'snapshot_id': snapshotId,
+      if (ruleId != null) 'rule_id': ruleId,
+      if (computedAt != null) 'computed_at': computedAt,
+      if (currentValue != null) 'current_value': currentValue,
+      if (status != null) 'status': status,
+    });
+  }
+
+  RuleSnapshotsCompanion copyWith({
+    Value<int>? snapshotId,
+    Value<int>? ruleId,
+    Value<DateTime>? computedAt,
+    Value<double>? currentValue,
+    Value<String>? status,
+  }) {
+    return RuleSnapshotsCompanion(
+      snapshotId: snapshotId ?? this.snapshotId,
+      ruleId: ruleId ?? this.ruleId,
+      computedAt: computedAt ?? this.computedAt,
+      currentValue: currentValue ?? this.currentValue,
+      status: status ?? this.status,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (snapshotId.present) {
+      map['snapshot_id'] = Variable<int>(snapshotId.value);
+    }
+    if (ruleId.present) {
+      map['rule_id'] = Variable<int>(ruleId.value);
+    }
+    if (computedAt.present) {
+      map['computed_at'] = Variable<DateTime>(computedAt.value);
+    }
+    if (currentValue.present) {
+      map['current_value'] = Variable<double>(currentValue.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RuleSnapshotsCompanion(')
+          ..write('snapshotId: $snapshotId, ')
+          ..write('ruleId: $ruleId, ')
+          ..write('computedAt: $computedAt, ')
+          ..write('currentValue: $currentValue, ')
+          ..write('status: $status')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $PositioningsTable extends Positionings
     with TableInfo<$PositioningsTable, Positioning> {
   @override
@@ -4708,6 +5882,1608 @@ class PositioningsCompanion extends UpdateCompanion<Positioning> {
   }
 }
 
+class $PreviousExperiencesTable extends PreviousExperiences
+    with TableInfo<$PreviousExperiencesTable, PreviousExperience> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PreviousExperiencesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _aircraftTypeIdMeta = const VerificationMeta(
+    'aircraftTypeId',
+  );
+  @override
+  late final GeneratedColumn<int> aircraftTypeId = GeneratedColumn<int>(
+    'aircraft_type_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES aircraft_types (id)',
+    ),
+  );
+  static const VerificationMeta _dateTimeFirstFlightMeta =
+      const VerificationMeta('dateTimeFirstFlight');
+  @override
+  late final GeneratedColumn<DateTime> dateTimeFirstFlight =
+      GeneratedColumn<DateTime>(
+        'date_time_first_flight',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _dateTimeLastFlightMeta =
+      const VerificationMeta('dateTimeLastFlight');
+  @override
+  late final GeneratedColumn<DateTime> dateTimeLastFlight =
+      GeneratedColumn<DateTime>(
+        'date_time_last_flight',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _timePICMinutesMeta = const VerificationMeta(
+    'timePICMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> timePICMinutes = GeneratedColumn<int>(
+    'time_p_i_c_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timePICUSMinutesMeta = const VerificationMeta(
+    'timePICUSMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> timePICUSMinutes = GeneratedColumn<int>(
+    'time_p_i_c_u_s_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeSICMinutesMeta = const VerificationMeta(
+    'timeSICMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> timeSICMinutes = GeneratedColumn<int>(
+    'time_s_i_c_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeDualMinutesMeta = const VerificationMeta(
+    'timeDualMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> timeDualMinutes = GeneratedColumn<int>(
+    'time_dual_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeInstructorMinutesMeta =
+      const VerificationMeta('timeInstructorMinutes');
+  @override
+  late final GeneratedColumn<int> timeInstructorMinutes = GeneratedColumn<int>(
+    'time_instructor_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeIFRMinutesMeta = const VerificationMeta(
+    'timeIFRMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> timeIFRMinutes = GeneratedColumn<int>(
+    'time_i_f_r_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeInstrumentMinutesMeta =
+      const VerificationMeta('timeInstrumentMinutes');
+  @override
+  late final GeneratedColumn<int> timeInstrumentMinutes = GeneratedColumn<int>(
+    'time_instrument_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeSimulatedInstrumentMinutesMeta =
+      const VerificationMeta('timeSimulatedInstrumentMinutes');
+  @override
+  late final GeneratedColumn<int> timeSimulatedInstrumentMinutes =
+      GeneratedColumn<int>(
+        'time_simulated_instrument_minutes',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _timeNightMinutesMeta = const VerificationMeta(
+    'timeNightMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> timeNightMinutes = GeneratedColumn<int>(
+    'time_night_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeCrossCountryMinutesMeta =
+      const VerificationMeta('timeCrossCountryMinutes');
+  @override
+  late final GeneratedColumn<int> timeCrossCountryMinutes =
+      GeneratedColumn<int>(
+        'time_cross_country_minutes',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _timeCustom1MinutesMeta =
+      const VerificationMeta('timeCustom1Minutes');
+  @override
+  late final GeneratedColumn<int> timeCustom1Minutes = GeneratedColumn<int>(
+    'time_custom1_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeCustom2MinutesMeta =
+      const VerificationMeta('timeCustom2Minutes');
+  @override
+  late final GeneratedColumn<int> timeCustom2Minutes = GeneratedColumn<int>(
+    'time_custom2_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeCustom3MinutesMeta =
+      const VerificationMeta('timeCustom3Minutes');
+  @override
+  late final GeneratedColumn<int> timeCustom3Minutes = GeneratedColumn<int>(
+    'time_custom3_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeCustom4MinutesMeta =
+      const VerificationMeta('timeCustom4Minutes');
+  @override
+  late final GeneratedColumn<int> timeCustom4Minutes = GeneratedColumn<int>(
+    'time_custom4_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeFlightMinutesMeta = const VerificationMeta(
+    'timeFlightMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> timeFlightMinutes = GeneratedColumn<int>(
+    'time_flight_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeBlockMinutesMeta = const VerificationMeta(
+    'timeBlockMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> timeBlockMinutes = GeneratedColumn<int>(
+    'time_block_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeSimulatorMinutesMeta =
+      const VerificationMeta('timeSimulatorMinutes');
+  @override
+  late final GeneratedColumn<int> timeSimulatorMinutes = GeneratedColumn<int>(
+    'time_simulator_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _distanceNMMeta = const VerificationMeta(
+    'distanceNM',
+  );
+  @override
+  late final GeneratedColumn<int> distanceNM = GeneratedColumn<int>(
+    'distance_n_m',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ifrApproachesMeta = const VerificationMeta(
+    'ifrApproaches',
+  );
+  @override
+  late final GeneratedColumn<int> ifrApproaches = GeneratedColumn<int>(
+    'ifr_approaches',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _takeOffsDaysMeta = const VerificationMeta(
+    'takeOffsDays',
+  );
+  @override
+  late final GeneratedColumn<int> takeOffsDays = GeneratedColumn<int>(
+    'take_offs_days',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _takeOffsNightMeta = const VerificationMeta(
+    'takeOffsNight',
+  );
+  @override
+  late final GeneratedColumn<int> takeOffsNight = GeneratedColumn<int>(
+    'take_offs_night',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _landingsDayMeta = const VerificationMeta(
+    'landingsDay',
+  );
+  @override
+  late final GeneratedColumn<int> landingsDay = GeneratedColumn<int>(
+    'landings_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _landingsNightMeta = const VerificationMeta(
+    'landingsNight',
+  );
+  @override
+  late final GeneratedColumn<int> landingsNight = GeneratedColumn<int>(
+    'landings_night',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    aircraftTypeId,
+    dateTimeFirstFlight,
+    dateTimeLastFlight,
+    timePICMinutes,
+    timePICUSMinutes,
+    timeSICMinutes,
+    timeDualMinutes,
+    timeInstructorMinutes,
+    timeIFRMinutes,
+    timeInstrumentMinutes,
+    timeSimulatedInstrumentMinutes,
+    timeNightMinutes,
+    timeCrossCountryMinutes,
+    timeCustom1Minutes,
+    timeCustom2Minutes,
+    timeCustom3Minutes,
+    timeCustom4Minutes,
+    timeFlightMinutes,
+    timeBlockMinutes,
+    timeSimulatorMinutes,
+    distanceNM,
+    ifrApproaches,
+    takeOffsDays,
+    takeOffsNight,
+    landingsDay,
+    landingsNight,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'previous_experiences';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PreviousExperience> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('aircraft_type_id')) {
+      context.handle(
+        _aircraftTypeIdMeta,
+        aircraftTypeId.isAcceptableOrUnknown(
+          data['aircraft_type_id']!,
+          _aircraftTypeIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_aircraftTypeIdMeta);
+    }
+    if (data.containsKey('date_time_first_flight')) {
+      context.handle(
+        _dateTimeFirstFlightMeta,
+        dateTimeFirstFlight.isAcceptableOrUnknown(
+          data['date_time_first_flight']!,
+          _dateTimeFirstFlightMeta,
+        ),
+      );
+    }
+    if (data.containsKey('date_time_last_flight')) {
+      context.handle(
+        _dateTimeLastFlightMeta,
+        dateTimeLastFlight.isAcceptableOrUnknown(
+          data['date_time_last_flight']!,
+          _dateTimeLastFlightMeta,
+        ),
+      );
+    }
+    if (data.containsKey('time_p_i_c_minutes')) {
+      context.handle(
+        _timePICMinutesMeta,
+        timePICMinutes.isAcceptableOrUnknown(
+          data['time_p_i_c_minutes']!,
+          _timePICMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timePICMinutesMeta);
+    }
+    if (data.containsKey('time_p_i_c_u_s_minutes')) {
+      context.handle(
+        _timePICUSMinutesMeta,
+        timePICUSMinutes.isAcceptableOrUnknown(
+          data['time_p_i_c_u_s_minutes']!,
+          _timePICUSMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timePICUSMinutesMeta);
+    }
+    if (data.containsKey('time_s_i_c_minutes')) {
+      context.handle(
+        _timeSICMinutesMeta,
+        timeSICMinutes.isAcceptableOrUnknown(
+          data['time_s_i_c_minutes']!,
+          _timeSICMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeSICMinutesMeta);
+    }
+    if (data.containsKey('time_dual_minutes')) {
+      context.handle(
+        _timeDualMinutesMeta,
+        timeDualMinutes.isAcceptableOrUnknown(
+          data['time_dual_minutes']!,
+          _timeDualMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeDualMinutesMeta);
+    }
+    if (data.containsKey('time_instructor_minutes')) {
+      context.handle(
+        _timeInstructorMinutesMeta,
+        timeInstructorMinutes.isAcceptableOrUnknown(
+          data['time_instructor_minutes']!,
+          _timeInstructorMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeInstructorMinutesMeta);
+    }
+    if (data.containsKey('time_i_f_r_minutes')) {
+      context.handle(
+        _timeIFRMinutesMeta,
+        timeIFRMinutes.isAcceptableOrUnknown(
+          data['time_i_f_r_minutes']!,
+          _timeIFRMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeIFRMinutesMeta);
+    }
+    if (data.containsKey('time_instrument_minutes')) {
+      context.handle(
+        _timeInstrumentMinutesMeta,
+        timeInstrumentMinutes.isAcceptableOrUnknown(
+          data['time_instrument_minutes']!,
+          _timeInstrumentMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeInstrumentMinutesMeta);
+    }
+    if (data.containsKey('time_simulated_instrument_minutes')) {
+      context.handle(
+        _timeSimulatedInstrumentMinutesMeta,
+        timeSimulatedInstrumentMinutes.isAcceptableOrUnknown(
+          data['time_simulated_instrument_minutes']!,
+          _timeSimulatedInstrumentMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeSimulatedInstrumentMinutesMeta);
+    }
+    if (data.containsKey('time_night_minutes')) {
+      context.handle(
+        _timeNightMinutesMeta,
+        timeNightMinutes.isAcceptableOrUnknown(
+          data['time_night_minutes']!,
+          _timeNightMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeNightMinutesMeta);
+    }
+    if (data.containsKey('time_cross_country_minutes')) {
+      context.handle(
+        _timeCrossCountryMinutesMeta,
+        timeCrossCountryMinutes.isAcceptableOrUnknown(
+          data['time_cross_country_minutes']!,
+          _timeCrossCountryMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeCrossCountryMinutesMeta);
+    }
+    if (data.containsKey('time_custom1_minutes')) {
+      context.handle(
+        _timeCustom1MinutesMeta,
+        timeCustom1Minutes.isAcceptableOrUnknown(
+          data['time_custom1_minutes']!,
+          _timeCustom1MinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeCustom1MinutesMeta);
+    }
+    if (data.containsKey('time_custom2_minutes')) {
+      context.handle(
+        _timeCustom2MinutesMeta,
+        timeCustom2Minutes.isAcceptableOrUnknown(
+          data['time_custom2_minutes']!,
+          _timeCustom2MinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeCustom2MinutesMeta);
+    }
+    if (data.containsKey('time_custom3_minutes')) {
+      context.handle(
+        _timeCustom3MinutesMeta,
+        timeCustom3Minutes.isAcceptableOrUnknown(
+          data['time_custom3_minutes']!,
+          _timeCustom3MinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeCustom3MinutesMeta);
+    }
+    if (data.containsKey('time_custom4_minutes')) {
+      context.handle(
+        _timeCustom4MinutesMeta,
+        timeCustom4Minutes.isAcceptableOrUnknown(
+          data['time_custom4_minutes']!,
+          _timeCustom4MinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeCustom4MinutesMeta);
+    }
+    if (data.containsKey('time_flight_minutes')) {
+      context.handle(
+        _timeFlightMinutesMeta,
+        timeFlightMinutes.isAcceptableOrUnknown(
+          data['time_flight_minutes']!,
+          _timeFlightMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeFlightMinutesMeta);
+    }
+    if (data.containsKey('time_block_minutes')) {
+      context.handle(
+        _timeBlockMinutesMeta,
+        timeBlockMinutes.isAcceptableOrUnknown(
+          data['time_block_minutes']!,
+          _timeBlockMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeBlockMinutesMeta);
+    }
+    if (data.containsKey('time_simulator_minutes')) {
+      context.handle(
+        _timeSimulatorMinutesMeta,
+        timeSimulatorMinutes.isAcceptableOrUnknown(
+          data['time_simulator_minutes']!,
+          _timeSimulatorMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeSimulatorMinutesMeta);
+    }
+    if (data.containsKey('distance_n_m')) {
+      context.handle(
+        _distanceNMMeta,
+        distanceNM.isAcceptableOrUnknown(
+          data['distance_n_m']!,
+          _distanceNMMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_distanceNMMeta);
+    }
+    if (data.containsKey('ifr_approaches')) {
+      context.handle(
+        _ifrApproachesMeta,
+        ifrApproaches.isAcceptableOrUnknown(
+          data['ifr_approaches']!,
+          _ifrApproachesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ifrApproachesMeta);
+    }
+    if (data.containsKey('take_offs_days')) {
+      context.handle(
+        _takeOffsDaysMeta,
+        takeOffsDays.isAcceptableOrUnknown(
+          data['take_offs_days']!,
+          _takeOffsDaysMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_takeOffsDaysMeta);
+    }
+    if (data.containsKey('take_offs_night')) {
+      context.handle(
+        _takeOffsNightMeta,
+        takeOffsNight.isAcceptableOrUnknown(
+          data['take_offs_night']!,
+          _takeOffsNightMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_takeOffsNightMeta);
+    }
+    if (data.containsKey('landings_day')) {
+      context.handle(
+        _landingsDayMeta,
+        landingsDay.isAcceptableOrUnknown(
+          data['landings_day']!,
+          _landingsDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_landingsDayMeta);
+    }
+    if (data.containsKey('landings_night')) {
+      context.handle(
+        _landingsNightMeta,
+        landingsNight.isAcceptableOrUnknown(
+          data['landings_night']!,
+          _landingsNightMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_landingsNightMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PreviousExperience map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PreviousExperience(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      aircraftTypeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}aircraft_type_id'],
+      )!,
+      dateTimeFirstFlight: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date_time_first_flight'],
+      ),
+      dateTimeLastFlight: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date_time_last_flight'],
+      ),
+      timePICMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_p_i_c_minutes'],
+      )!,
+      timePICUSMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_p_i_c_u_s_minutes'],
+      )!,
+      timeSICMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_s_i_c_minutes'],
+      )!,
+      timeDualMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_dual_minutes'],
+      )!,
+      timeInstructorMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_instructor_minutes'],
+      )!,
+      timeIFRMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_i_f_r_minutes'],
+      )!,
+      timeInstrumentMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_instrument_minutes'],
+      )!,
+      timeSimulatedInstrumentMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_simulated_instrument_minutes'],
+      )!,
+      timeNightMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_night_minutes'],
+      )!,
+      timeCrossCountryMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_cross_country_minutes'],
+      )!,
+      timeCustom1Minutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_custom1_minutes'],
+      )!,
+      timeCustom2Minutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_custom2_minutes'],
+      )!,
+      timeCustom3Minutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_custom3_minutes'],
+      )!,
+      timeCustom4Minutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_custom4_minutes'],
+      )!,
+      timeFlightMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_flight_minutes'],
+      )!,
+      timeBlockMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_block_minutes'],
+      )!,
+      timeSimulatorMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_simulator_minutes'],
+      )!,
+      distanceNM: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}distance_n_m'],
+      )!,
+      ifrApproaches: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}ifr_approaches'],
+      )!,
+      takeOffsDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}take_offs_days'],
+      )!,
+      takeOffsNight: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}take_offs_night'],
+      )!,
+      landingsDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}landings_day'],
+      )!,
+      landingsNight: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}landings_night'],
+      )!,
+    );
+  }
+
+  @override
+  $PreviousExperiencesTable createAlias(String alias) {
+    return $PreviousExperiencesTable(attachedDatabase, alias);
+  }
+}
+
+class PreviousExperience extends DataClass
+    implements Insertable<PreviousExperience> {
+  final int id;
+  final int aircraftTypeId;
+  final DateTime? dateTimeFirstFlight;
+  final DateTime? dateTimeLastFlight;
+  final int timePICMinutes;
+  final int timePICUSMinutes;
+  final int timeSICMinutes;
+  final int timeDualMinutes;
+  final int timeInstructorMinutes;
+  final int timeIFRMinutes;
+  final int timeInstrumentMinutes;
+  final int timeSimulatedInstrumentMinutes;
+  final int timeNightMinutes;
+  final int timeCrossCountryMinutes;
+  final int timeCustom1Minutes;
+  final int timeCustom2Minutes;
+  final int timeCustom3Minutes;
+  final int timeCustom4Minutes;
+  final int timeFlightMinutes;
+  final int timeBlockMinutes;
+  final int timeSimulatorMinutes;
+  final int distanceNM;
+  final int ifrApproaches;
+  final int takeOffsDays;
+  final int takeOffsNight;
+  final int landingsDay;
+  final int landingsNight;
+  const PreviousExperience({
+    required this.id,
+    required this.aircraftTypeId,
+    this.dateTimeFirstFlight,
+    this.dateTimeLastFlight,
+    required this.timePICMinutes,
+    required this.timePICUSMinutes,
+    required this.timeSICMinutes,
+    required this.timeDualMinutes,
+    required this.timeInstructorMinutes,
+    required this.timeIFRMinutes,
+    required this.timeInstrumentMinutes,
+    required this.timeSimulatedInstrumentMinutes,
+    required this.timeNightMinutes,
+    required this.timeCrossCountryMinutes,
+    required this.timeCustom1Minutes,
+    required this.timeCustom2Minutes,
+    required this.timeCustom3Minutes,
+    required this.timeCustom4Minutes,
+    required this.timeFlightMinutes,
+    required this.timeBlockMinutes,
+    required this.timeSimulatorMinutes,
+    required this.distanceNM,
+    required this.ifrApproaches,
+    required this.takeOffsDays,
+    required this.takeOffsNight,
+    required this.landingsDay,
+    required this.landingsNight,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['aircraft_type_id'] = Variable<int>(aircraftTypeId);
+    if (!nullToAbsent || dateTimeFirstFlight != null) {
+      map['date_time_first_flight'] = Variable<DateTime>(dateTimeFirstFlight);
+    }
+    if (!nullToAbsent || dateTimeLastFlight != null) {
+      map['date_time_last_flight'] = Variable<DateTime>(dateTimeLastFlight);
+    }
+    map['time_p_i_c_minutes'] = Variable<int>(timePICMinutes);
+    map['time_p_i_c_u_s_minutes'] = Variable<int>(timePICUSMinutes);
+    map['time_s_i_c_minutes'] = Variable<int>(timeSICMinutes);
+    map['time_dual_minutes'] = Variable<int>(timeDualMinutes);
+    map['time_instructor_minutes'] = Variable<int>(timeInstructorMinutes);
+    map['time_i_f_r_minutes'] = Variable<int>(timeIFRMinutes);
+    map['time_instrument_minutes'] = Variable<int>(timeInstrumentMinutes);
+    map['time_simulated_instrument_minutes'] = Variable<int>(
+      timeSimulatedInstrumentMinutes,
+    );
+    map['time_night_minutes'] = Variable<int>(timeNightMinutes);
+    map['time_cross_country_minutes'] = Variable<int>(timeCrossCountryMinutes);
+    map['time_custom1_minutes'] = Variable<int>(timeCustom1Minutes);
+    map['time_custom2_minutes'] = Variable<int>(timeCustom2Minutes);
+    map['time_custom3_minutes'] = Variable<int>(timeCustom3Minutes);
+    map['time_custom4_minutes'] = Variable<int>(timeCustom4Minutes);
+    map['time_flight_minutes'] = Variable<int>(timeFlightMinutes);
+    map['time_block_minutes'] = Variable<int>(timeBlockMinutes);
+    map['time_simulator_minutes'] = Variable<int>(timeSimulatorMinutes);
+    map['distance_n_m'] = Variable<int>(distanceNM);
+    map['ifr_approaches'] = Variable<int>(ifrApproaches);
+    map['take_offs_days'] = Variable<int>(takeOffsDays);
+    map['take_offs_night'] = Variable<int>(takeOffsNight);
+    map['landings_day'] = Variable<int>(landingsDay);
+    map['landings_night'] = Variable<int>(landingsNight);
+    return map;
+  }
+
+  PreviousExperiencesCompanion toCompanion(bool nullToAbsent) {
+    return PreviousExperiencesCompanion(
+      id: Value(id),
+      aircraftTypeId: Value(aircraftTypeId),
+      dateTimeFirstFlight: dateTimeFirstFlight == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dateTimeFirstFlight),
+      dateTimeLastFlight: dateTimeLastFlight == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dateTimeLastFlight),
+      timePICMinutes: Value(timePICMinutes),
+      timePICUSMinutes: Value(timePICUSMinutes),
+      timeSICMinutes: Value(timeSICMinutes),
+      timeDualMinutes: Value(timeDualMinutes),
+      timeInstructorMinutes: Value(timeInstructorMinutes),
+      timeIFRMinutes: Value(timeIFRMinutes),
+      timeInstrumentMinutes: Value(timeInstrumentMinutes),
+      timeSimulatedInstrumentMinutes: Value(timeSimulatedInstrumentMinutes),
+      timeNightMinutes: Value(timeNightMinutes),
+      timeCrossCountryMinutes: Value(timeCrossCountryMinutes),
+      timeCustom1Minutes: Value(timeCustom1Minutes),
+      timeCustom2Minutes: Value(timeCustom2Minutes),
+      timeCustom3Minutes: Value(timeCustom3Minutes),
+      timeCustom4Minutes: Value(timeCustom4Minutes),
+      timeFlightMinutes: Value(timeFlightMinutes),
+      timeBlockMinutes: Value(timeBlockMinutes),
+      timeSimulatorMinutes: Value(timeSimulatorMinutes),
+      distanceNM: Value(distanceNM),
+      ifrApproaches: Value(ifrApproaches),
+      takeOffsDays: Value(takeOffsDays),
+      takeOffsNight: Value(takeOffsNight),
+      landingsDay: Value(landingsDay),
+      landingsNight: Value(landingsNight),
+    );
+  }
+
+  factory PreviousExperience.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PreviousExperience(
+      id: serializer.fromJson<int>(json['id']),
+      aircraftTypeId: serializer.fromJson<int>(json['aircraftTypeId']),
+      dateTimeFirstFlight: serializer.fromJson<DateTime?>(
+        json['dateTimeFirstFlight'],
+      ),
+      dateTimeLastFlight: serializer.fromJson<DateTime?>(
+        json['dateTimeLastFlight'],
+      ),
+      timePICMinutes: serializer.fromJson<int>(json['timePICMinutes']),
+      timePICUSMinutes: serializer.fromJson<int>(json['timePICUSMinutes']),
+      timeSICMinutes: serializer.fromJson<int>(json['timeSICMinutes']),
+      timeDualMinutes: serializer.fromJson<int>(json['timeDualMinutes']),
+      timeInstructorMinutes: serializer.fromJson<int>(
+        json['timeInstructorMinutes'],
+      ),
+      timeIFRMinutes: serializer.fromJson<int>(json['timeIFRMinutes']),
+      timeInstrumentMinutes: serializer.fromJson<int>(
+        json['timeInstrumentMinutes'],
+      ),
+      timeSimulatedInstrumentMinutes: serializer.fromJson<int>(
+        json['timeSimulatedInstrumentMinutes'],
+      ),
+      timeNightMinutes: serializer.fromJson<int>(json['timeNightMinutes']),
+      timeCrossCountryMinutes: serializer.fromJson<int>(
+        json['timeCrossCountryMinutes'],
+      ),
+      timeCustom1Minutes: serializer.fromJson<int>(json['timeCustom1Minutes']),
+      timeCustom2Minutes: serializer.fromJson<int>(json['timeCustom2Minutes']),
+      timeCustom3Minutes: serializer.fromJson<int>(json['timeCustom3Minutes']),
+      timeCustom4Minutes: serializer.fromJson<int>(json['timeCustom4Minutes']),
+      timeFlightMinutes: serializer.fromJson<int>(json['timeFlightMinutes']),
+      timeBlockMinutes: serializer.fromJson<int>(json['timeBlockMinutes']),
+      timeSimulatorMinutes: serializer.fromJson<int>(
+        json['timeSimulatorMinutes'],
+      ),
+      distanceNM: serializer.fromJson<int>(json['distanceNM']),
+      ifrApproaches: serializer.fromJson<int>(json['ifrApproaches']),
+      takeOffsDays: serializer.fromJson<int>(json['takeOffsDays']),
+      takeOffsNight: serializer.fromJson<int>(json['takeOffsNight']),
+      landingsDay: serializer.fromJson<int>(json['landingsDay']),
+      landingsNight: serializer.fromJson<int>(json['landingsNight']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'aircraftTypeId': serializer.toJson<int>(aircraftTypeId),
+      'dateTimeFirstFlight': serializer.toJson<DateTime?>(dateTimeFirstFlight),
+      'dateTimeLastFlight': serializer.toJson<DateTime?>(dateTimeLastFlight),
+      'timePICMinutes': serializer.toJson<int>(timePICMinutes),
+      'timePICUSMinutes': serializer.toJson<int>(timePICUSMinutes),
+      'timeSICMinutes': serializer.toJson<int>(timeSICMinutes),
+      'timeDualMinutes': serializer.toJson<int>(timeDualMinutes),
+      'timeInstructorMinutes': serializer.toJson<int>(timeInstructorMinutes),
+      'timeIFRMinutes': serializer.toJson<int>(timeIFRMinutes),
+      'timeInstrumentMinutes': serializer.toJson<int>(timeInstrumentMinutes),
+      'timeSimulatedInstrumentMinutes': serializer.toJson<int>(
+        timeSimulatedInstrumentMinutes,
+      ),
+      'timeNightMinutes': serializer.toJson<int>(timeNightMinutes),
+      'timeCrossCountryMinutes': serializer.toJson<int>(
+        timeCrossCountryMinutes,
+      ),
+      'timeCustom1Minutes': serializer.toJson<int>(timeCustom1Minutes),
+      'timeCustom2Minutes': serializer.toJson<int>(timeCustom2Minutes),
+      'timeCustom3Minutes': serializer.toJson<int>(timeCustom3Minutes),
+      'timeCustom4Minutes': serializer.toJson<int>(timeCustom4Minutes),
+      'timeFlightMinutes': serializer.toJson<int>(timeFlightMinutes),
+      'timeBlockMinutes': serializer.toJson<int>(timeBlockMinutes),
+      'timeSimulatorMinutes': serializer.toJson<int>(timeSimulatorMinutes),
+      'distanceNM': serializer.toJson<int>(distanceNM),
+      'ifrApproaches': serializer.toJson<int>(ifrApproaches),
+      'takeOffsDays': serializer.toJson<int>(takeOffsDays),
+      'takeOffsNight': serializer.toJson<int>(takeOffsNight),
+      'landingsDay': serializer.toJson<int>(landingsDay),
+      'landingsNight': serializer.toJson<int>(landingsNight),
+    };
+  }
+
+  PreviousExperience copyWith({
+    int? id,
+    int? aircraftTypeId,
+    Value<DateTime?> dateTimeFirstFlight = const Value.absent(),
+    Value<DateTime?> dateTimeLastFlight = const Value.absent(),
+    int? timePICMinutes,
+    int? timePICUSMinutes,
+    int? timeSICMinutes,
+    int? timeDualMinutes,
+    int? timeInstructorMinutes,
+    int? timeIFRMinutes,
+    int? timeInstrumentMinutes,
+    int? timeSimulatedInstrumentMinutes,
+    int? timeNightMinutes,
+    int? timeCrossCountryMinutes,
+    int? timeCustom1Minutes,
+    int? timeCustom2Minutes,
+    int? timeCustom3Minutes,
+    int? timeCustom4Minutes,
+    int? timeFlightMinutes,
+    int? timeBlockMinutes,
+    int? timeSimulatorMinutes,
+    int? distanceNM,
+    int? ifrApproaches,
+    int? takeOffsDays,
+    int? takeOffsNight,
+    int? landingsDay,
+    int? landingsNight,
+  }) => PreviousExperience(
+    id: id ?? this.id,
+    aircraftTypeId: aircraftTypeId ?? this.aircraftTypeId,
+    dateTimeFirstFlight: dateTimeFirstFlight.present
+        ? dateTimeFirstFlight.value
+        : this.dateTimeFirstFlight,
+    dateTimeLastFlight: dateTimeLastFlight.present
+        ? dateTimeLastFlight.value
+        : this.dateTimeLastFlight,
+    timePICMinutes: timePICMinutes ?? this.timePICMinutes,
+    timePICUSMinutes: timePICUSMinutes ?? this.timePICUSMinutes,
+    timeSICMinutes: timeSICMinutes ?? this.timeSICMinutes,
+    timeDualMinutes: timeDualMinutes ?? this.timeDualMinutes,
+    timeInstructorMinutes: timeInstructorMinutes ?? this.timeInstructorMinutes,
+    timeIFRMinutes: timeIFRMinutes ?? this.timeIFRMinutes,
+    timeInstrumentMinutes: timeInstrumentMinutes ?? this.timeInstrumentMinutes,
+    timeSimulatedInstrumentMinutes:
+        timeSimulatedInstrumentMinutes ?? this.timeSimulatedInstrumentMinutes,
+    timeNightMinutes: timeNightMinutes ?? this.timeNightMinutes,
+    timeCrossCountryMinutes:
+        timeCrossCountryMinutes ?? this.timeCrossCountryMinutes,
+    timeCustom1Minutes: timeCustom1Minutes ?? this.timeCustom1Minutes,
+    timeCustom2Minutes: timeCustom2Minutes ?? this.timeCustom2Minutes,
+    timeCustom3Minutes: timeCustom3Minutes ?? this.timeCustom3Minutes,
+    timeCustom4Minutes: timeCustom4Minutes ?? this.timeCustom4Minutes,
+    timeFlightMinutes: timeFlightMinutes ?? this.timeFlightMinutes,
+    timeBlockMinutes: timeBlockMinutes ?? this.timeBlockMinutes,
+    timeSimulatorMinutes: timeSimulatorMinutes ?? this.timeSimulatorMinutes,
+    distanceNM: distanceNM ?? this.distanceNM,
+    ifrApproaches: ifrApproaches ?? this.ifrApproaches,
+    takeOffsDays: takeOffsDays ?? this.takeOffsDays,
+    takeOffsNight: takeOffsNight ?? this.takeOffsNight,
+    landingsDay: landingsDay ?? this.landingsDay,
+    landingsNight: landingsNight ?? this.landingsNight,
+  );
+  PreviousExperience copyWithCompanion(PreviousExperiencesCompanion data) {
+    return PreviousExperience(
+      id: data.id.present ? data.id.value : this.id,
+      aircraftTypeId: data.aircraftTypeId.present
+          ? data.aircraftTypeId.value
+          : this.aircraftTypeId,
+      dateTimeFirstFlight: data.dateTimeFirstFlight.present
+          ? data.dateTimeFirstFlight.value
+          : this.dateTimeFirstFlight,
+      dateTimeLastFlight: data.dateTimeLastFlight.present
+          ? data.dateTimeLastFlight.value
+          : this.dateTimeLastFlight,
+      timePICMinutes: data.timePICMinutes.present
+          ? data.timePICMinutes.value
+          : this.timePICMinutes,
+      timePICUSMinutes: data.timePICUSMinutes.present
+          ? data.timePICUSMinutes.value
+          : this.timePICUSMinutes,
+      timeSICMinutes: data.timeSICMinutes.present
+          ? data.timeSICMinutes.value
+          : this.timeSICMinutes,
+      timeDualMinutes: data.timeDualMinutes.present
+          ? data.timeDualMinutes.value
+          : this.timeDualMinutes,
+      timeInstructorMinutes: data.timeInstructorMinutes.present
+          ? data.timeInstructorMinutes.value
+          : this.timeInstructorMinutes,
+      timeIFRMinutes: data.timeIFRMinutes.present
+          ? data.timeIFRMinutes.value
+          : this.timeIFRMinutes,
+      timeInstrumentMinutes: data.timeInstrumentMinutes.present
+          ? data.timeInstrumentMinutes.value
+          : this.timeInstrumentMinutes,
+      timeSimulatedInstrumentMinutes:
+          data.timeSimulatedInstrumentMinutes.present
+          ? data.timeSimulatedInstrumentMinutes.value
+          : this.timeSimulatedInstrumentMinutes,
+      timeNightMinutes: data.timeNightMinutes.present
+          ? data.timeNightMinutes.value
+          : this.timeNightMinutes,
+      timeCrossCountryMinutes: data.timeCrossCountryMinutes.present
+          ? data.timeCrossCountryMinutes.value
+          : this.timeCrossCountryMinutes,
+      timeCustom1Minutes: data.timeCustom1Minutes.present
+          ? data.timeCustom1Minutes.value
+          : this.timeCustom1Minutes,
+      timeCustom2Minutes: data.timeCustom2Minutes.present
+          ? data.timeCustom2Minutes.value
+          : this.timeCustom2Minutes,
+      timeCustom3Minutes: data.timeCustom3Minutes.present
+          ? data.timeCustom3Minutes.value
+          : this.timeCustom3Minutes,
+      timeCustom4Minutes: data.timeCustom4Minutes.present
+          ? data.timeCustom4Minutes.value
+          : this.timeCustom4Minutes,
+      timeFlightMinutes: data.timeFlightMinutes.present
+          ? data.timeFlightMinutes.value
+          : this.timeFlightMinutes,
+      timeBlockMinutes: data.timeBlockMinutes.present
+          ? data.timeBlockMinutes.value
+          : this.timeBlockMinutes,
+      timeSimulatorMinutes: data.timeSimulatorMinutes.present
+          ? data.timeSimulatorMinutes.value
+          : this.timeSimulatorMinutes,
+      distanceNM: data.distanceNM.present
+          ? data.distanceNM.value
+          : this.distanceNM,
+      ifrApproaches: data.ifrApproaches.present
+          ? data.ifrApproaches.value
+          : this.ifrApproaches,
+      takeOffsDays: data.takeOffsDays.present
+          ? data.takeOffsDays.value
+          : this.takeOffsDays,
+      takeOffsNight: data.takeOffsNight.present
+          ? data.takeOffsNight.value
+          : this.takeOffsNight,
+      landingsDay: data.landingsDay.present
+          ? data.landingsDay.value
+          : this.landingsDay,
+      landingsNight: data.landingsNight.present
+          ? data.landingsNight.value
+          : this.landingsNight,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PreviousExperience(')
+          ..write('id: $id, ')
+          ..write('aircraftTypeId: $aircraftTypeId, ')
+          ..write('dateTimeFirstFlight: $dateTimeFirstFlight, ')
+          ..write('dateTimeLastFlight: $dateTimeLastFlight, ')
+          ..write('timePICMinutes: $timePICMinutes, ')
+          ..write('timePICUSMinutes: $timePICUSMinutes, ')
+          ..write('timeSICMinutes: $timeSICMinutes, ')
+          ..write('timeDualMinutes: $timeDualMinutes, ')
+          ..write('timeInstructorMinutes: $timeInstructorMinutes, ')
+          ..write('timeIFRMinutes: $timeIFRMinutes, ')
+          ..write('timeInstrumentMinutes: $timeInstrumentMinutes, ')
+          ..write(
+            'timeSimulatedInstrumentMinutes: $timeSimulatedInstrumentMinutes, ',
+          )
+          ..write('timeNightMinutes: $timeNightMinutes, ')
+          ..write('timeCrossCountryMinutes: $timeCrossCountryMinutes, ')
+          ..write('timeCustom1Minutes: $timeCustom1Minutes, ')
+          ..write('timeCustom2Minutes: $timeCustom2Minutes, ')
+          ..write('timeCustom3Minutes: $timeCustom3Minutes, ')
+          ..write('timeCustom4Minutes: $timeCustom4Minutes, ')
+          ..write('timeFlightMinutes: $timeFlightMinutes, ')
+          ..write('timeBlockMinutes: $timeBlockMinutes, ')
+          ..write('timeSimulatorMinutes: $timeSimulatorMinutes, ')
+          ..write('distanceNM: $distanceNM, ')
+          ..write('ifrApproaches: $ifrApproaches, ')
+          ..write('takeOffsDays: $takeOffsDays, ')
+          ..write('takeOffsNight: $takeOffsNight, ')
+          ..write('landingsDay: $landingsDay, ')
+          ..write('landingsNight: $landingsNight')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    aircraftTypeId,
+    dateTimeFirstFlight,
+    dateTimeLastFlight,
+    timePICMinutes,
+    timePICUSMinutes,
+    timeSICMinutes,
+    timeDualMinutes,
+    timeInstructorMinutes,
+    timeIFRMinutes,
+    timeInstrumentMinutes,
+    timeSimulatedInstrumentMinutes,
+    timeNightMinutes,
+    timeCrossCountryMinutes,
+    timeCustom1Minutes,
+    timeCustom2Minutes,
+    timeCustom3Minutes,
+    timeCustom4Minutes,
+    timeFlightMinutes,
+    timeBlockMinutes,
+    timeSimulatorMinutes,
+    distanceNM,
+    ifrApproaches,
+    takeOffsDays,
+    takeOffsNight,
+    landingsDay,
+    landingsNight,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PreviousExperience &&
+          other.id == this.id &&
+          other.aircraftTypeId == this.aircraftTypeId &&
+          other.dateTimeFirstFlight == this.dateTimeFirstFlight &&
+          other.dateTimeLastFlight == this.dateTimeLastFlight &&
+          other.timePICMinutes == this.timePICMinutes &&
+          other.timePICUSMinutes == this.timePICUSMinutes &&
+          other.timeSICMinutes == this.timeSICMinutes &&
+          other.timeDualMinutes == this.timeDualMinutes &&
+          other.timeInstructorMinutes == this.timeInstructorMinutes &&
+          other.timeIFRMinutes == this.timeIFRMinutes &&
+          other.timeInstrumentMinutes == this.timeInstrumentMinutes &&
+          other.timeSimulatedInstrumentMinutes ==
+              this.timeSimulatedInstrumentMinutes &&
+          other.timeNightMinutes == this.timeNightMinutes &&
+          other.timeCrossCountryMinutes == this.timeCrossCountryMinutes &&
+          other.timeCustom1Minutes == this.timeCustom1Minutes &&
+          other.timeCustom2Minutes == this.timeCustom2Minutes &&
+          other.timeCustom3Minutes == this.timeCustom3Minutes &&
+          other.timeCustom4Minutes == this.timeCustom4Minutes &&
+          other.timeFlightMinutes == this.timeFlightMinutes &&
+          other.timeBlockMinutes == this.timeBlockMinutes &&
+          other.timeSimulatorMinutes == this.timeSimulatorMinutes &&
+          other.distanceNM == this.distanceNM &&
+          other.ifrApproaches == this.ifrApproaches &&
+          other.takeOffsDays == this.takeOffsDays &&
+          other.takeOffsNight == this.takeOffsNight &&
+          other.landingsDay == this.landingsDay &&
+          other.landingsNight == this.landingsNight);
+}
+
+class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
+  final Value<int> id;
+  final Value<int> aircraftTypeId;
+  final Value<DateTime?> dateTimeFirstFlight;
+  final Value<DateTime?> dateTimeLastFlight;
+  final Value<int> timePICMinutes;
+  final Value<int> timePICUSMinutes;
+  final Value<int> timeSICMinutes;
+  final Value<int> timeDualMinutes;
+  final Value<int> timeInstructorMinutes;
+  final Value<int> timeIFRMinutes;
+  final Value<int> timeInstrumentMinutes;
+  final Value<int> timeSimulatedInstrumentMinutes;
+  final Value<int> timeNightMinutes;
+  final Value<int> timeCrossCountryMinutes;
+  final Value<int> timeCustom1Minutes;
+  final Value<int> timeCustom2Minutes;
+  final Value<int> timeCustom3Minutes;
+  final Value<int> timeCustom4Minutes;
+  final Value<int> timeFlightMinutes;
+  final Value<int> timeBlockMinutes;
+  final Value<int> timeSimulatorMinutes;
+  final Value<int> distanceNM;
+  final Value<int> ifrApproaches;
+  final Value<int> takeOffsDays;
+  final Value<int> takeOffsNight;
+  final Value<int> landingsDay;
+  final Value<int> landingsNight;
+  const PreviousExperiencesCompanion({
+    this.id = const Value.absent(),
+    this.aircraftTypeId = const Value.absent(),
+    this.dateTimeFirstFlight = const Value.absent(),
+    this.dateTimeLastFlight = const Value.absent(),
+    this.timePICMinutes = const Value.absent(),
+    this.timePICUSMinutes = const Value.absent(),
+    this.timeSICMinutes = const Value.absent(),
+    this.timeDualMinutes = const Value.absent(),
+    this.timeInstructorMinutes = const Value.absent(),
+    this.timeIFRMinutes = const Value.absent(),
+    this.timeInstrumentMinutes = const Value.absent(),
+    this.timeSimulatedInstrumentMinutes = const Value.absent(),
+    this.timeNightMinutes = const Value.absent(),
+    this.timeCrossCountryMinutes = const Value.absent(),
+    this.timeCustom1Minutes = const Value.absent(),
+    this.timeCustom2Minutes = const Value.absent(),
+    this.timeCustom3Minutes = const Value.absent(),
+    this.timeCustom4Minutes = const Value.absent(),
+    this.timeFlightMinutes = const Value.absent(),
+    this.timeBlockMinutes = const Value.absent(),
+    this.timeSimulatorMinutes = const Value.absent(),
+    this.distanceNM = const Value.absent(),
+    this.ifrApproaches = const Value.absent(),
+    this.takeOffsDays = const Value.absent(),
+    this.takeOffsNight = const Value.absent(),
+    this.landingsDay = const Value.absent(),
+    this.landingsNight = const Value.absent(),
+  });
+  PreviousExperiencesCompanion.insert({
+    this.id = const Value.absent(),
+    required int aircraftTypeId,
+    this.dateTimeFirstFlight = const Value.absent(),
+    this.dateTimeLastFlight = const Value.absent(),
+    required int timePICMinutes,
+    required int timePICUSMinutes,
+    required int timeSICMinutes,
+    required int timeDualMinutes,
+    required int timeInstructorMinutes,
+    required int timeIFRMinutes,
+    required int timeInstrumentMinutes,
+    required int timeSimulatedInstrumentMinutes,
+    required int timeNightMinutes,
+    required int timeCrossCountryMinutes,
+    required int timeCustom1Minutes,
+    required int timeCustom2Minutes,
+    required int timeCustom3Minutes,
+    required int timeCustom4Minutes,
+    required int timeFlightMinutes,
+    required int timeBlockMinutes,
+    required int timeSimulatorMinutes,
+    required int distanceNM,
+    required int ifrApproaches,
+    required int takeOffsDays,
+    required int takeOffsNight,
+    required int landingsDay,
+    required int landingsNight,
+  }) : aircraftTypeId = Value(aircraftTypeId),
+       timePICMinutes = Value(timePICMinutes),
+       timePICUSMinutes = Value(timePICUSMinutes),
+       timeSICMinutes = Value(timeSICMinutes),
+       timeDualMinutes = Value(timeDualMinutes),
+       timeInstructorMinutes = Value(timeInstructorMinutes),
+       timeIFRMinutes = Value(timeIFRMinutes),
+       timeInstrumentMinutes = Value(timeInstrumentMinutes),
+       timeSimulatedInstrumentMinutes = Value(timeSimulatedInstrumentMinutes),
+       timeNightMinutes = Value(timeNightMinutes),
+       timeCrossCountryMinutes = Value(timeCrossCountryMinutes),
+       timeCustom1Minutes = Value(timeCustom1Minutes),
+       timeCustom2Minutes = Value(timeCustom2Minutes),
+       timeCustom3Minutes = Value(timeCustom3Minutes),
+       timeCustom4Minutes = Value(timeCustom4Minutes),
+       timeFlightMinutes = Value(timeFlightMinutes),
+       timeBlockMinutes = Value(timeBlockMinutes),
+       timeSimulatorMinutes = Value(timeSimulatorMinutes),
+       distanceNM = Value(distanceNM),
+       ifrApproaches = Value(ifrApproaches),
+       takeOffsDays = Value(takeOffsDays),
+       takeOffsNight = Value(takeOffsNight),
+       landingsDay = Value(landingsDay),
+       landingsNight = Value(landingsNight);
+  static Insertable<PreviousExperience> custom({
+    Expression<int>? id,
+    Expression<int>? aircraftTypeId,
+    Expression<DateTime>? dateTimeFirstFlight,
+    Expression<DateTime>? dateTimeLastFlight,
+    Expression<int>? timePICMinutes,
+    Expression<int>? timePICUSMinutes,
+    Expression<int>? timeSICMinutes,
+    Expression<int>? timeDualMinutes,
+    Expression<int>? timeInstructorMinutes,
+    Expression<int>? timeIFRMinutes,
+    Expression<int>? timeInstrumentMinutes,
+    Expression<int>? timeSimulatedInstrumentMinutes,
+    Expression<int>? timeNightMinutes,
+    Expression<int>? timeCrossCountryMinutes,
+    Expression<int>? timeCustom1Minutes,
+    Expression<int>? timeCustom2Minutes,
+    Expression<int>? timeCustom3Minutes,
+    Expression<int>? timeCustom4Minutes,
+    Expression<int>? timeFlightMinutes,
+    Expression<int>? timeBlockMinutes,
+    Expression<int>? timeSimulatorMinutes,
+    Expression<int>? distanceNM,
+    Expression<int>? ifrApproaches,
+    Expression<int>? takeOffsDays,
+    Expression<int>? takeOffsNight,
+    Expression<int>? landingsDay,
+    Expression<int>? landingsNight,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (aircraftTypeId != null) 'aircraft_type_id': aircraftTypeId,
+      if (dateTimeFirstFlight != null)
+        'date_time_first_flight': dateTimeFirstFlight,
+      if (dateTimeLastFlight != null)
+        'date_time_last_flight': dateTimeLastFlight,
+      if (timePICMinutes != null) 'time_p_i_c_minutes': timePICMinutes,
+      if (timePICUSMinutes != null) 'time_p_i_c_u_s_minutes': timePICUSMinutes,
+      if (timeSICMinutes != null) 'time_s_i_c_minutes': timeSICMinutes,
+      if (timeDualMinutes != null) 'time_dual_minutes': timeDualMinutes,
+      if (timeInstructorMinutes != null)
+        'time_instructor_minutes': timeInstructorMinutes,
+      if (timeIFRMinutes != null) 'time_i_f_r_minutes': timeIFRMinutes,
+      if (timeInstrumentMinutes != null)
+        'time_instrument_minutes': timeInstrumentMinutes,
+      if (timeSimulatedInstrumentMinutes != null)
+        'time_simulated_instrument_minutes': timeSimulatedInstrumentMinutes,
+      if (timeNightMinutes != null) 'time_night_minutes': timeNightMinutes,
+      if (timeCrossCountryMinutes != null)
+        'time_cross_country_minutes': timeCrossCountryMinutes,
+      if (timeCustom1Minutes != null)
+        'time_custom1_minutes': timeCustom1Minutes,
+      if (timeCustom2Minutes != null)
+        'time_custom2_minutes': timeCustom2Minutes,
+      if (timeCustom3Minutes != null)
+        'time_custom3_minutes': timeCustom3Minutes,
+      if (timeCustom4Minutes != null)
+        'time_custom4_minutes': timeCustom4Minutes,
+      if (timeFlightMinutes != null) 'time_flight_minutes': timeFlightMinutes,
+      if (timeBlockMinutes != null) 'time_block_minutes': timeBlockMinutes,
+      if (timeSimulatorMinutes != null)
+        'time_simulator_minutes': timeSimulatorMinutes,
+      if (distanceNM != null) 'distance_n_m': distanceNM,
+      if (ifrApproaches != null) 'ifr_approaches': ifrApproaches,
+      if (takeOffsDays != null) 'take_offs_days': takeOffsDays,
+      if (takeOffsNight != null) 'take_offs_night': takeOffsNight,
+      if (landingsDay != null) 'landings_day': landingsDay,
+      if (landingsNight != null) 'landings_night': landingsNight,
+    });
+  }
+
+  PreviousExperiencesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? aircraftTypeId,
+    Value<DateTime?>? dateTimeFirstFlight,
+    Value<DateTime?>? dateTimeLastFlight,
+    Value<int>? timePICMinutes,
+    Value<int>? timePICUSMinutes,
+    Value<int>? timeSICMinutes,
+    Value<int>? timeDualMinutes,
+    Value<int>? timeInstructorMinutes,
+    Value<int>? timeIFRMinutes,
+    Value<int>? timeInstrumentMinutes,
+    Value<int>? timeSimulatedInstrumentMinutes,
+    Value<int>? timeNightMinutes,
+    Value<int>? timeCrossCountryMinutes,
+    Value<int>? timeCustom1Minutes,
+    Value<int>? timeCustom2Minutes,
+    Value<int>? timeCustom3Minutes,
+    Value<int>? timeCustom4Minutes,
+    Value<int>? timeFlightMinutes,
+    Value<int>? timeBlockMinutes,
+    Value<int>? timeSimulatorMinutes,
+    Value<int>? distanceNM,
+    Value<int>? ifrApproaches,
+    Value<int>? takeOffsDays,
+    Value<int>? takeOffsNight,
+    Value<int>? landingsDay,
+    Value<int>? landingsNight,
+  }) {
+    return PreviousExperiencesCompanion(
+      id: id ?? this.id,
+      aircraftTypeId: aircraftTypeId ?? this.aircraftTypeId,
+      dateTimeFirstFlight: dateTimeFirstFlight ?? this.dateTimeFirstFlight,
+      dateTimeLastFlight: dateTimeLastFlight ?? this.dateTimeLastFlight,
+      timePICMinutes: timePICMinutes ?? this.timePICMinutes,
+      timePICUSMinutes: timePICUSMinutes ?? this.timePICUSMinutes,
+      timeSICMinutes: timeSICMinutes ?? this.timeSICMinutes,
+      timeDualMinutes: timeDualMinutes ?? this.timeDualMinutes,
+      timeInstructorMinutes:
+          timeInstructorMinutes ?? this.timeInstructorMinutes,
+      timeIFRMinutes: timeIFRMinutes ?? this.timeIFRMinutes,
+      timeInstrumentMinutes:
+          timeInstrumentMinutes ?? this.timeInstrumentMinutes,
+      timeSimulatedInstrumentMinutes:
+          timeSimulatedInstrumentMinutes ?? this.timeSimulatedInstrumentMinutes,
+      timeNightMinutes: timeNightMinutes ?? this.timeNightMinutes,
+      timeCrossCountryMinutes:
+          timeCrossCountryMinutes ?? this.timeCrossCountryMinutes,
+      timeCustom1Minutes: timeCustom1Minutes ?? this.timeCustom1Minutes,
+      timeCustom2Minutes: timeCustom2Minutes ?? this.timeCustom2Minutes,
+      timeCustom3Minutes: timeCustom3Minutes ?? this.timeCustom3Minutes,
+      timeCustom4Minutes: timeCustom4Minutes ?? this.timeCustom4Minutes,
+      timeFlightMinutes: timeFlightMinutes ?? this.timeFlightMinutes,
+      timeBlockMinutes: timeBlockMinutes ?? this.timeBlockMinutes,
+      timeSimulatorMinutes: timeSimulatorMinutes ?? this.timeSimulatorMinutes,
+      distanceNM: distanceNM ?? this.distanceNM,
+      ifrApproaches: ifrApproaches ?? this.ifrApproaches,
+      takeOffsDays: takeOffsDays ?? this.takeOffsDays,
+      takeOffsNight: takeOffsNight ?? this.takeOffsNight,
+      landingsDay: landingsDay ?? this.landingsDay,
+      landingsNight: landingsNight ?? this.landingsNight,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (aircraftTypeId.present) {
+      map['aircraft_type_id'] = Variable<int>(aircraftTypeId.value);
+    }
+    if (dateTimeFirstFlight.present) {
+      map['date_time_first_flight'] = Variable<DateTime>(
+        dateTimeFirstFlight.value,
+      );
+    }
+    if (dateTimeLastFlight.present) {
+      map['date_time_last_flight'] = Variable<DateTime>(
+        dateTimeLastFlight.value,
+      );
+    }
+    if (timePICMinutes.present) {
+      map['time_p_i_c_minutes'] = Variable<int>(timePICMinutes.value);
+    }
+    if (timePICUSMinutes.present) {
+      map['time_p_i_c_u_s_minutes'] = Variable<int>(timePICUSMinutes.value);
+    }
+    if (timeSICMinutes.present) {
+      map['time_s_i_c_minutes'] = Variable<int>(timeSICMinutes.value);
+    }
+    if (timeDualMinutes.present) {
+      map['time_dual_minutes'] = Variable<int>(timeDualMinutes.value);
+    }
+    if (timeInstructorMinutes.present) {
+      map['time_instructor_minutes'] = Variable<int>(
+        timeInstructorMinutes.value,
+      );
+    }
+    if (timeIFRMinutes.present) {
+      map['time_i_f_r_minutes'] = Variable<int>(timeIFRMinutes.value);
+    }
+    if (timeInstrumentMinutes.present) {
+      map['time_instrument_minutes'] = Variable<int>(
+        timeInstrumentMinutes.value,
+      );
+    }
+    if (timeSimulatedInstrumentMinutes.present) {
+      map['time_simulated_instrument_minutes'] = Variable<int>(
+        timeSimulatedInstrumentMinutes.value,
+      );
+    }
+    if (timeNightMinutes.present) {
+      map['time_night_minutes'] = Variable<int>(timeNightMinutes.value);
+    }
+    if (timeCrossCountryMinutes.present) {
+      map['time_cross_country_minutes'] = Variable<int>(
+        timeCrossCountryMinutes.value,
+      );
+    }
+    if (timeCustom1Minutes.present) {
+      map['time_custom1_minutes'] = Variable<int>(timeCustom1Minutes.value);
+    }
+    if (timeCustom2Minutes.present) {
+      map['time_custom2_minutes'] = Variable<int>(timeCustom2Minutes.value);
+    }
+    if (timeCustom3Minutes.present) {
+      map['time_custom3_minutes'] = Variable<int>(timeCustom3Minutes.value);
+    }
+    if (timeCustom4Minutes.present) {
+      map['time_custom4_minutes'] = Variable<int>(timeCustom4Minutes.value);
+    }
+    if (timeFlightMinutes.present) {
+      map['time_flight_minutes'] = Variable<int>(timeFlightMinutes.value);
+    }
+    if (timeBlockMinutes.present) {
+      map['time_block_minutes'] = Variable<int>(timeBlockMinutes.value);
+    }
+    if (timeSimulatorMinutes.present) {
+      map['time_simulator_minutes'] = Variable<int>(timeSimulatorMinutes.value);
+    }
+    if (distanceNM.present) {
+      map['distance_n_m'] = Variable<int>(distanceNM.value);
+    }
+    if (ifrApproaches.present) {
+      map['ifr_approaches'] = Variable<int>(ifrApproaches.value);
+    }
+    if (takeOffsDays.present) {
+      map['take_offs_days'] = Variable<int>(takeOffsDays.value);
+    }
+    if (takeOffsNight.present) {
+      map['take_offs_night'] = Variable<int>(takeOffsNight.value);
+    }
+    if (landingsDay.present) {
+      map['landings_day'] = Variable<int>(landingsDay.value);
+    }
+    if (landingsNight.present) {
+      map['landings_night'] = Variable<int>(landingsNight.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PreviousExperiencesCompanion(')
+          ..write('id: $id, ')
+          ..write('aircraftTypeId: $aircraftTypeId, ')
+          ..write('dateTimeFirstFlight: $dateTimeFirstFlight, ')
+          ..write('dateTimeLastFlight: $dateTimeLastFlight, ')
+          ..write('timePICMinutes: $timePICMinutes, ')
+          ..write('timePICUSMinutes: $timePICUSMinutes, ')
+          ..write('timeSICMinutes: $timeSICMinutes, ')
+          ..write('timeDualMinutes: $timeDualMinutes, ')
+          ..write('timeInstructorMinutes: $timeInstructorMinutes, ')
+          ..write('timeIFRMinutes: $timeIFRMinutes, ')
+          ..write('timeInstrumentMinutes: $timeInstrumentMinutes, ')
+          ..write(
+            'timeSimulatedInstrumentMinutes: $timeSimulatedInstrumentMinutes, ',
+          )
+          ..write('timeNightMinutes: $timeNightMinutes, ')
+          ..write('timeCrossCountryMinutes: $timeCrossCountryMinutes, ')
+          ..write('timeCustom1Minutes: $timeCustom1Minutes, ')
+          ..write('timeCustom2Minutes: $timeCustom2Minutes, ')
+          ..write('timeCustom3Minutes: $timeCustom3Minutes, ')
+          ..write('timeCustom4Minutes: $timeCustom4Minutes, ')
+          ..write('timeFlightMinutes: $timeFlightMinutes, ')
+          ..write('timeBlockMinutes: $timeBlockMinutes, ')
+          ..write('timeSimulatorMinutes: $timeSimulatorMinutes, ')
+          ..write('distanceNM: $distanceNM, ')
+          ..write('ifrApproaches: $ifrApproaches, ')
+          ..write('takeOffsDays: $takeOffsDays, ')
+          ..write('takeOffsNight: $takeOffsNight, ')
+          ..write('landingsDay: $landingsDay, ')
+          ..write('landingsNight: $landingsNight')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $DutyPeriodsTable extends DutyPeriods
     with TableInfo<$DutyPeriodsTable, DutyPeriod> {
   @override
@@ -4765,6 +7541,18 @@ class $DutyPeriodsTable extends DutyPeriods
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _restBeforeMinutesMeta = const VerificationMeta(
+    'restBeforeMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> restBeforeMinutes = GeneratedColumn<int>(
+    'rest_before_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _timeFactoredDutyMinutesMeta =
       const VerificationMeta('timeFactoredDutyMinutes');
   @override
@@ -4796,6 +7584,7 @@ class $DutyPeriodsTable extends DutyPeriods
     dutyStartTimeLineId,
     dutyEndTimeLineId,
     timeDutyMinutes,
+    restBeforeMinutes,
     timeFactoredDutyMinutes,
     isLocked,
   ];
@@ -4847,6 +7636,15 @@ class $DutyPeriodsTable extends DutyPeriods
     } else if (isInserting) {
       context.missing(_timeDutyMinutesMeta);
     }
+    if (data.containsKey('rest_before_minutes')) {
+      context.handle(
+        _restBeforeMinutesMeta,
+        restBeforeMinutes.isAcceptableOrUnknown(
+          data['rest_before_minutes']!,
+          _restBeforeMinutesMeta,
+        ),
+      );
+    }
     if (data.containsKey('time_factored_duty_minutes')) {
       context.handle(
         _timeFactoredDutyMinutesMeta,
@@ -4891,6 +7689,10 @@ class $DutyPeriodsTable extends DutyPeriods
         DriftSqlType.int,
         data['${effectivePrefix}time_duty_minutes'],
       )!,
+      restBeforeMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rest_before_minutes'],
+      )!,
       timeFactoredDutyMinutes: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}time_factored_duty_minutes'],
@@ -4913,6 +7715,7 @@ class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
   final int dutyStartTimeLineId;
   final int dutyEndTimeLineId;
   final int timeDutyMinutes;
+  final int restBeforeMinutes;
   final int timeFactoredDutyMinutes;
   final bool isLocked;
   const DutyPeriod({
@@ -4920,6 +7723,7 @@ class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
     required this.dutyStartTimeLineId,
     required this.dutyEndTimeLineId,
     required this.timeDutyMinutes,
+    required this.restBeforeMinutes,
     required this.timeFactoredDutyMinutes,
     required this.isLocked,
   });
@@ -4930,6 +7734,7 @@ class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
     map['duty_start_time_line_id'] = Variable<int>(dutyStartTimeLineId);
     map['duty_end_time_line_id'] = Variable<int>(dutyEndTimeLineId);
     map['time_duty_minutes'] = Variable<int>(timeDutyMinutes);
+    map['rest_before_minutes'] = Variable<int>(restBeforeMinutes);
     map['time_factored_duty_minutes'] = Variable<int>(timeFactoredDutyMinutes);
     map['is_locked'] = Variable<bool>(isLocked);
     return map;
@@ -4941,6 +7746,7 @@ class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
       dutyStartTimeLineId: Value(dutyStartTimeLineId),
       dutyEndTimeLineId: Value(dutyEndTimeLineId),
       timeDutyMinutes: Value(timeDutyMinutes),
+      restBeforeMinutes: Value(restBeforeMinutes),
       timeFactoredDutyMinutes: Value(timeFactoredDutyMinutes),
       isLocked: Value(isLocked),
     );
@@ -4958,6 +7764,7 @@ class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
       ),
       dutyEndTimeLineId: serializer.fromJson<int>(json['dutyEndTimeLineId']),
       timeDutyMinutes: serializer.fromJson<int>(json['timeDutyMinutes']),
+      restBeforeMinutes: serializer.fromJson<int>(json['restBeforeMinutes']),
       timeFactoredDutyMinutes: serializer.fromJson<int>(
         json['timeFactoredDutyMinutes'],
       ),
@@ -4972,6 +7779,7 @@ class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
       'dutyStartTimeLineId': serializer.toJson<int>(dutyStartTimeLineId),
       'dutyEndTimeLineId': serializer.toJson<int>(dutyEndTimeLineId),
       'timeDutyMinutes': serializer.toJson<int>(timeDutyMinutes),
+      'restBeforeMinutes': serializer.toJson<int>(restBeforeMinutes),
       'timeFactoredDutyMinutes': serializer.toJson<int>(
         timeFactoredDutyMinutes,
       ),
@@ -4984,6 +7792,7 @@ class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
     int? dutyStartTimeLineId,
     int? dutyEndTimeLineId,
     int? timeDutyMinutes,
+    int? restBeforeMinutes,
     int? timeFactoredDutyMinutes,
     bool? isLocked,
   }) => DutyPeriod(
@@ -4991,6 +7800,7 @@ class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
     dutyStartTimeLineId: dutyStartTimeLineId ?? this.dutyStartTimeLineId,
     dutyEndTimeLineId: dutyEndTimeLineId ?? this.dutyEndTimeLineId,
     timeDutyMinutes: timeDutyMinutes ?? this.timeDutyMinutes,
+    restBeforeMinutes: restBeforeMinutes ?? this.restBeforeMinutes,
     timeFactoredDutyMinutes:
         timeFactoredDutyMinutes ?? this.timeFactoredDutyMinutes,
     isLocked: isLocked ?? this.isLocked,
@@ -5007,6 +7817,9 @@ class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
       timeDutyMinutes: data.timeDutyMinutes.present
           ? data.timeDutyMinutes.value
           : this.timeDutyMinutes,
+      restBeforeMinutes: data.restBeforeMinutes.present
+          ? data.restBeforeMinutes.value
+          : this.restBeforeMinutes,
       timeFactoredDutyMinutes: data.timeFactoredDutyMinutes.present
           ? data.timeFactoredDutyMinutes.value
           : this.timeFactoredDutyMinutes,
@@ -5021,6 +7834,7 @@ class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
           ..write('dutyStartTimeLineId: $dutyStartTimeLineId, ')
           ..write('dutyEndTimeLineId: $dutyEndTimeLineId, ')
           ..write('timeDutyMinutes: $timeDutyMinutes, ')
+          ..write('restBeforeMinutes: $restBeforeMinutes, ')
           ..write('timeFactoredDutyMinutes: $timeFactoredDutyMinutes, ')
           ..write('isLocked: $isLocked')
           ..write(')'))
@@ -5033,6 +7847,7 @@ class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
     dutyStartTimeLineId,
     dutyEndTimeLineId,
     timeDutyMinutes,
+    restBeforeMinutes,
     timeFactoredDutyMinutes,
     isLocked,
   );
@@ -5044,6 +7859,7 @@ class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
           other.dutyStartTimeLineId == this.dutyStartTimeLineId &&
           other.dutyEndTimeLineId == this.dutyEndTimeLineId &&
           other.timeDutyMinutes == this.timeDutyMinutes &&
+          other.restBeforeMinutes == this.restBeforeMinutes &&
           other.timeFactoredDutyMinutes == this.timeFactoredDutyMinutes &&
           other.isLocked == this.isLocked);
 }
@@ -5053,6 +7869,7 @@ class DutyPeriodsCompanion extends UpdateCompanion<DutyPeriod> {
   final Value<int> dutyStartTimeLineId;
   final Value<int> dutyEndTimeLineId;
   final Value<int> timeDutyMinutes;
+  final Value<int> restBeforeMinutes;
   final Value<int> timeFactoredDutyMinutes;
   final Value<bool> isLocked;
   const DutyPeriodsCompanion({
@@ -5060,6 +7877,7 @@ class DutyPeriodsCompanion extends UpdateCompanion<DutyPeriod> {
     this.dutyStartTimeLineId = const Value.absent(),
     this.dutyEndTimeLineId = const Value.absent(),
     this.timeDutyMinutes = const Value.absent(),
+    this.restBeforeMinutes = const Value.absent(),
     this.timeFactoredDutyMinutes = const Value.absent(),
     this.isLocked = const Value.absent(),
   });
@@ -5068,6 +7886,7 @@ class DutyPeriodsCompanion extends UpdateCompanion<DutyPeriod> {
     required int dutyStartTimeLineId,
     required int dutyEndTimeLineId,
     required int timeDutyMinutes,
+    this.restBeforeMinutes = const Value.absent(),
     required int timeFactoredDutyMinutes,
     required bool isLocked,
   }) : dutyStartTimeLineId = Value(dutyStartTimeLineId),
@@ -5080,6 +7899,7 @@ class DutyPeriodsCompanion extends UpdateCompanion<DutyPeriod> {
     Expression<int>? dutyStartTimeLineId,
     Expression<int>? dutyEndTimeLineId,
     Expression<int>? timeDutyMinutes,
+    Expression<int>? restBeforeMinutes,
     Expression<int>? timeFactoredDutyMinutes,
     Expression<bool>? isLocked,
   }) {
@@ -5089,6 +7909,7 @@ class DutyPeriodsCompanion extends UpdateCompanion<DutyPeriod> {
         'duty_start_time_line_id': dutyStartTimeLineId,
       if (dutyEndTimeLineId != null) 'duty_end_time_line_id': dutyEndTimeLineId,
       if (timeDutyMinutes != null) 'time_duty_minutes': timeDutyMinutes,
+      if (restBeforeMinutes != null) 'rest_before_minutes': restBeforeMinutes,
       if (timeFactoredDutyMinutes != null)
         'time_factored_duty_minutes': timeFactoredDutyMinutes,
       if (isLocked != null) 'is_locked': isLocked,
@@ -5100,6 +7921,7 @@ class DutyPeriodsCompanion extends UpdateCompanion<DutyPeriod> {
     Value<int>? dutyStartTimeLineId,
     Value<int>? dutyEndTimeLineId,
     Value<int>? timeDutyMinutes,
+    Value<int>? restBeforeMinutes,
     Value<int>? timeFactoredDutyMinutes,
     Value<bool>? isLocked,
   }) {
@@ -5108,6 +7930,7 @@ class DutyPeriodsCompanion extends UpdateCompanion<DutyPeriod> {
       dutyStartTimeLineId: dutyStartTimeLineId ?? this.dutyStartTimeLineId,
       dutyEndTimeLineId: dutyEndTimeLineId ?? this.dutyEndTimeLineId,
       timeDutyMinutes: timeDutyMinutes ?? this.timeDutyMinutes,
+      restBeforeMinutes: restBeforeMinutes ?? this.restBeforeMinutes,
       timeFactoredDutyMinutes:
           timeFactoredDutyMinutes ?? this.timeFactoredDutyMinutes,
       isLocked: isLocked ?? this.isLocked,
@@ -5129,6 +7952,9 @@ class DutyPeriodsCompanion extends UpdateCompanion<DutyPeriod> {
     if (timeDutyMinutes.present) {
       map['time_duty_minutes'] = Variable<int>(timeDutyMinutes.value);
     }
+    if (restBeforeMinutes.present) {
+      map['rest_before_minutes'] = Variable<int>(restBeforeMinutes.value);
+    }
     if (timeFactoredDutyMinutes.present) {
       map['time_factored_duty_minutes'] = Variable<int>(
         timeFactoredDutyMinutes.value,
@@ -5147,6 +7973,7 @@ class DutyPeriodsCompanion extends UpdateCompanion<DutyPeriod> {
           ..write('dutyStartTimeLineId: $dutyStartTimeLineId, ')
           ..write('dutyEndTimeLineId: $dutyEndTimeLineId, ')
           ..write('timeDutyMinutes: $timeDutyMinutes, ')
+          ..write('restBeforeMinutes: $restBeforeMinutes, ')
           ..write('timeFactoredDutyMinutes: $timeFactoredDutyMinutes, ')
           ..write('isLocked: $isLocked')
           ..write(')'))
@@ -6924,7 +9751,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AirportsTable airports = $AirportsTable(this);
   late final $TimeLinesTable timeLines = $TimeLinesTable(this);
   late final $FlightsTable flights = $FlightsTable(this);
+  late final $LimitRulesTable limitRules = $LimitRulesTable(this);
+  late final $RuleSnapshotsTable ruleSnapshots = $RuleSnapshotsTable(this);
   late final $PositioningsTable positionings = $PositioningsTable(this);
+  late final $PreviousExperiencesTable previousExperiences =
+      $PreviousExperiencesTable(this);
   late final $DutyPeriodsTable dutyPeriods = $DutyPeriodsTable(this);
   late final $CrewTable crew = $CrewTable(this);
   late final $FlightCrewAssignmentsTable flightCrewAssignments =
@@ -6943,7 +9774,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     airports,
     timeLines,
     flights,
+    limitRules,
+    ruleSnapshots,
     positionings,
+    previousExperiences,
     dutyPeriods,
     crew,
     flightCrewAssignments,
@@ -7011,6 +9845,33 @@ final class $$AircraftTypesTableReferences
     ).filter((f) => f.aircraftTypeId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_aircraftsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $PreviousExperiencesTable,
+    List<PreviousExperience>
+  >
+  _previousExperiencesRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.previousExperiences,
+        aliasName: $_aliasNameGenerator(
+          db.aircraftTypes.id,
+          db.previousExperiences.aircraftTypeId,
+        ),
+      );
+
+  $$PreviousExperiencesTableProcessedTableManager get previousExperiencesRefs {
+    final manager = $$PreviousExperiencesTableTableManager(
+      $_db,
+      $_db.previousExperiences,
+    ).filter((f) => f.aircraftTypeId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _previousExperiencesRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -7114,6 +9975,31 @@ class $$AircraftTypesTableFilterComposer
           }) => $$AircraftsTableFilterComposer(
             $db: $db,
             $table: $db.aircrafts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> previousExperiencesRefs(
+    Expression<bool> Function($$PreviousExperiencesTableFilterComposer f) f,
+  ) {
+    final $$PreviousExperiencesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.previousExperiences,
+      getReferencedColumn: (t) => t.aircraftTypeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PreviousExperiencesTableFilterComposer(
+            $db: $db,
+            $table: $db.previousExperiences,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -7290,6 +10176,32 @@ class $$AircraftTypesTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> previousExperiencesRefs<T extends Object>(
+    Expression<T> Function($$PreviousExperiencesTableAnnotationComposer a) f,
+  ) {
+    final $$PreviousExperiencesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.previousExperiences,
+          getReferencedColumn: (t) => t.aircraftTypeId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$PreviousExperiencesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.previousExperiences,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$AircraftTypesTableTableManager
@@ -7305,7 +10217,10 @@ class $$AircraftTypesTableTableManager
           $$AircraftTypesTableUpdateCompanionBuilder,
           (AircraftType, $$AircraftTypesTableReferences),
           AircraftType,
-          PrefetchHooks Function({bool aircraftsRefs})
+          PrefetchHooks Function({
+            bool aircraftsRefs,
+            bool previousExperiencesRefs,
+          })
         > {
   $$AircraftTypesTableTableManager(_$AppDatabase db, $AircraftTypesTable table)
     : super(
@@ -7390,38 +10305,63 @@ class $$AircraftTypesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({aircraftsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (aircraftsRefs) db.aircrafts],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (aircraftsRefs)
-                    await $_getPrefetchedData<
-                      AircraftType,
-                      $AircraftTypesTable,
-                      Aircraft
-                    >(
-                      currentTable: table,
-                      referencedTable: $$AircraftTypesTableReferences
-                          ._aircraftsRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$AircraftTypesTableReferences(
-                            db,
-                            table,
-                            p0,
-                          ).aircraftsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where(
-                            (e) => e.aircraftTypeId == item.id,
-                          ),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({aircraftsRefs = false, previousExperiencesRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (aircraftsRefs) db.aircrafts,
+                    if (previousExperiencesRefs) db.previousExperiences,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (aircraftsRefs)
+                        await $_getPrefetchedData<
+                          AircraftType,
+                          $AircraftTypesTable,
+                          Aircraft
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AircraftTypesTableReferences
+                              ._aircraftsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AircraftTypesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).aircraftsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.aircraftTypeId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (previousExperiencesRefs)
+                        await $_getPrefetchedData<
+                          AircraftType,
+                          $AircraftTypesTable,
+                          PreviousExperience
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AircraftTypesTableReferences
+                              ._previousExperiencesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AircraftTypesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).previousExperiencesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.aircraftTypeId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -7438,7 +10378,7 @@ typedef $$AircraftTypesTableProcessedTableManager =
       $$AircraftTypesTableUpdateCompanionBuilder,
       (AircraftType, $$AircraftTypesTableReferences),
       AircraftType,
-      PrefetchHooks Function({bool aircraftsRefs})
+      PrefetchHooks Function({bool aircraftsRefs, bool previousExperiencesRefs})
     >;
 typedef $$AircraftsTableCreateCompanionBuilder =
     AircraftsCompanion Function({
@@ -10073,6 +13013,814 @@ typedef $$FlightsTableProcessedTableManager =
         bool flightCrewAssignmentsRefs,
       })
     >;
+typedef $$LimitRulesTableCreateCompanionBuilder =
+    LimitRulesCompanion Function({
+      Value<int> ruleId,
+      required String ruleName,
+      required String metric,
+      required String ruleType,
+      required String windowType,
+      required int windowValue,
+      required double limitValue,
+      required String limitUnit,
+      Value<double> warnYellowBefore,
+      Value<double> warnRedBefore,
+      Value<String> warnYellowColor,
+      Value<String> warnRedColor,
+      Value<bool> active,
+      Value<String?> notes,
+    });
+typedef $$LimitRulesTableUpdateCompanionBuilder =
+    LimitRulesCompanion Function({
+      Value<int> ruleId,
+      Value<String> ruleName,
+      Value<String> metric,
+      Value<String> ruleType,
+      Value<String> windowType,
+      Value<int> windowValue,
+      Value<double> limitValue,
+      Value<String> limitUnit,
+      Value<double> warnYellowBefore,
+      Value<double> warnRedBefore,
+      Value<String> warnYellowColor,
+      Value<String> warnRedColor,
+      Value<bool> active,
+      Value<String?> notes,
+    });
+
+final class $$LimitRulesTableReferences
+    extends BaseReferences<_$AppDatabase, $LimitRulesTable, LimitRule> {
+  $$LimitRulesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$RuleSnapshotsTable, List<RuleSnapshot>>
+  _ruleSnapshotsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.ruleSnapshots,
+    aliasName: $_aliasNameGenerator(
+      db.limitRules.ruleId,
+      db.ruleSnapshots.ruleId,
+    ),
+  );
+
+  $$RuleSnapshotsTableProcessedTableManager get ruleSnapshotsRefs {
+    final manager = $$RuleSnapshotsTableTableManager(
+      $_db,
+      $_db.ruleSnapshots,
+    ).filter((f) => f.ruleId.ruleId.sqlEquals($_itemColumn<int>('rule_id')!));
+
+    final cache = $_typedResult.readTableOrNull(_ruleSnapshotsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$LimitRulesTableFilterComposer
+    extends Composer<_$AppDatabase, $LimitRulesTable> {
+  $$LimitRulesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get ruleId => $composableBuilder(
+    column: $table.ruleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ruleName => $composableBuilder(
+    column: $table.ruleName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get metric => $composableBuilder(
+    column: $table.metric,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ruleType => $composableBuilder(
+    column: $table.ruleType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get windowType => $composableBuilder(
+    column: $table.windowType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get windowValue => $composableBuilder(
+    column: $table.windowValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get limitValue => $composableBuilder(
+    column: $table.limitValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get limitUnit => $composableBuilder(
+    column: $table.limitUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get warnYellowBefore => $composableBuilder(
+    column: $table.warnYellowBefore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get warnRedBefore => $composableBuilder(
+    column: $table.warnRedBefore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get warnYellowColor => $composableBuilder(
+    column: $table.warnYellowColor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get warnRedColor => $composableBuilder(
+    column: $table.warnRedColor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get active => $composableBuilder(
+    column: $table.active,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> ruleSnapshotsRefs(
+    Expression<bool> Function($$RuleSnapshotsTableFilterComposer f) f,
+  ) {
+    final $$RuleSnapshotsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ruleId,
+      referencedTable: $db.ruleSnapshots,
+      getReferencedColumn: (t) => t.ruleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RuleSnapshotsTableFilterComposer(
+            $db: $db,
+            $table: $db.ruleSnapshots,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$LimitRulesTableOrderingComposer
+    extends Composer<_$AppDatabase, $LimitRulesTable> {
+  $$LimitRulesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get ruleId => $composableBuilder(
+    column: $table.ruleId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ruleName => $composableBuilder(
+    column: $table.ruleName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get metric => $composableBuilder(
+    column: $table.metric,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ruleType => $composableBuilder(
+    column: $table.ruleType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get windowType => $composableBuilder(
+    column: $table.windowType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get windowValue => $composableBuilder(
+    column: $table.windowValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get limitValue => $composableBuilder(
+    column: $table.limitValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get limitUnit => $composableBuilder(
+    column: $table.limitUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get warnYellowBefore => $composableBuilder(
+    column: $table.warnYellowBefore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get warnRedBefore => $composableBuilder(
+    column: $table.warnRedBefore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get warnYellowColor => $composableBuilder(
+    column: $table.warnYellowColor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get warnRedColor => $composableBuilder(
+    column: $table.warnRedColor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get active => $composableBuilder(
+    column: $table.active,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LimitRulesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LimitRulesTable> {
+  $$LimitRulesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get ruleId =>
+      $composableBuilder(column: $table.ruleId, builder: (column) => column);
+
+  GeneratedColumn<String> get ruleName =>
+      $composableBuilder(column: $table.ruleName, builder: (column) => column);
+
+  GeneratedColumn<String> get metric =>
+      $composableBuilder(column: $table.metric, builder: (column) => column);
+
+  GeneratedColumn<String> get ruleType =>
+      $composableBuilder(column: $table.ruleType, builder: (column) => column);
+
+  GeneratedColumn<String> get windowType => $composableBuilder(
+    column: $table.windowType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get windowValue => $composableBuilder(
+    column: $table.windowValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get limitValue => $composableBuilder(
+    column: $table.limitValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get limitUnit =>
+      $composableBuilder(column: $table.limitUnit, builder: (column) => column);
+
+  GeneratedColumn<double> get warnYellowBefore => $composableBuilder(
+    column: $table.warnYellowBefore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get warnRedBefore => $composableBuilder(
+    column: $table.warnRedBefore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get warnYellowColor => $composableBuilder(
+    column: $table.warnYellowColor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get warnRedColor => $composableBuilder(
+    column: $table.warnRedColor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get active =>
+      $composableBuilder(column: $table.active, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  Expression<T> ruleSnapshotsRefs<T extends Object>(
+    Expression<T> Function($$RuleSnapshotsTableAnnotationComposer a) f,
+  ) {
+    final $$RuleSnapshotsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ruleId,
+      referencedTable: $db.ruleSnapshots,
+      getReferencedColumn: (t) => t.ruleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RuleSnapshotsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.ruleSnapshots,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$LimitRulesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LimitRulesTable,
+          LimitRule,
+          $$LimitRulesTableFilterComposer,
+          $$LimitRulesTableOrderingComposer,
+          $$LimitRulesTableAnnotationComposer,
+          $$LimitRulesTableCreateCompanionBuilder,
+          $$LimitRulesTableUpdateCompanionBuilder,
+          (LimitRule, $$LimitRulesTableReferences),
+          LimitRule,
+          PrefetchHooks Function({bool ruleSnapshotsRefs})
+        > {
+  $$LimitRulesTableTableManager(_$AppDatabase db, $LimitRulesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LimitRulesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LimitRulesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LimitRulesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> ruleId = const Value.absent(),
+                Value<String> ruleName = const Value.absent(),
+                Value<String> metric = const Value.absent(),
+                Value<String> ruleType = const Value.absent(),
+                Value<String> windowType = const Value.absent(),
+                Value<int> windowValue = const Value.absent(),
+                Value<double> limitValue = const Value.absent(),
+                Value<String> limitUnit = const Value.absent(),
+                Value<double> warnYellowBefore = const Value.absent(),
+                Value<double> warnRedBefore = const Value.absent(),
+                Value<String> warnYellowColor = const Value.absent(),
+                Value<String> warnRedColor = const Value.absent(),
+                Value<bool> active = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+              }) => LimitRulesCompanion(
+                ruleId: ruleId,
+                ruleName: ruleName,
+                metric: metric,
+                ruleType: ruleType,
+                windowType: windowType,
+                windowValue: windowValue,
+                limitValue: limitValue,
+                limitUnit: limitUnit,
+                warnYellowBefore: warnYellowBefore,
+                warnRedBefore: warnRedBefore,
+                warnYellowColor: warnYellowColor,
+                warnRedColor: warnRedColor,
+                active: active,
+                notes: notes,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> ruleId = const Value.absent(),
+                required String ruleName,
+                required String metric,
+                required String ruleType,
+                required String windowType,
+                required int windowValue,
+                required double limitValue,
+                required String limitUnit,
+                Value<double> warnYellowBefore = const Value.absent(),
+                Value<double> warnRedBefore = const Value.absent(),
+                Value<String> warnYellowColor = const Value.absent(),
+                Value<String> warnRedColor = const Value.absent(),
+                Value<bool> active = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+              }) => LimitRulesCompanion.insert(
+                ruleId: ruleId,
+                ruleName: ruleName,
+                metric: metric,
+                ruleType: ruleType,
+                windowType: windowType,
+                windowValue: windowValue,
+                limitValue: limitValue,
+                limitUnit: limitUnit,
+                warnYellowBefore: warnYellowBefore,
+                warnRedBefore: warnRedBefore,
+                warnYellowColor: warnYellowColor,
+                warnRedColor: warnRedColor,
+                active: active,
+                notes: notes,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$LimitRulesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({ruleSnapshotsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (ruleSnapshotsRefs) db.ruleSnapshots,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (ruleSnapshotsRefs)
+                    await $_getPrefetchedData<
+                      LimitRule,
+                      $LimitRulesTable,
+                      RuleSnapshot
+                    >(
+                      currentTable: table,
+                      referencedTable: $$LimitRulesTableReferences
+                          ._ruleSnapshotsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$LimitRulesTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).ruleSnapshotsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.ruleId == item.ruleId),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$LimitRulesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LimitRulesTable,
+      LimitRule,
+      $$LimitRulesTableFilterComposer,
+      $$LimitRulesTableOrderingComposer,
+      $$LimitRulesTableAnnotationComposer,
+      $$LimitRulesTableCreateCompanionBuilder,
+      $$LimitRulesTableUpdateCompanionBuilder,
+      (LimitRule, $$LimitRulesTableReferences),
+      LimitRule,
+      PrefetchHooks Function({bool ruleSnapshotsRefs})
+    >;
+typedef $$RuleSnapshotsTableCreateCompanionBuilder =
+    RuleSnapshotsCompanion Function({
+      Value<int> snapshotId,
+      required int ruleId,
+      Value<DateTime> computedAt,
+      required double currentValue,
+      required String status,
+    });
+typedef $$RuleSnapshotsTableUpdateCompanionBuilder =
+    RuleSnapshotsCompanion Function({
+      Value<int> snapshotId,
+      Value<int> ruleId,
+      Value<DateTime> computedAt,
+      Value<double> currentValue,
+      Value<String> status,
+    });
+
+final class $$RuleSnapshotsTableReferences
+    extends BaseReferences<_$AppDatabase, $RuleSnapshotsTable, RuleSnapshot> {
+  $$RuleSnapshotsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $LimitRulesTable _ruleIdTable(_$AppDatabase db) =>
+      db.limitRules.createAlias(
+        $_aliasNameGenerator(db.ruleSnapshots.ruleId, db.limitRules.ruleId),
+      );
+
+  $$LimitRulesTableProcessedTableManager get ruleId {
+    final $_column = $_itemColumn<int>('rule_id')!;
+
+    final manager = $$LimitRulesTableTableManager(
+      $_db,
+      $_db.limitRules,
+    ).filter((f) => f.ruleId.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_ruleIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$RuleSnapshotsTableFilterComposer
+    extends Composer<_$AppDatabase, $RuleSnapshotsTable> {
+  $$RuleSnapshotsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get snapshotId => $composableBuilder(
+    column: $table.snapshotId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get computedAt => $composableBuilder(
+    column: $table.computedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get currentValue => $composableBuilder(
+    column: $table.currentValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$LimitRulesTableFilterComposer get ruleId {
+    final $$LimitRulesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ruleId,
+      referencedTable: $db.limitRules,
+      getReferencedColumn: (t) => t.ruleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LimitRulesTableFilterComposer(
+            $db: $db,
+            $table: $db.limitRules,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RuleSnapshotsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RuleSnapshotsTable> {
+  $$RuleSnapshotsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get snapshotId => $composableBuilder(
+    column: $table.snapshotId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get computedAt => $composableBuilder(
+    column: $table.computedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get currentValue => $composableBuilder(
+    column: $table.currentValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$LimitRulesTableOrderingComposer get ruleId {
+    final $$LimitRulesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ruleId,
+      referencedTable: $db.limitRules,
+      getReferencedColumn: (t) => t.ruleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LimitRulesTableOrderingComposer(
+            $db: $db,
+            $table: $db.limitRules,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RuleSnapshotsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RuleSnapshotsTable> {
+  $$RuleSnapshotsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get snapshotId => $composableBuilder(
+    column: $table.snapshotId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get computedAt => $composableBuilder(
+    column: $table.computedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get currentValue => $composableBuilder(
+    column: $table.currentValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  $$LimitRulesTableAnnotationComposer get ruleId {
+    final $$LimitRulesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ruleId,
+      referencedTable: $db.limitRules,
+      getReferencedColumn: (t) => t.ruleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LimitRulesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.limitRules,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RuleSnapshotsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RuleSnapshotsTable,
+          RuleSnapshot,
+          $$RuleSnapshotsTableFilterComposer,
+          $$RuleSnapshotsTableOrderingComposer,
+          $$RuleSnapshotsTableAnnotationComposer,
+          $$RuleSnapshotsTableCreateCompanionBuilder,
+          $$RuleSnapshotsTableUpdateCompanionBuilder,
+          (RuleSnapshot, $$RuleSnapshotsTableReferences),
+          RuleSnapshot,
+          PrefetchHooks Function({bool ruleId})
+        > {
+  $$RuleSnapshotsTableTableManager(_$AppDatabase db, $RuleSnapshotsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RuleSnapshotsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RuleSnapshotsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RuleSnapshotsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> snapshotId = const Value.absent(),
+                Value<int> ruleId = const Value.absent(),
+                Value<DateTime> computedAt = const Value.absent(),
+                Value<double> currentValue = const Value.absent(),
+                Value<String> status = const Value.absent(),
+              }) => RuleSnapshotsCompanion(
+                snapshotId: snapshotId,
+                ruleId: ruleId,
+                computedAt: computedAt,
+                currentValue: currentValue,
+                status: status,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> snapshotId = const Value.absent(),
+                required int ruleId,
+                Value<DateTime> computedAt = const Value.absent(),
+                required double currentValue,
+                required String status,
+              }) => RuleSnapshotsCompanion.insert(
+                snapshotId: snapshotId,
+                ruleId: ruleId,
+                computedAt: computedAt,
+                currentValue: currentValue,
+                status: status,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$RuleSnapshotsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({ruleId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (ruleId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.ruleId,
+                                referencedTable: $$RuleSnapshotsTableReferences
+                                    ._ruleIdTable(db),
+                                referencedColumn: $$RuleSnapshotsTableReferences
+                                    ._ruleIdTable(db)
+                                    .ruleId,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$RuleSnapshotsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RuleSnapshotsTable,
+      RuleSnapshot,
+      $$RuleSnapshotsTableFilterComposer,
+      $$RuleSnapshotsTableOrderingComposer,
+      $$RuleSnapshotsTableAnnotationComposer,
+      $$RuleSnapshotsTableCreateCompanionBuilder,
+      $$RuleSnapshotsTableUpdateCompanionBuilder,
+      (RuleSnapshot, $$RuleSnapshotsTableReferences),
+      RuleSnapshot,
+      PrefetchHooks Function({bool ruleId})
+    >;
 typedef $$PositioningsTableCreateCompanionBuilder =
     PositioningsCompanion Function({
       Value<int> id,
@@ -10645,12 +14393,817 @@ typedef $$PositioningsTableProcessedTableManager =
         bool departureDateTimeId,
       })
     >;
+typedef $$PreviousExperiencesTableCreateCompanionBuilder =
+    PreviousExperiencesCompanion Function({
+      Value<int> id,
+      required int aircraftTypeId,
+      Value<DateTime?> dateTimeFirstFlight,
+      Value<DateTime?> dateTimeLastFlight,
+      required int timePICMinutes,
+      required int timePICUSMinutes,
+      required int timeSICMinutes,
+      required int timeDualMinutes,
+      required int timeInstructorMinutes,
+      required int timeIFRMinutes,
+      required int timeInstrumentMinutes,
+      required int timeSimulatedInstrumentMinutes,
+      required int timeNightMinutes,
+      required int timeCrossCountryMinutes,
+      required int timeCustom1Minutes,
+      required int timeCustom2Minutes,
+      required int timeCustom3Minutes,
+      required int timeCustom4Minutes,
+      required int timeFlightMinutes,
+      required int timeBlockMinutes,
+      required int timeSimulatorMinutes,
+      required int distanceNM,
+      required int ifrApproaches,
+      required int takeOffsDays,
+      required int takeOffsNight,
+      required int landingsDay,
+      required int landingsNight,
+    });
+typedef $$PreviousExperiencesTableUpdateCompanionBuilder =
+    PreviousExperiencesCompanion Function({
+      Value<int> id,
+      Value<int> aircraftTypeId,
+      Value<DateTime?> dateTimeFirstFlight,
+      Value<DateTime?> dateTimeLastFlight,
+      Value<int> timePICMinutes,
+      Value<int> timePICUSMinutes,
+      Value<int> timeSICMinutes,
+      Value<int> timeDualMinutes,
+      Value<int> timeInstructorMinutes,
+      Value<int> timeIFRMinutes,
+      Value<int> timeInstrumentMinutes,
+      Value<int> timeSimulatedInstrumentMinutes,
+      Value<int> timeNightMinutes,
+      Value<int> timeCrossCountryMinutes,
+      Value<int> timeCustom1Minutes,
+      Value<int> timeCustom2Minutes,
+      Value<int> timeCustom3Minutes,
+      Value<int> timeCustom4Minutes,
+      Value<int> timeFlightMinutes,
+      Value<int> timeBlockMinutes,
+      Value<int> timeSimulatorMinutes,
+      Value<int> distanceNM,
+      Value<int> ifrApproaches,
+      Value<int> takeOffsDays,
+      Value<int> takeOffsNight,
+      Value<int> landingsDay,
+      Value<int> landingsNight,
+    });
+
+final class $$PreviousExperiencesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $PreviousExperiencesTable,
+          PreviousExperience
+        > {
+  $$PreviousExperiencesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $AircraftTypesTable _aircraftTypeIdTable(_$AppDatabase db) =>
+      db.aircraftTypes.createAlias(
+        $_aliasNameGenerator(
+          db.previousExperiences.aircraftTypeId,
+          db.aircraftTypes.id,
+        ),
+      );
+
+  $$AircraftTypesTableProcessedTableManager get aircraftTypeId {
+    final $_column = $_itemColumn<int>('aircraft_type_id')!;
+
+    final manager = $$AircraftTypesTableTableManager(
+      $_db,
+      $_db.aircraftTypes,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_aircraftTypeIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$PreviousExperiencesTableFilterComposer
+    extends Composer<_$AppDatabase, $PreviousExperiencesTable> {
+  $$PreviousExperiencesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dateTimeFirstFlight => $composableBuilder(
+    column: $table.dateTimeFirstFlight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dateTimeLastFlight => $composableBuilder(
+    column: $table.dateTimeLastFlight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timePICMinutes => $composableBuilder(
+    column: $table.timePICMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timePICUSMinutes => $composableBuilder(
+    column: $table.timePICUSMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeSICMinutes => $composableBuilder(
+    column: $table.timeSICMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeDualMinutes => $composableBuilder(
+    column: $table.timeDualMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeInstructorMinutes => $composableBuilder(
+    column: $table.timeInstructorMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeIFRMinutes => $composableBuilder(
+    column: $table.timeIFRMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeInstrumentMinutes => $composableBuilder(
+    column: $table.timeInstrumentMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeSimulatedInstrumentMinutes => $composableBuilder(
+    column: $table.timeSimulatedInstrumentMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeNightMinutes => $composableBuilder(
+    column: $table.timeNightMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeCrossCountryMinutes => $composableBuilder(
+    column: $table.timeCrossCountryMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeCustom1Minutes => $composableBuilder(
+    column: $table.timeCustom1Minutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeCustom2Minutes => $composableBuilder(
+    column: $table.timeCustom2Minutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeCustom3Minutes => $composableBuilder(
+    column: $table.timeCustom3Minutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeCustom4Minutes => $composableBuilder(
+    column: $table.timeCustom4Minutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeFlightMinutes => $composableBuilder(
+    column: $table.timeFlightMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeBlockMinutes => $composableBuilder(
+    column: $table.timeBlockMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeSimulatorMinutes => $composableBuilder(
+    column: $table.timeSimulatorMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get distanceNM => $composableBuilder(
+    column: $table.distanceNM,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get ifrApproaches => $composableBuilder(
+    column: $table.ifrApproaches,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get takeOffsDays => $composableBuilder(
+    column: $table.takeOffsDays,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get takeOffsNight => $composableBuilder(
+    column: $table.takeOffsNight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get landingsDay => $composableBuilder(
+    column: $table.landingsDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get landingsNight => $composableBuilder(
+    column: $table.landingsNight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$AircraftTypesTableFilterComposer get aircraftTypeId {
+    final $$AircraftTypesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.aircraftTypeId,
+      referencedTable: $db.aircraftTypes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AircraftTypesTableFilterComposer(
+            $db: $db,
+            $table: $db.aircraftTypes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PreviousExperiencesTableOrderingComposer
+    extends Composer<_$AppDatabase, $PreviousExperiencesTable> {
+  $$PreviousExperiencesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dateTimeFirstFlight => $composableBuilder(
+    column: $table.dateTimeFirstFlight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dateTimeLastFlight => $composableBuilder(
+    column: $table.dateTimeLastFlight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timePICMinutes => $composableBuilder(
+    column: $table.timePICMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timePICUSMinutes => $composableBuilder(
+    column: $table.timePICUSMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeSICMinutes => $composableBuilder(
+    column: $table.timeSICMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeDualMinutes => $composableBuilder(
+    column: $table.timeDualMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeInstructorMinutes => $composableBuilder(
+    column: $table.timeInstructorMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeIFRMinutes => $composableBuilder(
+    column: $table.timeIFRMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeInstrumentMinutes => $composableBuilder(
+    column: $table.timeInstrumentMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeSimulatedInstrumentMinutes => $composableBuilder(
+    column: $table.timeSimulatedInstrumentMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeNightMinutes => $composableBuilder(
+    column: $table.timeNightMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeCrossCountryMinutes => $composableBuilder(
+    column: $table.timeCrossCountryMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeCustom1Minutes => $composableBuilder(
+    column: $table.timeCustom1Minutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeCustom2Minutes => $composableBuilder(
+    column: $table.timeCustom2Minutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeCustom3Minutes => $composableBuilder(
+    column: $table.timeCustom3Minutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeCustom4Minutes => $composableBuilder(
+    column: $table.timeCustom4Minutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeFlightMinutes => $composableBuilder(
+    column: $table.timeFlightMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeBlockMinutes => $composableBuilder(
+    column: $table.timeBlockMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeSimulatorMinutes => $composableBuilder(
+    column: $table.timeSimulatorMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get distanceNM => $composableBuilder(
+    column: $table.distanceNM,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get ifrApproaches => $composableBuilder(
+    column: $table.ifrApproaches,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get takeOffsDays => $composableBuilder(
+    column: $table.takeOffsDays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get takeOffsNight => $composableBuilder(
+    column: $table.takeOffsNight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get landingsDay => $composableBuilder(
+    column: $table.landingsDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get landingsNight => $composableBuilder(
+    column: $table.landingsNight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$AircraftTypesTableOrderingComposer get aircraftTypeId {
+    final $$AircraftTypesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.aircraftTypeId,
+      referencedTable: $db.aircraftTypes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AircraftTypesTableOrderingComposer(
+            $db: $db,
+            $table: $db.aircraftTypes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PreviousExperiencesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PreviousExperiencesTable> {
+  $$PreviousExperiencesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dateTimeFirstFlight => $composableBuilder(
+    column: $table.dateTimeFirstFlight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get dateTimeLastFlight => $composableBuilder(
+    column: $table.dateTimeLastFlight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timePICMinutes => $composableBuilder(
+    column: $table.timePICMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timePICUSMinutes => $composableBuilder(
+    column: $table.timePICUSMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeSICMinutes => $composableBuilder(
+    column: $table.timeSICMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeDualMinutes => $composableBuilder(
+    column: $table.timeDualMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeInstructorMinutes => $composableBuilder(
+    column: $table.timeInstructorMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeIFRMinutes => $composableBuilder(
+    column: $table.timeIFRMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeInstrumentMinutes => $composableBuilder(
+    column: $table.timeInstrumentMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeSimulatedInstrumentMinutes => $composableBuilder(
+    column: $table.timeSimulatedInstrumentMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeNightMinutes => $composableBuilder(
+    column: $table.timeNightMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeCrossCountryMinutes => $composableBuilder(
+    column: $table.timeCrossCountryMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeCustom1Minutes => $composableBuilder(
+    column: $table.timeCustom1Minutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeCustom2Minutes => $composableBuilder(
+    column: $table.timeCustom2Minutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeCustom3Minutes => $composableBuilder(
+    column: $table.timeCustom3Minutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeCustom4Minutes => $composableBuilder(
+    column: $table.timeCustom4Minutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeFlightMinutes => $composableBuilder(
+    column: $table.timeFlightMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeBlockMinutes => $composableBuilder(
+    column: $table.timeBlockMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeSimulatorMinutes => $composableBuilder(
+    column: $table.timeSimulatorMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get distanceNM => $composableBuilder(
+    column: $table.distanceNM,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get ifrApproaches => $composableBuilder(
+    column: $table.ifrApproaches,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get takeOffsDays => $composableBuilder(
+    column: $table.takeOffsDays,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get takeOffsNight => $composableBuilder(
+    column: $table.takeOffsNight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get landingsDay => $composableBuilder(
+    column: $table.landingsDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get landingsNight => $composableBuilder(
+    column: $table.landingsNight,
+    builder: (column) => column,
+  );
+
+  $$AircraftTypesTableAnnotationComposer get aircraftTypeId {
+    final $$AircraftTypesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.aircraftTypeId,
+      referencedTable: $db.aircraftTypes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AircraftTypesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.aircraftTypes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PreviousExperiencesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PreviousExperiencesTable,
+          PreviousExperience,
+          $$PreviousExperiencesTableFilterComposer,
+          $$PreviousExperiencesTableOrderingComposer,
+          $$PreviousExperiencesTableAnnotationComposer,
+          $$PreviousExperiencesTableCreateCompanionBuilder,
+          $$PreviousExperiencesTableUpdateCompanionBuilder,
+          (PreviousExperience, $$PreviousExperiencesTableReferences),
+          PreviousExperience,
+          PrefetchHooks Function({bool aircraftTypeId})
+        > {
+  $$PreviousExperiencesTableTableManager(
+    _$AppDatabase db,
+    $PreviousExperiencesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PreviousExperiencesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PreviousExperiencesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PreviousExperiencesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> aircraftTypeId = const Value.absent(),
+                Value<DateTime?> dateTimeFirstFlight = const Value.absent(),
+                Value<DateTime?> dateTimeLastFlight = const Value.absent(),
+                Value<int> timePICMinutes = const Value.absent(),
+                Value<int> timePICUSMinutes = const Value.absent(),
+                Value<int> timeSICMinutes = const Value.absent(),
+                Value<int> timeDualMinutes = const Value.absent(),
+                Value<int> timeInstructorMinutes = const Value.absent(),
+                Value<int> timeIFRMinutes = const Value.absent(),
+                Value<int> timeInstrumentMinutes = const Value.absent(),
+                Value<int> timeSimulatedInstrumentMinutes =
+                    const Value.absent(),
+                Value<int> timeNightMinutes = const Value.absent(),
+                Value<int> timeCrossCountryMinutes = const Value.absent(),
+                Value<int> timeCustom1Minutes = const Value.absent(),
+                Value<int> timeCustom2Minutes = const Value.absent(),
+                Value<int> timeCustom3Minutes = const Value.absent(),
+                Value<int> timeCustom4Minutes = const Value.absent(),
+                Value<int> timeFlightMinutes = const Value.absent(),
+                Value<int> timeBlockMinutes = const Value.absent(),
+                Value<int> timeSimulatorMinutes = const Value.absent(),
+                Value<int> distanceNM = const Value.absent(),
+                Value<int> ifrApproaches = const Value.absent(),
+                Value<int> takeOffsDays = const Value.absent(),
+                Value<int> takeOffsNight = const Value.absent(),
+                Value<int> landingsDay = const Value.absent(),
+                Value<int> landingsNight = const Value.absent(),
+              }) => PreviousExperiencesCompanion(
+                id: id,
+                aircraftTypeId: aircraftTypeId,
+                dateTimeFirstFlight: dateTimeFirstFlight,
+                dateTimeLastFlight: dateTimeLastFlight,
+                timePICMinutes: timePICMinutes,
+                timePICUSMinutes: timePICUSMinutes,
+                timeSICMinutes: timeSICMinutes,
+                timeDualMinutes: timeDualMinutes,
+                timeInstructorMinutes: timeInstructorMinutes,
+                timeIFRMinutes: timeIFRMinutes,
+                timeInstrumentMinutes: timeInstrumentMinutes,
+                timeSimulatedInstrumentMinutes: timeSimulatedInstrumentMinutes,
+                timeNightMinutes: timeNightMinutes,
+                timeCrossCountryMinutes: timeCrossCountryMinutes,
+                timeCustom1Minutes: timeCustom1Minutes,
+                timeCustom2Minutes: timeCustom2Minutes,
+                timeCustom3Minutes: timeCustom3Minutes,
+                timeCustom4Minutes: timeCustom4Minutes,
+                timeFlightMinutes: timeFlightMinutes,
+                timeBlockMinutes: timeBlockMinutes,
+                timeSimulatorMinutes: timeSimulatorMinutes,
+                distanceNM: distanceNM,
+                ifrApproaches: ifrApproaches,
+                takeOffsDays: takeOffsDays,
+                takeOffsNight: takeOffsNight,
+                landingsDay: landingsDay,
+                landingsNight: landingsNight,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int aircraftTypeId,
+                Value<DateTime?> dateTimeFirstFlight = const Value.absent(),
+                Value<DateTime?> dateTimeLastFlight = const Value.absent(),
+                required int timePICMinutes,
+                required int timePICUSMinutes,
+                required int timeSICMinutes,
+                required int timeDualMinutes,
+                required int timeInstructorMinutes,
+                required int timeIFRMinutes,
+                required int timeInstrumentMinutes,
+                required int timeSimulatedInstrumentMinutes,
+                required int timeNightMinutes,
+                required int timeCrossCountryMinutes,
+                required int timeCustom1Minutes,
+                required int timeCustom2Minutes,
+                required int timeCustom3Minutes,
+                required int timeCustom4Minutes,
+                required int timeFlightMinutes,
+                required int timeBlockMinutes,
+                required int timeSimulatorMinutes,
+                required int distanceNM,
+                required int ifrApproaches,
+                required int takeOffsDays,
+                required int takeOffsNight,
+                required int landingsDay,
+                required int landingsNight,
+              }) => PreviousExperiencesCompanion.insert(
+                id: id,
+                aircraftTypeId: aircraftTypeId,
+                dateTimeFirstFlight: dateTimeFirstFlight,
+                dateTimeLastFlight: dateTimeLastFlight,
+                timePICMinutes: timePICMinutes,
+                timePICUSMinutes: timePICUSMinutes,
+                timeSICMinutes: timeSICMinutes,
+                timeDualMinutes: timeDualMinutes,
+                timeInstructorMinutes: timeInstructorMinutes,
+                timeIFRMinutes: timeIFRMinutes,
+                timeInstrumentMinutes: timeInstrumentMinutes,
+                timeSimulatedInstrumentMinutes: timeSimulatedInstrumentMinutes,
+                timeNightMinutes: timeNightMinutes,
+                timeCrossCountryMinutes: timeCrossCountryMinutes,
+                timeCustom1Minutes: timeCustom1Minutes,
+                timeCustom2Minutes: timeCustom2Minutes,
+                timeCustom3Minutes: timeCustom3Minutes,
+                timeCustom4Minutes: timeCustom4Minutes,
+                timeFlightMinutes: timeFlightMinutes,
+                timeBlockMinutes: timeBlockMinutes,
+                timeSimulatorMinutes: timeSimulatorMinutes,
+                distanceNM: distanceNM,
+                ifrApproaches: ifrApproaches,
+                takeOffsDays: takeOffsDays,
+                takeOffsNight: takeOffsNight,
+                landingsDay: landingsDay,
+                landingsNight: landingsNight,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$PreviousExperiencesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({aircraftTypeId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (aircraftTypeId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.aircraftTypeId,
+                                referencedTable:
+                                    $$PreviousExperiencesTableReferences
+                                        ._aircraftTypeIdTable(db),
+                                referencedColumn:
+                                    $$PreviousExperiencesTableReferences
+                                        ._aircraftTypeIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$PreviousExperiencesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PreviousExperiencesTable,
+      PreviousExperience,
+      $$PreviousExperiencesTableFilterComposer,
+      $$PreviousExperiencesTableOrderingComposer,
+      $$PreviousExperiencesTableAnnotationComposer,
+      $$PreviousExperiencesTableCreateCompanionBuilder,
+      $$PreviousExperiencesTableUpdateCompanionBuilder,
+      (PreviousExperience, $$PreviousExperiencesTableReferences),
+      PreviousExperience,
+      PrefetchHooks Function({bool aircraftTypeId})
+    >;
 typedef $$DutyPeriodsTableCreateCompanionBuilder =
     DutyPeriodsCompanion Function({
       Value<int> id,
       required int dutyStartTimeLineId,
       required int dutyEndTimeLineId,
       required int timeDutyMinutes,
+      Value<int> restBeforeMinutes,
       required int timeFactoredDutyMinutes,
       required bool isLocked,
     });
@@ -10660,6 +15213,7 @@ typedef $$DutyPeriodsTableUpdateCompanionBuilder =
       Value<int> dutyStartTimeLineId,
       Value<int> dutyEndTimeLineId,
       Value<int> timeDutyMinutes,
+      Value<int> restBeforeMinutes,
       Value<int> timeFactoredDutyMinutes,
       Value<bool> isLocked,
     });
@@ -10726,6 +15280,11 @@ class $$DutyPeriodsTableFilterComposer
 
   ColumnFilters<int> get timeDutyMinutes => $composableBuilder(
     column: $table.timeDutyMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get restBeforeMinutes => $composableBuilder(
+    column: $table.restBeforeMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10805,6 +15364,11 @@ class $$DutyPeriodsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get restBeforeMinutes => $composableBuilder(
+    column: $table.restBeforeMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get timeFactoredDutyMinutes => $composableBuilder(
     column: $table.timeFactoredDutyMinutes,
     builder: (column) => ColumnOrderings(column),
@@ -10876,6 +15440,11 @@ class $$DutyPeriodsTableAnnotationComposer
 
   GeneratedColumn<int> get timeDutyMinutes => $composableBuilder(
     column: $table.timeDutyMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get restBeforeMinutes => $composableBuilder(
+    column: $table.restBeforeMinutes,
     builder: (column) => column,
   );
 
@@ -10969,6 +15538,7 @@ class $$DutyPeriodsTableTableManager
                 Value<int> dutyStartTimeLineId = const Value.absent(),
                 Value<int> dutyEndTimeLineId = const Value.absent(),
                 Value<int> timeDutyMinutes = const Value.absent(),
+                Value<int> restBeforeMinutes = const Value.absent(),
                 Value<int> timeFactoredDutyMinutes = const Value.absent(),
                 Value<bool> isLocked = const Value.absent(),
               }) => DutyPeriodsCompanion(
@@ -10976,6 +15546,7 @@ class $$DutyPeriodsTableTableManager
                 dutyStartTimeLineId: dutyStartTimeLineId,
                 dutyEndTimeLineId: dutyEndTimeLineId,
                 timeDutyMinutes: timeDutyMinutes,
+                restBeforeMinutes: restBeforeMinutes,
                 timeFactoredDutyMinutes: timeFactoredDutyMinutes,
                 isLocked: isLocked,
               ),
@@ -10985,6 +15556,7 @@ class $$DutyPeriodsTableTableManager
                 required int dutyStartTimeLineId,
                 required int dutyEndTimeLineId,
                 required int timeDutyMinutes,
+                Value<int> restBeforeMinutes = const Value.absent(),
                 required int timeFactoredDutyMinutes,
                 required bool isLocked,
               }) => DutyPeriodsCompanion.insert(
@@ -10992,6 +15564,7 @@ class $$DutyPeriodsTableTableManager
                 dutyStartTimeLineId: dutyStartTimeLineId,
                 dutyEndTimeLineId: dutyEndTimeLineId,
                 timeDutyMinutes: timeDutyMinutes,
+                restBeforeMinutes: restBeforeMinutes,
                 timeFactoredDutyMinutes: timeFactoredDutyMinutes,
                 isLocked: isLocked,
               ),
@@ -13030,8 +17603,14 @@ class $AppDatabaseManager {
       $$TimeLinesTableTableManager(_db, _db.timeLines);
   $$FlightsTableTableManager get flights =>
       $$FlightsTableTableManager(_db, _db.flights);
+  $$LimitRulesTableTableManager get limitRules =>
+      $$LimitRulesTableTableManager(_db, _db.limitRules);
+  $$RuleSnapshotsTableTableManager get ruleSnapshots =>
+      $$RuleSnapshotsTableTableManager(_db, _db.ruleSnapshots);
   $$PositioningsTableTableManager get positionings =>
       $$PositioningsTableTableManager(_db, _db.positionings);
+  $$PreviousExperiencesTableTableManager get previousExperiences =>
+      $$PreviousExperiencesTableTableManager(_db, _db.previousExperiences);
   $$DutyPeriodsTableTableManager get dutyPeriods =>
       $$DutyPeriodsTableTableManager(_db, _db.dutyPeriods);
   $$CrewTableTableManager get crew => $$CrewTableTableManager(_db, _db.crew);

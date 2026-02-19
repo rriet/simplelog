@@ -14,7 +14,10 @@ import 'tables/crew_table.dart';
 import 'tables/duty_periods_table.dart';
 import 'tables/flight_crew_assignments_table.dart';
 import 'tables/flights_table.dart';
+import 'tables/limit_rules_table.dart';
 import 'tables/positionings_table.dart';
+import 'tables/previous_experiences_table.dart';
+import 'tables/rule_snapshots_table.dart';
 import 'tables/simulator_crew_assignments_table.dart';
 import 'tables/simulator_trainings_table.dart';
 import 'tables/timeline_table.dart';
@@ -27,7 +30,10 @@ part 'app_database.g.dart';
     Aircrafts,
     Airports,
     Flights,
+    LimitRules,
+    RuleSnapshots,
     Positionings,
+    PreviousExperiences,
     DutyPeriods,
     Crew,
     FlightCrewAssignments,
@@ -40,7 +46,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'simplelog'));
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -364,6 +370,174 @@ class AppDatabase extends _$AppDatabase {
               'ALTER TABLE aircrafts_new RENAME TO aircrafts;',
             );
           }
+          if (from < 9) {
+            await migrator.createTable(limitRules);
+            await migrator.createTable(ruleSnapshots);
+            await migrator.addColumn(dutyPeriods, dutyPeriods.restBeforeMinutes);
+          }
+          if (from < 10) {
+            await migrator.database.customStatement('''
+              CREATE TABLE limit_rules_new (
+                rule_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                rule_name TEXT NOT NULL,
+                metric TEXT NOT NULL,
+                rule_type TEXT NOT NULL,
+                window_type TEXT NOT NULL,
+                window_value INTEGER NOT NULL,
+                limit_value REAL NOT NULL,
+                limit_unit TEXT NOT NULL,
+                warn_yellow_before REAL NOT NULL DEFAULT 0,
+                warn_red_before REAL NOT NULL DEFAULT 0,
+                warn_yellow_color TEXT NOT NULL DEFAULT '#FFC107',
+                warn_red_color TEXT NOT NULL DEFAULT '#DC3545',
+                active INTEGER NOT NULL DEFAULT 1,
+                notes TEXT NULL
+              );
+            ''');
+            await migrator.database.customStatement('''
+              INSERT INTO limit_rules_new (
+                rule_id,
+                rule_name,
+                metric,
+                rule_type,
+                window_type,
+                window_value,
+                limit_value,
+                limit_unit,
+                warn_yellow_before,
+                warn_red_before,
+                warn_yellow_color,
+                warn_red_color,
+                active,
+                notes
+              )
+              SELECT
+                rule_id,
+                rule_name,
+                metric,
+                rule_type,
+                window_type,
+                window_value,
+                limit_value,
+                limit_unit,
+                warn_yellow_before,
+                warn_red_before,
+                warn_yellow_color,
+                warn_red_color,
+                active,
+                notes
+              FROM limit_rules;
+            ''');
+            await migrator.database.customStatement('DROP TABLE rule_snapshots;');
+            await migrator.database.customStatement('DROP TABLE limit_rules;');
+            await migrator.database.customStatement(
+              'ALTER TABLE limit_rules_new RENAME TO limit_rules;',
+            );
+            await migrator.createTable(ruleSnapshots);
+            await migrator.database.customStatement('DROP TABLE IF EXISTS pilots;');
+          }
+          if (from < 11) {
+            await migrator.createTable(previousExperiences);
+          }
+          if (from < 12) {
+            await migrator.database.customStatement('''
+              CREATE TABLE previous_experiences_new (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                aircraft_type_id INTEGER NOT NULL REFERENCES aircraft_types(id),
+                date_time_first_flight INTEGER NULL,
+                date_time_last_flight INTEGER NULL,
+                time_p_i_c_minutes INTEGER NOT NULL,
+                time_p_i_c_u_s_minutes INTEGER NOT NULL,
+                time_s_i_c_minutes INTEGER NOT NULL,
+                time_dual_minutes INTEGER NOT NULL,
+                time_instructor_minutes INTEGER NOT NULL,
+                time_i_f_r_minutes INTEGER NOT NULL,
+                time_instrument_minutes INTEGER NOT NULL,
+                time_simulated_instrument_minutes INTEGER NOT NULL,
+                time_night_minutes INTEGER NOT NULL,
+                time_cross_country_minutes INTEGER NOT NULL,
+                time_custom1_minutes INTEGER NOT NULL,
+                time_custom2_minutes INTEGER NOT NULL,
+                time_custom3_minutes INTEGER NOT NULL,
+                time_custom4_minutes INTEGER NOT NULL,
+                time_flight_minutes INTEGER NOT NULL,
+                time_block_minutes INTEGER NOT NULL,
+                time_simulator_minutes INTEGER NOT NULL,
+                distance_n_m INTEGER NOT NULL,
+                ifr_approaches INTEGER NOT NULL,
+                take_offs_days INTEGER NOT NULL,
+                take_offs_night INTEGER NOT NULL,
+                landings_day INTEGER NOT NULL,
+                landings_night INTEGER NOT NULL
+              );
+            ''');
+            await migrator.database.customStatement('''
+              INSERT INTO previous_experiences_new (
+                id,
+                aircraft_type_id,
+                date_time_first_flight,
+                date_time_last_flight,
+                time_p_i_c_minutes,
+                time_p_i_c_u_s_minutes,
+                time_s_i_c_minutes,
+                time_dual_minutes,
+                time_instructor_minutes,
+                time_i_f_r_minutes,
+                time_instrument_minutes,
+                time_simulated_instrument_minutes,
+                time_night_minutes,
+                time_cross_country_minutes,
+                time_custom1_minutes,
+                time_custom2_minutes,
+                time_custom3_minutes,
+                time_custom4_minutes,
+                time_flight_minutes,
+                time_block_minutes,
+                time_simulator_minutes,
+                distance_n_m,
+                ifr_approaches,
+                take_offs_days,
+                take_offs_night,
+                landings_day,
+                landings_night
+              )
+              SELECT
+                id,
+                aircraft_type_id,
+                date_time_first_flight,
+                date_time_last_flight,
+                time_p_i_c_minutes,
+                time_p_i_c_u_s_minutes,
+                time_s_i_c_minutes,
+                time_dual_minutes,
+                time_instructor_minutes,
+                time_i_f_r_minutes,
+                time_instrument_minutes,
+                time_simulated_instrument_minutes,
+                time_night_minutes,
+                time_cross_country_minutes,
+                time_custom1_minutes,
+                time_custom2_minutes,
+                time_custom3_minutes,
+                time_custom4_minutes,
+                time_flight_minutes,
+                time_block_minutes,
+                time_simulator_minutes,
+                distance_n_m,
+                ifr_approaches,
+                take_offs_days,
+                take_offs_night,
+                landings_day,
+                landings_night
+              FROM previous_experiences;
+            ''');
+            await migrator.database.customStatement(
+              'DROP TABLE previous_experiences;',
+            );
+            await migrator.database.customStatement(
+              'ALTER TABLE previous_experiences_new RENAME TO previous_experiences;',
+            );
+          }
         },
       );
 
@@ -371,6 +545,9 @@ class AppDatabase extends _$AppDatabase {
     await transaction(() async {
       await delete(flightCrewAssignments).go();
       await delete(simulatorCrewAssignments).go();
+      await delete(ruleSnapshots).go();
+      await delete(limitRules).go();
+      await delete(previousExperiences).go();
       await delete(flights).go();
       await delete(simulatorTrainings).go();
       await delete(positionings).go();

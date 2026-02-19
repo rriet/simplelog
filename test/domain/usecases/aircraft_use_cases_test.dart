@@ -87,4 +87,9 @@ class _FakeAircraftRepository implements AircraftRepositoryContract {
   Stream<List<AircraftRow>> watchAircraft(String query) {
     return const Stream.empty();
   }
+
+  @override
+  Future<List<AircraftRow>> fetchAircraftByType(int aircraftTypeId) async {
+    return const [];
+  }
 }

@@ -39,6 +39,8 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   Set<String> _localIps = {};
   bool _isWaiting = false;
   int? _schemaVersion;
+  int _disconnectFailures = 0;
+  bool _disconnectProbeInFlight = false;
 
   @override
   void initState() {
@@ -75,19 +77,22 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
           if (!mounted) return;
           final key = '$host:$port';
           final device = _devices[key];
+          final candidate = _selected ??
+              device ??
+              DiscoveredDevice(
+                name: host,
+                host: host,
+                port: port,
+              );
           setState(() {
-            _connectedName = device?.host ?? host;
+            _connectedName = device?.name ?? candidate.name;
             _isWaiting = true;
           });
           if (_selected == null && device != null) {
             setState(() => _selected = device);
           }
-          _connectedDevice = device ?? DiscoveredDevice(
-            name: host,
-            host: host,
-            port: port,
-          );
-          _startDisconnectMonitor(_connectedDevice!);
+          _connectedDevice = candidate;
+          _startDisconnectMonitor(candidate);
         },
       );
       await _server!.start(port: syncPort);
@@ -165,6 +170,10 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   Future<String> _resolveHost(String host) async {
     final trimmed =
         host.endsWith('.') ? host.substring(0, host.length - 1) : host;
+    final literalAddress = InternetAddress.tryParse(trimmed);
+    if (literalAddress != null) {
+      return literalAddress.address;
+    }
     try {
       final addresses = await InternetAddress.lookup(trimmed);
       final ipv4 = addresses.firstWhere(
@@ -226,31 +235,56 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   }
 
   Future<void> _sendToDevice() async {
+    _selected ??= _connectedDevice;
     if (_selected == null || _isBusy) return;
+    if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
+    final target = _selected!;
 
-    final schemaOk = await _ensureSchemaMatch(_selected!, l10n);
+    final reachable = await _probeDeviceReachability(target);
+    if (!mounted) return;
+    if (!reachable) {
+      setState(() {
+        _status = 'Device ${target.name} is no longer reachable. '
+            'Reopen Local Sync on that device and reconnect.';
+        _isWaiting = false;
+        _connectedDevice = null;
+        _connectedName = null;
+      });
+      return;
+    }
+
+    final schemaOk = await _ensureSchemaMatch(target, l10n);
+    if (!mounted) return;
     if (!schemaOk) return;
 
-    final confirm = await _confirmOverwrite(l10n, _selected!.name);
+    final confirm = await _confirmOverwrite(l10n, target.name);
+    if (!mounted) return;
     if (!confirm) return;
 
-    setState(() => _isBusy = true);
+    setState(() {
+      _isBusy = true;
+      _status = 'Transferring database...';
+    });
     try {
-      final host = await _resolveHost(_selected!.host);
-      final uri = Uri.parse('http://$host:${_selected!.port}/db');
       final bytes = await _readDatabaseBytes();
-      final response = await http.post(uri, body: bytes);
+      final response = await _postToDevice(
+        target,
+        '/db',
+        body: bytes,
+        timeout: const Duration(minutes: 2),
+      );
       if (response.statusCode != HttpStatus.ok) {
         throw StateError('Upload failed (${response.statusCode})');
       }
-      await _notifyTransferComplete(_selected!);
+      await _notifyTransferComplete(target);
       if (mounted) {
+        setState(() => _status = null);
         await _showSyncComplete(l10n);
       }
     } catch (error) {
       if (mounted) {
-        setState(() => _status = error.toString());
+        setState(() => _status = _friendlySyncError(error));
       }
     } finally {
       if (mounted) {
@@ -262,11 +296,10 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   Future<void> _sendHelloTo(DiscoveredDevice device) async {
     final selfHost = await _localIp();
     if (selfHost == null) return;
-    final host = await _resolveHost(device.host);
-    final uri = Uri.parse('http://$host:${device.port}/hello');
     try {
-      await http.post(
-        uri,
+      await _postToDevice(
+        device,
+        '/hello',
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'host': selfHost, 'port': syncPort}),
       );
@@ -276,13 +309,36 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   }
 
   Future<void> _handleDeviceTap(DiscoveredDevice device) async {
-    setState(() => _selected = device);
-    await _sendHelloTo(device);
-    if (mounted) {
-      setState(() => _connectedName = device.host);
+    setState(() {
+      _selected = device;
+      _status = null;
+    });
+    final reachable = await _probeDeviceReachability(device);
+    if (!mounted) return;
+    if (!reachable) {
+      setState(() {
+        _status = 'Cannot verify ${device.host}:${device.port} yet. '
+            'You can still try Pull/Send. Keep Local Sync open on the other '
+            'device and use the same Wi-Fi.';
+      });
     }
+    await _sendHelloTo(device);
+    if (!mounted) return;
+    setState(() {
+      _connectedName = device.name;
+      _isWaiting = true;
+    });
     _connectedDevice = device;
     _startDisconnectMonitor(device);
+  }
+
+  Future<bool> _probeDeviceReachability(DiscoveredDevice device) async {
+    try {
+      final response = await _getFromDevice(device, '/info');
+      return response.statusCode == HttpStatus.ok;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<String?> _localIp() async {
@@ -302,31 +358,55 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   }
 
   Future<void> _pullFromDevice() async {
+    _selected ??= _connectedDevice;
     if (_selected == null || _isBusy) return;
+    if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
+    final target = _selected!;
 
-    final schemaOk = await _ensureSchemaMatch(_selected!, l10n);
+    final reachable = await _probeDeviceReachability(target);
+    if (!mounted) return;
+    if (!reachable) {
+      setState(() {
+        _status = 'Device ${target.name} is no longer reachable. '
+            'Reopen Local Sync on that device and reconnect.';
+        _isWaiting = false;
+        _connectedDevice = null;
+        _connectedName = null;
+      });
+      return;
+    }
+
+    final schemaOk = await _ensureSchemaMatch(target, l10n);
+    if (!mounted) return;
     if (!schemaOk) return;
 
-    final confirm = await _confirmOverwrite(l10n, _selected!.name);
+    final confirm = await _confirmOverwrite(l10n, target.name);
+    if (!mounted) return;
     if (!confirm) return;
 
-    setState(() => _isBusy = true);
+    setState(() {
+      _isBusy = true;
+      _status = 'Transferring database...';
+    });
     try {
-      final host = await _resolveHost(_selected!.host);
-      final uri = Uri.parse('http://$host:${_selected!.port}/db');
-      final response = await http.get(uri);
+      final response = await _getFromDevice(
+        target,
+        '/db',
+        timeout: const Duration(minutes: 2),
+      );
       if (response.statusCode != HttpStatus.ok) {
         throw StateError('Download failed (${response.statusCode})');
       }
       await _replaceDatabaseBytes(response.bodyBytes);
-      await _notifyTransferComplete(_selected!);
+      await _notifyTransferComplete(target);
       if (mounted) {
+        setState(() => _status = null);
         await _showSyncComplete(l10n);
       }
     } catch (error) {
       if (mounted) {
-        setState(() => _status = error.toString());
+        setState(() => _status = _friendlySyncError(error));
       }
     } finally {
       if (mounted) {
@@ -336,6 +416,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   }
 
   Future<bool> _confirmOverwrite(AppLocalizations l10n, String name) async {
+    if (!mounted) return false;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -397,10 +478,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
 
   Future<int?> _fetchRemoteSchemaVersion(DiscoveredDevice device) async {
     try {
-      final host = await _resolveHost(device.host);
-      final uri = Uri.parse('http://$host:${device.port}/info');
-      final response =
-          await http.get(uri).timeout(const Duration(seconds: 2));
+      final response = await _getFromDevice(device, '/info');
       if (response.statusCode != HttpStatus.ok) {
         return null;
       }
@@ -438,20 +516,29 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   void _startDisconnectMonitor(DiscoveredDevice device) {
     _disconnectTimer?.cancel();
     _disconnectTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
-      if (!mounted || _connectedDevice != device) return;
+      if (!mounted || _connectedDevice != device || _isBusy) return;
+      if (_disconnectProbeInFlight) return;
+      _disconnectProbeInFlight = true;
       try {
-        final host = await _resolveHost(device.host);
-        final uri = Uri.parse('http://$host:${device.port}/info');
-        await http.get(uri).timeout(const Duration(seconds: 2));
+        await _getFromDevice(
+          device,
+          '/info',
+          timeout: const Duration(seconds: 2),
+        );
+        _disconnectFailures = 0;
       } catch (_) {
-        if (mounted && _connectedDevice == device) {
+        _disconnectFailures += 1;
+        if (mounted && _connectedDevice == device && _disconnectFailures >= 3) {
           _handleDisconnected();
         }
+      } finally {
+        _disconnectProbeInFlight = false;
       }
     });
   }
 
   void _handleDisconnected() {
+    if (!mounted) return;
     _disconnectTimer?.cancel();
     _connectedDevice = null;
     _connectedName = null;
@@ -460,6 +547,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   }
 
   Future<void> _showDisconnectedDialog() async {
+    if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
     final navigator = Navigator.of(context, rootNavigator: true);
     if (navigator.canPop()) {
@@ -481,12 +569,75 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
 
   Future<void> _notifyTransferComplete(DiscoveredDevice device) async {
     try {
-      final host = await _resolveHost(device.host);
-      final uri = Uri.parse('http://$host:${device.port}/complete');
-      await http.post(uri).timeout(const Duration(seconds: 2));
+      await _postToDevice(device, '/complete');
     } catch (_) {
       // ignore
     }
+  }
+
+  Future<http.Response> _getFromDevice(
+    DiscoveredDevice device,
+    String path, {
+    Duration timeout = const Duration(seconds: 6),
+  }) async {
+    Object? lastError;
+    for (final host in await _hostCandidates(device)) {
+      final uri = Uri.parse('http://$host:${device.port}$path');
+      for (var attempt = 0; attempt < 3; attempt++) {
+        try {
+          return await http.get(uri).timeout(timeout);
+        } catch (error) {
+          lastError = error;
+        }
+      }
+    }
+    throw StateError(lastError?.toString() ?? 'Unable to reach ${device.host}');
+  }
+
+  Future<http.Response> _postToDevice(
+    DiscoveredDevice device,
+    String path, {
+    Object? body,
+    Map<String, String>? headers,
+    Duration timeout = const Duration(seconds: 6),
+  }) async {
+    Object? lastError;
+    for (final host in await _hostCandidates(device)) {
+      final uri = Uri.parse('http://$host:${device.port}$path');
+      for (var attempt = 0; attempt < 3; attempt++) {
+        try {
+          return await http
+              .post(uri, body: body, headers: headers)
+              .timeout(timeout);
+        } catch (error) {
+          lastError = error;
+        }
+      }
+    }
+    throw StateError(lastError?.toString() ?? 'Unable to reach ${device.host}');
+  }
+
+  Future<List<String>> _hostCandidates(DiscoveredDevice device) async {
+    final raw = device.host.endsWith('.')
+        ? device.host.substring(0, device.host.length - 1)
+        : device.host;
+    final resolved = await _resolveHost(raw);
+    if (resolved == raw) {
+      return [raw];
+    }
+    return [raw, resolved];
+  }
+
+  String _friendlySyncError(Object error) {
+    final text = error.toString();
+    if (text.contains('Connection refused')) {
+      return 'Connection refused by the other device. '
+          'Keep Local Sync open on both devices and try reconnecting.';
+    }
+    if (text.contains('timed out') || text.contains('TimeoutException')) {
+      return 'Connection timed out. Verify both devices are on the same Wi-Fi.';
+    }
+    return text;
   }
 
   void _handleTransferComplete() {
@@ -606,25 +757,12 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
           ),
         const SizedBox(height: 12),
         LayoutBuilder(
-          builder: (context, constraints) {
-            final useWrap = constraints.maxWidth < 340;
-            if (useWrap) {
-              return Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 8,
-                runSpacing: 8,
-                children: actionButtons,
-              );
-            }
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                actionButtons[0],
-                const SizedBox(width: 8),
-                actionButtons[1],
-                const SizedBox(width: 8),
-                actionButtons[2],
-              ],
+          builder: (context, _) {
+            return Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
+              runSpacing: 8,
+              children: actionButtons,
             );
           },
         ),
@@ -647,16 +785,38 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
         ),
         const SizedBox(height: 12),
         Text(l10n.databaseSyncWaiting),
+        if (_isBusy) ...[
+          const SizedBox(height: 8),
+          const LinearProgressIndicator(),
+        ],
         const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+        Wrap(
+          alignment: WrapAlignment.end,
+          spacing: 8,
+          runSpacing: 8,
           children: [
+            OutlinedButton(
+              onPressed: (_connectedDevice == null || _isBusy)
+                  ? null
+                  : _pullFromDevice,
+              child: Text(l10n.databaseSyncPullAction),
+            ),
+            FilledButton(
+              onPressed: (_connectedDevice == null || _isBusy)
+                  ? null
+                  : _sendToDevice,
+              child: Text(l10n.databaseSyncSendAction),
+            ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(l10n.cancelAction),
             ),
           ],
         ),
+        if (_status != null) ...[
+          const SizedBox(height: 8),
+          Text(_status!),
+        ],
       ],
     );
   }

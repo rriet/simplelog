@@ -12,6 +12,7 @@ import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 import 'package:simplelog/presentation/shared/widgets/delete_confirmation_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart';
 import 'aircraft_edit_screen.dart';
 import 'widgets/aircraft_search_bar.dart';
 import 'widgets/aircraft_list.dart';
@@ -92,58 +93,76 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Aircraft'),
-        content: SizedBox(
+      builder: (context) => Dialog(
+        child: SizedBox(
           width: 480,
-          height: MediaQuery.of(context).size.height * 0.7,
+          height: MediaQuery.of(context).size.height * 0.75,
           child: Column(
             children: [
-              _AircraftHeader(row: row),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  l10n.screenLogbook,
-                  style: Theme.of(context).textTheme.titleSmall,
+              ListTile(
+                title: const Text('Aircraft'),
+                trailing: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Done'),
                 ),
               ),
-              const SizedBox(height: 8),
+              const Divider(height: 1),
               Expanded(
-                child: FutureBuilder<List<LogbookEntry>>(
-                  future: entriesFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                    final entries = snapshot.data ?? [];
-                    if (entries.isEmpty) {
-                      return Center(
-                        child: Text(l10n.emptyResults),
-                      );
-                    }
-                    return LogbookEntriesYearList(
-                      entries: entries,
-                      onEntryTap: (entry) => LogbookEntryDialogs.show(
-                        context,
-                        entry: entry,
-                        useCases: logbookUseCases,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      _AircraftHeader(row: row),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          l10n.screenLogbook,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
                       ),
-                    );
-                  },
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: FutureBuilder<List<LogbookEntry>>(
+                          future: entriesFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            final entries = snapshot.data ?? [];
+                            if (entries.isEmpty) {
+                              return Center(
+                                child: Text(l10n.emptyResults),
+                              );
+                            }
+                            return Column(
+                              children: [
+                                LogbookSummaryPanel(entries: entries),
+                                const SizedBox(height: 8),
+                                Expanded(
+                                  child: LogbookEntriesYearList(
+                                    entries: entries,
+                                    onEntryTap: (entry) => LogbookEntryDialogs.show(
+                                      context,
+                                      entry: entry,
+                                      useCases: logbookUseCases,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
       ),
     );
   }

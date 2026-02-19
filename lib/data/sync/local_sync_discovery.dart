@@ -36,18 +36,18 @@ class LocalSyncDiscovery {
   }
 
   Future<void> start() async {
+    final serviceName = _sanitizeServiceName(await localDeviceName);
     final service = BonsoirService(
-      name: await localDeviceName,
+      name: serviceName,
       type: kSyncServiceType,
       port: _port,
-      attributes: const {'app': 'simplelog'},
     );
     _broadcast = BonsoirBroadcast(service: service);
-    await _broadcast!.ready;
+    await _broadcast!.initialize();
     await _broadcast!.start();
 
     _discovery = BonsoirDiscovery(type: kSyncServiceType);
-    await _discovery!.ready;
+    await _discovery!.initialize();
     _subscription = _discovery!.eventStream?.listen(_handleDiscoveryEvent);
     await _discovery!.start();
   }
@@ -60,22 +60,30 @@ class LocalSyncDiscovery {
   }
 
   void _handleDiscoveryEvent(BonsoirDiscoveryEvent event) {
-    if (event.type == BonsoirDiscoveryEventType.discoveryServiceFound &&
-        event.service != null) {
-      _discovery?.serviceResolver.resolveService(event.service!);
+    if (event is BonsoirDiscoveryServiceLostEvent) {
+      final lostName = event.service.name;
+      _devices.removeWhere((_, value) => value.name == lostName);
+      _controller.add(_devices.values.toList()
+        ..sort((a, b) => a.name.compareTo(b.name)));
       return;
     }
 
-    if (event.type != BonsoirDiscoveryEventType.discoveryServiceResolved) {
+    if (event is BonsoirDiscoveryServiceFoundEvent) {
+      _discovery?.serviceResolver.resolveService(event.service);
       return;
     }
-    final service = event.service;
-    if (service == null) {
+
+    if (event is BonsoirDiscoveryServiceResolvedEvent) {
+      _upsertResolvedService(event.service);
       return;
     }
-    if (service is! ResolvedBonsoirService) {
+    if (event is BonsoirDiscoveryServiceUpdatedEvent) {
+      _upsertResolvedService(event.service);
       return;
     }
+  }
+
+  void _upsertResolvedService(BonsoirService service) {
     final host = service.host;
     if (host == null || host.isEmpty) {
       return;
@@ -115,4 +123,13 @@ class LocalSyncDiscovery {
     return 'SimpleLog';
   }
 
+  String _sanitizeServiceName(String raw) {
+    final normalized = raw
+        .replaceAll(RegExp(r'[^\x20-\x7E]'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final fallback = normalized.isEmpty ? 'SimpleLog' : normalized;
+    final clipped = fallback.length > 63 ? fallback.substring(0, 63) : fallback;
+    return clipped;
+  }
 }

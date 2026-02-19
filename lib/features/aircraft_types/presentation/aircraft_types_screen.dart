@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
+import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
+import 'package:simplelog/data/models/logbook_entry.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
+import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 import 'aircraft_type_edit_screen.dart';
 import 'widgets/aircraft_type_search_bar.dart';
@@ -166,6 +171,167 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
     );
   }
 
+  Future<void> _showAircraftTypeDetails(AircraftTypeRow row) async {
+    final l10n = AppLocalizations.of(context)!;
+    final logbookUseCases = ref.read(logbookUseCasesProvider);
+    final entriesFuture =
+        logbookUseCases.fetchEntriesForAircraftType(row.type.id);
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        child: SizedBox(
+          width: 500,
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: Column(
+            children: [
+              ListTile(
+                title: Text(row.code),
+                subtitle: Text(
+                  row.type.longName.trim().isEmpty
+                      ? 'Aircraft Type'
+                      : row.type.longName.trim(),
+                ),
+                trailing: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Done'),
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.screenLogbook,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: FutureBuilder<List<LogbookEntry>>(
+                          future: entriesFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            final entries = snapshot.data ?? [];
+                            if (entries.isEmpty) {
+                              return Center(
+                                child: Text(l10n.emptyResults),
+                              );
+                            }
+                            return Column(
+                              children: [
+                                LogbookSummaryPanel(entries: entries),
+                                const SizedBox(height: 8),
+                                Expanded(
+                                  child: LogbookEntriesYearList(
+                                    entries: entries,
+                                    onEntryTap: (entry) => LogbookEntryDialogs.show(
+                                      context,
+                                      entry: entry,
+                                      useCases: logbookUseCases,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showFamilyDetails(FamilyGroup group) async {
+    final l10n = AppLocalizations.of(context)!;
+    final logbookUseCases = ref.read(logbookUseCasesProvider);
+    final typeIds = group.rows.map((row) => row.type.id).toSet().toList(growable: false);
+
+    Future<List<LogbookEntry>> entriesFuture() async {
+      final all = <LogbookEntry>[];
+      final seenTimelineIds = <int>{};
+      for (final typeId in typeIds) {
+        final entries = await logbookUseCases.fetchEntriesForAircraftType(typeId);
+        for (final entry in entries) {
+          if (entry.type != LogbookEventType.flight) continue;
+          if (seenTimelineIds.add(entry.timeLine.id)) {
+            all.add(entry);
+          }
+        }
+      }
+      all.sort((a, b) => b.timeLine.eventDateTime.compareTo(a.timeLine.eventDateTime));
+      return all;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        child: SizedBox(
+          width: 500,
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: Column(
+            children: [
+              ListTile(
+                title: Text('Family: ${group.family}'),
+                subtitle: const Text('Flights'),
+                trailing: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Done'),
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: FutureBuilder<List<LogbookEntry>>(
+                    future: entriesFuture(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final entries = snapshot.data ?? [];
+                      if (entries.isEmpty) {
+                        return Center(child: Text(l10n.emptyResults));
+                      }
+                      return Column(
+                        children: [
+                          LogbookSummaryPanel(entries: entries),
+                          const SizedBox(height: 8),
+                          Expanded(
+                            child: LogbookEntriesYearList(
+                              entries: entries,
+                              onEntryTap: (entry) => LogbookEntryDialogs.show(
+                                context,
+                                entry: entry,
+                                useCases: logbookUseCases,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   List<FamilyGroup> _groupByFamily(List<AircraftTypeRow> rows) {
     final groups = <FamilyGroup>[];
     String? currentFamily;
@@ -226,6 +392,8 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
                 onToggleLock: _toggleLock,
                 onEdit: _editAircraftType,
                 onDelete: _confirmDelete,
+                onOpenDetails: _showAircraftTypeDetails,
+                onOpenFamilyDetails: _showFamilyDetails,
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),

@@ -41,6 +41,30 @@ class AircraftRepository implements AircraftRepositoryContract {
     });
   }
 
+  Future<List<AircraftRow>> fetchAircraftByType(int aircraftTypeId) async {
+    final query = _db.select(_db.aircrafts).join([
+      leftOuterJoin(
+        _db.aircraftTypes,
+        _db.aircraftTypes.id.equalsExp(_db.aircrafts.aircraftTypeId),
+      ),
+    ])
+      ..where(_db.aircrafts.aircraftTypeId.equals(aircraftTypeId))
+      ..orderBy([
+        OrderingTerm.desc(_db.aircrafts.isFavorite),
+        OrderingTerm.asc(_db.aircrafts.registration),
+      ]);
+
+    final rows = await query.get();
+    return rows
+        .map(
+          (row) => AircraftRow(
+            row.readTable(_db.aircrafts),
+            row.readTableOrNull(_db.aircraftTypes),
+          ),
+        )
+        .toList();
+  }
+
   Future<void> toggleLock(Aircraft item) async {
     await _db.update(_db.aircrafts).replace(
           item.copyWith(isLocked: !item.isLocked),

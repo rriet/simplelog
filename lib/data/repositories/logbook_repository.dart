@@ -694,6 +694,76 @@ class LogbookRepository implements LogbookRepositoryContract {
     return entries;
   }
 
+  Future<List<LogbookEntry>> fetchEntriesForAircraftType(int aircraftTypeId) async {
+    final dep = _db.alias(_db.airports, 'dep');
+    final arr = _db.alias(_db.airports, 'arr');
+    final simAircraft = _db.alias(_db.aircrafts, 'sim_aircrafts');
+    final simType = _db.alias(_db.aircraftTypes, 'sim_aircraft_types');
+
+    final flightQuery = _db.select(_db.flights).join([
+      innerJoin(
+        _db.timeLines,
+        _db.timeLines.id.equalsExp(_db.flights.departureDateTimeId),
+      ),
+      innerJoin(
+        _db.aircrafts,
+        _db.aircrafts.id.equalsExp(_db.flights.aircraftId),
+      ),
+      innerJoin(
+        _db.aircraftTypes,
+        _db.aircraftTypes.id.equalsExp(_db.aircrafts.aircraftTypeId),
+      ),
+      leftOuterJoin(dep, dep.id.equalsExp(_db.flights.departureAirportId)),
+      leftOuterJoin(arr, arr.id.equalsExp(_db.flights.arrivalAirportId)),
+    ])
+      ..where(_db.aircrafts.aircraftTypeId.equals(aircraftTypeId));
+
+    final simQuery = _db.select(_db.simulatorTrainings).join([
+      innerJoin(
+        _db.timeLines,
+        _db.timeLines.id.equalsExp(_db.simulatorTrainings.startTimeLineId),
+      ),
+      innerJoin(
+        simAircraft,
+        simAircraft.id.equalsExp(_db.simulatorTrainings.aircraftId),
+      ),
+      innerJoin(
+        simType,
+        simType.id.equalsExp(simAircraft.aircraftTypeId),
+      ),
+    ])
+      ..where(simAircraft.aircraftTypeId.equals(aircraftTypeId));
+
+    final flightRows = await flightQuery.get();
+    final simRows = await simQuery.get();
+    final entries = <LogbookEntry>[];
+
+    for (final row in flightRows) {
+      entries.add(
+        LogbookEntry(
+          timeLine: row.readTable(_db.timeLines),
+          flight: row.readTable(_db.flights),
+          aircraft: row.readTableOrNull(_db.aircrafts),
+          aircraftType: row.readTableOrNull(_db.aircraftTypes),
+          departureAirport: row.readTableOrNull(dep),
+          arrivalAirport: row.readTableOrNull(arr),
+        ),
+      );
+    }
+    for (final row in simRows) {
+      entries.add(
+        LogbookEntry(
+          timeLine: row.readTable(_db.timeLines),
+          simulatorTraining: row.readTable(_db.simulatorTrainings),
+          aircraft: row.readTableOrNull(simAircraft),
+          aircraftType: row.readTableOrNull(simType),
+        ),
+      );
+    }
+    entries.sort((a, b) => b.timeLine.eventDateTime.compareTo(a.timeLine.eventDateTime));
+    return entries;
+  }
+
   Future<List<LogbookEntry>> fetchEntriesForCrew(int crewId) async {
     final dep = _db.alias(_db.airports, 'dep');
     final arr = _db.alias(_db.airports, 'arr');

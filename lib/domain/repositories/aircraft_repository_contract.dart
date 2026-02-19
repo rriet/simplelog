@@ -3,6 +3,7 @@ import 'package:simplelog/data/models/aircraft_row.dart';
 
 abstract class AircraftRepositoryContract {
   Stream<List<AircraftRow>> watchAircraft(String query);
+  Future<List<AircraftRow>> fetchAircraftByType(int aircraftTypeId);
 
   Future<void> toggleLock(Aircraft item);
   Future<void> toggleFavorite(Aircraft item);
