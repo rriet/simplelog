@@ -11,6 +11,7 @@ class LogbookListItem extends StatelessWidget {
     super.key,
     required this.entry,
     required this.isCompact,
+    this.enableSlideActions = true,
     this.onEdit,
     this.onOpen,
     this.onDelete,
@@ -19,6 +20,7 @@ class LogbookListItem extends StatelessWidget {
 
   final LogbookEntry entry;
   final bool isCompact;
+  final bool enableSlideActions;
   final ValueChanged<LogbookEntry>? onEdit;
   final ValueChanged<LogbookEntry>? onOpen;
   final ValueChanged<LogbookEntry>? onDelete;
@@ -54,6 +56,10 @@ class LogbookListItem extends StatelessWidget {
           onTap: onEdit == null ? null : () => onEdit!(entry),
         ),
     };
+
+    if (!enableSlideActions) {
+      return tile;
+    }
 
     return SlidableActions(
       isCompact: isCompact,

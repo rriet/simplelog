@@ -307,7 +307,13 @@ class SimpleLogCsvImporter {
 
         final totalMinutesRaw = _parseInt(get(idxTotalMinutes));
         var computedTotal = totalMinutesRaw;
-        if (computedTotal == 0 && arrivalDate != null) {
+        final shouldDeriveMissingBlockTime =
+            options.recalculateTotalTime ||
+            options.recalculateCrossCountry ||
+            options.recalculateInstrument;
+        if (shouldDeriveMissingBlockTime &&
+            computedTotal == 0 &&
+            arrivalDate != null) {
           computedTotal = arrivalDate.difference(departureDate).inMinutes;
         }
 

@@ -9,11 +9,13 @@ class LogbookEntriesYearList extends StatefulWidget {
     super.key,
     required this.entries,
     this.isCompact = true,
+    this.enableSlideActions = false,
     this.onEntryTap,
   });
 
   final List<LogbookEntry> entries;
   final bool isCompact;
+  final bool enableSlideActions;
   final ValueChanged<LogbookEntry>? onEntryTap;
 
   @override
@@ -124,6 +126,7 @@ class _LogbookEntriesYearListState extends State<LogbookEntriesYearList> {
             return LogbookListItem(
               entry: entry,
               isCompact: widget.isCompact,
+              enableSlideActions: widget.enableSlideActions,
               onEdit: widget.onEntryTap == null
                   ? null
                   : (_) => widget.onEntryTap!(entry),

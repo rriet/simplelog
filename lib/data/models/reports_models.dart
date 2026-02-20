@@ -21,13 +21,47 @@ enum ReportsFilterValueType { text, number, time, boolean }
 enum ReportsFilterField {
   departureIcao,
   departureIata,
+  departureName,
+  departureCity,
   departureCountry,
+  arrivalIcao,
+  arrivalIata,
+  arrivalName,
+  arrivalCity,
+  arrivalCountry,
   aircraftTail,
-  aircraftType,
+  aircraftTypeCode,
+  aircraftTypeFamily,
+  aircraftTypeName,
   pilotName,
+  approachType,
+  remarks,
+  notes,
   blockTime,
+  flightTime,
+  totalTime,
   nightTime,
+  ifrTime,
+  instrumentTime,
+  simulatedInstrumentTime,
+  picTime,
+  picusTime,
+  sicTime,
+  dualTime,
+  instructorTime,
+  crossCountryTime,
+  custom1Time,
+  custom2Time,
+  custom3Time,
+  custom4Time,
   distanceNm,
+  takeoffs,
+  takeoffsDay,
+  takeoffsNight,
+  landings,
+  landingsDay,
+  landingsNight,
+  ifrApproaches,
   isMultiPilot,
   isSimulator,
 }
@@ -52,15 +86,49 @@ extension ReportsFilterFieldMeta on ReportsFilterField {
     switch (this) {
       case ReportsFilterField.departureIcao:
       case ReportsFilterField.departureIata:
+      case ReportsFilterField.departureName:
+      case ReportsFilterField.departureCity:
       case ReportsFilterField.departureCountry:
+      case ReportsFilterField.arrivalIcao:
+      case ReportsFilterField.arrivalIata:
+      case ReportsFilterField.arrivalName:
+      case ReportsFilterField.arrivalCity:
+      case ReportsFilterField.arrivalCountry:
       case ReportsFilterField.aircraftTail:
-      case ReportsFilterField.aircraftType:
+      case ReportsFilterField.aircraftTypeCode:
+      case ReportsFilterField.aircraftTypeFamily:
+      case ReportsFilterField.aircraftTypeName:
       case ReportsFilterField.pilotName:
+      case ReportsFilterField.approachType:
+      case ReportsFilterField.remarks:
+      case ReportsFilterField.notes:
         return ReportsFilterValueType.text;
       case ReportsFilterField.blockTime:
+      case ReportsFilterField.flightTime:
+      case ReportsFilterField.totalTime:
       case ReportsFilterField.nightTime:
+      case ReportsFilterField.ifrTime:
+      case ReportsFilterField.instrumentTime:
+      case ReportsFilterField.simulatedInstrumentTime:
+      case ReportsFilterField.picTime:
+      case ReportsFilterField.picusTime:
+      case ReportsFilterField.sicTime:
+      case ReportsFilterField.dualTime:
+      case ReportsFilterField.instructorTime:
+      case ReportsFilterField.crossCountryTime:
+      case ReportsFilterField.custom1Time:
+      case ReportsFilterField.custom2Time:
+      case ReportsFilterField.custom3Time:
+      case ReportsFilterField.custom4Time:
         return ReportsFilterValueType.time;
       case ReportsFilterField.distanceNm:
+      case ReportsFilterField.takeoffs:
+      case ReportsFilterField.takeoffsDay:
+      case ReportsFilterField.takeoffsNight:
+      case ReportsFilterField.landings:
+      case ReportsFilterField.landingsDay:
+      case ReportsFilterField.landingsNight:
+      case ReportsFilterField.ifrApproaches:
         return ReportsFilterValueType.number;
       case ReportsFilterField.isMultiPilot:
       case ReportsFilterField.isSimulator:
@@ -74,20 +142,88 @@ extension ReportsFilterFieldMeta on ReportsFilterField {
         return 'Departure ICAO';
       case ReportsFilterField.departureIata:
         return 'Departure IATA';
+      case ReportsFilterField.departureName:
+        return 'Departure Name';
+      case ReportsFilterField.departureCity:
+        return 'Departure City';
       case ReportsFilterField.departureCountry:
         return 'Departure Country';
+      case ReportsFilterField.arrivalIcao:
+        return 'Arrival ICAO';
+      case ReportsFilterField.arrivalIata:
+        return 'Arrival IATA';
+      case ReportsFilterField.arrivalName:
+        return 'Arrival Name';
+      case ReportsFilterField.arrivalCity:
+        return 'Arrival City';
+      case ReportsFilterField.arrivalCountry:
+        return 'Arrival Country';
       case ReportsFilterField.aircraftTail:
-        return 'Aircraft Tail';
-      case ReportsFilterField.aircraftType:
-        return 'Aircraft Type';
+        return 'Aircraft Registration';
+      case ReportsFilterField.aircraftTypeCode:
+        return 'Aircraft Type Code';
+      case ReportsFilterField.aircraftTypeFamily:
+        return 'Aircraft Type Family';
+      case ReportsFilterField.aircraftTypeName:
+        return 'Aircraft Type Name';
       case ReportsFilterField.pilotName:
         return 'Pilot Name';
+      case ReportsFilterField.approachType:
+        return 'Approach Type';
+      case ReportsFilterField.remarks:
+        return 'Remarks';
+      case ReportsFilterField.notes:
+        return 'Notes';
       case ReportsFilterField.blockTime:
         return 'Block Time';
+      case ReportsFilterField.flightTime:
+        return 'Flight Time';
+      case ReportsFilterField.totalTime:
+        return 'Total Time';
       case ReportsFilterField.nightTime:
         return 'Night Time';
+      case ReportsFilterField.ifrTime:
+        return 'IFR Time';
+      case ReportsFilterField.instrumentTime:
+        return 'Instrument Time';
+      case ReportsFilterField.simulatedInstrumentTime:
+        return 'Sim Instrument Time';
+      case ReportsFilterField.picTime:
+        return 'PIC Time';
+      case ReportsFilterField.picusTime:
+        return 'PICUS Time';
+      case ReportsFilterField.sicTime:
+        return 'SIC Time';
+      case ReportsFilterField.dualTime:
+        return 'Dual Time';
+      case ReportsFilterField.instructorTime:
+        return 'Instructor Time';
+      case ReportsFilterField.crossCountryTime:
+        return 'Cross-Country Time';
+      case ReportsFilterField.custom1Time:
+        return 'Custom 1 Time';
+      case ReportsFilterField.custom2Time:
+        return 'Custom 2 Time';
+      case ReportsFilterField.custom3Time:
+        return 'Custom 3 Time';
+      case ReportsFilterField.custom4Time:
+        return 'Custom 4 Time';
       case ReportsFilterField.distanceNm:
         return 'Distance NM';
+      case ReportsFilterField.takeoffs:
+        return 'Takeoffs';
+      case ReportsFilterField.takeoffsDay:
+        return 'Takeoffs Day';
+      case ReportsFilterField.takeoffsNight:
+        return 'Takeoffs Night';
+      case ReportsFilterField.landings:
+        return 'Landings';
+      case ReportsFilterField.landingsDay:
+        return 'Landings Day';
+      case ReportsFilterField.landingsNight:
+        return 'Landings Night';
+      case ReportsFilterField.ifrApproaches:
+        return 'IFR Approaches';
       case ReportsFilterField.isMultiPilot:
         return 'Multi Pilot';
       case ReportsFilterField.isSimulator:
@@ -197,6 +333,7 @@ class ReportsTotals {
     required this.instructorMinutes,
     required this.crossCountryMinutes,
     required this.simulatorMinutes,
+    required this.dutyMinutes,
     required this.custom1Minutes,
     required this.custom2Minutes,
     required this.custom3Minutes,
@@ -222,6 +359,7 @@ class ReportsTotals {
   final int instructorMinutes;
   final int crossCountryMinutes;
   final int simulatorMinutes;
+  final int dutyMinutes;
   final int custom1Minutes;
   final int custom2Minutes;
   final int custom3Minutes;
@@ -247,6 +385,7 @@ class ReportsTotals {
         instructorMinutes = 0,
         crossCountryMinutes = 0,
         simulatorMinutes = 0,
+        dutyMinutes = 0,
         custom1Minutes = 0,
         custom2Minutes = 0,
         custom3Minutes = 0,
@@ -274,6 +413,7 @@ class ReportsTotals {
       instructorMinutes: instructorMinutes + other.instructorMinutes,
       crossCountryMinutes: crossCountryMinutes + other.crossCountryMinutes,
       simulatorMinutes: simulatorMinutes + other.simulatorMinutes,
+      dutyMinutes: dutyMinutes + other.dutyMinutes,
       custom1Minutes: custom1Minutes + other.custom1Minutes,
       custom2Minutes: custom2Minutes + other.custom2Minutes,
       custom3Minutes: custom3Minutes + other.custom3Minutes,
@@ -289,18 +429,44 @@ class ReportsFlightRow {
     required this.departureDateTime,
     required this.registration,
     required this.modelCode,
+    required this.modelFamily,
     required this.fromIcao,
     required this.toIcao,
+    required this.fromLatitude,
+    required this.fromLongitude,
+    required this.toLatitude,
+    required this.toLongitude,
     required this.totalMinutes,
+    required this.picMinutes,
+    required this.picusMinutes,
+    required this.sicMinutes,
+    required this.dualMinutes,
+    required this.ifrMinutes,
+    required this.instrumentMinutes,
+    required this.nightMinutes,
+    required this.landings,
   });
 
   final int flightId;
   final DateTime departureDateTime;
   final String registration;
   final String modelCode;
+  final String modelFamily;
   final String fromIcao;
   final String toIcao;
+  final double? fromLatitude;
+  final double? fromLongitude;
+  final double? toLatitude;
+  final double? toLongitude;
   final int totalMinutes;
+  final int picMinutes;
+  final int picusMinutes;
+  final int sicMinutes;
+  final int dualMinutes;
+  final int ifrMinutes;
+  final int instrumentMinutes;
+  final int nightMinutes;
+  final int landings;
 }
 
 class ReportsData {

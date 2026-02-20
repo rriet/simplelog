@@ -7,6 +7,11 @@ class DashboardRulesSeedImporter {
 
   static const _prefsKey = 'dashboard_rules_seeded_v1';
 
+  static Future<void> clearSeedFlag() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefsKey);
+  }
+
   Future<int> importOnFirstOpen(AppDatabase db) async {
     final prefs = await SharedPreferences.getInstance();
     final alreadySeeded = prefs.getBool(_prefsKey) ?? false;

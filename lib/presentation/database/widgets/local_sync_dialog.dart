@@ -381,7 +381,9 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     if (!mounted) return;
     if (!schemaOk) return;
 
-    final confirm = await _confirmOverwrite(l10n, target.name);
+    final localName =
+        _localDeviceName ?? await _discovery?.localDeviceName ?? 'SimpleLog';
+    final confirm = await _confirmOverwrite(l10n, localName);
     if (!mounted) return;
     if (!confirm) return;
 

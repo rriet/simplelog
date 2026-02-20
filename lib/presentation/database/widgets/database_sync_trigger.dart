@@ -1,11 +1,16 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
+import 'package:simplelog/data/export/simplelog_csv_exporter.dart';
 import 'package:simplelog/data/import/import_operation_result.dart';
+import 'package:simplelog/data/import/dashboard_rules_seed_importer.dart';
 import 'package:simplelog/data/import/simplelog_csv_importer.dart';
 import 'package:simplelog/presentation/database/widgets/import_options_preferences.dart';
 import 'package:simplelog/presentation/database/widgets/southwest_import_options_dialog.dart';
@@ -40,6 +45,12 @@ class DatabaseSyncTrigger extends ConsumerWidget {
             icon: const Icon(Icons.upload_file),
             label: const Text('Import CSV'),
             onPressed: () => _importCsv(context, ref),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.download_outlined),
+            label: const Text('Export Flights/Simulator CSV'),
+            onPressed: () => _exportCsv(context, ref),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
@@ -169,6 +180,52 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     }
   }
 
+  Future<void> _exportCsv(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final db = ref.read(databaseProvider);
+    final exporter = SimpleLogCsvExporter(db);
+    final csv = await exporter.exportFlightsAndSimulatorsCsv();
+    if (!context.mounted) return;
+
+    final fileName = 'simplelog_export_'
+        '${DateTime.now().toUtc().toIso8601String().replaceAll(':', '').replaceAll('-', '').split('.').first}.csv';
+    final bytes = Uint8List.fromList(utf8.encode(csv));
+    String? path;
+    if (Platform.isIOS || Platform.isAndroid) {
+      path = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save CSV Export',
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: const ['csv'],
+        bytes: bytes,
+      );
+      if (path == null || path.isEmpty) return;
+      // On iOS/Android, the picker persists bytes to the selected location.
+    } else {
+      // On macOS, writing to a save-file path may fail with sandbox access.
+      // Picking a directory grants access for a direct write.
+      final directory = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: 'Choose export folder',
+      );
+      if (directory == null || directory.isEmpty) return;
+      path = '$directory${Platform.pathSeparator}$fileName';
+      try {
+        await File(path).writeAsBytes(bytes, flush: true);
+      } on FileSystemException {
+        final docsDir = await getApplicationDocumentsDirectory();
+        path = '${docsDir.path}${Platform.pathSeparator}$fileName';
+        await File(path).writeAsBytes(bytes, flush: true);
+      }
+    }
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('CSV exported: $path')),
+    );
+  }
+
   void _showImportProgressDialog(
     BuildContext context,
     ValueNotifier<_ImportProgress> progress,
@@ -261,6 +318,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
     final db = ref.read(databaseProvider);
     await db.clearAllData();
+    await DashboardRulesSeedImporter.clearSeedFlag();
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Database cleared.')),
