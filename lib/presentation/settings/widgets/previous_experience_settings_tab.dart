@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:intl/intl.dart';
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/data/models/previous_experience_row.dart';
 import 'package:simplelog/features/aircraft_types/application/providers/aircraft_type_repository_provider.dart';
 import 'package:simplelog/presentation/settings/providers/previous_experience_providers.dart';
@@ -109,7 +110,18 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
     WidgetRef ref, {
     PreviousExperience? initial,
   }) async {
-    final typesAsync = await ref.read(aircraftTypesProvider('').future);
+    List<AircraftTypeRow> typesAsync;
+    try {
+      final useCases = ref.read(aircraftTypeUseCasesProvider);
+      typesAsync = await useCases.watchAircraftTypes('').first;
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to load aircraft types: $error')),
+        );
+      }
+      return;
+    }
     if (!context.mounted) return;
     await showDialog<void>(
       context: context,
@@ -245,11 +257,11 @@ class _PreviousExperienceEditDialogState
     if (!_formKey.currentState!.validate()) return;
     if (_aircraftTypeId == null) return;
 
+    final warnings = <String>[];
     if (_firstFlight != null &&
         _lastFlight != null &&
         !_firstFlight!.isBefore(_lastFlight!)) {
-      await _showError('First flight must be earlier than last flight.');
-      return;
+      warnings.add('First flight should be earlier than last flight.');
     }
 
     final blockMinutes = _minutes('block');
@@ -259,8 +271,7 @@ class _PreviousExperienceEditDialogState
     final dual = _minutes('dual');
     final sumPilotFunctions = pic + picus + sic + dual;
     if (sumPilotFunctions != blockMinutes) {
-      await _showError('PIC + PICUS + SIC + Dual must equal Total Block time.');
-      return;
+      warnings.add('PIC + PICUS + SIC + Dual should equal Total Block time.');
     }
 
     final allTimes = <String, int>{
@@ -286,10 +297,14 @@ class _PreviousExperienceEditDialogState
         .map((entry) => entry.key)
         .toList(growable: false);
     if (biggerThanBlock.isNotEmpty) {
-      await _showError(
+      warnings.add(
         'These times are greater than Total Block: ${biggerThanBlock.join(', ')}.',
       );
-      return;
+    }
+
+    if (warnings.isNotEmpty) {
+      final proceed = await _showWarningsAndConfirm(warnings);
+      if (!proceed) return;
     }
 
     final companion = PreviousExperiencesCompanion(
@@ -360,21 +375,26 @@ class _PreviousExperienceEditDialogState
     Navigator.of(context).pop();
   }
 
-  Future<void> _showError(String message) async {
-    if (!mounted) return;
-    await showDialog<void>(
+  Future<bool> _showWarningsAndConfirm(List<String> warnings) async {
+    if (!mounted) return false;
+    final decision = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Validation error'),
-        content: Text(message),
+        title: const Text('Validation warnings'),
+        content: Text('${warnings.join('\n')}\n\nSave anyway?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Review'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Save anyway'),
           ),
         ],
       ),
     );
+    return decision ?? false;
   }
 
   @override
@@ -425,7 +445,7 @@ class _PreviousExperienceEditDialogState
                         children: [
                           Expanded(
                             child: _DateField(
-                              label: 'First Flight (UTC)',
+                              label: 'First Flight',
                               value: _firstFlight,
                               onPick: () => _pickDateTime(first: true),
                               onClear: () =>
@@ -435,7 +455,7 @@ class _PreviousExperienceEditDialogState
                           const SizedBox(width: 12),
                           Expanded(
                             child: _DateField(
-                              label: 'Last Flight (UTC)',
+                              label: 'Last Flight',
                               value: _lastFlight,
                               onPick: () => _pickDateTime(first: false),
                               onClear: () => setState(() => _lastFlight = null),
@@ -444,9 +464,11 @@ class _PreviousExperienceEditDialogState
                         ],
                       ),
                       const SizedBox(height: 12),
-                      _TimeGrid(controllers: _timeControllers),
-                      const SizedBox(height: 12),
                       _IntGrid(controllers: _intControllers),
+                      const SizedBox(height: 12),
+                      const Divider(height: 1),
+                      const SizedBox(height: 12),
+                      _TimeGrid(controllers: _timeControllers),
                     ],
                   ),
                 ),
@@ -474,16 +496,41 @@ class _DateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayValue = value?.toUtc();
     final text = value == null
         ? '-'
-        : DateFormat('dd/MM/yyyy HH:mm').format(value!.toUtc());
-    return OutlinedButton(
-      onPressed: onPick,
-      child: Row(
-        children: [
-          Expanded(child: Text('$label: $text')),
-          IconButton(onPressed: onClear, icon: const Icon(Icons.clear)),
-        ],
+        : DateFormat('dd/MM/yyyy HH:mm').format(displayValue!);
+    return InkWell(
+      onTap: onPick,
+      borderRadius: BorderRadius.circular(4),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 10,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                text,
+                style: Theme.of(context).textTheme.bodyMedium,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            IconButton(
+              onPressed: onClear,
+              icon: const Icon(Icons.clear, size: 18),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -515,27 +562,39 @@ class _TimeGrid extends StatelessWidget {
       ('Block', 'block'),
       ('Simulator', 'sim'),
     ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Times', style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: fields
-              .map(
-                (field) => SizedBox(
-                  width: 220,
-                  child: TimeInputField(
-                    controller: controllers[field.$2]!,
-                    label: field.$1,
-                  ),
-                ),
-              )
-              .toList(growable: false),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = (constraints.maxWidth - 12) / 2;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Times', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Theme(
+              data: Theme.of(context).copyWith(
+                inputDecorationTheme: Theme.of(
+                  context,
+                ).inputDecorationTheme.copyWith(isDense: true),
+              ),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 10,
+                children: fields
+                    .map(
+                      (field) => SizedBox(
+                        width: width,
+                        child: TimeInputField(
+                          controller: controllers[field.$2]!,
+                          label: field.$1,
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -555,31 +614,36 @@ class _IntGrid extends StatelessWidget {
       ('Landings Day', 'landingDay'),
       ('Landings Night', 'landingNight'),
     ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Counters', style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: fields
-              .map(
-                (field) => SizedBox(
-                  width: 220,
-                  child: TextFormField(
-                    controller: controllers[field.$2],
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: field.$1,
-                      border: const OutlineInputBorder(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = (constraints.maxWidth - 12) / 2;
+        return Theme(
+          data: Theme.of(context).copyWith(
+            inputDecorationTheme: Theme.of(
+              context,
+            ).inputDecorationTheme.copyWith(isDense: true),
+          ),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            children: fields
+                .map(
+                  (field) => SizedBox(
+                    width: width,
+                    child: TextFormField(
+                      controller: controllers[field.$2],
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: field.$1,
+                        border: const OutlineInputBorder(),
+                      ),
                     ),
                   ),
-                ),
-              )
-              .toList(growable: false),
-        ),
-      ],
+                )
+                .toList(growable: false),
+          ),
+        );
+      },
     );
   }
 }

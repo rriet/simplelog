@@ -14,14 +14,6 @@ import '../database/database_screen.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
-  static const _tabLabels = [
-    'General',
-    'Database',
-    'Experience',
-    'Time Fields',
-    'Developer',
-  ];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
@@ -30,32 +22,17 @@ class SettingsScreen extends ConsumerWidget {
       length: 5,
       child: Column(
         children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              const minTabWidth = 120.0;
-              final targetWidth = (constraints.maxWidth / _tabLabels.length)
-                  .clamp(minTabWidth, double.infinity);
-              return TabBar(
-                isScrollable: AppTabBarStyles.isScrollable,
-                tabAlignment: AppTabBarStyles.tabAlignment,
-                labelPadding: AppTabBarStyles.labelPadding,
-                tabs: [
-                  for (final label in _tabLabels)
-                    Tab(
-                      child: SizedBox(
-                        width: targetWidth,
-                        child: Center(
-                          child: Text(
-                            label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
+          const TabBar(
+            isScrollable: AppTabBarStyles.isScrollable,
+            tabAlignment: AppTabBarStyles.tabAlignment,
+            labelPadding: AppTabBarStyles.labelPadding,
+            tabs: [
+              Tab(text: 'General'),
+              Tab(text: 'Database'),
+              Tab(text: 'Experience'),
+              Tab(text: 'Time Fields'),
+              Tab(text: 'Developer'),
+            ],
           ),
           Expanded(
             child: TabBarView(

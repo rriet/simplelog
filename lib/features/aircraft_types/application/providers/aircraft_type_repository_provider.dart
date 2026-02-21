@@ -17,15 +17,14 @@ final aircraftTypeUseCasesProvider = Provider<AircraftTypeUseCases>((ref) {
 });
 
 final aircraftTypesProvider =
-    StreamProvider.autoDispose.family<List<AircraftTypeRow>, String>(
+    StreamProvider.family<List<AircraftTypeRow>, String>(
   (ref, query) {
     final useCases = ref.watch(aircraftTypeUseCasesProvider);
     return useCases.watchAircraftTypes(query);
   },
 );
 
-final aircraftTypeFamiliesProvider =
-    StreamProvider.autoDispose<List<String>>((ref) {
+final aircraftTypeFamiliesProvider = StreamProvider<List<String>>((ref) {
   final useCases = ref.watch(aircraftTypeUseCasesProvider);
   return useCases.watchFamilies();
 });
