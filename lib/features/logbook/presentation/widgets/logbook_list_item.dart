@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
@@ -28,92 +29,118 @@ class LogbookListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final date = entry.timeLine.eventDateTime;
-    final locale = MaterialLocalizations.of(context);
-    final dateText = locale.formatShortDate(date);
-    final timeText = locale.formatTimeOfDay(TimeOfDay.fromDateTime(date));
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final l10n = AppLocalizations.of(context)!;
+        final date = entry.timeLine.eventDateTime;
+        final dateUtc = DbDateTime.dbToUtc(date);
+        final locale = MaterialLocalizations.of(context);
+        final dateText = locale.formatShortDate(
+          DateTime(dateUtc.year, dateUtc.month, dateUtc.day),
+        );
+        final timeText = locale.formatTimeOfDay(
+          TimeOfDay(hour: dateUtc.hour, minute: dateUtc.minute),
+        );
+        // Avoid right-column overflow in split view before parent breakpoints kick in.
+        final effectiveCompact = isCompact || constraints.maxWidth < 760;
 
-    final eventLabel = _eventLabel(l10n, entry);
-    final routeLabel = _routeLabel(entry);
-    final subtitleParts = [
-      eventLabel,
-      if (routeLabel != null) routeLabel,
-    ];
+        final eventLabel = _eventLabel(l10n, entry);
+        final routeLabel = _routeLabel(entry);
+        final subtitleParts = [
+          eventLabel,
+          routeLabel,
+        ].whereType<String>().toList(growable: false);
 
-    final isLocked = _isLocked(entry);
-    final canLock = _canLock(entry);
+        final isLocked = _isLocked(entry);
+        final canLock = _canLock(entry);
 
-    final tile = switch (entry.type) {
-      LogbookEventType.flight => _buildFlightTile(context, l10n, date),
-      LogbookEventType.positioning => _buildPositioningTile(context, date),
-      LogbookEventType.simulatorTraining =>
-        _buildSimulatorTile(context, date),
-      _ => ListTile(
-          leading: Icon(_iconFor(entry.type)),
-          title: Text('$dateText • $timeText'),
-          subtitle: Text(subtitleParts.join(' • ')),
-          onTap: onEdit == null ? null : () => onEdit!(entry),
-        ),
-    };
+        final tile = switch (entry.type) {
+          LogbookEventType.flight => _buildFlightTile(
+            context,
+            l10n,
+            date,
+            isCompact: effectiveCompact,
+          ),
+          LogbookEventType.positioning => _buildPositioningTile(
+            context,
+            date,
+            isCompact: effectiveCompact,
+          ),
+          LogbookEventType.simulatorTraining => _buildSimulatorTile(
+            context,
+            date,
+            isCompact: effectiveCompact,
+          ),
+          _ => ListTile(
+            leading: Icon(_iconFor(entry.type)),
+            title: Text('$dateText • $timeText'),
+            subtitle: Text(subtitleParts.join(' • ')),
+            onTap: onEdit == null ? null : () => onEdit!(entry),
+          ),
+        };
 
-    if (!enableSlideActions) {
-      return tile;
-    }
+        if (!enableSlideActions) {
+          return tile;
+        }
 
-    return SlidableActions(
-      isCompact: isCompact,
-      isLocked: isLocked,
-      lockLabel: l10n.lockAction,
-      editLabel: l10n.editAction,
-      deleteLabel: l10n.deleteAction,
-      onToggleLock: !canLock
-          ? null
-          : onToggleLock == null
+        return SlidableActions(
+          isCompact: effectiveCompact,
+          isLocked: isLocked,
+          lockLabel: l10n.lockAction,
+          editLabel: l10n.editAction,
+          deleteLabel: l10n.deleteAction,
+          onToggleLock: !canLock
+              ? null
+              : onToggleLock == null
               ? null
               : () => onToggleLock!(entry),
-      onEdit: onEdit == null ? null : () => onEdit!(entry),
-      onDelete: onDelete == null ? null : () => onDelete!(entry),
-      inlineActions: SizedBox(
-        width: 144,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (canLock)
-              IconButton(
-                tooltip: l10n.lockAction,
-                icon: Icon(
-                  isLocked ? Icons.lock : Icons.lock_open,
-                  color: isLocked
-                      ? Theme.of(context).colorScheme.onSurface
-                      : Theme.of(context).colorScheme.primary,
-                ),
-                onPressed:
-                    onToggleLock == null ? null : () => onToggleLock!(entry),
-              ),
-            if (!isLocked)
-              IconButton(
-                tooltip: l10n.editAction,
-                icon: const Icon(Icons.edit_outlined),
-                onPressed: onEdit == null ? null : () => onEdit!(entry),
-              ),
-            if (!isLocked)
-              IconButton(
-                tooltip: l10n.deleteAction,
-                icon: const Icon(Icons.delete_outline),
-                onPressed: onDelete == null ? null : () => onDelete!(entry),
-              ),
-          ],
-        ),
-      ),
-      child: tile,
+          onEdit: onEdit == null ? null : () => onEdit!(entry),
+          onDelete: onDelete == null ? null : () => onDelete!(entry),
+          inlineActions: SizedBox(
+            width: 144,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (canLock)
+                  IconButton(
+                    tooltip: l10n.lockAction,
+                    icon: Icon(
+                      isLocked ? Icons.lock : Icons.lock_open,
+                      color: isLocked
+                          ? Theme.of(context).colorScheme.onSurface
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                    onPressed: onToggleLock == null
+                        ? null
+                        : () => onToggleLock!(entry),
+                  ),
+                if (!isLocked)
+                  IconButton(
+                    tooltip: l10n.editAction,
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: onEdit == null ? null : () => onEdit!(entry),
+                  ),
+                if (!isLocked)
+                  IconButton(
+                    tooltip: l10n.deleteAction,
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: onDelete == null ? null : () => onDelete!(entry),
+                  ),
+              ],
+            ),
+          ),
+          child: tile,
+        );
+      },
     );
   }
 
   ListTile _buildPositioningTile(
     BuildContext context,
-    DateTime date,
-  ) {
+    DateTime date, {
+    required bool isCompact,
+  }) {
+    final utcDate = DbDateTime.dbToUtc(date);
     final positioning = entry.positioning;
     final depCode = entry.positioningDepartureAirport?.icao ?? '-';
     final arrCode = entry.positioningArrivalAirport?.icao ?? '-';
@@ -134,8 +161,10 @@ class LogbookListItem extends StatelessWidget {
       'MMM',
       Localizations.localeOf(context).toString(),
     );
-    final dayText = date.day.toString().padLeft(2, '0');
-    final monthText = dateFormat.format(date);
+    final dayText = utcDate.day.toString().padLeft(2, '0');
+    final monthText = dateFormat.format(
+      DateTime(utcDate.year, utcDate.month, utcDate.day),
+    );
     final titleStyle = Theme.of(context).textTheme.titleSmall;
     final boostedTitleStyle = titleStyle?.copyWith(
       fontSize: (titleStyle.fontSize ?? 0) + 1,
@@ -154,9 +183,7 @@ class LogbookListItem extends StatelessWidget {
           children: [
             _DateBlock(day: dayText, month: monthText),
             const SizedBox(width: 10),
-            _DateDivider(
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
+            _DateDivider(color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -166,10 +193,7 @@ class LogbookListItem extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Center(
-                          child: _ScaledText(
-                            depCode,
-                            style: boostedTitleStyle,
-                          ),
+                          child: _ScaledText(depCode, style: boostedTitleStyle),
                         ),
                       ),
                       Expanded(
@@ -178,19 +202,16 @@ class LogbookListItem extends StatelessWidget {
                             durationText,
                             style: titleStyle?.copyWith(
                               fontSize: (titleStyle.fontSize ?? 0) + 1,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
                       ),
                       Expanded(
                         child: Center(
-                          child: _ScaledText(
-                            arrCode,
-                            style: boostedTitleStyle,
-                          ),
+                          child: _ScaledText(arrCode, style: boostedTitleStyle),
                         ),
                       ),
                     ],
@@ -198,21 +219,9 @@ class LogbookListItem extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Expanded(
-                        child: Center(
-                          child: _ScaledText(depTime),
-                        ),
-                      ),
-                      const Expanded(
-                        child: Center(
-                          child: _PositioningPath(),
-                        ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: _ScaledText(arrTime),
-                        ),
-                      ),
+                      Expanded(child: Center(child: _ScaledText(depTime))),
+                      const Expanded(child: Center(child: _PositioningPath())),
+                      Expanded(child: Center(child: _ScaledText(arrTime))),
                     ],
                   ),
                 ],
@@ -227,8 +236,8 @@ class LogbookListItem extends StatelessWidget {
       onTap: onOpen != null
           ? () => onOpen!(entry)
           : onEdit == null
-              ? null
-              : () => onEdit!(entry),
+          ? null
+          : () => onEdit!(entry),
       title: Padding(
         padding: isCompact
             ? EdgeInsets.zero
@@ -240,8 +249,10 @@ class LogbookListItem extends StatelessWidget {
 
   ListTile _buildSimulatorTile(
     BuildContext context,
-    DateTime date,
-  ) {
+    DateTime date, {
+    required bool isCompact,
+  }) {
+    final utcDate = DbDateTime.dbToUtc(date);
     final simulator = entry.simulatorTraining;
     final totalMinutes = simulator?.timeTotal ?? 0;
     final totalText = '${_formatBlockMinutes(totalMinutes)}h';
@@ -252,8 +263,10 @@ class LogbookListItem extends StatelessWidget {
       'MMM',
       Localizations.localeOf(context).toString(),
     );
-    final dayText = date.day.toString().padLeft(2, '0');
-    final monthText = dateFormat.format(date);
+    final dayText = utcDate.day.toString().padLeft(2, '0');
+    final monthText = dateFormat.format(
+      DateTime(utcDate.year, utcDate.month, utcDate.day),
+    );
     final titleStyle = Theme.of(context).textTheme.titleSmall;
     final boostedTitleStyle = titleStyle?.copyWith(
       fontSize: (titleStyle.fontSize ?? 0) + 1,
@@ -274,9 +287,7 @@ class LogbookListItem extends StatelessWidget {
           children: [
             _DateBlock(day: dayText, month: monthText),
             const SizedBox(width: 10),
-            _DateDivider(
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
+            _DateDivider(color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(width: 10),
             Expanded(
               child: Center(
@@ -297,8 +308,8 @@ class LogbookListItem extends StatelessWidget {
       onTap: onOpen != null
           ? () => onOpen!(entry)
           : onEdit == null
-              ? null
-              : () => onEdit!(entry),
+          ? null
+          : () => onEdit!(entry),
       title: Padding(
         padding: isCompact
             ? EdgeInsets.zero
@@ -307,11 +318,14 @@ class LogbookListItem extends StatelessWidget {
       ),
     );
   }
+
   ListTile _buildFlightTile(
     BuildContext context,
     AppLocalizations l10n,
-    DateTime date,
-  ) {
+    DateTime date, {
+    required bool isCompact,
+  }) {
+    final utcDate = DbDateTime.dbToUtc(date);
     final titleStyle = Theme.of(context).textTheme.titleSmall;
     final boostedTitleStyle = titleStyle?.copyWith(
       fontSize: (titleStyle.fontSize ?? 0) + 1,
@@ -322,6 +336,7 @@ class LogbookListItem extends StatelessWidget {
     final tailNumber = aircraft?.registration ?? '-';
     final typeLongName = type?.longName ?? '-';
     final blockMinutes = flight?.timeBlockMinutes ?? 0;
+    final totalBlockMinutes = flight?.timeTotalBlockMinutes ?? blockMinutes;
     final blockTime = '${_formatBlockMinutes(blockMinutes)}h';
     final depCode = entry.departureAirport?.icao ?? '-';
     final arrCode = entry.arrivalAirport?.icao ?? '-';
@@ -330,8 +345,10 @@ class LogbookListItem extends StatelessWidget {
       'MMM',
       Localizations.localeOf(context).toString(),
     );
-    final dayText = date.day.toString().padLeft(2, '0');
-    final monthText = dateFormat.format(date);
+    final dayText = utcDate.day.toString().padLeft(2, '0');
+    final monthText = dateFormat.format(
+      DateTime(utcDate.year, utcDate.month, utcDate.day),
+    );
     final depTime = _formatFlightTime(
       fallback: date,
       explicit: flight?.takeOffDateTime,
@@ -346,109 +363,90 @@ class LogbookListItem extends StatelessWidget {
     final rightColumn = _buildFlightRightColumn(context, flight);
 
     final content = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _FlightTopLine(
-            tailNumber: tailNumber,
-            typeLongName: typeLongName,
-          ),
-          const SizedBox(height: 6),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _DateBlock(
-                day: dayText,
-                month: monthText,
-              ),
-              const SizedBox(width: 10),
-              _DateDivider(color: Theme.of(context).colorScheme.outlineVariant),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Center(
-                            child: _ScaledText(
-                              depCode,
-                              style: boostedTitleStyle,
-                            ),
-                          ),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _FlightTopLine(tailNumber: tailNumber, typeLongName: typeLongName),
+        const SizedBox(height: 6),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _DateBlock(day: dayText, month: monthText),
+            const SizedBox(width: 10),
+            _DateDivider(color: Theme.of(context).colorScheme.outlineVariant),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: _ScaledText(depCode, style: boostedTitleStyle),
                         ),
-                        Expanded(
-                          child: Center(
-                            child: _ScaledText(
-                              blockTime,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: RichText(
+                            textAlign: TextAlign.center,
+                            text: TextSpan(
+                              style: Theme.of(context).textTheme.titleSmall
                                   ?.copyWith(
-                                    fontSize:
-                                        (titleStyle?.fontSize ?? 0) + 1,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
+                                    fontSize: (titleStyle?.fontSize ?? 0) + 1,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
+                              children: [
+                                TextSpan(text: blockTime),
+                                if (totalBlockMinutes != blockMinutes)
+                                  TextSpan(
+                                    text:
+                                        ' (${_formatBlockMinutes(totalBlockMinutes)}h)',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                              ],
                             ),
                           ),
                         ),
-                        Expanded(
-                          child: Center(
-                            child: _ScaledText(
-                              arrCode,
-                              style: boostedTitleStyle,
-                            ),
-                          ),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: _ScaledText(arrCode, style: boostedTitleStyle),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Center(
-                            child: _ScaledText(depTime),
-                          ),
-                        ),
-                        const Expanded(
-                          child: Center(
-                            child: _FlightPath(),
-                          ),
-                        ),
-                        Expanded(
-                          child: Center(
-                            child: _ScaledText(arrTime),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(child: Center(child: _ScaledText(depTime))),
+                      const Expanded(child: Center(child: _FlightPath())),
+                      Expanded(child: Center(child: _ScaledText(arrTime))),
+                    ],
+                  ),
+                ],
               ),
-              if (!isCompact) ...[
-                const SizedBox(width: 12),
-                _DateDivider(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 170,
-                  child: rightColumn,
-                ),
-              ],
+            ),
+            if (!isCompact) ...[
+              const SizedBox(width: 12),
+              _DateDivider(color: Theme.of(context).colorScheme.outlineVariant),
+              const SizedBox(width: 12),
+              SizedBox(width: 170, child: rightColumn),
             ],
-          ),
-        ],
-      );
+          ],
+        ),
+      ],
+    );
 
     return ListTile(
       onTap: onOpen != null
           ? () => onOpen!(entry)
           : onEdit == null
-              ? null
-              : () => onEdit!(entry),
+          ? null
+          : () => onEdit!(entry),
       title: Padding(
         padding: isCompact
             ? EdgeInsets.zero
@@ -483,21 +481,9 @@ class LogbookListItem extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _RightLine(
-          label: 'Position',
-          value: position,
-          style: textStyle,
-        ),
-        _RightLine(
-          label: 'TakeOff',
-          value: '$totalTakeOffs',
-          style: textStyle,
-        ),
-        _RightLine(
-          label: 'Landing',
-          value: '$totalLandings',
-          style: textStyle,
-        ),
+        _RightLine(label: 'Position', value: position, style: textStyle),
+        _RightLine(label: 'TakeOff', value: '$totalTakeOffs', style: textStyle),
+        _RightLine(label: 'Landing', value: '$totalLandings', style: textStyle),
       ],
     );
   }
@@ -519,12 +505,13 @@ class LogbookListItem extends StatelessWidget {
   }) {
     final timeSource = explicit ?? fallback;
     if (timeSource == null) return '--:--';
-    if (treatMidnightAsMissing &&
-        timeSource.hour == 0 &&
-        timeSource.minute == 0) {
+    final utcTime = DbDateTime.dbToUtc(timeSource);
+    if (treatMidnightAsMissing && utcTime.hour == 0 && utcTime.minute == 0) {
       return '--:--';
     }
-    return _formatTimeOfDay(TimeOfDay.fromDateTime(timeSource));
+    return _formatTimeOfDay(
+      TimeOfDay(hour: utcTime.hour, minute: utcTime.minute),
+    );
   }
 
   bool _isMissingFlightTime(Flight? flight) {
@@ -620,43 +607,30 @@ class LogbookListItem extends StatelessWidget {
 }
 
 class _SimpleTopLine extends StatelessWidget {
-  const _SimpleTopLine({
-    required this.icon,
-    required this.label,
-  });
+  const _SimpleTopLine({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
 
   @override
   Widget build(BuildContext context) {
-    final baseStyle = Theme.of(context)
-            .textTheme
-            .labelMedium
-            ?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ) ??
+    final baseStyle =
+        Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ) ??
         const TextStyle();
     final style = _ScaledText.scaledStyle(baseStyle)!;
     return DefaultTextStyle(
       style: style,
       child: Row(
-        children: [
-          Icon(icon, size: 14),
-          const SizedBox(width: 6),
-          Text(label),
-        ],
+        children: [Icon(icon, size: 14), const SizedBox(width: 6), Text(label)],
       ),
     );
   }
 }
 
 class _RightLine extends StatelessWidget {
-  const _RightLine({
-    required this.label,
-    required this.value,
-    this.style,
-  });
+  const _RightLine({required this.label, required this.value, this.style});
 
   final String label;
   final String value;
@@ -692,12 +666,10 @@ class _FlightTopLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final baseStyle = Theme.of(context)
-            .textTheme
-            .labelMedium
-            ?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ) ??
+    final baseStyle =
+        Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ) ??
         const TextStyle();
     final style = _ScaledText.scaledStyle(baseStyle)!;
     return DefaultTextStyle(
@@ -740,26 +712,24 @@ class _FlightTopLine extends StatelessWidget {
 }
 
 class _DateBlock extends StatelessWidget {
-  const _DateBlock({
-    required this.day,
-    required this.month,
-  });
+  const _DateBlock({required this.day, required this.month});
 
   final String day;
   final String month;
 
   @override
   Widget build(BuildContext context) {
-    final titleStyle = _ScaledText.scaledStyle(
-      Theme.of(context).textTheme.headlineSmall,
-    )?.copyWith(
-      fontSize:
-          ((Theme.of(context).textTheme.headlineSmall?.fontSize ?? 0) + 2),
-    );
+    final titleStyle =
+        _ScaledText.scaledStyle(
+          Theme.of(context).textTheme.headlineSmall,
+        )?.copyWith(
+          fontSize:
+              ((Theme.of(context).textTheme.headlineSmall?.fontSize ?? 0) + 2),
+        );
     final labelStyle = _ScaledText.scaledStyle(
       Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -772,10 +742,7 @@ class _DateBlock extends StatelessWidget {
 }
 
 class _ScaledText extends StatelessWidget {
-  const _ScaledText(
-    this.text, {
-    this.style,
-  });
+  const _ScaledText(this.text, {this.style});
 
   final String text;
   final TextStyle? style;
@@ -789,10 +756,7 @@ class _ScaledText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: scaledStyle(style),
-    );
+    return Text(text, style: scaledStyle(style));
   }
 }
 
@@ -802,33 +766,24 @@ class _FlightPath extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.onSurfaceVariant;
-    return SizedBox(
-      height: 16,
-      child: Row(
-        children: [
-          Expanded(
-            child: Divider(
-              color: color,
-              thickness: 1,
-              height: 1,
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 30) {
+          return const SizedBox.shrink();
+        }
+        return SizedBox(
+          height: 16,
+          child: Row(
+            children: [
+              Expanded(child: Divider(color: color, thickness: 1, height: 1)),
+              const SizedBox(width: 6),
+              Icon(Icons.flight_takeoff, size: 16, color: color),
+              const SizedBox(width: 6),
+              Expanded(child: Divider(color: color, thickness: 1, height: 1)),
+            ],
           ),
-          const SizedBox(width: 6),
-          Icon(
-            Icons.flight_takeoff,
-            size: 16,
-            color: color,
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Divider(
-              color: color,
-              thickness: 1,
-              height: 1,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -839,50 +794,39 @@ class _PositioningPath extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.onSurfaceVariant;
-    return SizedBox(
-      height: 16,
-      child: Row(
-        children: [
-          Expanded(
-            child: Divider(
-              color: color,
-              thickness: 1,
-              height: 1,
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 30) {
+          return const SizedBox.shrink();
+        }
+        return SizedBox(
+          height: 16,
+          child: Row(
+            children: [
+              Expanded(child: Divider(color: color, thickness: 1, height: 1)),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.airline_seat_recline_extra_sharp,
+                size: 16,
+                color: color,
+              ),
+              const SizedBox(width: 6),
+              Expanded(child: Divider(color: color, thickness: 1, height: 1)),
+            ],
           ),
-          const SizedBox(width: 6),
-          Icon(
-            Icons.airline_seat_recline_extra_sharp,
-            size: 16,
-            color: color,
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Divider(
-              color: color,
-              thickness: 1,
-              height: 1,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 class _DateDivider extends StatelessWidget {
-  const _DateDivider({
-    required this.color,
-  });
+  const _DateDivider({required this.color});
 
   final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 46,
-      color: color.withValues(alpha: 0.7),
-    );
+    return Container(width: 1, height: 46, color: color.withValues(alpha: 0.7));
   }
 }

@@ -61,15 +61,15 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
   }
 
   DateTime _startOfDay(DateTime date) {
-    return DateTime(date.year, date.month, date.day);
+    return DateTime.utc(date.year, date.month, date.day);
   }
 
   DateTime _endOfDay(DateTime date) {
-    return DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
+    return DateTime.utc(date.year, date.month, date.day, 23, 59, 59, 999);
   }
 
   Future<void> _selectPreset(LogbookDatePreset preset) async {
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     setState(() {
       _preset = preset;
     });
@@ -108,24 +108,24 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
         _setRangeDays(now, 365);
         return;
       case LogbookDatePreset.lastMonth:
-        final lastMonth = DateTime(now.year, now.month - 1, 1);
-        _fromDate = DateTime(lastMonth.year, lastMonth.month, 1);
-        _toDate = _endOfDay(DateTime(now.year, now.month, 0));
+        final lastMonth = DateTime.utc(now.year, now.month - 1, 1);
+        _fromDate = DateTime.utc(lastMonth.year, lastMonth.month, 1);
+        _toDate = _endOfDay(DateTime.utc(now.year, now.month, 0));
         setState(() {});
         return;
       case LogbookDatePreset.lastYear:
-        _fromDate = DateTime(now.year - 1, 1, 1);
-        _toDate = _endOfDay(DateTime(now.year - 1, 12, 31));
+        _fromDate = DateTime.utc(now.year - 1, 1, 1);
+        _toDate = _endOfDay(DateTime.utc(now.year - 1, 12, 31));
         setState(() {});
         return;
       case LogbookDatePreset.currentMonth:
-        _fromDate = DateTime(now.year, now.month, 1);
-        _toDate = _endOfDay(DateTime(now.year, now.month + 1, 0));
+        _fromDate = DateTime.utc(now.year, now.month, 1);
+        _toDate = _endOfDay(DateTime.utc(now.year, now.month + 1, 0));
         setState(() {});
         return;
       case LogbookDatePreset.currentYear:
-        _fromDate = DateTime(now.year, 1, 1);
-        _toDate = _endOfDay(DateTime(now.year, 12, 31));
+        _fromDate = DateTime.utc(now.year, 1, 1);
+        _toDate = _endOfDay(DateTime.utc(now.year, 12, 31));
         setState(() {});
         return;
     }
@@ -138,15 +138,13 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
     setState(() {});
   }
 
-  Future<void> _pickDate({
-    required bool isFrom,
-  }) async {
+  Future<void> _pickDate({required bool isFrom}) async {
     final initial = isFrom ? _fromDate : _toDate;
     final picked = await showDatePicker(
       context: context,
-      initialDate: initial ?? DateTime.now(),
-      firstDate: DateTime(1970),
-      lastDate: DateTime(2100),
+      initialDate: initial ?? DateTime.now().toUtc(),
+      firstDate: DateTime.utc(1970),
+      lastDate: DateTime.utc(2100),
     );
     if (!mounted || picked == null) return;
     setState(() {
@@ -241,14 +239,18 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
                         label: l10n.logbookFilterFromDate,
                         value: _fromDate,
                         onPick: () => _pickDate(isFrom: true),
-                        onClear: _fromDate == null ? null : () => _clearDate(true),
+                        onClear: _fromDate == null
+                            ? null
+                            : () => _clearDate(true),
                       ),
                       const SizedBox(height: 12),
                       _DateField(
                         label: l10n.logbookFilterToDate,
                         value: _toDate,
                         onPick: () => _pickDate(isFrom: false),
-                        onClear: _toDate == null ? null : () => _clearDate(false),
+                        onClear: _toDate == null
+                            ? null
+                            : () => _clearDate(false),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -258,14 +260,18 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
                       const SizedBox(height: 8),
                       CheckboxListTile(
                         value: _types.contains(LogbookEventType.flight),
-                        onChanged: (value) =>
-                            _toggleType(LogbookEventType.flight, value ?? false),
+                        onChanged: (value) => _toggleType(
+                          LogbookEventType.flight,
+                          value ?? false,
+                        ),
                         title: Text(l10n.logbookEventFlight),
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                       ),
                       CheckboxListTile(
-                        value: _types.contains(LogbookEventType.simulatorTraining),
+                        value: _types.contains(
+                          LogbookEventType.simulatorTraining,
+                        ),
                         onChanged: (value) => _toggleType(
                           LogbookEventType.simulatorTraining,
                           value ?? false,
@@ -276,16 +282,20 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
                       ),
                       CheckboxListTile(
                         value: _types.contains(LogbookEventType.dutyPeriod),
-                        onChanged: (value) =>
-                            _toggleType(LogbookEventType.dutyPeriod, value ?? false),
+                        onChanged: (value) => _toggleType(
+                          LogbookEventType.dutyPeriod,
+                          value ?? false,
+                        ),
                         title: Text(l10n.logbookEventDuty),
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                       ),
                       CheckboxListTile(
                         value: _types.contains(LogbookEventType.positioning),
-                        onChanged: (value) =>
-                            _toggleType(LogbookEventType.positioning, value ?? false),
+                        onChanged: (value) => _toggleType(
+                          LogbookEventType.positioning,
+                          value ?? false,
+                        ),
                         title: Text(l10n.logbookEventPositioning),
                         dense: true,
                         contentPadding: EdgeInsets.zero,
@@ -411,10 +421,7 @@ class _DateField extends StatelessWidget {
           border: const OutlineInputBorder(),
           suffixIcon: onClear == null
               ? null
-              : IconButton(
-                  onPressed: onClear,
-                  icon: const Icon(Icons.clear),
-                ),
+              : IconButton(onPressed: onClear, icon: const Icon(Icons.clear)),
         ),
         child: Text(text),
       ),

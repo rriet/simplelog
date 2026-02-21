@@ -14,6 +14,11 @@ final includePreviousExperienceProvider =
   IncludePreviousExperienceNotifier.new,
 );
 
+final includeHoursBeforeProvider =
+    NotifierProvider<IncludeHoursBeforeNotifier, bool>(
+  IncludeHoursBeforeNotifier.new,
+);
+
 class IncludePreviousExperienceNotifier extends Notifier<bool> {
   @override
   bool build() {
@@ -42,8 +47,81 @@ class IncludePreviousExperienceNotifier extends Notifier<bool> {
   Future<void> _save(bool value) async {
     try {
       final file = await _file();
+      Map<String, dynamic> current = <String, dynamic>{};
+      if (await file.exists()) {
+        try {
+          final raw = await file.readAsString();
+          final decoded = jsonDecode(raw);
+          if (decoded is Map<String, dynamic>) {
+            current = decoded;
+          } else if (decoded is Map) {
+            current = Map<String, dynamic>.from(decoded);
+          }
+        } catch (_) {
+          current = <String, dynamic>{};
+        }
+      }
+      current['includePreviousExperience'] = value;
       await file.writeAsString(
-        jsonEncode({'includePreviousExperience': value}),
+        jsonEncode(current),
+        flush: true,
+      );
+    } catch (_) {
+      // Best effort persistence.
+    }
+  }
+
+  Future<File> _file() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File('${dir.path}/$_reportsPreferencesFileName');
+  }
+}
+
+class IncludeHoursBeforeNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    _load();
+    return true;
+  }
+
+  Future<void> setValue(bool value) async {
+    state = value;
+    await _save(value);
+  }
+
+  Future<void> _load() async {
+    try {
+      final file = await _file();
+      if (!await file.exists()) return;
+      final raw = await file.readAsString();
+      final data = jsonDecode(raw) as Map<String, dynamic>;
+      final value = data['includeHoursBefore'] != false;
+      state = value;
+    } catch (_) {
+      // Keep default value.
+    }
+  }
+
+  Future<void> _save(bool value) async {
+    try {
+      final file = await _file();
+      Map<String, dynamic> current = <String, dynamic>{};
+      if (await file.exists()) {
+        try {
+          final raw = await file.readAsString();
+          final decoded = jsonDecode(raw);
+          if (decoded is Map<String, dynamic>) {
+            current = decoded;
+          } else if (decoded is Map) {
+            current = Map<String, dynamic>.from(decoded);
+          }
+        } catch (_) {
+          current = <String, dynamic>{};
+        }
+      }
+      current['includeHoursBefore'] = value;
+      await file.writeAsString(
+        jsonEncode(current),
         flush: true,
       );
     } catch (_) {
@@ -124,6 +202,11 @@ class SavedReportsQueriesNotifier extends Notifier<List<SavedReportsQuery>> {
 final reportsEventTypesProvider =
     NotifierProvider<ReportsEventTypesNotifier, ReportsEventTypesSelection>(
   ReportsEventTypesNotifier.new,
+);
+
+final reportsRuntimeQueryProvider =
+    NotifierProvider<ReportsRuntimeQueryNotifier, ReportsRuntimeQueryState>(
+  ReportsRuntimeQueryNotifier.new,
 );
 
 class ReportsEventTypesSelection {
@@ -214,6 +297,36 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
   Future<File> _file() async {
     final dir = await getApplicationDocumentsDirectory();
     return File('${dir.path}/$_reportsEventTypesFileName');
+  }
+}
+
+class ReportsRuntimeQueryState {
+  const ReportsRuntimeQueryState({
+    required this.from,
+    required this.to,
+    required this.matchMode,
+    required this.filters,
+  });
+
+  final DateTime from;
+  final DateTime to;
+  final ReportsFilterMatchMode matchMode;
+  final List<ReportsFilterCondition> filters;
+}
+
+class ReportsRuntimeQueryNotifier extends Notifier<ReportsRuntimeQueryState> {
+  @override
+  ReportsRuntimeQueryState build() {
+    return ReportsRuntimeQueryState(
+      from: DateTime.utc(1990, 1, 1),
+      to: DateTime.now().toUtc(),
+      matchMode: ReportsFilterMatchMode.all,
+      filters: const <ReportsFilterCondition>[],
+    );
+  }
+
+  void setValue(ReportsRuntimeQueryState value) {
+    state = value;
   }
 }
 

@@ -13,7 +13,7 @@ class SimulatorDefaultPositionSelector extends ConsumerWidget {
       data: (value) => DropdownButtonFormField<CrewPosition>(
         initialValue: value,
         decoration: const InputDecoration(
-          labelText: 'Default simulator crew position',
+          labelText: 'Default self crew position',
           border: OutlineInputBorder(),
         ),
         items: _positions
@@ -32,21 +32,13 @@ class SimulatorDefaultPositionSelector extends ConsumerWidget {
         },
       ),
       loading: () => const LinearProgressIndicator(),
-      error: (_, __) => const Text('Unable to load default position'),
+      error: (_, _) => const Text('Unable to load default position'),
     );
   }
 
   static const List<CrewPosition> _positions = [
     CrewPosition.pic,
     CrewPosition.sic,
-    CrewPosition.instructor,
-    CrewPosition.observer,
-    CrewPosition.relief,
-    CrewPosition.reliefCaptain,
-    CrewPosition.reliefFirstOfficer,
-    CrewPosition.cabinSenior,
-    CrewPosition.cabinCrew,
-    CrewPosition.other,
   ];
 
   static String _labelFor(CrewPosition value) {
@@ -54,7 +46,7 @@ class SimulatorDefaultPositionSelector extends ConsumerWidget {
       case CrewPosition.pic:
         return 'PIC';
       case CrewPosition.sic:
-        return 'SIC (FO)';
+        return 'SIC';
       case CrewPosition.instructor:
         return 'Instructor';
       case CrewPosition.observer:
@@ -76,4 +68,3 @@ class SimulatorDefaultPositionSelector extends ConsumerWidget {
     }
   }
 }
-

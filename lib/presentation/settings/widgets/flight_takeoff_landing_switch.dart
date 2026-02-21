@@ -18,8 +18,7 @@ class FlightTakeoffLandingSwitch extends ConsumerWidget {
         },
       ),
       loading: () => const LinearProgressIndicator(),
-      error: (_, __) => const Text('Unable to load option'),
+      error: (_, _) => const Text('Unable to load option'),
     );
   }
 }
-

@@ -29,12 +29,15 @@ class Flights extends Table {
   IntColumn get timeCustom4Minutes => integer()();
   IntColumn get timeFlightMinutes => integer()();
   IntColumn get timeBlockMinutes => integer()();
+  IntColumn get timeTotalBlockMinutes =>
+      integer().withDefault(const Constant(0))();
   IntColumn get distanceNM => integer()();
   IntColumn get ifrApproaches => integer()();
   IntColumn get takeOffsDays => integer()();
   IntColumn get takeOffsNight => integer()();
   IntColumn get landingsDay => integer()();
   IntColumn get landingsNight => integer()();
+  TextColumn get pilotFunction => text().withDefault(const Constant('PF'))();
   TextColumn get approachType => text()();
   TextColumn get remarks => text()();
   TextColumn get notes => text()();

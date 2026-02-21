@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/flight_time_fields_visibility_provider.dart';
+import 'package:simplelog/presentation/settings/widgets/flight_takeoff_landing_switch.dart';
 
 class TimeFieldsSettingsTab extends ConsumerStatefulWidget {
   const TimeFieldsSettingsTab({super.key});
@@ -98,6 +100,8 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        const FlightTakeoffLandingSwitch(),
+        const SizedBox(height: 8),
         Text('Visible Time Fields', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         SwitchListTile(

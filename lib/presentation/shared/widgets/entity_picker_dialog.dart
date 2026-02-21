@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/presentation/shared/widgets/keyboard_list_navigation.dart';
 import 'package:simplelog/presentation/shared/widgets/picker_search_bar.dart';
 
@@ -189,8 +190,8 @@ class _EntityPickerDialogState<T> extends ConsumerState<EntityPickerDialog<T>> {
                   );
                   final hasFavorite =
                       widget.isFavorite != null && widget.onToggleFavorite != null;
-                  final trailingWidgets = <Widget>[
-                    if (extraTrailing != null) extraTrailing,
+                  final trailingWidgets = <Widget?>[
+                    extraTrailing,
                     if (hasFavorite)
                       IconButton(
                         tooltip: widget.isFavorite!(item)
@@ -208,7 +209,7 @@ class _EntityPickerDialogState<T> extends ConsumerState<EntityPickerDialog<T>> {
                           await widget.onToggleFavorite!(ref, item);
                         },
                       ),
-                  ];
+                  ].whereType<Widget>().toList(growable: false);
 
                   return Focus(
                     key: _itemKeys[index],

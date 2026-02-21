@@ -44,7 +44,7 @@ class CrewPickerDialog extends StatelessWidget {
         await ref.read(crewControllerProvider.notifier).toggleFavorite(row.crew);
       },
       emptyText: 'No crew found',
-      errorBuilder: (_, __) => const Center(child: Text('Error loading crew')),
+      errorBuilder: (_, _) => const Center(child: Text('Error loading crew')),
     );
   }
 }

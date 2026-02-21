@@ -63,10 +63,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     );
   }
 
-  Future<void> _importCsv(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _importCsv(BuildContext context, WidgetRef ref) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['csv'],
@@ -74,10 +71,11 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.single;
-    final bytes = file.bytes ??
+    final bytes =
+        file.bytes ??
         (file.path == null ? null : await File(file.path!).readAsBytes());
     if (bytes == null) return;
-    final content = String.fromCharCodes(bytes);
+    final content = _decodeCsvBytes(bytes);
     final type = _detectCsvType(content);
     if (!context.mounted) return;
 
@@ -103,11 +101,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         outcome = await importer.importCsvSafely(
           content,
           options: options,
-          onProgress: (processed, total) =>
-              progress.value = _ImportProgress(
-                processed: processed,
-                total: total,
-              ),
+          onProgress: (processed, total) => progress.value = _ImportProgress(
+            processed: processed,
+            total: total,
+          ),
         );
       } finally {
         progress.dispose();
@@ -117,9 +114,9 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       if (!context.mounted) return;
       if (!outcome.isSuccess) {
         final message = _buildImportErrorMessage(outcome.failure);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
         return;
       }
       await _showImportSummary(context, outcome.data!);
@@ -165,33 +162,36 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       if (!context.mounted) return;
       if (!outcome.isSuccess) {
         final message = _buildImportErrorMessage(outcome.failure);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
         return;
       }
       await _showImportSummary(context, outcome.data!);
     } else {
       await _showOptionsDialog(context, type, file.name);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unsupported CSV format.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Unsupported CSV format.')));
     }
   }
 
-  Future<void> _exportCsv(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _exportCsv(BuildContext context, WidgetRef ref) async {
     final db = ref.read(databaseProvider);
     final exporter = SimpleLogCsvExporter(db);
     final csv = await exporter.exportFlightsAndSimulatorsCsv();
     if (!context.mounted) return;
 
-    final fileName = 'simplelog_export_'
+    final fileName =
+        'simplelog_export_'
         '${DateTime.now().toUtc().toIso8601String().replaceAll(':', '').replaceAll('-', '').split('.').first}.csv';
-    final bytes = Uint8List.fromList(utf8.encode(csv));
+    final bytes = Uint8List.fromList(<int>[
+      0xEF,
+      0xBB,
+      0xBF,
+      ...utf8.encode(csv),
+    ]);
     String? path;
     if (Platform.isIOS || Platform.isAndroid) {
       path = await FilePicker.platform.saveFile(
@@ -221,9 +221,27 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     }
 
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('CSV exported: $path')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('CSV exported: $path')));
+  }
+
+  String _decodeCsvBytes(Uint8List bytes) {
+    if (bytes.length >= 3 &&
+        bytes[0] == 0xEF &&
+        bytes[1] == 0xBB &&
+        bytes[2] == 0xBF) {
+      return utf8.decode(bytes.sublist(3));
+    }
+
+    try {
+      return utf8.decode(bytes);
+    } on FormatException {
+      // Keep UTF-8 as the default even when a few malformed bytes exist.
+      // Falling back to latin1 for the whole file corrupts valid UTF-8 text
+      // into mojibake (e.g. accented names).
+      return utf8.decode(bytes, allowMalformed: true);
+    }
   }
 
   void _showImportProgressDialog(
@@ -240,8 +258,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
           builder: (context, value, _) {
             final total = value.total;
             final processed = value.processed;
-            final percent =
-                total > 0 ? processed / total : null;
+            final percent = total > 0 ? processed / total : null;
             final label = total > 0
                 ? 'Processed $processed of $total'
                 : 'Preparing...';
@@ -250,10 +267,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
               children: [
                 LinearProgressIndicator(value: percent),
                 const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(label),
-                ),
+                Align(alignment: Alignment.centerLeft, child: Text(label)),
               ],
             );
           },
@@ -292,10 +306,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     );
   }
 
-  Future<void> _clearDatabase(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _clearDatabase(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -320,9 +331,9 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     await db.clearAllData();
     await DashboardRulesSeedImporter.clearSeedFlag();
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Database cleared.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Database cleared.')));
   }
 
   Future<bool> _showOptionsDialog(
@@ -389,8 +400,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     final prefix = switch (failure.type) {
       ImportFailureType.invalidFormat => 'Import failed: invalid CSV format.',
       ImportFailureType.parseError => 'Import failed while parsing data.',
-      ImportFailureType.databaseError => 'Import failed while saving to database.',
-      ImportFailureType.unexpected => 'Import failed due to an unexpected error.',
+      ImportFailureType.databaseError =>
+        'Import failed while saving to database.',
+      ImportFailureType.unexpected =>
+        'Import failed due to an unexpected error.',
     };
     if (failure.message.isEmpty) return prefix;
     return '$prefix ${failure.message}';

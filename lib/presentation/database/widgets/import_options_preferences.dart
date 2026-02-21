@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/import/simplelog_import_options.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
+import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 
 class ImportOptionsPreferences {
   static const _simplePrefix = 'import.simplelog.';
@@ -9,6 +12,9 @@ class ImportOptionsPreferences {
 
   static Future<SimpleLogImportOptions> loadSimpleLog() async {
     final prefs = await SharedPreferences.getInstance();
+    final factoringSettings = FlightFactoringSettings.fromJson(
+      prefs.getString(flightFactoringSettingsKey),
+    );
     return SimpleLogImportOptions(
       recalculateNightTime:
           prefs.getBool('${_simplePrefix}recalculateNightTime') ?? false,
@@ -18,29 +24,30 @@ class ImportOptionsPreferences {
           prefs.getBool('${_simplePrefix}recalculateTakeoffLanding') ?? false,
       recalculateCrossCountry:
           prefs.getBool('${_simplePrefix}recalculateCrossCountry') ?? false,
-      crossCountryThresholdNm:
-          prefs.getInt('${_simplePrefix}crossCountryThresholdNm') ?? 50,
+      crossCountryThresholdNm: factoringSettings.crossCountryThresholdNm,
       recalculateInstrument:
           prefs.getBool('${_simplePrefix}recalculateInstrument') ?? false,
-      instrumentPercent:
-          prefs.getInt('${_simplePrefix}instrumentPercent') ?? 0,
-      instrumentMinimumMinutes:
-          prefs.getInt('${_simplePrefix}instrumentMinimumMinutes') ?? 0,
-      instrumentSubtractMinutes:
-          prefs.getInt('${_simplePrefix}instrumentSubtractMinutes') ?? 0,
-      airportStrategy: _parseMerge(
-            prefs.getString('${_simplePrefix}airportStrategy'),
-          ) ??
-          MergeStrategy.keep,
-      crewStrategy:
-          _parseMerge(prefs.getString('${_simplePrefix}crewStrategy')) ??
-              MergeStrategy.keep,
-      aircraftStrategy:
-          _parseMerge(prefs.getString('${_simplePrefix}aircraftStrategy')) ??
-              MergeStrategy.keep,
-      aircraftTypeStrategy:
-          _parseMerge(prefs.getString('${_simplePrefix}aircraftTypeStrategy')) ??
-              MergeStrategy.keep,
+      instrumentPercent: factoringSettings.instrumentPercent,
+      instrumentMinimumMinutes: factoringSettings.instrumentMinimumMinutes,
+      instrumentSubtractMinutes: factoringSettings.instrumentSubtractMinutes,
+      recalculateIfrTime:
+          prefs.getBool('${_simplePrefix}recalculateIfrTime') ?? false,
+      ifrPercent: factoringSettings.ifrPercent,
+      ifrMinimumMinutes: factoringSettings.ifrMinimumMinutes,
+      ifrSubtractMinutes: factoringSettings.ifrSubtractMinutes,
+      irp3Percent: factoringSettings.irp3Percent,
+      irp3SubtractMinutes: factoringSettings.irp3SubtractMinutes,
+      irp4Percent: factoringSettings.irp4Percent,
+      irp4SubtractMinutes: factoringSettings.irp4SubtractMinutes,
+      overrideAirportValues:
+          prefs.getBool('${_simplePrefix}overrideAirportValues') ??
+          (prefs.getBool('${_simplePrefix}overrideExistingValues') ?? false),
+      overrideAircraftValues:
+          prefs.getBool('${_simplePrefix}overrideAircraftValues') ??
+          (prefs.getBool('${_simplePrefix}overrideExistingValues') ?? false),
+      overrideAircraftTypeValues:
+          prefs.getBool('${_simplePrefix}overrideAircraftTypeValues') ??
+          (prefs.getBool('${_simplePrefix}overrideExistingValues') ?? false),
     );
   }
 
@@ -62,41 +69,43 @@ class ImportOptionsPreferences {
       '${_simplePrefix}recalculateCrossCountry',
       value.recalculateCrossCountry,
     );
-    await prefs.setInt(
-      '${_simplePrefix}crossCountryThresholdNm',
-      value.crossCountryThresholdNm,
-    );
     await prefs.setBool(
       '${_simplePrefix}recalculateInstrument',
       value.recalculateInstrument,
     );
-    await prefs.setInt(
-      '${_simplePrefix}instrumentPercent',
-      value.instrumentPercent,
+    await prefs.setBool(
+      '${_simplePrefix}recalculateIfrTime',
+      value.recalculateIfrTime,
     );
-    await prefs.setInt(
-      '${_simplePrefix}instrumentMinimumMinutes',
-      value.instrumentMinimumMinutes,
+    await prefs.setBool(
+      '${_simplePrefix}overrideAirportValues',
+      value.overrideAirportValues,
     );
-    await prefs.setInt(
-      '${_simplePrefix}instrumentSubtractMinutes',
-      value.instrumentSubtractMinutes,
+    await prefs.setBool(
+      '${_simplePrefix}overrideAircraftValues',
+      value.overrideAircraftValues,
+    );
+    await prefs.setBool(
+      '${_simplePrefix}overrideAircraftTypeValues',
+      value.overrideAircraftTypeValues,
+    );
+
+    final factoringSettings = FlightFactoringSettings(
+      crossCountryThresholdNm: value.crossCountryThresholdNm,
+      instrumentPercent: value.instrumentPercent,
+      instrumentMinimumMinutes: value.instrumentMinimumMinutes,
+      instrumentSubtractMinutes: value.instrumentSubtractMinutes,
+      ifrPercent: value.ifrPercent,
+      ifrMinimumMinutes: value.ifrMinimumMinutes,
+      ifrSubtractMinutes: value.ifrSubtractMinutes,
+      irp3Percent: value.irp3Percent,
+      irp3SubtractMinutes: value.irp3SubtractMinutes,
+      irp4Percent: value.irp4Percent,
+      irp4SubtractMinutes: value.irp4SubtractMinutes,
     );
     await prefs.setString(
-      '${_simplePrefix}airportStrategy',
-      value.airportStrategy.name,
-    );
-    await prefs.setString(
-      '${_simplePrefix}crewStrategy',
-      value.crewStrategy.name,
-    );
-    await prefs.setString(
-      '${_simplePrefix}aircraftStrategy',
-      value.aircraftStrategy.name,
-    );
-    await prefs.setString(
-      '${_simplePrefix}aircraftTypeStrategy',
-      value.aircraftTypeStrategy.name,
+      flightFactoringSettingsKey,
+      jsonEncode(factoringSettings.toJson()),
     );
   }
 
@@ -106,8 +115,10 @@ class ImportOptionsPreferences {
     final prefs = await SharedPreferences.getInstance();
     return SouthwestImportOptions(
       defaultSelfPosition:
-          _parseCrewPosition(prefs.getString('${_swPrefix}defaultSelfPosition')) ??
-              fallbackPosition,
+          _parseCrewPosition(
+            prefs.getString('${_swPrefix}defaultSelfPosition'),
+          ) ??
+          fallbackPosition,
       recalculateBlockTime:
           prefs.getBool('${_swPrefix}recalculateBlockTime') ?? true,
       recalculateNightTime:
@@ -172,14 +183,6 @@ class ImportOptionsPreferences {
       value.addFlightNumberToNotes,
     );
   }
-}
-
-MergeStrategy? _parseMerge(String? raw) {
-  if (raw == null) return null;
-  for (final value in MergeStrategy.values) {
-    if (value.name == raw) return value;
-  }
-  return null;
 }
 
 CrewPosition? _parseCrewPosition(String? raw) {

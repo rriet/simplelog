@@ -532,4 +532,512 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get databaseSyncStopWarning =>
       'Stopping will disconnect other devices. Continue?';
+
+  @override
+  String get reportsTabOverview => 'Overview';
+
+  @override
+  String get reportsTabFlights => 'Flights';
+
+  @override
+  String get reportsTabTotals => 'Totals';
+
+  @override
+  String get reportsTabAnalyses => 'Analyses';
+
+  @override
+  String get reportsTabReports => 'Reports';
+
+  @override
+  String get reportsTabFilters => 'Filters';
+
+  @override
+  String get reportsEntryGeneric => 'Entry';
+
+  @override
+  String reportsDeleteEntryConfirm(String label) {
+    return 'Delete $label?';
+  }
+
+  @override
+  String get reportsDeleteDutyConfirm => 'Delete this duty entry?';
+
+  @override
+  String get reportsNoPreviousFlightFound => 'No previous flight found.';
+
+  @override
+  String get logbookFabReturnFlight => 'Return Flight';
+
+  @override
+  String get logbookFabNextFlight => 'Next Flight';
+
+  @override
+  String get reportsStartBeforeEndError =>
+      'Start date must be before end date.';
+
+  @override
+  String reportsSavedQuery(String name) {
+    return 'Saved query \"$name\".';
+  }
+
+  @override
+  String get reportsPdfPreparing => 'Preparing PDF...';
+
+  @override
+  String get reportsPdfGenerating => 'Generating PDF...';
+
+  @override
+  String get reportsPdfSaving => 'Saving PDF...';
+
+  @override
+  String get reportsPdfDone => 'Done.';
+
+  @override
+  String reportsPdfExported(String path) {
+    return 'PDF exported to: $path';
+  }
+
+  @override
+  String reportsPdfFailed(String error) {
+    return 'Failed to generate PDF: $error';
+  }
+
+  @override
+  String get reportsNoTemplateAvailable => 'No template available.';
+
+  @override
+  String get reportsSavePdfDialogTitle => 'Save PDF';
+
+  @override
+  String get reportsChooseExportFolderTitle => 'Choose export folder';
+
+  @override
+  String get reportsCancelled => 'Cancelled';
+
+  @override
+  String get reportsAnalyzeByLabel => 'Analyze by';
+
+  @override
+  String get reportsOrderByLabel => 'Order by';
+
+  @override
+  String get reportsAnalyzeByAircraft => 'By Aircraft';
+
+  @override
+  String get reportsAnalyzeByType => 'By Type';
+
+  @override
+  String get reportsAnalyzeByFamily => 'By Family';
+
+  @override
+  String get reportsAnalyzeByYear => 'By Year';
+
+  @override
+  String get reportsAnalyzeByMonth => 'By Month';
+
+  @override
+  String get reportsOrderByGreater => 'Greater';
+
+  @override
+  String get reportsOrderByNatural => 'Natural';
+
+  @override
+  String get reportsShowMap => 'Show Map';
+
+  @override
+  String get reportsShowPath => 'Show Path';
+
+  @override
+  String get reportsIncludeHoursBefore => 'Include hours before';
+
+  @override
+  String get reportsPageSizeLabel => 'Page Size';
+
+  @override
+  String get reportsXmlTemplateLabel => 'XML Template';
+
+  @override
+  String get reportsGeneratingShort => 'Generating...';
+
+  @override
+  String get reportsGeneratePdf => 'Generate PDF';
+
+  @override
+  String get reportsDatePresetLastMonthRolling => 'Last month (rolling)';
+
+  @override
+  String get reportsUnknown => 'Unknown';
+
+  @override
+  String get reportsUnknownType => 'Unknown type';
+
+  @override
+  String get reportsUnknownFamily => 'Unknown family';
+
+  @override
+  String reportsFiltersSummary(int count, String from, String to) {
+    return '$count filters • $from UTC - $to UTC';
+  }
+
+  @override
+  String get reportsEventSimShort => 'Sim';
+
+  @override
+  String get reportsPreviousExperienceLabel => 'Previous experience';
+
+  @override
+  String get reportsInclude => 'Include';
+
+  @override
+  String get reportsExclude => 'Exclude';
+
+  @override
+  String get reportsMatchModeLabel => 'Match mode';
+
+  @override
+  String get reportsMatchAll => 'All';
+
+  @override
+  String get reportsMatchAny => 'Any';
+
+  @override
+  String get reportsAddFilter => 'Add Filter';
+
+  @override
+  String reportsFilterChipLabel(String field, String operator, String value) {
+    return '$field · $operator · $value';
+  }
+
+  @override
+  String get reportsSavedQueriesLabel => 'Saved queries';
+
+  @override
+  String get reportsSaveQuery => 'Save Query';
+
+  @override
+  String reportsDeleteSavedQuery(String name) {
+    return 'Delete: $name';
+  }
+
+  @override
+  String get reportsDeleteSavedLabel => 'Delete Saved';
+
+  @override
+  String get reportsMetricIfrApproaches => 'IFR Approaches';
+
+  @override
+  String get reportsMetricTakeoffDay => 'Takeoff Day';
+
+  @override
+  String get reportsMetricTakeoffNight => 'Takeoff Night';
+
+  @override
+  String get reportsMetricLandingDay => 'Landing Day';
+
+  @override
+  String get reportsMetricLandingNight => 'Landing Night';
+
+  @override
+  String get reportsMetricTotalBlock => 'Total Block';
+
+  @override
+  String get reportsMetricPic => 'PIC';
+
+  @override
+  String get reportsMetricPicus => 'PICUS';
+
+  @override
+  String get reportsMetricSic => 'SIC';
+
+  @override
+  String get reportsMetricDual => 'Dual';
+
+  @override
+  String get reportsMetricInstructor => 'Instructor';
+
+  @override
+  String get reportsMetricNight => 'Night';
+
+  @override
+  String get reportsMetricIfr => 'IFR';
+
+  @override
+  String get reportsMetricInstrument => 'Instrument';
+
+  @override
+  String get reportsMetricCrossCountry => 'Cross-Country';
+
+  @override
+  String get reportsMetricSimulator => 'Simulator';
+
+  @override
+  String get reportsMetricDuty => 'Duty';
+
+  @override
+  String get reportsMetricDistanceNm => 'Distance NM';
+
+  @override
+  String reportsFlightCount(String count) {
+    return 'Flight count: $count';
+  }
+
+  @override
+  String get reportsNoDataForQuery => 'No data for selected query.';
+
+  @override
+  String get reportsMetricLandings => 'Landings';
+
+  @override
+  String reportsFirstFlightAt(String date) {
+    return 'First flight $date UTC';
+  }
+
+  @override
+  String reportsLastFlightAt(String date) {
+    return 'Last flight $date UTC';
+  }
+
+  @override
+  String get reportsFieldNameLabel => 'Field name';
+
+  @override
+  String get reportsConditionLabel => 'Condition';
+
+  @override
+  String get reportsValueLabel => 'Value';
+
+  @override
+  String get reportsFlightsAndSimulatorTitle => 'Flights & Simulator';
+
+  @override
+  String reportsEntriesCount(int count) {
+    return '$count entries';
+  }
+
+  @override
+  String get reportsNoFlightsInPeriod => 'No flights/sim in selected period.';
+
+  @override
+  String get reportsFlightMapTitle => 'Flight Map';
+
+  @override
+  String get reportsHideLines => 'Hide lines';
+
+  @override
+  String get reportsShowLines => 'Show lines';
+
+  @override
+  String get reportsDone => 'Done';
+
+  @override
+  String get reportsNoCoordinatesAvailable => 'No coordinates available.';
+
+  @override
+  String reportsAirportsCount(int count) {
+    return 'Airports: $count';
+  }
+
+  @override
+  String get reportsFilterFieldDepartureIcao => 'Departure ICAO';
+
+  @override
+  String get reportsFilterFieldDepartureIata => 'Departure IATA';
+
+  @override
+  String get reportsFilterFieldDepartureName => 'Departure Name';
+
+  @override
+  String get reportsFilterFieldDepartureCity => 'Departure City';
+
+  @override
+  String get reportsFilterFieldDepartureCountry => 'Departure Country';
+
+  @override
+  String get reportsFilterFieldArrivalIcao => 'Arrival ICAO';
+
+  @override
+  String get reportsFilterFieldArrivalIata => 'Arrival IATA';
+
+  @override
+  String get reportsFilterFieldArrivalName => 'Arrival Name';
+
+  @override
+  String get reportsFilterFieldArrivalCity => 'Arrival City';
+
+  @override
+  String get reportsFilterFieldArrivalCountry => 'Arrival Country';
+
+  @override
+  String get reportsFilterFieldAircraftRegistration => 'Aircraft Registration';
+
+  @override
+  String get reportsFilterFieldAircraftTypeCode => 'Aircraft Type Code';
+
+  @override
+  String get reportsFilterFieldAircraftTypeFamily => 'Aircraft Type Family';
+
+  @override
+  String get reportsFilterFieldAircraftTypeName => 'Aircraft Type Name';
+
+  @override
+  String get reportsFilterFieldPilotName => 'Pilot Name';
+
+  @override
+  String get reportsFilterFieldApproachType => 'Approach Type';
+
+  @override
+  String get reportsFilterFieldRemarks => 'Remarks';
+
+  @override
+  String get reportsFilterFieldNotes => 'Notes';
+
+  @override
+  String get reportsFilterFieldBlockTime => 'Block Time';
+
+  @override
+  String get reportsFilterFieldFlightTime => 'Flight Time';
+
+  @override
+  String get reportsFilterFieldTotalTime => 'Total Time';
+
+  @override
+  String get reportsFilterFieldNightTime => 'Night Time';
+
+  @override
+  String get reportsFilterFieldIfrTime => 'IFR Time';
+
+  @override
+  String get reportsFilterFieldInstrumentTime => 'Instrument Time';
+
+  @override
+  String get reportsFilterFieldSimInstrumentTime => 'Sim Instrument Time';
+
+  @override
+  String get reportsFilterFieldPicTime => 'PIC Time';
+
+  @override
+  String get reportsFilterFieldPicusTime => 'PICUS Time';
+
+  @override
+  String get reportsFilterFieldSicTime => 'SIC Time';
+
+  @override
+  String get reportsFilterFieldDualTime => 'Dual Time';
+
+  @override
+  String get reportsFilterFieldInstructorTime => 'Instructor Time';
+
+  @override
+  String get reportsFilterFieldCrossCountryTime => 'Cross-Country Time';
+
+  @override
+  String get reportsFilterFieldCustom1Time => 'Custom 1 Time';
+
+  @override
+  String get reportsFilterFieldCustom2Time => 'Custom 2 Time';
+
+  @override
+  String get reportsFilterFieldCustom3Time => 'Custom 3 Time';
+
+  @override
+  String get reportsFilterFieldCustom4Time => 'Custom 4 Time';
+
+  @override
+  String get reportsFilterFieldDistanceNm => 'Distance NM';
+
+  @override
+  String get reportsFilterFieldTakeoffs => 'Takeoffs';
+
+  @override
+  String get reportsFilterFieldTakeoffsDay => 'Takeoffs Day';
+
+  @override
+  String get reportsFilterFieldTakeoffsNight => 'Takeoffs Night';
+
+  @override
+  String get reportsFilterFieldLandings => 'Landings';
+
+  @override
+  String get reportsFilterFieldLandingsDay => 'Landings Day';
+
+  @override
+  String get reportsFilterFieldLandingsNight => 'Landings Night';
+
+  @override
+  String get reportsFilterFieldIfrApproaches => 'IFR Approaches';
+
+  @override
+  String get reportsFilterFieldMultiPilot => 'Multi Pilot';
+
+  @override
+  String get reportsFilterFieldSimulator => 'Simulator';
+
+  @override
+  String get reportsFilterOperatorContains => 'Contains';
+
+  @override
+  String get reportsFilterOperatorStartsWith => 'Starts With';
+
+  @override
+  String get reportsFilterOperatorDoesNotStartWith => 'Does not start with';
+
+  @override
+  String get reportsFilterOperatorEndsWith => 'Ends With';
+
+  @override
+  String get reportsFilterOperatorDoesNotEndWith => 'Does not end with';
+
+  @override
+  String get reportsFilterOperatorIs => 'Is';
+
+  @override
+  String get reportsFilterOperatorIsNot => 'Is not';
+
+  @override
+  String get reportsFilterOperatorGreaterThan => 'Greater than';
+
+  @override
+  String get reportsFilterOperatorLessThan => 'Less than';
+
+  @override
+  String get reportsFilterOperatorEquals => 'Equals';
+
+  @override
+  String get reportsFilterOperatorIsTrue => 'Is True';
+
+  @override
+  String get reportsFilterOperatorIsFalse => 'Is False';
+
+  @override
+  String get languageLatvian => 'Latvian';
+
+  @override
+  String get reportsAnalyzeByAirport => 'By Airport';
+
+  @override
+  String get reportsAnalyzeByPilot => 'By Pilot';
+
+  @override
+  String get reportsUnknownAirport => 'Unknown airport';
+
+  @override
+  String get reportsUnknownPilot => 'Unknown pilot';
+
+  @override
+  String get reportsOrderByHours => 'Hours';
+
+  @override
+  String get reportsOrderByLandings => 'Landings';
+
+  @override
+  String get reportsOrderByTakeoff => 'TakeOff';
+
+  @override
+  String get reportsOrderByOperations => 'Operations';
+
+  @override
+  String get reportsMetricTakeoff => 'TakeOff';
+
+  @override
+  String get reportsMetricOperations => 'Operations';
 }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
+import 'package:simplelog/data/models/reports_models.dart';
 import 'package:simplelog/data/models/simulator_crew_assignment_input.dart';
 
 import 'duty_edit_screen.dart';
@@ -12,8 +14,10 @@ import 'flight_edit_screen.dart';
 import 'positioning_edit_screen.dart';
 import 'simulator_edit_screen.dart';
 import 'widgets/logbook_entry_dialogs.dart';
-import 'widgets/logbook_filters_dialog.dart';
 import 'widgets/logbook_list.dart';
+import 'package:simplelog/presentation/reports/reports_screen.dart';
+import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
+import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
 
 class LogbookScreen extends ConsumerStatefulWidget {
   const LogbookScreen({super.key});
@@ -22,89 +26,221 @@ class LogbookScreen extends ConsumerStatefulWidget {
   ConsumerState<LogbookScreen> createState() => _LogbookScreenState();
 }
 
-class _LogbookScreenState extends ConsumerState<LogbookScreen> {
+class _LogbookScreenState extends ConsumerState<LogbookScreen>
+    with SingleTickerProviderStateMixin {
   int? _currentYear;
   bool _fabOpen = false;
+  int _selectedTabIndex = 0;
   final _scrollController = ScrollController();
   final List<LogbookEntry> _entries = [];
+  List<LogbookEntry> _allFilteredEntries = const [];
+  int _directOffset = 0;
+  int _loadedCount = 0;
   bool _isLoading = false;
-  bool _hasMore = true;
-  LogbookFilters? _activeFilters;
-
+  bool _hasMore = false;
   static const int _pageSize = 200;
-
-  Future<void> _openFilters() async {
-    final filters = ref.read(logbookFiltersProvider);
-    final useCases = ref.read(logbookUseCasesProvider);
-    final updated = await LogbookFiltersDialog.show(
-      context,
-      initial: filters,
-      loadFirstEventDate: useCases.fetchFirstEventDate,
-    );
-    if (!mounted || updated == null) return;
-    ref.read(logbookFiltersProvider.notifier).state = updated;
-  }
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    final persistedTab = ref.read(logbookTopTabIndexProvider).clamp(0, 4);
+    _selectedTabIndex = persistedTab;
+    _tabController = TabController(
+      length: 5,
+      vsync: this,
+      initialIndex: persistedTab,
+    )..addListener(_handleTabChanged);
     _scrollController.addListener(_onScroll);
-    _activeFilters = ref.read(logbookFiltersProvider);
-    _loadNextPage(reset: true);
+    _reloadFromReportsQuery(ref.read(reportsRuntimeQueryProvider));
   }
 
   @override
   void dispose() {
+    _tabController
+      ..removeListener(_handleTabChanged)
+      ..dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
+  void _handleTabChanged() {
+    if (!_tabController.indexIsChanging &&
+        _selectedTabIndex != _tabController.index) {
+      setState(() {
+        _selectedTabIndex = _tabController.index;
+        if (_selectedTabIndex != 0) _fabOpen = false;
+      });
+      ref.read(logbookTopTabIndexProvider.notifier).state = _selectedTabIndex;
+    }
+  }
+
   void _onScroll() {
-    if (!_scrollController.hasClients) return;
+    if (_isLoading || !_hasMore || !_scrollController.hasClients) return;
     final threshold = _scrollController.position.maxScrollExtent - 300;
     if (_scrollController.position.pixels >= threshold) {
       _loadNextPage();
     }
   }
 
-  Future<void> _reload(LogbookFilters filters) async {
-    _activeFilters = filters;
+  Future<void> _reloadFromReportsQuery(ReportsRuntimeQueryState query) async {
+    await _loadNextPage(reset: true, runtimeQuery: query);
+  }
+
+  Future<List<LogbookEntry>> _fetchEntriesForReportsRange({
+    required List<ReportsFlightRow> flights,
+    required ReportsEventTypesSelection eventTypes,
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final logbookUseCases = ref.read(logbookUseCasesProvider);
+    final selectedTypes = <LogbookEventType>{
+      if (eventTypes.flights) LogbookEventType.flight,
+      if (eventTypes.simulator) LogbookEventType.simulatorTraining,
+      if (eventTypes.duty) LogbookEventType.dutyPeriod,
+      if (eventTypes.positioning) LogbookEventType.positioning,
+    };
+    if (selectedTypes.isEmpty) {
+      return const [];
+    }
+    final logbookEntries = await logbookUseCases.fetchLogbookPage(
+      LogbookFilters(from: from, to: to, types: selectedTypes),
+      limit: 10000,
+      offset: 0,
+    );
+    final flightIds = flights.map((flight) => flight.flightId).toSet();
+    return logbookEntries
+        .where((entry) {
+          if (entry.flight != null) {
+            return eventTypes.flights && flightIds.contains(entry.flight!.id);
+          }
+          if (entry.simulatorTraining != null) {
+            return eventTypes.simulator;
+          }
+          if (entry.positioning != null) {
+            return eventTypes.positioning;
+          }
+          if (entry.dutyStart != null || entry.dutyEnd != null) {
+            return eventTypes.duty;
+          }
+          return false;
+        })
+        .toList(growable: false);
+  }
+
+  Future<void> _reload(LogbookFilters _) async {
     await _loadNextPage(reset: true);
   }
 
-  Future<void> _loadNextPage({bool reset = false}) async {
-    if (_isLoading) return;
-    if (!mounted) return;
+  Future<void> _loadNextPage({
+    bool reset = false,
+    ReportsRuntimeQueryState? runtimeQuery,
+  }) async {
     if (!reset && !_hasMore) return;
+    if (_isLoading || !mounted) return;
+    final ReportsRuntimeQueryState query =
+        runtimeQuery ?? ref.read(reportsRuntimeQueryProvider);
+    final includePreviousExperience = ref.read(
+      includePreviousExperienceProvider,
+    );
+    final eventTypes = ref.read(reportsEventTypesProvider);
 
-    final filters = _activeFilters ?? LogbookFilters.initial();
-    if (filters.types.isEmpty) {
-      setState(() {
-        _entries.clear();
-        _hasMore = false;
-      });
-      return;
+    if (reset) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || !_scrollController.hasClients) return;
+          _scrollController.jumpTo(0);
+        });
+      }
+      if (mounted && _currentYear != null) {
+        setState(() => _currentYear = null);
+      }
     }
-
     setState(() => _isLoading = true);
     try {
-      final useCases = ref.read(logbookUseCasesProvider);
-      final offset = reset ? 0 : _entries.length;
-      final page = await useCases.fetchLogbookPage(
-        filters,
-        limit: _pageSize,
-        offset: offset,
-      );
-      if (!mounted) return;
-      setState(() {
+      final selectedTypes = <LogbookEventType>{
+        if (eventTypes.flights) LogbookEventType.flight,
+        if (eventTypes.simulator) LogbookEventType.simulatorTraining,
+        if (eventTypes.duty) LogbookEventType.dutyPeriod,
+        if (eventTypes.positioning) LogbookEventType.positioning,
+      };
+      if (selectedTypes.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _entries.clear();
+          _allFilteredEntries = const [];
+          _loadedCount = 0;
+          _directOffset = 0;
+          _hasMore = false;
+        });
+        return;
+      }
+
+      // Fast path: no advanced conditions -> direct paged query.
+      if (query.filters.isEmpty) {
+        final useCases = ref.read(logbookUseCasesProvider);
         if (reset) {
-          _entries
-            ..clear()
-            ..addAll(page);
-        } else {
-          _entries.addAll(page);
+          _directOffset = 0;
         }
-        _hasMore = page.length == _pageSize;
+        final page = await useCases.fetchLogbookPage(
+          LogbookFilters(from: query.from, to: query.to, types: selectedTypes),
+          limit: _pageSize,
+          offset: _directOffset,
+        );
+        if (!mounted) return;
+        setState(() {
+          if (reset) {
+            _entries
+              ..clear()
+              ..addAll(page);
+            _allFilteredEntries = const [];
+            _loadedCount = 0;
+          } else {
+            _entries.addAll(page);
+          }
+          _directOffset += page.length;
+          _hasMore = page.length == _pageSize;
+        });
+        return;
+      }
+
+      if (reset || _allFilteredEntries.isEmpty) {
+        final repo = ref.read(reportsRepositoryProvider);
+        final result = await repo.load(
+          ReportsQuery(
+            from: query.from,
+            to: query.to,
+            includePreviousExperience: includePreviousExperience,
+            filterMatchMode: query.matchMode,
+            filters: query.filters,
+          ),
+        );
+        final flights = eventTypes.flights
+            ? result.flights
+            : const <ReportsFlightRow>[];
+        _allFilteredEntries = await _fetchEntriesForReportsRange(
+          flights: flights,
+          eventTypes: eventTypes,
+          from: query.from,
+          to: query.to,
+        );
+        _loadedCount = 0;
+        _directOffset = 0;
+      }
+
+      if (!mounted) return;
+      final nextLoadedCount = (_loadedCount + _pageSize).clamp(
+        0,
+        _allFilteredEntries.length,
+      );
+      setState(() {
+        _entries
+          ..clear()
+          ..addAll(_allFilteredEntries.take(nextLoadedCount));
+        _loadedCount = nextLoadedCount;
+        _hasMore = _loadedCount < _allFilteredEntries.length;
       });
     } finally {
       if (mounted) {
@@ -144,9 +280,23 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    ref.listen<ReportsRuntimeQueryState>(reportsRuntimeQueryProvider, (
+      prev,
+      next,
+    ) {
+      if (prev == next) return;
+      _reloadFromReportsQuery(next);
+    });
+    ref.listen<ReportsEventTypesSelection>(reportsEventTypesProvider, (
+      prev,
+      next,
+    ) {
+      if (prev == next) return;
+      _loadNextPage(reset: true);
+    });
     ref.listen<LogbookFilters>(logbookFiltersProvider, (prev, next) {
       if (prev == next) return;
-      _reload(next);
+      _reload(next); // keeps compatibility with existing providers/listeners
     });
 
     return Stack(
@@ -156,41 +306,21 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.screenLogbook,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: l10n.logbookFilterAction,
-                    icon: const Icon(Icons.filter_list),
-                    onPressed: _openFilters,
-                  ),
+              TabBar(
+                controller: _tabController,
+                isScrollable: AppTabBarStyles.isScrollable,
+                tabAlignment: AppTabBarStyles.tabAlignment,
+                labelPadding: AppTabBarStyles.labelPadding,
+                tabs: [
+                  Tab(text: l10n.reportsTabFlights),
+                  Tab(text: l10n.reportsTabTotals),
+                  Tab(text: l10n.reportsTabAnalyses),
+                  Tab(text: l10n.reportsTabReports),
+                  Tab(text: l10n.reportsTabFilters),
                 ],
               ),
               const SizedBox(height: 8),
-              Expanded(
-                child: _isLoading && _entries.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : LogbookList(
-                        controller: _scrollController,
-                        items: _buildDisplayItems(_entries),
-                        onOpenEntry: _openEntry,
-                        onEditEntry: _editEntry,
-                        onDeleteEntry: _deleteEntry,
-                        onToggleLockEntry: _toggleEntryLock,
-                        onEditDuty: _editDuty,
-                        onDeleteDuty: _deleteDuty,
-                        onToggleLockDuty: _toggleDutyLock,
-                        onYearChange: (year) {
-                          if (!mounted || _currentYear == year) return;
-                          setState(() => _currentYear = year);
-                        },
-                      ),
-              ),
+              Expanded(child: _buildSelectedTab()),
               if (_isLoading && _entries.isNotEmpty)
                 const Padding(
                   padding: EdgeInsets.only(top: 12),
@@ -199,28 +329,62 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
             ],
           ),
         ),
-        if (_fabOpen)
+        if (_selectedTabIndex == 0 && _fabOpen)
           Positioned.fill(
             child: GestureDetector(
               onTap: () => setState(() => _fabOpen = false),
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.1),
+              child: Container(color: Colors.black.withValues(alpha: 0.1)),
+            ),
+          ),
+        if (_selectedTabIndex == 0)
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: SafeArea(
+              top: false,
+              child: _FabMenu(
+                isOpen: _fabOpen,
+                onToggle: _toggleFabMenu,
+                onAction: _handleAction,
               ),
             ),
           ),
-        Positioned(
-          right: 16,
-          bottom: 16,
-          child: SafeArea(
-            top: false,
-            child: _FabMenu(
-              isOpen: _fabOpen,
-              onToggle: _toggleFabMenu,
-              onAction: _handleAction,
-            ),
-          ),
-        ),
       ],
+    );
+  }
+
+  Widget _buildSelectedTab() {
+    if (_selectedTabIndex == 0) {
+      return _isLoading && _entries.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : LogbookList(
+              controller: _scrollController,
+              items: _buildDisplayItems(_entries),
+              onOpenEntry: _openEntry,
+              onEditEntry: _editEntry,
+              onDeleteEntry: _deleteEntry,
+              onToggleLockEntry: _toggleEntryLock,
+              onEditDuty: _editDuty,
+              onDeleteDuty: _deleteDuty,
+              onToggleLockDuty: _toggleDutyLock,
+              onYearChange: (year) {
+                if (!mounted || _currentYear == year) return;
+                setState(() => _currentYear = year);
+              },
+            );
+    }
+
+    final section = switch (_selectedTabIndex) {
+      1 => ReportsPanelSection.totals,
+      2 => ReportsPanelSection.analizes,
+      3 => ReportsPanelSection.reports,
+      4 => ReportsPanelSection.filters,
+      _ => ReportsPanelSection.overview,
+    };
+
+    return ReportsScreen(
+      key: const ValueKey('logbook_reports_panel'),
+      section: section,
     );
   }
 
@@ -244,21 +408,13 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
       return;
     }
     final useCases = ref.read(logbookUseCasesProvider);
-    await LogbookEntryDialogs.show(
-      context,
-      entry: entry,
-      useCases: useCases,
-    );
+    await LogbookEntryDialogs.show(context, entry: entry, useCases: useCases);
     await _refreshEntryByTimelineId(entry.timeLine.id);
   }
 
   Future<void> _openEntry(LogbookEntry entry) async {
     final useCases = ref.read(logbookUseCasesProvider);
-    await LogbookEntryDialogs.show(
-      context,
-      entry: entry,
-      useCases: useCases,
-    );
+    await LogbookEntryDialogs.show(context, entry: entry, useCases: useCases);
   }
 
   Future<void> _refreshEntryByTimelineId(int timeLineId) async {
@@ -291,16 +447,16 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
   }
 
   void _upsertEntry(LogbookEntry entry) {
-    final index =
-        _entries.indexWhere((e) => e.timeLine.id == entry.timeLine.id);
+    final index = _entries.indexWhere(
+      (e) => e.timeLine.id == entry.timeLine.id,
+    );
     if (index == -1) {
       _entries.add(entry);
     } else {
       _entries[index] = entry;
     }
     _entries.sort((a, b) {
-      final cmp =
-          b.timeLine.eventDateTime.compareTo(a.timeLine.eventDateTime);
+      final cmp = b.timeLine.eventDateTime.compareTo(a.timeLine.eventDateTime);
       if (cmp != 0) return cmp;
       return b.timeLine.id.compareTo(a.timeLine.id);
     });
@@ -341,21 +497,16 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
       initialEnd: group.end,
     );
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => screen),
-      );
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => screen));
       await _refreshDutyById(group.dutyId);
       return;
     }
     await showDialog<void>(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 520,
-          height: 560,
-          child: screen,
-        ),
-      ),
+      builder: (context) =>
+          Dialog(child: SizedBox(width: 520, height: 560, child: screen)),
     );
     await _refreshDutyById(group.dutyId);
   }
@@ -379,21 +530,16 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
     const screen = DutyEditScreen();
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => screen),
-      );
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => screen));
       await _loadNextPage(reset: true);
       return;
     }
     await showDialog<void>(
       context: context,
-      builder: (context) => const Dialog(
-        child: SizedBox(
-          width: 520,
-          height: 560,
-          child: screen,
-        ),
-      ),
+      builder: (context) =>
+          const Dialog(child: SizedBox(width: 520, height: 560, child: screen)),
     );
     await _loadNextPage(reset: true);
   }
@@ -405,13 +551,13 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
       LogbookEventType.positioning => l10n.logbookEventPositioning,
       LogbookEventType.simulatorTraining => l10n.logbookEventSimulator,
       LogbookEventType.dutyPeriod => l10n.logbookEventDuty,
-      LogbookEventType.unknown => 'Entry',
+      LogbookEventType.unknown => l10n.reportsEntryGeneric,
     };
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.confirmDeleteTitle),
-        content: Text('Delete $label entry?'),
+        content: Text(l10n.reportsDeleteEntryConfirm(label)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -432,7 +578,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.confirmDeleteTitle),
-        content: const Text('Delete duty period?'),
+        content: Text(l10n.reportsDeleteDutyConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -451,9 +597,9 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
     final screen = PositioningEditScreen(positioningId: positioningId);
     if (isCompact) {
-      final changed = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => screen),
-      );
+      final changed = await Navigator.of(
+        context,
+      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
       if (changed == true) {
         await _refreshEntryByTimelineId(timelineId);
       }
@@ -461,13 +607,8 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     }
     final changed = await showDialog<bool>(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 560,
-          height: 700,
-          child: screen,
-        ),
-      ),
+      builder: (context) =>
+          Dialog(child: SizedBox(width: 560, height: 700, child: screen)),
     );
     if (changed == true) {
       await _refreshEntryByTimelineId(timelineId);
@@ -478,9 +619,9 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
     const screen = PositioningEditScreen();
     if (isCompact) {
-      final created = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => screen),
-      );
+      final created = await Navigator.of(
+        context,
+      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
       if (created == true) {
         await _loadNextPage(reset: true);
       }
@@ -488,13 +629,8 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     }
     final created = await showDialog<bool>(
       context: context,
-      builder: (context) => const Dialog(
-        child: SizedBox(
-          width: 560,
-          height: 700,
-          child: screen,
-        ),
-      ),
+      builder: (context) =>
+          const Dialog(child: SizedBox(width: 560, height: 700, child: screen)),
     );
     if (created == true) {
       await _loadNextPage(reset: true);
@@ -505,9 +641,9 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
     final screen = FlightEditScreen(flightId: flightId);
     if (isCompact) {
-      final changed = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => screen),
-      );
+      final changed = await Navigator.of(
+        context,
+      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
       if (changed == true) {
         await _refreshEntryByTimelineId(timelineId);
       }
@@ -515,13 +651,8 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     }
     final changed = await showDialog<bool>(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 640,
-          height: 780,
-          child: screen,
-        ),
-      ),
+      builder: (context) =>
+          Dialog(child: SizedBox(width: 640, height: 780, child: screen)),
     );
     if (changed == true) {
       await _refreshEntryByTimelineId(timelineId);
@@ -532,9 +663,9 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
     const screen = FlightEditScreen();
     if (isCompact) {
-      final created = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => screen),
-      );
+      final created = await Navigator.of(
+        context,
+      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
       if (created == true) {
         await _loadNextPage(reset: true);
       }
@@ -542,13 +673,8 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     }
     final created = await showDialog<bool>(
       context: context,
-      builder: (context) => const Dialog(
-        child: SizedBox(
-          width: 640,
-          height: 780,
-          child: screen,
-        ),
-      ),
+      builder: (context) =>
+          const Dialog(child: SizedBox(width: 640, height: 780, child: screen)),
     );
     if (created == true) {
       await _loadNextPage(reset: true);
@@ -564,9 +690,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     return null;
   }
 
-  Future<FlightPrefill?> _buildFlightPrefill({
-    required bool isReturn,
-  }) async {
+  Future<FlightPrefill?> _buildFlightPrefill({required bool isReturn}) async {
     final latest = _latestFlightEntry();
     if (latest == null || latest.flight == null) return null;
     final flight = latest.flight!;
@@ -600,7 +724,11 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     if (!mounted) return;
     if (prefill == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No previous flight found.')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.reportsNoPreviousFlightFound,
+          ),
+        ),
       );
       return;
     }
@@ -612,7 +740,11 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     if (!mounted) return;
     if (prefill == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No previous flight found.')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.reportsNoPreviousFlightFound,
+          ),
+        ),
       );
       return;
     }
@@ -623,9 +755,9 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
     final screen = FlightEditScreen(prefill: prefill);
     if (isCompact) {
-      final created = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => screen),
-      );
+      final created = await Navigator.of(
+        context,
+      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
       if (created == true) {
         await _loadNextPage(reset: true);
       }
@@ -633,13 +765,8 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     }
     final created = await showDialog<bool>(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 640,
-          height: 780,
-          child: screen,
-        ),
-      ),
+      builder: (context) =>
+          Dialog(child: SizedBox(width: 640, height: 780, child: screen)),
     );
     if (created == true) {
       await _loadNextPage(reset: true);
@@ -650,9 +777,9 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
     final screen = SimulatorEditScreen(simulatorId: simulatorId);
     if (isCompact) {
-      final changed = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => screen),
-      );
+      final changed = await Navigator.of(
+        context,
+      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
       if (changed == true) {
         await _refreshEntryByTimelineId(timelineId);
       }
@@ -660,13 +787,8 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     }
     final changed = await showDialog<bool>(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 560,
-          height: 720,
-          child: screen,
-        ),
-      ),
+      builder: (context) =>
+          Dialog(child: SizedBox(width: 560, height: 720, child: screen)),
     );
     if (changed == true) {
       await _refreshEntryByTimelineId(timelineId);
@@ -677,9 +799,9 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
     const screen = SimulatorEditScreen();
     if (isCompact) {
-      final created = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => screen),
-      );
+      final created = await Navigator.of(
+        context,
+      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
       if (created == true) {
         await _loadNextPage(reset: true);
       }
@@ -687,22 +809,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     }
     final created = await showDialog<bool>(
       context: context,
-      builder: (context) => const Dialog(
-        child: SizedBox(
-          width: 560,
-          height: 720,
-          child: screen,
-        ),
-      ),
+      builder: (context) =>
+          const Dialog(child: SizedBox(width: 560, height: 720, child: screen)),
     );
     if (created == true) {
       await _loadNextPage(reset: true);
     }
   }
 
-  List<LogbookListItemModel> _buildDisplayItems(
-    List<LogbookEntry> entries,
-  ) {
+  List<LogbookListItemModel> _buildDisplayItems(List<LogbookEntry> entries) {
     final dutyRanges = <int, _DutyRange>{};
 
     for (final entry in entries) {
@@ -767,9 +882,11 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
           end: range.end!,
           entries: List<LogbookEntry>.from(groupItems),
           isLocked: range.duty?.isLocked ?? false,
-          dutyMinutes: range.duty?.timeDutyMinutes ??
+          dutyMinutes:
+              range.duty?.timeDutyMinutes ??
               range.end!.difference(range.start!).inMinutes,
-          factoredMinutes: range.duty?.timeFactoredDutyMinutes ??
+          factoredMinutes:
+              range.duty?.timeFactoredDutyMinutes ??
               range.end!.difference(range.start!).inMinutes,
         ),
       );
@@ -853,12 +970,12 @@ class _FabMenu extends StatelessWidget {
       ),
       _FabMenuItem(
         icon: Icons.reply,
-        label: 'Return Flight',
+        label: l10n.logbookFabReturnFlight,
         action: _LogbookCreateAction.returnFlight,
       ),
       _FabMenuItem(
         icon: Icons.airline_stops_sharp,
-        label: 'Next Flight',
+        label: l10n.logbookFabNextFlight,
         action: _LogbookCreateAction.nextFlight,
       ),
       _FabMenuItem(
@@ -935,10 +1052,7 @@ class _FabMenuItem {
 }
 
 class _FabMenuButton extends StatelessWidget {
-  const _FabMenuButton({
-    required this.item,
-    required this.onTap,
-  });
+  const _FabMenuButton({required this.item, required this.onTap});
 
   final _FabMenuItem item;
   final VoidCallback onTap;
@@ -949,9 +1063,7 @@ class _FabMenuButton extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
           child: Material(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
@@ -959,7 +1071,10 @@ class _FabMenuButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               onTap: onTap,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
@@ -979,10 +1094,7 @@ class _FabMenuButton extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        FloatingActionButton.small(
-          onPressed: onTap,
-          child: Icon(item.icon),
-        ),
+        FloatingActionButton.small(onPressed: onTap, child: Icon(item.icon)),
       ],
     );
   }

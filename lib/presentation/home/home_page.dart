@@ -11,7 +11,7 @@ class MyHomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < 840;
+        final isCompact = constraints.maxWidth < 980;
 
         if (isCompact) {
           return const CollapsibleScaffold();

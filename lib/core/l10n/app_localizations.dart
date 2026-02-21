@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
+import 'app_localizations_lv.dart';
 
 // ignore_for_file: type=lint
 
@@ -96,6 +97,7 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('es'),
+    Locale('lv'),
   ];
 
   /// No description provided for @appTitle.
@@ -1087,6 +1089,972 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stopping will disconnect other devices. Continue?'**
   String get databaseSyncStopWarning;
+
+  /// No description provided for @reportsTabOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get reportsTabOverview;
+
+  /// No description provided for @reportsTabFlights.
+  ///
+  /// In en, this message translates to:
+  /// **'Flights'**
+  String get reportsTabFlights;
+
+  /// No description provided for @reportsTabTotals.
+  ///
+  /// In en, this message translates to:
+  /// **'Totals'**
+  String get reportsTabTotals;
+
+  /// No description provided for @reportsTabAnalyses.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyses'**
+  String get reportsTabAnalyses;
+
+  /// No description provided for @reportsTabReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get reportsTabReports;
+
+  /// No description provided for @reportsTabFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get reportsTabFilters;
+
+  /// No description provided for @reportsEntryGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry'**
+  String get reportsEntryGeneric;
+
+  /// No description provided for @reportsDeleteEntryConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {label}?'**
+  String reportsDeleteEntryConfirm(String label);
+
+  /// No description provided for @reportsDeleteDutyConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this duty entry?'**
+  String get reportsDeleteDutyConfirm;
+
+  /// No description provided for @reportsNoPreviousFlightFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No previous flight found.'**
+  String get reportsNoPreviousFlightFound;
+
+  /// No description provided for @logbookFabReturnFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Return Flight'**
+  String get logbookFabReturnFlight;
+
+  /// No description provided for @logbookFabNextFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Flight'**
+  String get logbookFabNextFlight;
+
+  /// No description provided for @reportsStartBeforeEndError.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date must be before end date.'**
+  String get reportsStartBeforeEndError;
+
+  /// No description provided for @reportsSavedQuery.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved query \"{name}\".'**
+  String reportsSavedQuery(String name);
+
+  /// No description provided for @reportsPdfPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing PDF...'**
+  String get reportsPdfPreparing;
+
+  /// No description provided for @reportsPdfGenerating.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating PDF...'**
+  String get reportsPdfGenerating;
+
+  /// No description provided for @reportsPdfSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving PDF...'**
+  String get reportsPdfSaving;
+
+  /// No description provided for @reportsPdfDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done.'**
+  String get reportsPdfDone;
+
+  /// No description provided for @reportsPdfExported.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF exported to: {path}'**
+  String reportsPdfExported(String path);
+
+  /// No description provided for @reportsPdfFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to generate PDF: {error}'**
+  String reportsPdfFailed(String error);
+
+  /// No description provided for @reportsNoTemplateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No template available.'**
+  String get reportsNoTemplateAvailable;
+
+  /// No description provided for @reportsSavePdfDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save PDF'**
+  String get reportsSavePdfDialogTitle;
+
+  /// No description provided for @reportsChooseExportFolderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose export folder'**
+  String get reportsChooseExportFolderTitle;
+
+  /// No description provided for @reportsCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get reportsCancelled;
+
+  /// No description provided for @reportsAnalyzeByLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze by'**
+  String get reportsAnalyzeByLabel;
+
+  /// No description provided for @reportsOrderByLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Order by'**
+  String get reportsOrderByLabel;
+
+  /// No description provided for @reportsAnalyzeByAircraft.
+  ///
+  /// In en, this message translates to:
+  /// **'By Aircraft'**
+  String get reportsAnalyzeByAircraft;
+
+  /// No description provided for @reportsAnalyzeByType.
+  ///
+  /// In en, this message translates to:
+  /// **'By Type'**
+  String get reportsAnalyzeByType;
+
+  /// No description provided for @reportsAnalyzeByFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'By Family'**
+  String get reportsAnalyzeByFamily;
+
+  /// No description provided for @reportsAnalyzeByYear.
+  ///
+  /// In en, this message translates to:
+  /// **'By Year'**
+  String get reportsAnalyzeByYear;
+
+  /// No description provided for @reportsAnalyzeByMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'By Month'**
+  String get reportsAnalyzeByMonth;
+
+  /// No description provided for @reportsOrderByGreater.
+  ///
+  /// In en, this message translates to:
+  /// **'Greater'**
+  String get reportsOrderByGreater;
+
+  /// No description provided for @reportsOrderByNatural.
+  ///
+  /// In en, this message translates to:
+  /// **'Natural'**
+  String get reportsOrderByNatural;
+
+  /// No description provided for @reportsShowMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Map'**
+  String get reportsShowMap;
+
+  /// No description provided for @reportsShowPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Path'**
+  String get reportsShowPath;
+
+  /// No description provided for @reportsIncludeHoursBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'Include hours before'**
+  String get reportsIncludeHoursBefore;
+
+  /// No description provided for @reportsPageSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Size'**
+  String get reportsPageSizeLabel;
+
+  /// No description provided for @reportsXmlTemplateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'XML Template'**
+  String get reportsXmlTemplateLabel;
+
+  /// No description provided for @reportsGeneratingShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating...'**
+  String get reportsGeneratingShort;
+
+  /// No description provided for @reportsGeneratePdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate PDF'**
+  String get reportsGeneratePdf;
+
+  /// No description provided for @reportsDatePresetLastMonthRolling.
+  ///
+  /// In en, this message translates to:
+  /// **'Last month (rolling)'**
+  String get reportsDatePresetLastMonthRolling;
+
+  /// No description provided for @reportsUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get reportsUnknown;
+
+  /// No description provided for @reportsUnknownType.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown type'**
+  String get reportsUnknownType;
+
+  /// No description provided for @reportsUnknownFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown family'**
+  String get reportsUnknownFamily;
+
+  /// No description provided for @reportsFiltersSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} filters • {from} UTC - {to} UTC'**
+  String reportsFiltersSummary(int count, String from, String to);
+
+  /// No description provided for @reportsEventSimShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sim'**
+  String get reportsEventSimShort;
+
+  /// No description provided for @reportsPreviousExperienceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous experience'**
+  String get reportsPreviousExperienceLabel;
+
+  /// No description provided for @reportsInclude.
+  ///
+  /// In en, this message translates to:
+  /// **'Include'**
+  String get reportsInclude;
+
+  /// No description provided for @reportsExclude.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude'**
+  String get reportsExclude;
+
+  /// No description provided for @reportsMatchModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Match mode'**
+  String get reportsMatchModeLabel;
+
+  /// No description provided for @reportsMatchAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get reportsMatchAll;
+
+  /// No description provided for @reportsMatchAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Any'**
+  String get reportsMatchAny;
+
+  /// No description provided for @reportsAddFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Filter'**
+  String get reportsAddFilter;
+
+  /// No description provided for @reportsFilterChipLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{field} · {operator} · {value}'**
+  String reportsFilterChipLabel(String field, String operator, String value);
+
+  /// No description provided for @reportsSavedQueriesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved queries'**
+  String get reportsSavedQueriesLabel;
+
+  /// No description provided for @reportsSaveQuery.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Query'**
+  String get reportsSaveQuery;
+
+  /// No description provided for @reportsDeleteSavedQuery.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete: {name}'**
+  String reportsDeleteSavedQuery(String name);
+
+  /// No description provided for @reportsDeleteSavedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Saved'**
+  String get reportsDeleteSavedLabel;
+
+  /// No description provided for @reportsMetricIfrApproaches.
+  ///
+  /// In en, this message translates to:
+  /// **'IFR Approaches'**
+  String get reportsMetricIfrApproaches;
+
+  /// No description provided for @reportsMetricTakeoffDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Takeoff Day'**
+  String get reportsMetricTakeoffDay;
+
+  /// No description provided for @reportsMetricTakeoffNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Takeoff Night'**
+  String get reportsMetricTakeoffNight;
+
+  /// No description provided for @reportsMetricLandingDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Landing Day'**
+  String get reportsMetricLandingDay;
+
+  /// No description provided for @reportsMetricLandingNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Landing Night'**
+  String get reportsMetricLandingNight;
+
+  /// No description provided for @reportsMetricTotalBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Block'**
+  String get reportsMetricTotalBlock;
+
+  /// No description provided for @reportsMetricPic.
+  ///
+  /// In en, this message translates to:
+  /// **'PIC'**
+  String get reportsMetricPic;
+
+  /// No description provided for @reportsMetricPicus.
+  ///
+  /// In en, this message translates to:
+  /// **'PICUS'**
+  String get reportsMetricPicus;
+
+  /// No description provided for @reportsMetricSic.
+  ///
+  /// In en, this message translates to:
+  /// **'SIC'**
+  String get reportsMetricSic;
+
+  /// No description provided for @reportsMetricDual.
+  ///
+  /// In en, this message translates to:
+  /// **'Dual'**
+  String get reportsMetricDual;
+
+  /// No description provided for @reportsMetricInstructor.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructor'**
+  String get reportsMetricInstructor;
+
+  /// No description provided for @reportsMetricNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Night'**
+  String get reportsMetricNight;
+
+  /// No description provided for @reportsMetricIfr.
+  ///
+  /// In en, this message translates to:
+  /// **'IFR'**
+  String get reportsMetricIfr;
+
+  /// No description provided for @reportsMetricInstrument.
+  ///
+  /// In en, this message translates to:
+  /// **'Instrument'**
+  String get reportsMetricInstrument;
+
+  /// No description provided for @reportsMetricCrossCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross-Country'**
+  String get reportsMetricCrossCountry;
+
+  /// No description provided for @reportsMetricSimulator.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulator'**
+  String get reportsMetricSimulator;
+
+  /// No description provided for @reportsMetricDuty.
+  ///
+  /// In en, this message translates to:
+  /// **'Duty'**
+  String get reportsMetricDuty;
+
+  /// No description provided for @reportsMetricDistanceNm.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance NM'**
+  String get reportsMetricDistanceNm;
+
+  /// No description provided for @reportsFlightCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Flight count: {count}'**
+  String reportsFlightCount(String count);
+
+  /// No description provided for @reportsNoDataForQuery.
+  ///
+  /// In en, this message translates to:
+  /// **'No data for selected query.'**
+  String get reportsNoDataForQuery;
+
+  /// No description provided for @reportsMetricLandings.
+  ///
+  /// In en, this message translates to:
+  /// **'Landings'**
+  String get reportsMetricLandings;
+
+  /// No description provided for @reportsFirstFlightAt.
+  ///
+  /// In en, this message translates to:
+  /// **'First flight {date} UTC'**
+  String reportsFirstFlightAt(String date);
+
+  /// No description provided for @reportsLastFlightAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Last flight {date} UTC'**
+  String reportsLastFlightAt(String date);
+
+  /// No description provided for @reportsFieldNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Field name'**
+  String get reportsFieldNameLabel;
+
+  /// No description provided for @reportsConditionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get reportsConditionLabel;
+
+  /// No description provided for @reportsValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get reportsValueLabel;
+
+  /// No description provided for @reportsFlightsAndSimulatorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Flights & Simulator'**
+  String get reportsFlightsAndSimulatorTitle;
+
+  /// No description provided for @reportsEntriesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} entries'**
+  String reportsEntriesCount(int count);
+
+  /// No description provided for @reportsNoFlightsInPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'No flights/sim in selected period.'**
+  String get reportsNoFlightsInPeriod;
+
+  /// No description provided for @reportsFlightMapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Flight Map'**
+  String get reportsFlightMapTitle;
+
+  /// No description provided for @reportsHideLines.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide lines'**
+  String get reportsHideLines;
+
+  /// No description provided for @reportsShowLines.
+  ///
+  /// In en, this message translates to:
+  /// **'Show lines'**
+  String get reportsShowLines;
+
+  /// No description provided for @reportsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get reportsDone;
+
+  /// No description provided for @reportsNoCoordinatesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No coordinates available.'**
+  String get reportsNoCoordinatesAvailable;
+
+  /// No description provided for @reportsAirportsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Airports: {count}'**
+  String reportsAirportsCount(int count);
+
+  /// No description provided for @reportsFilterFieldDepartureIcao.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure ICAO'**
+  String get reportsFilterFieldDepartureIcao;
+
+  /// No description provided for @reportsFilterFieldDepartureIata.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure IATA'**
+  String get reportsFilterFieldDepartureIata;
+
+  /// No description provided for @reportsFilterFieldDepartureName.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure Name'**
+  String get reportsFilterFieldDepartureName;
+
+  /// No description provided for @reportsFilterFieldDepartureCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure City'**
+  String get reportsFilterFieldDepartureCity;
+
+  /// No description provided for @reportsFilterFieldDepartureCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure Country'**
+  String get reportsFilterFieldDepartureCountry;
+
+  /// No description provided for @reportsFilterFieldArrivalIcao.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival ICAO'**
+  String get reportsFilterFieldArrivalIcao;
+
+  /// No description provided for @reportsFilterFieldArrivalIata.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival IATA'**
+  String get reportsFilterFieldArrivalIata;
+
+  /// No description provided for @reportsFilterFieldArrivalName.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival Name'**
+  String get reportsFilterFieldArrivalName;
+
+  /// No description provided for @reportsFilterFieldArrivalCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival City'**
+  String get reportsFilterFieldArrivalCity;
+
+  /// No description provided for @reportsFilterFieldArrivalCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival Country'**
+  String get reportsFilterFieldArrivalCountry;
+
+  /// No description provided for @reportsFilterFieldAircraftRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'Aircraft Registration'**
+  String get reportsFilterFieldAircraftRegistration;
+
+  /// No description provided for @reportsFilterFieldAircraftTypeCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Aircraft Type Code'**
+  String get reportsFilterFieldAircraftTypeCode;
+
+  /// No description provided for @reportsFilterFieldAircraftTypeFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Aircraft Type Family'**
+  String get reportsFilterFieldAircraftTypeFamily;
+
+  /// No description provided for @reportsFilterFieldAircraftTypeName.
+  ///
+  /// In en, this message translates to:
+  /// **'Aircraft Type Name'**
+  String get reportsFilterFieldAircraftTypeName;
+
+  /// No description provided for @reportsFilterFieldPilotName.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot Name'**
+  String get reportsFilterFieldPilotName;
+
+  /// No description provided for @reportsFilterFieldApproachType.
+  ///
+  /// In en, this message translates to:
+  /// **'Approach Type'**
+  String get reportsFilterFieldApproachType;
+
+  /// No description provided for @reportsFilterFieldRemarks.
+  ///
+  /// In en, this message translates to:
+  /// **'Remarks'**
+  String get reportsFilterFieldRemarks;
+
+  /// No description provided for @reportsFilterFieldNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get reportsFilterFieldNotes;
+
+  /// No description provided for @reportsFilterFieldBlockTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Block Time'**
+  String get reportsFilterFieldBlockTime;
+
+  /// No description provided for @reportsFilterFieldFlightTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Flight Time'**
+  String get reportsFilterFieldFlightTime;
+
+  /// No description provided for @reportsFilterFieldTotalTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Time'**
+  String get reportsFilterFieldTotalTime;
+
+  /// No description provided for @reportsFilterFieldNightTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Night Time'**
+  String get reportsFilterFieldNightTime;
+
+  /// No description provided for @reportsFilterFieldIfrTime.
+  ///
+  /// In en, this message translates to:
+  /// **'IFR Time'**
+  String get reportsFilterFieldIfrTime;
+
+  /// No description provided for @reportsFilterFieldInstrumentTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Instrument Time'**
+  String get reportsFilterFieldInstrumentTime;
+
+  /// No description provided for @reportsFilterFieldSimInstrumentTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Sim Instrument Time'**
+  String get reportsFilterFieldSimInstrumentTime;
+
+  /// No description provided for @reportsFilterFieldPicTime.
+  ///
+  /// In en, this message translates to:
+  /// **'PIC Time'**
+  String get reportsFilterFieldPicTime;
+
+  /// No description provided for @reportsFilterFieldPicusTime.
+  ///
+  /// In en, this message translates to:
+  /// **'PICUS Time'**
+  String get reportsFilterFieldPicusTime;
+
+  /// No description provided for @reportsFilterFieldSicTime.
+  ///
+  /// In en, this message translates to:
+  /// **'SIC Time'**
+  String get reportsFilterFieldSicTime;
+
+  /// No description provided for @reportsFilterFieldDualTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Dual Time'**
+  String get reportsFilterFieldDualTime;
+
+  /// No description provided for @reportsFilterFieldInstructorTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructor Time'**
+  String get reportsFilterFieldInstructorTime;
+
+  /// No description provided for @reportsFilterFieldCrossCountryTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross-Country Time'**
+  String get reportsFilterFieldCrossCountryTime;
+
+  /// No description provided for @reportsFilterFieldCustom1Time.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom 1 Time'**
+  String get reportsFilterFieldCustom1Time;
+
+  /// No description provided for @reportsFilterFieldCustom2Time.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom 2 Time'**
+  String get reportsFilterFieldCustom2Time;
+
+  /// No description provided for @reportsFilterFieldCustom3Time.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom 3 Time'**
+  String get reportsFilterFieldCustom3Time;
+
+  /// No description provided for @reportsFilterFieldCustom4Time.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom 4 Time'**
+  String get reportsFilterFieldCustom4Time;
+
+  /// No description provided for @reportsFilterFieldDistanceNm.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance NM'**
+  String get reportsFilterFieldDistanceNm;
+
+  /// No description provided for @reportsFilterFieldTakeoffs.
+  ///
+  /// In en, this message translates to:
+  /// **'Takeoffs'**
+  String get reportsFilterFieldTakeoffs;
+
+  /// No description provided for @reportsFilterFieldTakeoffsDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Takeoffs Day'**
+  String get reportsFilterFieldTakeoffsDay;
+
+  /// No description provided for @reportsFilterFieldTakeoffsNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Takeoffs Night'**
+  String get reportsFilterFieldTakeoffsNight;
+
+  /// No description provided for @reportsFilterFieldLandings.
+  ///
+  /// In en, this message translates to:
+  /// **'Landings'**
+  String get reportsFilterFieldLandings;
+
+  /// No description provided for @reportsFilterFieldLandingsDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Landings Day'**
+  String get reportsFilterFieldLandingsDay;
+
+  /// No description provided for @reportsFilterFieldLandingsNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Landings Night'**
+  String get reportsFilterFieldLandingsNight;
+
+  /// No description provided for @reportsFilterFieldIfrApproaches.
+  ///
+  /// In en, this message translates to:
+  /// **'IFR Approaches'**
+  String get reportsFilterFieldIfrApproaches;
+
+  /// No description provided for @reportsFilterFieldMultiPilot.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi Pilot'**
+  String get reportsFilterFieldMultiPilot;
+
+  /// No description provided for @reportsFilterFieldSimulator.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulator'**
+  String get reportsFilterFieldSimulator;
+
+  /// No description provided for @reportsFilterOperatorContains.
+  ///
+  /// In en, this message translates to:
+  /// **'Contains'**
+  String get reportsFilterOperatorContains;
+
+  /// No description provided for @reportsFilterOperatorStartsWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts With'**
+  String get reportsFilterOperatorStartsWith;
+
+  /// No description provided for @reportsFilterOperatorDoesNotStartWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Does not start with'**
+  String get reportsFilterOperatorDoesNotStartWith;
+
+  /// No description provided for @reportsFilterOperatorEndsWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends With'**
+  String get reportsFilterOperatorEndsWith;
+
+  /// No description provided for @reportsFilterOperatorDoesNotEndWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Does not end with'**
+  String get reportsFilterOperatorDoesNotEndWith;
+
+  /// No description provided for @reportsFilterOperatorIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Is'**
+  String get reportsFilterOperatorIs;
+
+  /// No description provided for @reportsFilterOperatorIsNot.
+  ///
+  /// In en, this message translates to:
+  /// **'Is not'**
+  String get reportsFilterOperatorIsNot;
+
+  /// No description provided for @reportsFilterOperatorGreaterThan.
+  ///
+  /// In en, this message translates to:
+  /// **'Greater than'**
+  String get reportsFilterOperatorGreaterThan;
+
+  /// No description provided for @reportsFilterOperatorLessThan.
+  ///
+  /// In en, this message translates to:
+  /// **'Less than'**
+  String get reportsFilterOperatorLessThan;
+
+  /// No description provided for @reportsFilterOperatorEquals.
+  ///
+  /// In en, this message translates to:
+  /// **'Equals'**
+  String get reportsFilterOperatorEquals;
+
+  /// No description provided for @reportsFilterOperatorIsTrue.
+  ///
+  /// In en, this message translates to:
+  /// **'Is True'**
+  String get reportsFilterOperatorIsTrue;
+
+  /// No description provided for @reportsFilterOperatorIsFalse.
+  ///
+  /// In en, this message translates to:
+  /// **'Is False'**
+  String get reportsFilterOperatorIsFalse;
+
+  /// No description provided for @languageLatvian.
+  ///
+  /// In en, this message translates to:
+  /// **'Latvian'**
+  String get languageLatvian;
+
+  /// No description provided for @reportsAnalyzeByAirport.
+  ///
+  /// In en, this message translates to:
+  /// **'By Airport'**
+  String get reportsAnalyzeByAirport;
+
+  /// No description provided for @reportsAnalyzeByPilot.
+  ///
+  /// In en, this message translates to:
+  /// **'By Pilot'**
+  String get reportsAnalyzeByPilot;
+
+  /// No description provided for @reportsUnknownAirport.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown airport'**
+  String get reportsUnknownAirport;
+
+  /// No description provided for @reportsUnknownPilot.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown pilot'**
+  String get reportsUnknownPilot;
+
+  /// No description provided for @reportsOrderByHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours'**
+  String get reportsOrderByHours;
+
+  /// No description provided for @reportsOrderByLandings.
+  ///
+  /// In en, this message translates to:
+  /// **'Landings'**
+  String get reportsOrderByLandings;
+
+  /// No description provided for @reportsOrderByTakeoff.
+  ///
+  /// In en, this message translates to:
+  /// **'TakeOff'**
+  String get reportsOrderByTakeoff;
+
+  /// No description provided for @reportsOrderByOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Operations'**
+  String get reportsOrderByOperations;
+
+  /// No description provided for @reportsMetricTakeoff.
+  ///
+  /// In en, this message translates to:
+  /// **'TakeOff'**
+  String get reportsMetricTakeoff;
+
+  /// No description provided for @reportsMetricOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Operations'**
+  String get reportsMetricOperations;
 }
 
 class _AppLocalizationsDelegate
@@ -1100,7 +2068,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'es'].contains(locale.languageCode);
+      <String>['en', 'es', 'lv'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -1113,6 +2081,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEn();
     case 'es':
       return AppLocalizationsEs();
+    case 'lv':
+      return AppLocalizationsLv();
   }
 
   throw FlutterError(

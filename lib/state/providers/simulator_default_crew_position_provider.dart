@@ -9,13 +9,14 @@ class SimulatorDefaultCrewPositionNotifier extends AsyncNotifier<CrewPosition> {
   Future<CrewPosition> build() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_defaultCrewPositionKey);
-    return _parseCrewPosition(raw) ?? CrewPosition.sic;
+    return _normalizeDefaultPosition(_parseCrewPosition(raw));
   }
 
   Future<void> setPosition(CrewPosition position) async {
+    final normalized = _normalizeDefaultPosition(position);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_defaultCrewPositionKey, position.name);
-    state = AsyncData(position);
+    await prefs.setString(_defaultCrewPositionKey, normalized.name);
+    state = AsyncData(normalized);
   }
 }
 
@@ -34,3 +35,7 @@ CrewPosition? _parseCrewPosition(String? raw) {
   return null;
 }
 
+CrewPosition _normalizeDefaultPosition(CrewPosition? value) {
+  if (value == CrewPosition.pic) return CrewPosition.pic;
+  return CrewPosition.sic;
+}

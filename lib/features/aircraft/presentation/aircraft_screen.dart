@@ -27,6 +27,7 @@ class AircraftScreen extends ConsumerStatefulWidget {
 class _AircraftScreenState extends ConsumerState<AircraftScreen> {
   final _searchController = TextEditingController();
   String _query = '';
+  bool _fabOpen = false;
 
   @override
   void dispose() {
@@ -185,6 +186,7 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
           builder: (_) => AircraftEditScreen(
             item: placeholder,
             isCreate: true,
+            initialIsSimulator: false,
           ),
         ),
       );
@@ -200,6 +202,49 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
           child: AircraftEditScreen(
             item: placeholder,
             isCreate: true,
+            initialIsSimulator: false,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _createSimulator() async {
+    final isCompact = MediaQuery.of(context).size.width < 600;
+    final placeholder = Aircraft(
+      id: kPlaceholderId,
+      aircraftTypeId: 0,
+      registration: '',
+      mtow: null,
+      isSimulator: true,
+      isFavorite: false,
+      isLocked: false,
+      notes: null,
+    );
+
+    if (isCompact) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => AircraftEditScreen(
+            item: placeholder,
+            isCreate: true,
+            initialIsSimulator: true,
+          ),
+        ),
+      );
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        child: SizedBox(
+          width: 520,
+          height: 640,
+          child: AircraftEditScreen(
+            item: placeholder,
+            isCreate: true,
+            initialIsSimulator: true,
           ),
         ),
       ),
@@ -240,41 +285,58 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
     final aircraft = ref.watch(aircraftProvider(_query));
     final isCompact = MediaQuery.of(context).size.width < 600;
 
-    return Column(
+    return Stack(
       children: [
-        AircraftSearchBar(
-          controller: _searchController,
-          label: l10n.searchAircraft,
-          onChanged: (value) => setState(() => _query = value),
-        ),
-        const SizedBox(height: 12),
-        Expanded(
-          child: aircraft.when(
-            data: (items) => AircraftList(
-              items: items,
-              isCompact: isCompact,
-              onToggleFavorite: _toggleFavorite,
-              onToggleLock: _toggleLock,
-              onEdit: _editAircraft,
-              onDelete: _confirmDelete,
-              onOpenDetails: _showAircraftDetails,
+        Column(
+          children: [
+            AircraftSearchBar(
+              controller: _searchController,
+              label: l10n.searchAircraft,
+              onChanged: (value) => setState(() => _query = value),
             ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stackTrace) => Center(
-              child: Text(error.toString()),
+            const SizedBox(height: 12),
+            Expanded(
+              child: aircraft.when(
+                data: (items) => AircraftList(
+                  items: items,
+                  isCompact: isCompact,
+                  onToggleFavorite: _toggleFavorite,
+                  onToggleLock: _toggleLock,
+                  onEdit: _editAircraft,
+                  onDelete: _confirmDelete,
+                  onOpenDetails: _showAircraftDetails,
+                ),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) => Center(
+                  child: Text(error.toString()),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (_fabOpen)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () => setState(() => _fabOpen = false),
+              child: Container(color: Colors.black.withValues(alpha: 0.1)),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        SafeArea(
-          top: false,
-          minimum: const EdgeInsets.only(right: 16, bottom: 8),
-          child: Align(
-            alignment: Alignment.bottomRight,
-            child: FloatingActionButton(
-              onPressed: _createAircraft,
-              tooltip: l10n.createAircraftTitle,
-              child: const Icon(Icons.add),
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: SafeArea(
+            top: false,
+            child: _AircraftFabMenu(
+              isOpen: _fabOpen,
+              onToggle: () => setState(() => _fabOpen = !_fabOpen),
+              onCreateAircraft: () async {
+                setState(() => _fabOpen = false);
+                await _createAircraft();
+              },
+              onCreateSimulator: () async {
+                setState(() => _fabOpen = false);
+                await _createSimulator();
+              },
             ),
           ),
         ),
@@ -304,9 +366,22 @@ class _AircraftHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          row.registration,
-          style: Theme.of(context).textTheme.titleLarge,
+        Row(
+          children: [
+            Icon(
+              row.aircraft.isSimulator
+                  ? Icons.videogame_asset_outlined
+                  : Icons.airplanemode_active_outlined,
+              size: 18,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                row.registration,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+          ],
         ),
         if (subtitle.isNotEmpty)
           Text(
@@ -322,6 +397,101 @@ class _AircraftHeader extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _AircraftFabMenu extends StatelessWidget {
+  const _AircraftFabMenu({
+    required this.isOpen,
+    required this.onToggle,
+    required this.onCreateAircraft,
+    required this.onCreateSimulator,
+  });
+
+  final bool isOpen;
+  final VoidCallback onToggle;
+  final Future<void> Function() onCreateAircraft;
+  final Future<void> Function() onCreateSimulator;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (isOpen)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 10,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _AircraftFabAction(
+                  icon: Icons.airplanemode_active_outlined,
+                  label: 'New Aircraft',
+                  onTap: onCreateAircraft,
+                ),
+                const SizedBox(height: 10),
+                _AircraftFabAction(
+                  icon: Icons.videogame_asset_outlined,
+                  label: 'New Simulator',
+                  onTap: onCreateSimulator,
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 8),
+        FloatingActionButton(
+          onPressed: onToggle,
+          child: Icon(isOpen ? Icons.close : Icons.add),
+        ),
+      ],
+    );
+  }
+}
+
+class _AircraftFabAction extends StatelessWidget {
+  const _AircraftFabAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Future<void> Function() onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label),
+            const SizedBox(width: 8),
+            CircleAvatar(
+              radius: 18,
+              child: Icon(icon, size: 20),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

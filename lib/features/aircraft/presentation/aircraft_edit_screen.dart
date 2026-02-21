@@ -38,8 +38,9 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
   late final TextEditingController _mtowController;
   late final TextEditingController _notesController;
   int? _aircraftTypeId;
-  late bool _isSimulator;
+  late bool _isSimulatorMode;
   late bool _isFavorite;
+  bool _showAircraftTypeError = false;
 
   @override
   void initState() {
@@ -55,7 +56,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
       text: widget.isCreate ? '' : (item.notes ?? ''),
     );
     _aircraftTypeId = widget.isCreate ? null : item.aircraftTypeId;
-    _isSimulator = widget.isCreate
+    _isSimulatorMode = widget.isCreate
         ? (widget.initialIsSimulator ?? item.isSimulator)
         : item.isSimulator;
     _isFavorite = widget.isCreate ? false : item.isFavorite;
@@ -84,6 +85,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
 
     final registration = _registrationController.text.trim().toUpperCase();
     if (_aircraftTypeId == null) {
+      setState(() => _showAircraftTypeError = true);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context)!.aircraftTypeRequired)),
@@ -103,7 +105,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
         aircraftTypeId: _aircraftTypeId!,
         registration: registration,
         mtow: Value(mtow),
-        isSimulator: _isSimulator,
+        isSimulator: _isSimulatorMode,
         isFavorite: _isFavorite,
         isLocked: false,
         notes: notes.isEmpty ? const Value(null) : Value(notes),
@@ -120,7 +122,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
         aircraftTypeId: _aircraftTypeId!,
         registration: registration,
         mtow: Value(mtow),
-        isSimulator: _isSimulator,
+        isSimulator: _isSimulatorMode,
         isFavorite: _isFavorite,
         notes: notes.isEmpty ? const Value(null) : Value(notes),
       );
@@ -215,7 +217,9 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.isCreate ? l10n.createAircraftTitle : l10n.editAircraftTitle,
+          widget.isCreate
+              ? (_isSimulatorMode ? 'Add Simulator' : 'Add Aircraft')
+              : (_isSimulatorMode ? 'Edit Simulator' : l10n.editAircraftTitle),
         ),
         actions: [
           TextButton(
@@ -262,8 +266,14 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
                         itemLabel: (value) => value.label,
                         itemValue: (value) => value.id,
                         onChanged: (value) =>
-                            setState(() => _aircraftTypeId = value),
+                            setState(() {
+                              _aircraftTypeId = value;
+                              if (value != null) {
+                                _showAircraftTypeError = false;
+                              }
+                            }),
                         isRequired: true,
+                        showRequiredError: _showAircraftTypeError,
                         isDense: true,
                       ),
                     ),
@@ -302,11 +312,6 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
               controller: _notesController,
               label: l10n.fieldNotes,
               maxLines: 4,
-            ),
-            SwitchListTile(
-              title: Text(l10n.fieldIsSimulator),
-              value: _isSimulator,
-              onChanged: (value) => setState(() => _isSimulator = value),
             ),
             SwitchListTile(
               title: Text(l10n.fieldIsFavorite),

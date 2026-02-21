@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/maps/map_tile_caching.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/airports/application/providers/airports_feature_providers.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -431,6 +432,9 @@ Future<void> _showAirportExpandedMapDialog(
                         urlTemplate:
                             'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                         userAgentPackageName: 'simplelog',
+                        tileProvider: NetworkTileProvider(
+                          cachingProvider: appMapCachingProvider(),
+                        ),
                       ),
                       MarkerLayer(
                         markers: [

@@ -2429,6 +2429,17 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _timeTotalBlockMinutesMeta =
+      const VerificationMeta('timeTotalBlockMinutes');
+  @override
+  late final GeneratedColumn<int> timeTotalBlockMinutes = GeneratedColumn<int>(
+    'time_total_block_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _distanceNMMeta = const VerificationMeta(
     'distanceNM',
   );
@@ -2494,6 +2505,18 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pilotFunctionMeta = const VerificationMeta(
+    'pilotFunction',
+  );
+  @override
+  late final GeneratedColumn<String> pilotFunction = GeneratedColumn<String>(
+    'pilot_function',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('PF'),
   );
   static const VerificationMeta _approachTypeMeta = const VerificationMeta(
     'approachType',
@@ -2578,12 +2601,14 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     timeCustom4Minutes,
     timeFlightMinutes,
     timeBlockMinutes,
+    timeTotalBlockMinutes,
     distanceNM,
     ifrApproaches,
     takeOffsDays,
     takeOffsNight,
     landingsDay,
     landingsNight,
+    pilotFunction,
     approachType,
     remarks,
     notes,
@@ -2849,6 +2874,15 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     } else if (isInserting) {
       context.missing(_timeBlockMinutesMeta);
     }
+    if (data.containsKey('time_total_block_minutes')) {
+      context.handle(
+        _timeTotalBlockMinutesMeta,
+        timeTotalBlockMinutes.isAcceptableOrUnknown(
+          data['time_total_block_minutes']!,
+          _timeTotalBlockMinutesMeta,
+        ),
+      );
+    }
     if (data.containsKey('distance_n_m')) {
       context.handle(
         _distanceNMMeta,
@@ -2914,6 +2948,15 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
       );
     } else if (isInserting) {
       context.missing(_landingsNightMeta);
+    }
+    if (data.containsKey('pilot_function')) {
+      context.handle(
+        _pilotFunctionMeta,
+        pilotFunction.isAcceptableOrUnknown(
+          data['pilot_function']!,
+          _pilotFunctionMeta,
+        ),
+      );
     }
     if (data.containsKey('approach_type')) {
       context.handle(
@@ -3064,6 +3107,10 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
         DriftSqlType.int,
         data['${effectivePrefix}time_block_minutes'],
       )!,
+      timeTotalBlockMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}time_total_block_minutes'],
+      )!,
       distanceNM: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}distance_n_m'],
@@ -3087,6 +3134,10 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
       landingsNight: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}landings_night'],
+      )!,
+      pilotFunction: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pilot_function'],
       )!,
       approachType: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -3142,12 +3193,14 @@ class Flight extends DataClass implements Insertable<Flight> {
   final int timeCustom4Minutes;
   final int timeFlightMinutes;
   final int timeBlockMinutes;
+  final int timeTotalBlockMinutes;
   final int distanceNM;
   final int ifrApproaches;
   final int takeOffsDays;
   final int takeOffsNight;
   final int landingsDay;
   final int landingsNight;
+  final String pilotFunction;
   final String approachType;
   final String remarks;
   final String notes;
@@ -3178,12 +3231,14 @@ class Flight extends DataClass implements Insertable<Flight> {
     required this.timeCustom4Minutes,
     required this.timeFlightMinutes,
     required this.timeBlockMinutes,
+    required this.timeTotalBlockMinutes,
     required this.distanceNM,
     required this.ifrApproaches,
     required this.takeOffsDays,
     required this.takeOffsNight,
     required this.landingsDay,
     required this.landingsNight,
+    required this.pilotFunction,
     required this.approachType,
     required this.remarks,
     required this.notes,
@@ -3225,12 +3280,14 @@ class Flight extends DataClass implements Insertable<Flight> {
     map['time_custom4_minutes'] = Variable<int>(timeCustom4Minutes);
     map['time_flight_minutes'] = Variable<int>(timeFlightMinutes);
     map['time_block_minutes'] = Variable<int>(timeBlockMinutes);
+    map['time_total_block_minutes'] = Variable<int>(timeTotalBlockMinutes);
     map['distance_n_m'] = Variable<int>(distanceNM);
     map['ifr_approaches'] = Variable<int>(ifrApproaches);
     map['take_offs_days'] = Variable<int>(takeOffsDays);
     map['take_offs_night'] = Variable<int>(takeOffsNight);
     map['landings_day'] = Variable<int>(landingsDay);
     map['landings_night'] = Variable<int>(landingsNight);
+    map['pilot_function'] = Variable<String>(pilotFunction);
     map['approach_type'] = Variable<String>(approachType);
     map['remarks'] = Variable<String>(remarks);
     map['notes'] = Variable<String>(notes);
@@ -3273,12 +3330,14 @@ class Flight extends DataClass implements Insertable<Flight> {
       timeCustom4Minutes: Value(timeCustom4Minutes),
       timeFlightMinutes: Value(timeFlightMinutes),
       timeBlockMinutes: Value(timeBlockMinutes),
+      timeTotalBlockMinutes: Value(timeTotalBlockMinutes),
       distanceNM: Value(distanceNM),
       ifrApproaches: Value(ifrApproaches),
       takeOffsDays: Value(takeOffsDays),
       takeOffsNight: Value(takeOffsNight),
       landingsDay: Value(landingsDay),
       landingsNight: Value(landingsNight),
+      pilotFunction: Value(pilotFunction),
       approachType: Value(approachType),
       remarks: Value(remarks),
       notes: Value(notes),
@@ -3329,12 +3388,16 @@ class Flight extends DataClass implements Insertable<Flight> {
       timeCustom4Minutes: serializer.fromJson<int>(json['timeCustom4Minutes']),
       timeFlightMinutes: serializer.fromJson<int>(json['timeFlightMinutes']),
       timeBlockMinutes: serializer.fromJson<int>(json['timeBlockMinutes']),
+      timeTotalBlockMinutes: serializer.fromJson<int>(
+        json['timeTotalBlockMinutes'],
+      ),
       distanceNM: serializer.fromJson<int>(json['distanceNM']),
       ifrApproaches: serializer.fromJson<int>(json['ifrApproaches']),
       takeOffsDays: serializer.fromJson<int>(json['takeOffsDays']),
       takeOffsNight: serializer.fromJson<int>(json['takeOffsNight']),
       landingsDay: serializer.fromJson<int>(json['landingsDay']),
       landingsNight: serializer.fromJson<int>(json['landingsNight']),
+      pilotFunction: serializer.fromJson<String>(json['pilotFunction']),
       approachType: serializer.fromJson<String>(json['approachType']),
       remarks: serializer.fromJson<String>(json['remarks']),
       notes: serializer.fromJson<String>(json['notes']),
@@ -3374,12 +3437,14 @@ class Flight extends DataClass implements Insertable<Flight> {
       'timeCustom4Minutes': serializer.toJson<int>(timeCustom4Minutes),
       'timeFlightMinutes': serializer.toJson<int>(timeFlightMinutes),
       'timeBlockMinutes': serializer.toJson<int>(timeBlockMinutes),
+      'timeTotalBlockMinutes': serializer.toJson<int>(timeTotalBlockMinutes),
       'distanceNM': serializer.toJson<int>(distanceNM),
       'ifrApproaches': serializer.toJson<int>(ifrApproaches),
       'takeOffsDays': serializer.toJson<int>(takeOffsDays),
       'takeOffsNight': serializer.toJson<int>(takeOffsNight),
       'landingsDay': serializer.toJson<int>(landingsDay),
       'landingsNight': serializer.toJson<int>(landingsNight),
+      'pilotFunction': serializer.toJson<String>(pilotFunction),
       'approachType': serializer.toJson<String>(approachType),
       'remarks': serializer.toJson<String>(remarks),
       'notes': serializer.toJson<String>(notes),
@@ -3413,12 +3478,14 @@ class Flight extends DataClass implements Insertable<Flight> {
     int? timeCustom4Minutes,
     int? timeFlightMinutes,
     int? timeBlockMinutes,
+    int? timeTotalBlockMinutes,
     int? distanceNM,
     int? ifrApproaches,
     int? takeOffsDays,
     int? takeOffsNight,
     int? landingsDay,
     int? landingsNight,
+    String? pilotFunction,
     String? approachType,
     String? remarks,
     String? notes,
@@ -3457,12 +3524,14 @@ class Flight extends DataClass implements Insertable<Flight> {
     timeCustom4Minutes: timeCustom4Minutes ?? this.timeCustom4Minutes,
     timeFlightMinutes: timeFlightMinutes ?? this.timeFlightMinutes,
     timeBlockMinutes: timeBlockMinutes ?? this.timeBlockMinutes,
+    timeTotalBlockMinutes: timeTotalBlockMinutes ?? this.timeTotalBlockMinutes,
     distanceNM: distanceNM ?? this.distanceNM,
     ifrApproaches: ifrApproaches ?? this.ifrApproaches,
     takeOffsDays: takeOffsDays ?? this.takeOffsDays,
     takeOffsNight: takeOffsNight ?? this.takeOffsNight,
     landingsDay: landingsDay ?? this.landingsDay,
     landingsNight: landingsNight ?? this.landingsNight,
+    pilotFunction: pilotFunction ?? this.pilotFunction,
     approachType: approachType ?? this.approachType,
     remarks: remarks ?? this.remarks,
     notes: notes ?? this.notes,
@@ -3544,6 +3613,9 @@ class Flight extends DataClass implements Insertable<Flight> {
       timeBlockMinutes: data.timeBlockMinutes.present
           ? data.timeBlockMinutes.value
           : this.timeBlockMinutes,
+      timeTotalBlockMinutes: data.timeTotalBlockMinutes.present
+          ? data.timeTotalBlockMinutes.value
+          : this.timeTotalBlockMinutes,
       distanceNM: data.distanceNM.present
           ? data.distanceNM.value
           : this.distanceNM,
@@ -3562,6 +3634,9 @@ class Flight extends DataClass implements Insertable<Flight> {
       landingsNight: data.landingsNight.present
           ? data.landingsNight.value
           : this.landingsNight,
+      pilotFunction: data.pilotFunction.present
+          ? data.pilotFunction.value
+          : this.pilotFunction,
       approachType: data.approachType.present
           ? data.approachType.value
           : this.approachType,
@@ -3603,12 +3678,14 @@ class Flight extends DataClass implements Insertable<Flight> {
           ..write('timeCustom4Minutes: $timeCustom4Minutes, ')
           ..write('timeFlightMinutes: $timeFlightMinutes, ')
           ..write('timeBlockMinutes: $timeBlockMinutes, ')
+          ..write('timeTotalBlockMinutes: $timeTotalBlockMinutes, ')
           ..write('distanceNM: $distanceNM, ')
           ..write('ifrApproaches: $ifrApproaches, ')
           ..write('takeOffsDays: $takeOffsDays, ')
           ..write('takeOffsNight: $takeOffsNight, ')
           ..write('landingsDay: $landingsDay, ')
           ..write('landingsNight: $landingsNight, ')
+          ..write('pilotFunction: $pilotFunction, ')
           ..write('approachType: $approachType, ')
           ..write('remarks: $remarks, ')
           ..write('notes: $notes, ')
@@ -3644,12 +3721,14 @@ class Flight extends DataClass implements Insertable<Flight> {
     timeCustom4Minutes,
     timeFlightMinutes,
     timeBlockMinutes,
+    timeTotalBlockMinutes,
     distanceNM,
     ifrApproaches,
     takeOffsDays,
     takeOffsNight,
     landingsDay,
     landingsNight,
+    pilotFunction,
     approachType,
     remarks,
     notes,
@@ -3685,12 +3764,14 @@ class Flight extends DataClass implements Insertable<Flight> {
           other.timeCustom4Minutes == this.timeCustom4Minutes &&
           other.timeFlightMinutes == this.timeFlightMinutes &&
           other.timeBlockMinutes == this.timeBlockMinutes &&
+          other.timeTotalBlockMinutes == this.timeTotalBlockMinutes &&
           other.distanceNM == this.distanceNM &&
           other.ifrApproaches == this.ifrApproaches &&
           other.takeOffsDays == this.takeOffsDays &&
           other.takeOffsNight == this.takeOffsNight &&
           other.landingsDay == this.landingsDay &&
           other.landingsNight == this.landingsNight &&
+          other.pilotFunction == this.pilotFunction &&
           other.approachType == this.approachType &&
           other.remarks == this.remarks &&
           other.notes == this.notes &&
@@ -3723,12 +3804,14 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
   final Value<int> timeCustom4Minutes;
   final Value<int> timeFlightMinutes;
   final Value<int> timeBlockMinutes;
+  final Value<int> timeTotalBlockMinutes;
   final Value<int> distanceNM;
   final Value<int> ifrApproaches;
   final Value<int> takeOffsDays;
   final Value<int> takeOffsNight;
   final Value<int> landingsDay;
   final Value<int> landingsNight;
+  final Value<String> pilotFunction;
   final Value<String> approachType;
   final Value<String> remarks;
   final Value<String> notes;
@@ -3759,12 +3842,14 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     this.timeCustom4Minutes = const Value.absent(),
     this.timeFlightMinutes = const Value.absent(),
     this.timeBlockMinutes = const Value.absent(),
+    this.timeTotalBlockMinutes = const Value.absent(),
     this.distanceNM = const Value.absent(),
     this.ifrApproaches = const Value.absent(),
     this.takeOffsDays = const Value.absent(),
     this.takeOffsNight = const Value.absent(),
     this.landingsDay = const Value.absent(),
     this.landingsNight = const Value.absent(),
+    this.pilotFunction = const Value.absent(),
     this.approachType = const Value.absent(),
     this.remarks = const Value.absent(),
     this.notes = const Value.absent(),
@@ -3796,12 +3881,14 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     required int timeCustom4Minutes,
     required int timeFlightMinutes,
     required int timeBlockMinutes,
+    this.timeTotalBlockMinutes = const Value.absent(),
     required int distanceNM,
     required int ifrApproaches,
     required int takeOffsDays,
     required int takeOffsNight,
     required int landingsDay,
     required int landingsNight,
+    this.pilotFunction = const Value.absent(),
     required String approachType,
     required String remarks,
     required String notes,
@@ -3862,12 +3949,14 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     Expression<int>? timeCustom4Minutes,
     Expression<int>? timeFlightMinutes,
     Expression<int>? timeBlockMinutes,
+    Expression<int>? timeTotalBlockMinutes,
     Expression<int>? distanceNM,
     Expression<int>? ifrApproaches,
     Expression<int>? takeOffsDays,
     Expression<int>? takeOffsNight,
     Expression<int>? landingsDay,
     Expression<int>? landingsNight,
+    Expression<String>? pilotFunction,
     Expression<String>? approachType,
     Expression<String>? remarks,
     Expression<String>? notes,
@@ -3909,12 +3998,15 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
         'time_custom4_minutes': timeCustom4Minutes,
       if (timeFlightMinutes != null) 'time_flight_minutes': timeFlightMinutes,
       if (timeBlockMinutes != null) 'time_block_minutes': timeBlockMinutes,
+      if (timeTotalBlockMinutes != null)
+        'time_total_block_minutes': timeTotalBlockMinutes,
       if (distanceNM != null) 'distance_n_m': distanceNM,
       if (ifrApproaches != null) 'ifr_approaches': ifrApproaches,
       if (takeOffsDays != null) 'take_offs_days': takeOffsDays,
       if (takeOffsNight != null) 'take_offs_night': takeOffsNight,
       if (landingsDay != null) 'landings_day': landingsDay,
       if (landingsNight != null) 'landings_night': landingsNight,
+      if (pilotFunction != null) 'pilot_function': pilotFunction,
       if (approachType != null) 'approach_type': approachType,
       if (remarks != null) 'remarks': remarks,
       if (notes != null) 'notes': notes,
@@ -3948,12 +4040,14 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     Value<int>? timeCustom4Minutes,
     Value<int>? timeFlightMinutes,
     Value<int>? timeBlockMinutes,
+    Value<int>? timeTotalBlockMinutes,
     Value<int>? distanceNM,
     Value<int>? ifrApproaches,
     Value<int>? takeOffsDays,
     Value<int>? takeOffsNight,
     Value<int>? landingsDay,
     Value<int>? landingsNight,
+    Value<String>? pilotFunction,
     Value<String>? approachType,
     Value<String>? remarks,
     Value<String>? notes,
@@ -3989,12 +4083,15 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
       timeCustom4Minutes: timeCustom4Minutes ?? this.timeCustom4Minutes,
       timeFlightMinutes: timeFlightMinutes ?? this.timeFlightMinutes,
       timeBlockMinutes: timeBlockMinutes ?? this.timeBlockMinutes,
+      timeTotalBlockMinutes:
+          timeTotalBlockMinutes ?? this.timeTotalBlockMinutes,
       distanceNM: distanceNM ?? this.distanceNM,
       ifrApproaches: ifrApproaches ?? this.ifrApproaches,
       takeOffsDays: takeOffsDays ?? this.takeOffsDays,
       takeOffsNight: takeOffsNight ?? this.takeOffsNight,
       landingsDay: landingsDay ?? this.landingsDay,
       landingsNight: landingsNight ?? this.landingsNight,
+      pilotFunction: pilotFunction ?? this.pilotFunction,
       approachType: approachType ?? this.approachType,
       remarks: remarks ?? this.remarks,
       notes: notes ?? this.notes,
@@ -4086,6 +4183,11 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     if (timeBlockMinutes.present) {
       map['time_block_minutes'] = Variable<int>(timeBlockMinutes.value);
     }
+    if (timeTotalBlockMinutes.present) {
+      map['time_total_block_minutes'] = Variable<int>(
+        timeTotalBlockMinutes.value,
+      );
+    }
     if (distanceNM.present) {
       map['distance_n_m'] = Variable<int>(distanceNM.value);
     }
@@ -4103,6 +4205,9 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     }
     if (landingsNight.present) {
       map['landings_night'] = Variable<int>(landingsNight.value);
+    }
+    if (pilotFunction.present) {
+      map['pilot_function'] = Variable<String>(pilotFunction.value);
     }
     if (approachType.present) {
       map['approach_type'] = Variable<String>(approachType.value);
@@ -4151,12 +4256,14 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
           ..write('timeCustom4Minutes: $timeCustom4Minutes, ')
           ..write('timeFlightMinutes: $timeFlightMinutes, ')
           ..write('timeBlockMinutes: $timeBlockMinutes, ')
+          ..write('timeTotalBlockMinutes: $timeTotalBlockMinutes, ')
           ..write('distanceNM: $distanceNM, ')
           ..write('ifrApproaches: $ifrApproaches, ')
           ..write('takeOffsDays: $takeOffsDays, ')
           ..write('takeOffsNight: $takeOffsNight, ')
           ..write('landingsDay: $landingsDay, ')
           ..write('landingsNight: $landingsNight, ')
+          ..write('pilotFunction: $pilotFunction, ')
           ..write('approachType: $approachType, ')
           ..write('remarks: $remarks, ')
           ..write('notes: $notes, ')
@@ -11714,12 +11821,14 @@ typedef $$FlightsTableCreateCompanionBuilder =
       required int timeCustom4Minutes,
       required int timeFlightMinutes,
       required int timeBlockMinutes,
+      Value<int> timeTotalBlockMinutes,
       required int distanceNM,
       required int ifrApproaches,
       required int takeOffsDays,
       required int takeOffsNight,
       required int landingsDay,
       required int landingsNight,
+      Value<String> pilotFunction,
       required String approachType,
       required String remarks,
       required String notes,
@@ -11752,12 +11861,14 @@ typedef $$FlightsTableUpdateCompanionBuilder =
       Value<int> timeCustom4Minutes,
       Value<int> timeFlightMinutes,
       Value<int> timeBlockMinutes,
+      Value<int> timeTotalBlockMinutes,
       Value<int> distanceNM,
       Value<int> ifrApproaches,
       Value<int> takeOffsDays,
       Value<int> takeOffsNight,
       Value<int> landingsDay,
       Value<int> landingsNight,
+      Value<String> pilotFunction,
       Value<String> approachType,
       Value<String> remarks,
       Value<String> notes,
@@ -11983,6 +12094,11 @@ class $$FlightsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get timeTotalBlockMinutes => $composableBuilder(
+    column: $table.timeTotalBlockMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get distanceNM => $composableBuilder(
     column: $table.distanceNM,
     builder: (column) => ColumnFilters(column),
@@ -12010,6 +12126,11 @@ class $$FlightsTableFilterComposer
 
   ColumnFilters<int> get landingsNight => $composableBuilder(
     column: $table.landingsNight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pilotFunction => $composableBuilder(
+    column: $table.pilotFunction,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12266,6 +12387,11 @@ class $$FlightsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get timeTotalBlockMinutes => $composableBuilder(
+    column: $table.timeTotalBlockMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get distanceNM => $composableBuilder(
     column: $table.distanceNM,
     builder: (column) => ColumnOrderings(column),
@@ -12293,6 +12419,11 @@ class $$FlightsTableOrderingComposer
 
   ColumnOrderings<int> get landingsNight => $composableBuilder(
     column: $table.landingsNight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pilotFunction => $composableBuilder(
+    column: $table.pilotFunction,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -12521,6 +12652,11 @@ class $$FlightsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get timeTotalBlockMinutes => $composableBuilder(
+    column: $table.timeTotalBlockMinutes,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get distanceNM => $composableBuilder(
     column: $table.distanceNM,
     builder: (column) => column,
@@ -12548,6 +12684,11 @@ class $$FlightsTableAnnotationComposer
 
   GeneratedColumn<int> get landingsNight => $composableBuilder(
     column: $table.landingsNight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get pilotFunction => $composableBuilder(
+    column: $table.pilotFunction,
     builder: (column) => column,
   );
 
@@ -12748,12 +12889,14 @@ class $$FlightsTableTableManager
                 Value<int> timeCustom4Minutes = const Value.absent(),
                 Value<int> timeFlightMinutes = const Value.absent(),
                 Value<int> timeBlockMinutes = const Value.absent(),
+                Value<int> timeTotalBlockMinutes = const Value.absent(),
                 Value<int> distanceNM = const Value.absent(),
                 Value<int> ifrApproaches = const Value.absent(),
                 Value<int> takeOffsDays = const Value.absent(),
                 Value<int> takeOffsNight = const Value.absent(),
                 Value<int> landingsDay = const Value.absent(),
                 Value<int> landingsNight = const Value.absent(),
+                Value<String> pilotFunction = const Value.absent(),
                 Value<String> approachType = const Value.absent(),
                 Value<String> remarks = const Value.absent(),
                 Value<String> notes = const Value.absent(),
@@ -12784,12 +12927,14 @@ class $$FlightsTableTableManager
                 timeCustom4Minutes: timeCustom4Minutes,
                 timeFlightMinutes: timeFlightMinutes,
                 timeBlockMinutes: timeBlockMinutes,
+                timeTotalBlockMinutes: timeTotalBlockMinutes,
                 distanceNM: distanceNM,
                 ifrApproaches: ifrApproaches,
                 takeOffsDays: takeOffsDays,
                 takeOffsNight: takeOffsNight,
                 landingsDay: landingsDay,
                 landingsNight: landingsNight,
+                pilotFunction: pilotFunction,
                 approachType: approachType,
                 remarks: remarks,
                 notes: notes,
@@ -12822,12 +12967,14 @@ class $$FlightsTableTableManager
                 required int timeCustom4Minutes,
                 required int timeFlightMinutes,
                 required int timeBlockMinutes,
+                Value<int> timeTotalBlockMinutes = const Value.absent(),
                 required int distanceNM,
                 required int ifrApproaches,
                 required int takeOffsDays,
                 required int takeOffsNight,
                 required int landingsDay,
                 required int landingsNight,
+                Value<String> pilotFunction = const Value.absent(),
                 required String approachType,
                 required String remarks,
                 required String notes,
@@ -12858,12 +13005,14 @@ class $$FlightsTableTableManager
                 timeCustom4Minutes: timeCustom4Minutes,
                 timeFlightMinutes: timeFlightMinutes,
                 timeBlockMinutes: timeBlockMinutes,
+                timeTotalBlockMinutes: timeTotalBlockMinutes,
                 distanceNM: distanceNM,
                 ifrApproaches: ifrApproaches,
                 takeOffsDays: takeOffsDays,
                 takeOffsNight: takeOffsNight,
                 landingsDay: landingsDay,
                 landingsNight: landingsNight,
+                pilotFunction: pilotFunction,
                 approachType: approachType,
                 remarks: remarks,
                 notes: notes,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 
 class CustomTimeLabelsCard extends ConsumerStatefulWidget {

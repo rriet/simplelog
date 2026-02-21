@@ -38,13 +38,24 @@ class AircraftListItem extends StatelessWidget {
         ),
         onPressed: onToggleFavorite,
       ),
-      title: Text(row.registration),
+      title: Row(
+        children: [
+          Icon(
+            row.aircraft.isSimulator
+                ? Icons.videogame_asset_outlined
+                : Icons.airplanemode_active_outlined,
+            size: 18,
+          ),
+          const SizedBox(width: 6),
+          Expanded(child: Text(row.registration)),
+        ],
+      ),
       onTap: onOpenDetails,
       subtitle: Text(
         [
-          if (typeLabel != null) typeLabel,
+          typeLabel,
           '${l10n.fieldMtow}: ${row.effectiveMtow}',
-        ].join(' • '),
+        ].whereType<String>().join(' • '),
       ),
       trailing: isMobile ? null : _buildActions(context, l10n),
     );

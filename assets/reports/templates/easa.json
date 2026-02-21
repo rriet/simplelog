@@ -1,0 +1,117 @@
+{
+  "displayName": "EASA",
+  "rowsPerPage": 26,
+  "forceLandscape": true,
+  "defaultPageSize": "a4",
+  "labels": {
+    "pageTotal": "TOTAL THIS PAGE",
+    "amountForward": "TOTAL FROM PREVIOUS PAGES",
+    "totalToDate": "TOTAL TIME"
+  },
+  "tables": [
+    {
+      "pageSuffix": "A",
+      "columns": [
+        { "key": "date", "header": "Date", "width": 1.0 },
+        { "key": "fromIcao", "header": "Dep", "width": 0.8 },
+        { "key": "toIcao", "header": "Arr", "width": 0.8 },
+        { "key": "aircraftModel", "header": "Model", "width": 1.0 },
+        { "key": "aircraftRegistration", "header": "Reg", "width": 0.9 },
+        { "key": "sel", "header": "SEL", "width": 0.8 },
+        { "key": "mel", "header": "MEL", "width": 0.8 },
+        { "key": "sic", "header": "Multi-Pilot", "width": 1.0 },
+        { "key": "total", "header": "Total", "width": 0.9 },
+        { "key": "landingsTotal", "header": "Landings", "width": 0.8 }
+      ],
+      "footerRows": [
+        {
+          "labelToken": "pageTotal",
+          "source": "pageTotals",
+          "values": {
+            "sel": "sel",
+            "mel": "mel",
+            "sic": "sic",
+            "total": "total",
+            "landingsTotal": "landings"
+          }
+        },
+        {
+          "labelToken": "amountForward",
+          "source": "totalsBefore",
+          "values": {
+            "sel": "sel",
+            "mel": "mel",
+            "sic": "sic",
+            "total": "total",
+            "landingsTotal": "landings"
+          }
+        },
+        {
+          "labelToken": "totalToDate",
+          "source": "totalsAfter",
+          "values": {
+            "sel": "sel",
+            "mel": "mel",
+            "sic": "sic",
+            "total": "total",
+            "landingsTotal": "landings"
+          }
+        }
+      ]
+    },
+    {
+      "pageSuffix": "B",
+      "columns": [
+        { "key": "night", "header": "Night" },
+        { "key": "ifr", "header": "IFR" },
+        { "key": "picPicus", "header": "PIC+US" },
+        { "key": "sic", "header": "Co-Pilot" },
+        { "key": "dual", "header": "Dual" },
+        { "key": "instructor", "header": "Instructor" },
+        { "key": "fstd", "header": "Sim" },
+        { "key": "remarks", "header": "Remarks", "width": 2.2, "alignment": "left" }
+      ],
+      "footerRows": [
+        {
+          "labelToken": "pageTotal",
+          "source": "pageTotals",
+          "values": {
+            "night": "night",
+            "ifr": "ifr",
+            "picPicus": "picPicus",
+            "sic": "sic",
+            "dual": "dual",
+            "instructor": "instructor",
+            "fstd": "fstd"
+          }
+        },
+        {
+          "labelToken": "amountForward",
+          "source": "totalsBefore",
+          "values": {
+            "night": "night",
+            "ifr": "ifr",
+            "picPicus": "picPicus",
+            "sic": "sic",
+            "dual": "dual",
+            "instructor": "instructor",
+            "fstd": "fstd"
+          }
+        },
+        {
+          "labelToken": "totalToDate",
+          "source": "totalsAfter",
+          "values": {
+            "night": "night",
+            "ifr": "ifr",
+            "picPicus": "picPicus",
+            "sic": "sic",
+            "dual": "dual",
+            "instructor": "instructor",
+            "fstd": "fstd"
+          }
+        }
+      ]
+    }
+  ]
+}

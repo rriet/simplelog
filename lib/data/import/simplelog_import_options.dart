@@ -9,10 +9,17 @@ class SimpleLogImportOptions {
     this.instrumentPercent = 0,
     this.instrumentMinimumMinutes = 0,
     this.instrumentSubtractMinutes = 0,
-    this.airportStrategy = MergeStrategy.keep,
-    this.crewStrategy = MergeStrategy.keep,
-    this.aircraftStrategy = MergeStrategy.keep,
-    this.aircraftTypeStrategy = MergeStrategy.keep,
+    this.recalculateIfrTime = false,
+    this.ifrPercent = 0,
+    this.ifrMinimumMinutes = 0,
+    this.ifrSubtractMinutes = 0,
+    this.irp3Percent = 100,
+    this.irp3SubtractMinutes = 0,
+    this.irp4Percent = 100,
+    this.irp4SubtractMinutes = 0,
+    this.overrideAirportValues = false,
+    this.overrideAircraftValues = false,
+    this.overrideAircraftTypeValues = false,
   });
 
   final bool recalculateNightTime;
@@ -24,10 +31,22 @@ class SimpleLogImportOptions {
   final int instrumentPercent;
   final int instrumentMinimumMinutes;
   final int instrumentSubtractMinutes;
-  final MergeStrategy airportStrategy;
-  final MergeStrategy crewStrategy;
-  final MergeStrategy aircraftStrategy;
-  final MergeStrategy aircraftTypeStrategy;
+  final bool recalculateIfrTime;
+  final int ifrPercent;
+  final int ifrMinimumMinutes;
+  final int ifrSubtractMinutes;
+  final int irp3Percent;
+  final int irp3SubtractMinutes;
+  final int irp4Percent;
+  final int irp4SubtractMinutes;
+  final bool overrideAirportValues;
+  final bool overrideAircraftValues;
+  final bool overrideAircraftTypeValues;
+
+  bool get overrideExistingValues =>
+      overrideAirportValues ||
+      overrideAircraftValues ||
+      overrideAircraftTypeValues;
 
   SimpleLogImportOptions copyWith({
     bool? recalculateNightTime,
@@ -39,16 +58,21 @@ class SimpleLogImportOptions {
     int? instrumentPercent,
     int? instrumentMinimumMinutes,
     int? instrumentSubtractMinutes,
-    MergeStrategy? airportStrategy,
-    MergeStrategy? crewStrategy,
-    MergeStrategy? aircraftStrategy,
-    MergeStrategy? aircraftTypeStrategy,
+    bool? recalculateIfrTime,
+    int? ifrPercent,
+    int? ifrMinimumMinutes,
+    int? ifrSubtractMinutes,
+    int? irp3Percent,
+    int? irp3SubtractMinutes,
+    int? irp4Percent,
+    int? irp4SubtractMinutes,
+    bool? overrideAirportValues,
+    bool? overrideAircraftValues,
+    bool? overrideAircraftTypeValues,
   }) {
     return SimpleLogImportOptions(
-      recalculateNightTime:
-          recalculateNightTime ?? this.recalculateNightTime,
-      recalculateTotalTime:
-          recalculateTotalTime ?? this.recalculateTotalTime,
+      recalculateNightTime: recalculateNightTime ?? this.recalculateNightTime,
+      recalculateTotalTime: recalculateTotalTime ?? this.recalculateTotalTime,
       recalculateTakeoffLanding:
           recalculateTakeoffLanding ?? this.recalculateTakeoffLanding,
       recalculateCrossCountry:
@@ -62,12 +86,20 @@ class SimpleLogImportOptions {
           instrumentMinimumMinutes ?? this.instrumentMinimumMinutes,
       instrumentSubtractMinutes:
           instrumentSubtractMinutes ?? this.instrumentSubtractMinutes,
-      airportStrategy: airportStrategy ?? this.airportStrategy,
-      crewStrategy: crewStrategy ?? this.crewStrategy,
-      aircraftStrategy: aircraftStrategy ?? this.aircraftStrategy,
-      aircraftTypeStrategy: aircraftTypeStrategy ?? this.aircraftTypeStrategy,
+      recalculateIfrTime: recalculateIfrTime ?? this.recalculateIfrTime,
+      ifrPercent: ifrPercent ?? this.ifrPercent,
+      ifrMinimumMinutes: ifrMinimumMinutes ?? this.ifrMinimumMinutes,
+      ifrSubtractMinutes: ifrSubtractMinutes ?? this.ifrSubtractMinutes,
+      irp3Percent: irp3Percent ?? this.irp3Percent,
+      irp3SubtractMinutes: irp3SubtractMinutes ?? this.irp3SubtractMinutes,
+      irp4Percent: irp4Percent ?? this.irp4Percent,
+      irp4SubtractMinutes: irp4SubtractMinutes ?? this.irp4SubtractMinutes,
+      overrideAirportValues:
+          overrideAirportValues ?? this.overrideAirportValues,
+      overrideAircraftValues:
+          overrideAircraftValues ?? this.overrideAircraftValues,
+      overrideAircraftTypeValues:
+          overrideAircraftTypeValues ?? this.overrideAircraftTypeValues,
     );
   }
 }
-
-enum MergeStrategy { keep, override, mix }

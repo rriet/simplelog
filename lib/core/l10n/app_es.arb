@@ -259,7 +259,263 @@
   "databaseSyncInvalidSession": "No se pudo conectar a esa sesion.",
   "databaseSyncNoNetwork": "No se encontro una red local.",
   "databaseSyncScanQr": "Escanear codigo QR",
-  "databaseSyncDisconnected": "Se desconecto del otro dispositivo."
-  ,
-  "databaseSyncStopWarning": "Detener la sesion desconectara a otros dispositivos. Continuar?"
+  "databaseSyncDisconnected": "Se desconecto del otro dispositivo.",
+  "databaseSyncStopWarning": "Detener la sesion desconectara a otros dispositivos. Continuar?",
+  "reportsTabOverview": "Resumen",
+  "reportsTabFlights": "Vuelos",
+  "reportsTabTotals": "Totales",
+  "reportsTabAnalyses": "Analisis",
+  "reportsTabReports": "Informes",
+  "reportsTabFilters": "Filtros",
+  "reportsEntryGeneric": "Entrada",
+  "reportsDeleteEntryConfirm": "Eliminar {label}?",
+  "reportsDeleteDutyConfirm": "Eliminar esta entrada de servicio?",
+  "reportsNoPreviousFlightFound": "No se encontro vuelo anterior.",
+  "logbookFabReturnFlight": "Vuelo de regreso",
+  "logbookFabNextFlight": "Siguiente vuelo",
+  "reportsStartBeforeEndError": "La fecha inicial debe ser anterior a la final.",
+  "reportsSavedQuery": "Consulta guardada \"{name}\".",
+  "reportsPdfPreparing": "Preparando PDF...",
+  "reportsPdfGenerating": "Generando PDF...",
+  "reportsPdfSaving": "Guardando PDF...",
+  "reportsPdfDone": "Listo.",
+  "reportsPdfExported": "PDF exportado en: {path}",
+  "reportsPdfFailed": "Error al generar PDF: {error}",
+  "reportsNoTemplateAvailable": "No hay plantilla disponible.",
+  "reportsSavePdfDialogTitle": "Guardar PDF",
+  "reportsChooseExportFolderTitle": "Elegir carpeta de exportacion",
+  "reportsCancelled": "Cancelado",
+  "reportsAnalyzeByLabel": "Analizar por",
+  "reportsOrderByLabel": "Ordenar por",
+  "reportsAnalyzeByAircraft": "Por aeronave",
+  "reportsAnalyzeByType": "Por tipo",
+  "reportsAnalyzeByFamily": "Por familia",
+  "reportsAnalyzeByYear": "Por ano",
+  "reportsAnalyzeByMonth": "Por mes",
+  "reportsOrderByGreater": "Mayor",
+  "reportsOrderByNatural": "Natural",
+  "reportsShowMap": "Mostrar mapa",
+  "reportsShowPath": "Mostrar ruta",
+  "reportsIncludeHoursBefore": "Incluir horas anteriores",
+  "reportsPageSizeLabel": "Tamano de pagina",
+  "reportsXmlTemplateLabel": "Plantilla XML",
+  "reportsGeneratingShort": "Generando...",
+  "reportsGeneratePdf": "Generar PDF",
+  "reportsDatePresetLastMonthRolling": "Ultimo mes (movil)",
+  "reportsUnknown": "Desconocido",
+  "reportsUnknownType": "Tipo desconocido",
+  "reportsUnknownFamily": "Familia desconocida",
+  "reportsFiltersSummary": "{count} filtros • {from} UTC - {to} UTC",
+  "reportsEventSimShort": "Sim",
+  "reportsPreviousExperienceLabel": "Experiencia previa",
+  "reportsInclude": "Incluir",
+  "reportsExclude": "Excluir",
+  "reportsMatchModeLabel": "Modo de coincidencia",
+  "reportsMatchAll": "Todos",
+  "reportsMatchAny": "Cualquiera",
+  "reportsAddFilter": "Agregar filtro",
+  "reportsFilterChipLabel": "{field} · {operator} · {value}",
+  "reportsSavedQueriesLabel": "Consultas guardadas",
+  "reportsSaveQuery": "Guardar consulta",
+  "reportsDeleteSavedQuery": "Eliminar: {name}",
+  "reportsDeleteSavedLabel": "Eliminar guardada",
+  "reportsMetricIfrApproaches": "Aproximaciones IFR",
+  "reportsMetricTakeoffDay": "Despegues dia",
+  "reportsMetricTakeoffNight": "Despegues noche",
+  "reportsMetricLandingDay": "Aterrizajes dia",
+  "reportsMetricLandingNight": "Aterrizajes noche",
+  "reportsMetricTotalBlock": "Total block",
+  "reportsMetricPic": "PIC",
+  "reportsMetricPicus": "PICUS",
+  "reportsMetricSic": "SIC",
+  "reportsMetricDual": "Dual",
+  "reportsMetricInstructor": "Instructor",
+  "reportsMetricNight": "Noche",
+  "reportsMetricIfr": "IFR",
+  "reportsMetricInstrument": "Instrumental",
+  "reportsMetricCrossCountry": "Travesia",
+  "reportsMetricSimulator": "Simulador",
+  "reportsMetricDuty": "Servicio",
+  "reportsMetricDistanceNm": "Distancia NM",
+  "reportsFlightCount": "Cantidad de vuelos: {count}",
+  "reportsNoDataForQuery": "No hay datos para la consulta seleccionada.",
+  "reportsMetricLandings": "Aterrizajes",
+  "reportsFirstFlightAt": "Primer vuelo {date} UTC",
+  "reportsLastFlightAt": "Ultimo vuelo {date} UTC",
+  "reportsFieldNameLabel": "Nombre del campo",
+  "reportsConditionLabel": "Condicion",
+  "reportsValueLabel": "Valor",
+  "reportsFlightsAndSimulatorTitle": "Vuelos y simulador",
+  "reportsEntriesCount": "{count} entradas",
+  "reportsNoFlightsInPeriod": "No hay vuelos/sim en el periodo seleccionado.",
+  "reportsFlightMapTitle": "Mapa de vuelos",
+  "reportsHideLines": "Ocultar lineas",
+  "reportsShowLines": "Mostrar lineas",
+  "reportsDone": "Listo",
+  "reportsNoCoordinatesAvailable": "No hay coordenadas disponibles.",
+  "reportsAirportsCount": "Aeropuertos: {count}",
+  "reportsFilterFieldDepartureIcao": "Salida ICAO",
+  "reportsFilterFieldDepartureIata": "Salida IATA",
+  "reportsFilterFieldDepartureName": "Nombre salida",
+  "reportsFilterFieldDepartureCity": "Ciudad salida",
+  "reportsFilterFieldDepartureCountry": "Pais salida",
+  "reportsFilterFieldArrivalIcao": "Llegada ICAO",
+  "reportsFilterFieldArrivalIata": "Llegada IATA",
+  "reportsFilterFieldArrivalName": "Nombre llegada",
+  "reportsFilterFieldArrivalCity": "Ciudad llegada",
+  "reportsFilterFieldArrivalCountry": "Pais llegada",
+  "reportsFilterFieldAircraftRegistration": "Matricula aeronave",
+  "reportsFilterFieldAircraftTypeCode": "Codigo tipo aeronave",
+  "reportsFilterFieldAircraftTypeFamily": "Familia tipo aeronave",
+  "reportsFilterFieldAircraftTypeName": "Nombre tipo aeronave",
+  "reportsFilterFieldPilotName": "Nombre piloto",
+  "reportsFilterFieldApproachType": "Tipo de aproximacion",
+  "reportsFilterFieldRemarks": "Observaciones",
+  "reportsFilterFieldNotes": "Notas",
+  "reportsFilterFieldBlockTime": "Tiempo block",
+  "reportsFilterFieldFlightTime": "Tiempo de vuelo",
+  "reportsFilterFieldTotalTime": "Tiempo total",
+  "reportsFilterFieldNightTime": "Tiempo nocturno",
+  "reportsFilterFieldIfrTime": "Tiempo IFR",
+  "reportsFilterFieldInstrumentTime": "Tiempo instrumental",
+  "reportsFilterFieldSimInstrumentTime": "Tiempo instrumental simulado",
+  "reportsFilterFieldPicTime": "Tiempo PIC",
+  "reportsFilterFieldPicusTime": "Tiempo PICUS",
+  "reportsFilterFieldSicTime": "Tiempo SIC",
+  "reportsFilterFieldDualTime": "Tiempo dual",
+  "reportsFilterFieldInstructorTime": "Tiempo instructor",
+  "reportsFilterFieldCrossCountryTime": "Tiempo travesia",
+  "reportsFilterFieldCustom1Time": "Tiempo personalizado 1",
+  "reportsFilterFieldCustom2Time": "Tiempo personalizado 2",
+  "reportsFilterFieldCustom3Time": "Tiempo personalizado 3",
+  "reportsFilterFieldCustom4Time": "Tiempo personalizado 4",
+  "reportsFilterFieldDistanceNm": "Distancia NM",
+  "reportsFilterFieldTakeoffs": "Despegues",
+  "reportsFilterFieldTakeoffsDay": "Despegues dia",
+  "reportsFilterFieldTakeoffsNight": "Despegues noche",
+  "reportsFilterFieldLandings": "Aterrizajes",
+  "reportsFilterFieldLandingsDay": "Aterrizajes dia",
+  "reportsFilterFieldLandingsNight": "Aterrizajes noche",
+  "reportsFilterFieldIfrApproaches": "Aproximaciones IFR",
+  "reportsFilterFieldMultiPilot": "Multipiloto",
+  "reportsFilterFieldSimulator": "Simulador",
+  "reportsFilterOperatorContains": "Contiene",
+  "reportsFilterOperatorStartsWith": "Empieza con",
+  "reportsFilterOperatorDoesNotStartWith": "No empieza con",
+  "reportsFilterOperatorEndsWith": "Termina con",
+  "reportsFilterOperatorDoesNotEndWith": "No termina con",
+  "reportsFilterOperatorIs": "Es",
+  "reportsFilterOperatorIsNot": "No es",
+  "reportsFilterOperatorGreaterThan": "Mayor que",
+  "reportsFilterOperatorLessThan": "Menor que",
+  "reportsFilterOperatorEquals": "Igual a",
+  "reportsFilterOperatorIsTrue": "Es verdadero",
+  "reportsFilterOperatorIsFalse": "Es falso",
+  "@reportsDeleteEntryConfirm": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "@reportsSavedQuery": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@reportsPdfExported": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "@reportsPdfFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@reportsFiltersSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "@reportsFilterChipLabel": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      },
+      "operator": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@reportsDeleteSavedQuery": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@reportsFlightCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "@reportsFirstFlightAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "@reportsLastFlightAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "@reportsEntriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@reportsAirportsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "languageLatvian": "Letón",
+  "reportsAnalyzeByAirport": "Por aeropuerto",
+  "reportsAnalyzeByPilot": "Por piloto",
+  "reportsUnknownAirport": "Aeropuerto desconocido",
+  "reportsUnknownPilot": "Piloto desconocido",
+  "reportsOrderByHours": "Horas",
+  "reportsOrderByLandings": "Aterrizajes",
+  "reportsOrderByTakeoff": "Despegues",
+  "reportsOrderByOperations": "Operaciones",
+  "reportsMetricTakeoff": "Despegues",
+  "reportsMetricOperations": "Operaciones"
 }

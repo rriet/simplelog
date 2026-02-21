@@ -744,7 +744,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
             child: ListView.separated(
               shrinkWrap: true,
               itemCount: devices.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
+              separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final device = devices[index];
                 final selected = _selected == device;

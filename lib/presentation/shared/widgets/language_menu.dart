@@ -31,6 +31,10 @@ class LanguageMenu extends ConsumerWidget {
           value: const Locale('es'),
           child: Text(l10n.languageSpanish),
         ),
+        PopupMenuItem<Locale?>(
+          value: const Locale('lv'),
+          child: Text(l10n.languageLatvian),
+        ),
       ],
     );
   }

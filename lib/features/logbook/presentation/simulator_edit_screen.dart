@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:simplelog/core/constants/app_constants.dart';
+import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/data/models/crew_row.dart';
@@ -21,17 +23,15 @@ import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
 class SimulatorEditScreen extends ConsumerStatefulWidget {
-  const SimulatorEditScreen({
-    super.key,
-    this.simulatorId,
-  });
+  const SimulatorEditScreen({super.key, this.simulatorId});
 
   final int? simulatorId;
 
   bool get isCreate => simulatorId == null;
 
   @override
-  ConsumerState<SimulatorEditScreen> createState() => _SimulatorEditScreenState();
+  ConsumerState<SimulatorEditScreen> createState() =>
+      _SimulatorEditScreenState();
 }
 
 class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
@@ -88,8 +88,10 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       return;
     }
     _simulatorTraining = loaded.simulatorTraining;
-    _start = loaded.startLine?.eventDateTime ?? DateTime.now();
-    _end = loaded.simulatorTraining.endDateTime;
+    _start = loaded.startLine == null
+        ? DateTime.now()
+        : DbDateTime.dbToUtc(loaded.startLine!.eventDateTime);
+    _end = DbDateTime.dbToUtcOrNull(loaded.simulatorTraining.endDateTime);
     _startTimeController.text = TimeInputField.formatMinutes(
       _start.hour * 60 + _start.minute,
     );
@@ -99,15 +101,14 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     _aircraftId = loaded.simulatorTraining.aircraftId;
     _remarksController.text = loaded.simulatorTraining.remarks;
     _notesController.text = loaded.simulatorTraining.notes;
-    _timeController.text = TimeInputField.formatMinutes(loaded.simulatorTraining.timeTotal);
+    _timeController.text = TimeInputField.formatMinutes(
+      loaded.simulatorTraining.timeTotal,
+    );
     _crewRows
       ..clear()
       ..addAll(
         loaded.crewAssignments.map(
-          (item) => _CrewDraftRow(
-            crewId: item.crewId,
-            position: item.position,
-          ),
+          (item) => _CrewDraftRow(crewId: item.crewId, position: item.position),
         ),
       );
     setState(() => _loading = false);
@@ -116,20 +117,19 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   Future<void> _insertDefaultSelfCrewIfAny() async {
     if (!widget.isCreate || _crewRows.isNotEmpty) return;
     final db = ref.read(databaseProvider);
-    final selfCrew = await (db.select(db.crew)
-          ..where((t) => t.isSelf.equals(true))
-          ..limit(1))
-        .getSingleOrNull();
+    final selfCrew =
+        await (db.select(db.crew)
+              ..where((t) => t.isSelf.equals(true))
+              ..limit(1))
+            .getSingleOrNull();
     if (!mounted || selfCrew == null) return;
-    final defaultPosition =
-        await ref.read(simulatorDefaultCrewPositionProvider.future);
+    final defaultPosition = await ref.read(
+      simulatorDefaultCrewPositionProvider.future,
+    );
     if (!mounted) return;
     setState(() {
       _crewRows.add(
-        _CrewDraftRow(
-          crewId: selfCrew.id,
-          position: defaultPosition,
-        ),
+        _CrewDraftRow(crewId: selfCrew.id, position: defaultPosition),
       );
     });
   }
@@ -175,11 +175,12 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     );
     if (!mounted || result != true) return;
     final db = ref.read(databaseProvider);
-    final created = await (db.select(db.aircrafts)
-          ..where((t) => t.isSimulator.equals(true))
-          ..orderBy([(t) => OrderingTerm.desc(t.id)])
-          ..limit(1))
-        .getSingleOrNull();
+    final created =
+        await (db.select(db.aircrafts)
+              ..where((t) => t.isSimulator.equals(true))
+              ..orderBy([(t) => OrderingTerm.desc(t.id)])
+              ..limit(1))
+            .getSingleOrNull();
     if (!mounted || created == null) return;
     setState(() => _aircraftId = created.id);
   }
@@ -199,17 +200,15 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
 
     final result = await _showStandardFormDialog<dynamic>(
       context,
-      CrewEditScreen(
-        item: placeholder,
-        isCreate: true,
-      ),
+      CrewEditScreen(item: placeholder, isCreate: true),
     );
     if (!mounted || result != true) return null;
     final db = ref.read(databaseProvider);
-    final created = await (db.select(db.crew)
-          ..orderBy([(t) => OrderingTerm.desc(t.id)])
-          ..limit(1))
-        .getSingleOrNull();
+    final created =
+        await (db.select(db.crew)
+              ..orderBy([(t) => OrderingTerm.desc(t.id)])
+              ..limit(1))
+            .getSingleOrNull();
     if (!mounted || created == null) return null;
     _crewLabelCache[created.id] = created.name;
     return created.id;
@@ -221,14 +220,8 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       context: context,
       builder: (_) => Dialog(
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 520,
-            maxHeight: maxHeight,
-          ),
-          child: SizedBox(
-            width: 520,
-            child: child,
-          ),
+          constraints: BoxConstraints(maxWidth: 520, maxHeight: maxHeight),
+          child: SizedBox(width: 520, child: child),
         ),
       ),
     );
@@ -258,13 +251,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     final hour = (minutes ~/ 60) % 24;
     final minute = minutes % 60;
     setState(() {
-      _start = DateTime(
-        _start.year,
-        _start.month,
-        _start.day,
-        hour,
-        minute,
-      );
+      _start = DateTime(_start.year, _start.month, _start.day, hour, minute);
       _updateTimeIfAuto();
     });
   }
@@ -277,13 +264,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     final isNextDay = minutes < startMinutes;
     final endDate = startDate.add(Duration(days: isNextDay ? 1 : 0));
     setState(() {
-      _end = DateTime(
-        endDate.year,
-        endDate.month,
-        endDate.day,
-        hour,
-        minute,
-      );
+      _end = DateTime(endDate.year, endDate.month, endDate.day, hour, minute);
       _updateTimeIfAuto();
     });
   }
@@ -322,7 +303,9 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       return;
     }
     if (!_validateCrewRows()) {
-      await _showError('Crew rows must have crew and position, without duplicates.');
+      await _showError(
+        'Crew rows must have crew and position, without duplicates.',
+      );
       return;
     }
     final crewAssignments = _crewRows
@@ -338,8 +321,8 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     if (widget.isCreate) {
       await useCases.createSimulatorTraining(
         aircraftId: _aircraftId!,
-        startDateTime: _start,
-        endDateTime: end,
+        startDateTime: DbDateTime.wallClockToDbUtc(_start),
+        endDateTime: DbDateTime.wallClockToDbUtcOrNull(end),
         totalMinutes: parsed,
         remarks: _remarksController.text.trim(),
         notes: _notesController.text.trim(),
@@ -351,8 +334,8 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       await useCases.updateSimulatorTraining(
         simulatorTraining: item,
         aircraftId: _aircraftId!,
-        startDateTime: _start,
-        endDateTime: end,
+        startDateTime: DbDateTime.wallClockToDbUtc(_start),
+        endDateTime: DbDateTime.wallClockToDbUtcOrNull(end),
         totalMinutes: parsed,
         remarks: _remarksController.text.trim(),
         notes: _notesController.text.trim(),
@@ -393,13 +376,12 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isCreate ? 'New Simulator Training' : 'Edit Simulator Training'),
-        actions: [
-          TextButton(
-            onPressed: _save,
-            child: Text(l10n.saveAction),
-          ),
-        ],
+        title: Text(
+          widget.isCreate
+              ? 'New Simulator Training'
+              : 'Edit Simulator Training',
+        ),
+        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
       ),
       body: Form(
         key: _formKey,
@@ -469,7 +451,9 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                       : () {
                           final calculated = _calculatedMinutes();
                           setState(() {
-                            _timeController.text = TimeInputField.formatMinutes(calculated);
+                            _timeController.text = TimeInputField.formatMinutes(
+                              calculated,
+                            );
                             _timeEdited = false;
                           });
                         },
@@ -484,9 +468,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Simulator'),
-                    subtitle: Text(
-                      _simulatorLabel(_aircraftId, aircraftAsync),
-                    ),
+                    subtitle: Text(_simulatorLabel(_aircraftId, aircraftAsync)),
                     trailing: const Icon(Icons.search),
                     onTap: _pickSimulator,
                   ),
@@ -543,7 +525,9 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
               onPressed: () async {
                 final draft = await _showAddCrewDialog(crewItems);
                 if (draft == null || !mounted) return;
-                final duplicate = _crewRows.any((row) => row.crewId == draft.crewId);
+                final duplicate = _crewRows.any(
+                  (row) => row.crewId == draft.crewId,
+                );
                 if (duplicate) return;
                 setState(() => _crewRows.add(draft));
               },
@@ -566,7 +550,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                       controller: _crewListController,
                       primary: false,
                       itemCount: _crewRows.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      separatorBuilder: (_, _) => const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final row = _crewRows[index];
                         return Padding(
@@ -596,7 +580,8 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                               IconButton(
                                 tooltip: 'Remove',
                                 visualDensity: VisualDensity.compact,
-                                onPressed: () => setState(() => _crewRows.removeAt(index)),
+                                onPressed: () =>
+                                    setState(() => _crewRows.removeAt(index)),
                                 icon: const Icon(Icons.remove_circle_outline),
                               ),
                             ],
@@ -705,7 +690,9 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                       child: ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Crew'),
-                        subtitle: Text(_crewLabel(selectedCrewId, initialItems)),
+                        subtitle: Text(
+                          _crewLabel(selectedCrewId, initialItems),
+                        ),
                         trailing: const Icon(Icons.search),
                         onTap: () async {
                           final selected = await CrewPickerDialog.show(
@@ -758,11 +745,11 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
               onPressed: selectedCrewId == null
                   ? null
                   : () => Navigator.of(dialogContext).pop(
-                        _CrewDraftRow(
-                          crewId: selectedCrewId,
-                          position: selectedPosition,
-                        ),
+                      _CrewDraftRow(
+                        crewId: selectedCrewId,
+                        position: selectedPosition,
                       ),
+                    ),
               child: const Text('Add'),
             ),
           ],
@@ -773,10 +760,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
 }
 
 class _CrewDraftRow {
-  _CrewDraftRow({
-    this.crewId,
-    this.position,
-  });
+  _CrewDraftRow({this.crewId, this.position});
 
   int? crewId;
   CrewPosition? position;

@@ -22,17 +22,14 @@ class LogbookUseCases {
     required int limit,
     required int offset,
   }) {
-    return _repository.fetchLogbookPage(
-      filters,
-      limit: limit,
-      offset: offset,
-    );
+    return _repository.fetchLogbookPage(filters, limit: limit, offset: offset);
   }
 
   Future<DateTime?> fetchFirstEventDate() => _repository.fetchFirstEventDate();
   Future<LogbookEntry?> fetchEntryByTimelineId(int timeLineId) =>
       _repository.fetchEntryByTimelineId(timeLineId);
-  Future<Flight?> findFlightById(int flightId) => _repository.findFlightById(flightId);
+  Future<Flight?> findFlightById(int flightId) =>
+      _repository.findFlightById(flightId);
   Future<FlightEditData?> loadFlightEditData(int flightId) =>
       _repository.loadFlightEditData(flightId);
   Future<List<FlightCrewAssignment>> fetchFlightCrewAssignments(int flightId) =>
@@ -41,7 +38,8 @@ class LogbookUseCases {
   Future<void> toggleEntryLock(LogbookEntry entry) =>
       _repository.toggleEntryLock(entry);
   Future<void> toggleDutyLock(int dutyId) => _repository.toggleDutyLock(dutyId);
-  Future<DutyPeriod?> findDutyById(int dutyId) => _repository.findDutyById(dutyId);
+  Future<DutyPeriod?> findDutyById(int dutyId) =>
+      _repository.findDutyById(dutyId);
   Future<DutyEditData?> loadDutyEditData(int dutyId) =>
       _repository.loadDutyEditData(dutyId);
   Future<Positioning?> findPositioningById(int positioningId) =>
@@ -54,8 +52,7 @@ class LogbookUseCases {
       _repository.loadSimulatorEditData(simulatorId);
   Future<List<SimulatorCrewAssignment>> fetchSimulatorCrewAssignments(
     int simulatorId,
-  ) =>
-      _repository.fetchSimulatorCrewAssignments(simulatorId);
+  ) => _repository.fetchSimulatorCrewAssignments(simulatorId);
 
   Future<void> createDuty({
     required DateTime start,
@@ -141,6 +138,7 @@ class LogbookUseCases {
     required int landingsDay,
     required int landingsNight,
     required int timeBlockMinutes,
+    required int timeTotalBlockMinutes,
     required int timeFlightMinutes,
     required int timePICMinutes,
     required int timePICUSMinutes,
@@ -177,6 +175,7 @@ class LogbookUseCases {
       landingsDay: landingsDay,
       landingsNight: landingsNight,
       timeBlockMinutes: timeBlockMinutes,
+      timeTotalBlockMinutes: timeTotalBlockMinutes,
       timeFlightMinutes: timeFlightMinutes,
       timePICMinutes: timePICMinutes,
       timePICUSMinutes: timePICUSMinutes,
@@ -216,6 +215,7 @@ class LogbookUseCases {
     required int landingsDay,
     required int landingsNight,
     required int timeBlockMinutes,
+    required int timeTotalBlockMinutes,
     required int timeFlightMinutes,
     required int timePICMinutes,
     required int timePICUSMinutes,
@@ -253,6 +253,7 @@ class LogbookUseCases {
       landingsDay: landingsDay,
       landingsNight: landingsNight,
       timeBlockMinutes: timeBlockMinutes,
+      timeTotalBlockMinutes: timeTotalBlockMinutes,
       timeFlightMinutes: timeFlightMinutes,
       timePICMinutes: timePICMinutes,
       timePICUSMinutes: timePICUSMinutes,
@@ -330,6 +331,7 @@ class LogbookUseCases {
   Future<List<LogbookEntry>> fetchEntriesForCrew(int crewId) =>
       _repository.fetchEntriesForCrew(crewId);
 
-  Future<void> deleteEntry(LogbookEntry entry) => _repository.deleteEntry(entry);
+  Future<void> deleteEntry(LogbookEntry entry) =>
+      _repository.deleteEntry(entry);
   Future<void> deleteDutyById(int dutyId) => _repository.deleteDutyById(dutyId);
 }

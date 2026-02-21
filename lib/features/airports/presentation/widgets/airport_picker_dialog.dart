@@ -73,7 +73,7 @@ class AirportPickerDialog extends StatelessWidget {
             );
       },
       emptyText: 'No airports found',
-      errorBuilder: (_, __) => const Center(child: Text('Error loading airports')),
+      errorBuilder: (_, _) => const Center(child: Text('Error loading airports')),
     );
   }
 

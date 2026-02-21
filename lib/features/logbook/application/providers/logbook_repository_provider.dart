@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
 import 'package:simplelog/data/repositories/logbook_repository.dart';
@@ -19,6 +20,8 @@ final logbookUseCasesProvider = Provider<LogbookUseCases>((ref) {
 final logbookFiltersProvider = StateProvider<LogbookFilters>(
   (ref) => LogbookFilters.initial(),
 );
+
+final logbookTopTabIndexProvider = StateProvider<int>((ref) => 0);
 
 final logbookProvider =
     StreamProvider.autoDispose.family<List<LogbookEntry>, LogbookFilters>(

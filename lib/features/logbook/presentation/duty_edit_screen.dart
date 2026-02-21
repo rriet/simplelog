@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/data/database/app_database.dart';
@@ -80,11 +81,11 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     final startLine = loaded.startLine;
     final endLine = loaded.endLine;
     if (startLine != null) {
-      _start = startLine.eventDateTime;
+      _start = DbDateTime.dbToUtc(startLine.eventDateTime);
       _startTimelineId = startLine.id;
     }
     if (endLine != null) {
-      _end = endLine.eventDateTime;
+      _end = DbDateTime.dbToUtc(endLine.eventDateTime);
       _endTimelineId = endLine.id;
     }
     _startTimeController.text = TimeInputField.formatMinutes(
@@ -137,15 +138,11 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     final dayStart = DateTime(_start.year, _start.month, _start.day);
     final endMinutes = _end.hour * 60 + _end.minute;
     final endDayOffset = _end.difference(dayStart).inDays;
-    final adjustedEndOffset = endDayOffset == 0 && endMinutes < minutes ? 1 : endDayOffset;
+    final adjustedEndOffset = endDayOffset == 0 && endMinutes < minutes
+        ? 1
+        : endDayOffset;
     setState(() {
-      _start = DateTime(
-        _start.year,
-        _start.month,
-        _start.day,
-        hour,
-        minute,
-      );
+      _start = DateTime(_start.year, _start.month, _start.day, hour, minute);
       _end = DateTime(
         dayStart.add(Duration(days: adjustedEndOffset)).year,
         dayStart.add(Duration(days: adjustedEndOffset)).month,
@@ -168,13 +165,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     final startDate = DateTime(_start.year, _start.month, _start.day);
     final endDate = startDate.add(Duration(days: isNextDay ? 1 : 0));
     setState(() {
-      _end = DateTime(
-        endDate.year,
-        endDate.month,
-        endDate.day,
-        hour,
-        minute,
-      );
+      _end = DateTime(endDate.year, endDate.month, endDate.day, hour, minute);
       _updateFactoredIfNeeded();
     });
   }
@@ -225,8 +216,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
 
     final dutyMinutes = _dutyMinutes;
     final factoredMinutes =
-        TimeInputField.parseMinutes(_factoredController.text) ??
-            dutyMinutes;
+        TimeInputField.parseMinutes(_factoredController.text) ?? dutyMinutes;
     if (factoredMinutes > dutyMinutes) {
       await _showError('Factored duty time is greater than total duty time.');
       return;
@@ -235,22 +225,20 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     final useCases = ref.read(logbookUseCasesProvider);
     if (widget.isCreate) {
       await useCases.createDuty(
-        start: _start,
-        end: _end,
+        start: DbDateTime.wallClockToDbUtc(_start),
+        end: DbDateTime.wallClockToDbUtc(_end),
         dutyMinutes: dutyMinutes,
         factoredMinutes: factoredMinutes,
       );
     } else {
       final duty = _duty;
-      if (duty == null ||
-          _startTimelineId == null ||
-          _endTimelineId == null) {
+      if (duty == null || _startTimelineId == null || _endTimelineId == null) {
         return;
       }
       await useCases.updateDuty(
         duty: duty,
-        start: _start,
-        end: _end,
+        start: DbDateTime.wallClockToDbUtc(_start),
+        end: DbDateTime.wallClockToDbUtc(_end),
         dutyMinutes: dutyMinutes,
         factoredMinutes: factoredMinutes,
       );
@@ -269,18 +257,12 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final title =
-        widget.isCreate ? 'New Duty' : 'Edit Duty';
+    final title = widget.isCreate ? 'New Duty' : 'Edit Duty';
 
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
-        actions: [
-          TextButton(
-            onPressed: _save,
-            child: Text(l10n.saveAction),
-          ),
-        ],
+        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
       ),
       body: Form(
         key: _formKey,

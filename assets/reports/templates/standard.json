@@ -1,0 +1,127 @@
+{
+  "displayName": "Standard - Jeppesen",
+  "rowsPerPage": 27,
+  "forceLandscape": true,
+  "defaultPageSize": "letter",
+  "labels": {
+    "pageTotal": "PAGE TOTAL",
+    "amountForward": "AMT. FORWARD",
+    "totalToDate": "TOTAL TO DATE"
+  },
+  "tables": [
+    {
+      "pageSuffix": "A",
+      "columns": [
+        { "key": "date", "header": "Date", "width": 1.1 },
+        { "key": "aircraftModel", "header": "Model", "width": 1.2 },
+        { "key": "aircraftRegistration", "header": "Reg", "width": 1.1 },
+        { "key": "fromIcao", "header": "From", "width": 0.9 },
+        { "key": "toIcao", "header": "To", "width": 0.9 },
+        { "key": "remarks", "header": "Remarks", "width": 2.6, "alignment": "left" },
+        { "key": "ifrApproaches", "header": "APP", "width": 0.8 },
+        { "key": "landingsTotal", "header": "LDG", "width": 0.8 },
+        { "key": "xc", "header": "XC", "width": 0.9 }
+      ],
+      "footerRows": [
+        {
+          "labelToken": "pageTotal",
+          "source": "pageTotals",
+          "values": {
+            "landingsTotal": "landings"
+          }
+        },
+        {
+          "labelToken": "amountForward",
+          "source": "totalsBefore",
+          "values": {
+            "landingsTotal": "landings"
+          }
+        },
+        {
+          "labelToken": "totalToDate",
+          "source": "totalsAfter",
+          "values": {
+            "landingsTotal": "landings"
+          }
+        }
+      ]
+    },
+    {
+      "pageSuffix": "B",
+      "columns": [
+        { "key": "sel", "header": "SEL" },
+        { "key": "mel", "header": "MEL" },
+        { "key": "xc", "header": "XC" },
+        { "key": "day", "header": "Day" },
+        { "key": "night", "header": "Night" },
+        { "key": "ifr", "header": "IFR" },
+        { "key": "simInst", "header": "Sim Inst" },
+        { "key": "fstd", "header": "FSTD" },
+        { "key": "dual", "header": "Dual" },
+        { "key": "picPicus", "header": "PIC+US" },
+        { "key": "sic", "header": "SIC" },
+        { "key": "instructor", "header": "Instr" },
+        { "key": "total", "header": "Total" }
+      ],
+      "footerRows": [
+        {
+          "labelToken": "pageTotal",
+          "source": "pageTotals",
+          "values": {
+            "sel": "sel",
+            "mel": "mel",
+            "xc": "xc",
+            "day": "day",
+            "night": "night",
+            "ifr": "ifr",
+            "simInst": "simInst",
+            "fstd": "fstd",
+            "dual": "dual",
+            "picPicus": "picPicus",
+            "sic": "sic",
+            "instructor": "instructor",
+            "total": "total"
+          }
+        },
+        {
+          "labelToken": "amountForward",
+          "source": "totalsBefore",
+          "values": {
+            "sel": "sel",
+            "mel": "mel",
+            "xc": "xc",
+            "day": "day",
+            "night": "night",
+            "ifr": "ifr",
+            "simInst": "simInst",
+            "fstd": "fstd",
+            "dual": "dual",
+            "picPicus": "picPicus",
+            "sic": "sic",
+            "instructor": "instructor",
+            "total": "total"
+          }
+        },
+        {
+          "labelToken": "totalToDate",
+          "source": "totalsAfter",
+          "values": {
+            "sel": "sel",
+            "mel": "mel",
+            "xc": "xc",
+            "day": "day",
+            "night": "night",
+            "ifr": "ifr",
+            "simInst": "simInst",
+            "fstd": "fstd",
+            "dual": "dual",
+            "picPicus": "picPicus",
+            "sic": "sic",
+            "instructor": "instructor",
+            "total": "total"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,22 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
+import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
+import 'package:simplelog/core/maps/map_tile_caching.dart';
+import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
+import 'package:simplelog/data/models/report_pdf_models.dart';
+import 'package:simplelog/data/reports/report_xsl_template_loader.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
 import 'package:simplelog/data/models/reports_models.dart';
+import 'package:simplelog/features/reports/application/report_pdf_application_service.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
+import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
+import 'package:simplelog/presentation/reports/providers/report_pdf_application_service_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
 import 'package:simplelog/presentation/shared/widgets/time_input_field.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
+
+enum ReportsPanelSection {
+  overview,
+  flights,
+  analizes,
+  reports,
+  filters,
+  totals,
+}
+
+class _XslTemplateOption {
+  const _XslTemplateOption({
+    required this.fileName,
+    required this.description,
+    required this.numberOfLines,
+    required this.template,
+  });
+
+  final String fileName;
+  final String description;
+  final int numberOfLines;
+  final ReportPdfTemplate template;
+}
 
 class ReportsScreen extends ConsumerStatefulWidget {
-  const ReportsScreen({super.key});
+  const ReportsScreen({super.key, this.section});
+
+  final ReportsPanelSection? section;
 
   @override
   ConsumerState<ReportsScreen> createState() => _ReportsScreenState();
@@ -30,10 +68,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   ReportsFilterMatchMode _filterMatchMode = ReportsFilterMatchMode.all;
   final List<ReportsFilterCondition> _filters = [];
   _AnalysisGroupBy _analysisGroupBy = _AnalysisGroupBy.aircraft;
+  _AnalysisOrderBy _analysisOrderBy = _AnalysisOrderBy.hours;
   late final TabController _tabController;
+  ReportPdfPageSize _selectedPageSize = ReportPdfPageSize.letter;
+  List<_XslTemplateOption> _xslTemplateOptions = const [];
+  _XslTemplateOption? _selectedTemplate;
+  bool _showPathOnMap = true;
+  bool _isGeneratingPdf = false;
+  String _pdfGenerationStatus = '';
+  double? _pdfGenerationProgress;
 
   bool _loading = false;
   bool _detailsLoaded = false;
+  bool _pendingDetailsLoad = false;
   String? _error;
 
   ReportsData _data = const ReportsData(
@@ -45,8 +92,62 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   @override
   void initState() {
     super.initState();
+    final runtimeQuery = ref.read(reportsRuntimeQueryProvider);
+    _from = runtimeQuery.from;
+    _to = runtimeQuery.to;
+    _filterMatchMode = runtimeQuery.matchMode;
+    _filters
+      ..clear()
+      ..addAll(runtimeQuery.filters);
     _tabController = TabController(length: 3, vsync: this);
+    _loadTemplateOptions();
     _loadOverviewData();
+    if (widget.section == ReportsPanelSection.flights ||
+        widget.section == ReportsPanelSection.analizes ||
+        widget.section == ReportsPanelSection.reports) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _ensureDetailsLoaded();
+      });
+    }
+  }
+
+  Future<void> _loadTemplateOptions() async {
+    final templates = await ReportXslTemplateLoader().load();
+    if (!mounted) {
+      return;
+    }
+    final options = templates
+        .map(
+          (template) => _XslTemplateOption(
+            fileName: template.fileName,
+            description: template.displayName,
+            numberOfLines: template.rowsPerPage,
+            template: template,
+          ),
+        )
+        .toList(growable: false);
+    if (options.isEmpty) {
+      return;
+    }
+    setState(() {
+      _xslTemplateOptions = options;
+      _selectedTemplate ??= options.first;
+      _selectedPageSize =
+          (_selectedTemplate ?? options.first).template.defaultPageSize;
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant ReportsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.section != widget.section &&
+        widget.section != null &&
+        (widget.section == ReportsPanelSection.flights ||
+            widget.section == ReportsPanelSection.analizes ||
+            widget.section == ReportsPanelSection.reports)) {
+      _ensureDetailsLoaded();
+    }
   }
 
   @override
@@ -57,7 +158,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   Future<void> _loadOverviewData() async {
     if (_from.isAfter(_to)) {
-      setState(() => _error = 'Start date must be before end date.');
+      setState(
+        () => _error = AppLocalizations.of(context)!.reportsStartBeforeEndError,
+      );
       return;
     }
     setState(() {
@@ -65,7 +168,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       _error = null;
     });
 
-    final includePreviousExperience = ref.read(includePreviousExperienceProvider);
+    final includePreviousExperience = ref.read(
+      includePreviousExperienceProvider,
+    );
     final eventTypes = ref.read(reportsEventTypesProvider);
 
     try {
@@ -95,7 +200,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             filters: _filters,
           ),
         );
-        final flights = eventTypes.flights ? result.flights : const <ReportsFlightRow>[];
+        final flights = eventTypes.flights
+            ? result.flights
+            : const <ReportsFlightRow>[];
         final entries = await _fetchEntriesForFlights(flights, eventTypes);
         if (!mounted) return;
         setState(() {
@@ -113,13 +220,32 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     } finally {
       if (mounted) {
         setState(() => _loading = false);
+        if (_pendingDetailsLoad) {
+          _pendingDetailsLoad = false;
+          unawaited(_ensureDetailsLoaded());
+        }
       }
     }
   }
 
+  void _persistRuntimeQuery() {
+    ref
+        .read(reportsRuntimeQueryProvider.notifier)
+        .setValue(
+          ReportsRuntimeQueryState(
+            from: _from,
+            to: _to,
+            matchMode: _filterMatchMode,
+            filters: List<ReportsFilterCondition>.from(_filters),
+          ),
+        );
+  }
+
   Future<void> _loadDetailed() async {
     if (_from.isAfter(_to)) {
-      setState(() => _error = 'Start date must be before end date.');
+      setState(
+        () => _error = AppLocalizations.of(context)!.reportsStartBeforeEndError,
+      );
       return;
     }
     setState(() {
@@ -127,7 +253,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       _error = null;
     });
 
-    final includePreviousExperience = ref.read(includePreviousExperienceProvider);
+    final includePreviousExperience = ref.read(
+      includePreviousExperienceProvider,
+    );
     final eventTypes = ref.read(reportsEventTypesProvider);
 
     try {
@@ -141,7 +269,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           filters: _filters,
         ),
       );
-      final flights = eventTypes.flights ? result.flights : const <ReportsFlightRow>[];
+      final flights = eventTypes.flights
+          ? result.flights
+          : const <ReportsFlightRow>[];
       final entries = await _fetchEntriesForFlights(flights, eventTypes);
       if (!mounted) return;
       setState(() {
@@ -166,6 +296,20 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     List<ReportsFlightRow> flights,
     ReportsEventTypesSelection eventTypes,
   ) async {
+    return _fetchEntriesForRange(
+      flights: flights,
+      eventTypes: eventTypes,
+      from: _from,
+      to: _to,
+    );
+  }
+
+  Future<List<LogbookEntry>> _fetchEntriesForRange({
+    required List<ReportsFlightRow> flights,
+    required ReportsEventTypesSelection eventTypes,
+    required DateTime from,
+    required DateTime to,
+  }) async {
     final logbookUseCases = ref.read(logbookUseCasesProvider);
     final selectedTypes = <LogbookEventType>{
       if (eventTypes.flights) LogbookEventType.flight,
@@ -177,34 +321,36 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       return const [];
     }
     final logbookEntries = await logbookUseCases.fetchLogbookPage(
-      LogbookFilters(
-        from: _from,
-        to: _to,
-        types: selectedTypes,
-      ),
+      LogbookFilters(from: from, to: to, types: selectedTypes),
       limit: 10000,
       offset: 0,
     );
     final flightIds = flights.map((flight) => flight.flightId).toSet();
-    return logbookEntries.where((entry) {
-      if (entry.flight != null) {
-        return eventTypes.flights && flightIds.contains(entry.flight!.id);
-      }
-      if (entry.simulatorTraining != null) {
-        return eventTypes.simulator;
-      }
-      if (entry.positioning != null) {
-        return eventTypes.positioning;
-      }
-      if (entry.dutyStart != null || entry.dutyEnd != null) {
-        return eventTypes.duty;
-      }
-      return false;
-    }).toList(growable: false);
+    return logbookEntries
+        .where((entry) {
+          if (entry.flight != null) {
+            return eventTypes.flights && flightIds.contains(entry.flight!.id);
+          }
+          if (entry.simulatorTraining != null) {
+            return eventTypes.simulator;
+          }
+          if (entry.positioning != null) {
+            return eventTypes.positioning;
+          }
+          if (entry.dutyStart != null || entry.dutyEnd != null) {
+            return eventTypes.duty;
+          }
+          return false;
+        })
+        .toList(growable: false);
   }
 
   Future<void> _ensureDetailsLoaded() async {
-    if (_detailsLoaded || _loading) return;
+    if (_detailsLoaded) return;
+    if (_loading) {
+      _pendingDetailsLoad = true;
+      return;
+    }
     await _loadDetailed();
   }
 
@@ -218,19 +364,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final current = isStart ? _from : _to;
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: current.toLocal(),
-      firstDate: DateTime(1970),
-      lastDate: DateTime(2100),
+      initialDate: DateTime.utc(current.year, current.month, current.day),
+      firstDate: DateTime.utc(1970),
+      lastDate: DateTime.utc(2100),
     );
     if (pickedDate == null || !mounted) return;
 
     final pickedTime = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(current.toLocal()),
+      initialTime: TimeOfDay(hour: current.hour, minute: current.minute),
     );
     if (pickedTime == null || !mounted) return;
 
-    final local = DateTime(
+    final selectedUtc = DateTime.utc(
       pickedDate.year,
       pickedDate.month,
       pickedDate.day,
@@ -239,12 +385,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
     setState(() {
       if (isStart) {
-        _from = local.toUtc();
+        _from = selectedUtc;
       } else {
-        _to = local.toUtc();
+        _to = selectedUtc;
       }
       _preset = _ReportDateRangePreset.custom;
     });
+    _persistRuntimeQuery();
     await _loadOverviewData();
   }
 
@@ -312,6 +459,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       _from = start;
       _to = end;
     });
+    _persistRuntimeQuery();
     await _loadOverviewData();
   }
 
@@ -322,18 +470,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
     if (added == null || !mounted) return;
     setState(() => _filters.add(added));
+    _persistRuntimeQuery();
     await _loadOverviewData();
   }
 
   Future<void> _removeFilter(int index) async {
     if (index < 0 || index >= _filters.length) return;
     setState(() => _filters.removeAt(index));
+    _persistRuntimeQuery();
     await _loadOverviewData();
   }
 
   Future<void> _setMatchMode(ReportsFilterMatchMode mode) async {
     if (_filterMatchMode == mode) return;
     setState(() => _filterMatchMode = mode);
+    _persistRuntimeQuery();
     await _loadOverviewData();
   }
 
@@ -367,7 +518,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     await ref.read(savedReportsQueriesProvider.notifier).addQuery(query);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Saved query "${query.name}".')),
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context)!.reportsSavedQuery(query.name),
+        ),
+      ),
     );
   }
 
@@ -381,6 +536,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         ..clear()
         ..addAll(query.filters);
     });
+    _persistRuntimeQuery();
     await ref
         .read(includePreviousExperienceProvider.notifier)
         .setValue(query.includePreviousExperience);
@@ -397,29 +553,224 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (!mounted) return;
     await showDialog<void>(
       context: context,
-      builder: (context) => _FlightsMapDialog(flights: _data.flights),
+      builder: (context) => _FlightsMapDialog(
+        flights: _data.flights,
+        fullscreen: true,
+        initialShowLines: _showPathOnMap,
+      ),
     );
   }
 
   Future<void> _generatePdf() async {
-    await _ensureDetailsLoaded();
+    if (_isGeneratingPdf) {
+      return;
+    }
+    final selectedTemplate = _selectedTemplate;
+    if (selectedTemplate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.reportsNoTemplateAvailable,
+          ),
+        ),
+      );
+      return;
+    }
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final l10n = AppLocalizations.of(context)!;
+    await _setPdfGenerationProgress(l10n.reportsPdfPreparing, progress: 0.1);
+
+    try {
+      await _ensureDetailsLoaded();
+      if (!mounted) return;
+      final templateConfig = selectedTemplate.template;
+      final pdfService = ref.read(reportPdfApplicationServiceProvider);
+
+      await _setPdfGenerationProgress(l10n.reportsPdfGenerating, progress: 0.5);
+      final includeHoursBefore = ref.read(includeHoursBeforeProvider);
+      final startingTotals = includeHoursBefore
+          ? await _loadStandardStartingTotals(pdfService)
+          : const ReportTemplateTotals();
+      final bytes = await pdfService.generateFromTemplate(
+        template: templateConfig,
+        entries: _entries,
+        selectedPageSize: _selectedPageSize,
+        startingTotals: startingTotals,
+      );
+
+      await _setPdfGenerationProgress(l10n.reportsPdfSaving, progress: 0.85);
+      final path = await _savePdfBytes(
+        bytes: bytes,
+        fileName:
+            'simplelog_report_'
+            '${DateTime.now().toUtc().toIso8601String().replaceAll(':', '').replaceAll('-', '').split('.').first}.pdf',
+      );
+      if (!mounted) return;
+      await _setPdfGenerationProgress(l10n.reportsPdfDone, progress: 1);
+      messenger?.showSnackBar(
+        SnackBar(content: Text(l10n.reportsPdfExported(path))),
+      );
+    } catch (error, stackTrace) {
+      debugPrint('PDF generation failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      if (!mounted) return;
+      messenger?.showSnackBar(
+        SnackBar(content: Text(l10n.reportsPdfFailed(error.toString()))),
+      );
+    } finally {
+      if (mounted) {
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+        setState(() {
+          _isGeneratingPdf = false;
+          _pdfGenerationStatus = '';
+          _pdfGenerationProgress = null;
+        });
+      }
+    }
+  }
+
+  Future<void> _setPdfGenerationProgress(
+    String status, {
+    required double progress,
+  }) async {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('PDF generation will be connected next.')),
+    setState(() {
+      _isGeneratingPdf = true;
+      _pdfGenerationStatus = status;
+      _pdfGenerationProgress = progress.clamp(0, 1);
+    });
+    await Future<void>.delayed(const Duration(milliseconds: 16));
+  }
+
+  Future<ReportTemplateTotals> _loadStandardStartingTotals(
+    ReportPdfApplicationService service,
+  ) async {
+    final cutoff = _from.subtract(const Duration(microseconds: 1));
+    final firstDate = DateTime.utc(1970, 1, 1);
+    if (cutoff.isBefore(firstDate)) {
+      return const ReportTemplateTotals();
+    }
+
+    final repo = ref.read(reportsRepositoryProvider);
+    final eventTypes = ref.read(reportsEventTypesProvider);
+    final beforeResult = await repo.load(
+      ReportsQuery(
+        from: firstDate,
+        to: cutoff,
+        includePreviousExperience: false,
+        filterMatchMode: _filterMatchMode,
+        filters: _filters,
+      ),
     );
+
+    final flights = eventTypes.flights
+        ? beforeResult.flights
+        : const <ReportsFlightRow>[];
+    final beforeEntries = await _fetchEntriesForRange(
+      flights: flights,
+      eventTypes: eventTypes,
+      from: firstDate,
+      to: cutoff,
+    );
+    final rows = service.buildRows(beforeEntries);
+    return service.sumTotals(rows);
+  }
+
+  Future<String> _savePdfBytes({
+    required Uint8List bytes,
+    required String fileName,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    String? path;
+    if (Platform.isIOS || Platform.isAndroid) {
+      path = await FilePicker.platform.saveFile(
+        dialogTitle: l10n.reportsSavePdfDialogTitle,
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: const ['pdf'],
+        bytes: bytes,
+      );
+      if (path == null || path.isEmpty) {
+        return l10n.reportsCancelled;
+      }
+      return path;
+    }
+
+    final directory = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: l10n.reportsChooseExportFolderTitle,
+    );
+    if (directory == null || directory.isEmpty) {
+      return l10n.reportsCancelled;
+    }
+    path = '$directory${Platform.pathSeparator}$fileName';
+    try {
+      await File(path).writeAsBytes(bytes, flush: true);
+    } on FileSystemException {
+      final docsDir = await getApplicationDocumentsDirectory();
+      path = '${docsDir.path}${Platform.pathSeparator}$fileName';
+      await File(path).writeAsBytes(bytes, flush: true);
+    }
+    return path;
   }
 
   List<_AnalysisGroup> _buildAnalysisGroups() {
+    final l10n = AppLocalizations.of(context)!;
     final groups = <String, _AnalysisGroupAccumulator>{};
     for (final flight in _data.flights) {
-      final key = _analysisGroupBy.keyFor(flight);
-      groups.putIfAbsent(key, () => _AnalysisGroupAccumulator()).add(flight);
+      final keys = _analysisGroupKeysForFlight(flight, l10n);
+      for (final key in keys) {
+        final bucket = groups.putIfAbsent(
+          key,
+          () => _AnalysisGroupAccumulator(),
+        );
+        if (_analysisGroupBy == _AnalysisGroupBy.airport) {
+          bucket.addForAirport(
+            flight,
+            airportIcao: key,
+            unknownAirportLabel: l10n.reportsUnknownAirport,
+          );
+        } else {
+          bucket.add(flight);
+        }
+      }
     }
     final list = groups.entries
         .map((entry) => _AnalysisGroup(title: entry.key, totals: entry.value))
         .toList(growable: false);
-    list.sort((a, b) => b.totals.totalMinutes.compareTo(a.totals.totalMinutes));
+    list.sort(_analysisSortCompare);
     return list;
+  }
+
+  List<String> _analysisGroupKeysForFlight(
+    ReportsFlightRow row,
+    AppLocalizations l10n,
+  ) {
+    if (_analysisGroupBy == _AnalysisGroupBy.airport) {
+      final keys = <String>{};
+      final fromIcao = row.fromIcao.trim();
+      final toIcao = row.toIcao.trim();
+      if (fromIcao.isNotEmpty) {
+        keys.add(fromIcao);
+      }
+      if (toIcao.isNotEmpty) {
+        keys.add(toIcao);
+      }
+      if (keys.isEmpty) {
+        return <String>[l10n.reportsUnknownAirport];
+      }
+      return keys.toList(growable: false);
+    }
+
+    return <String>[
+      _analysisGroupBy.keyFor(
+        row,
+        unknownAircraft: l10n.reportsUnknown,
+        unknownType: l10n.reportsUnknownType,
+        unknownFamily: l10n.reportsUnknownFamily,
+        unknownAirport: l10n.reportsUnknownAirport,
+        unknownPilot: l10n.reportsUnknownPilot,
+      ),
+    ];
   }
 
   ReportsTotals _applyTypeSelectionToTotals(
@@ -437,8 +788,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       totalMinutes: selection.flights ? totals.totalMinutes : 0,
       nightMinutes: selection.flights ? totals.nightMinutes : 0,
       ifrMinutes: selection.flights ? totals.ifrMinutes : 0,
-      simulatedInstrumentMinutes:
-          selection.flights ? totals.simulatedInstrumentMinutes : 0,
+      simulatedInstrumentMinutes: selection.flights
+          ? totals.simulatedInstrumentMinutes
+          : 0,
       picMinutes: selection.flights ? totals.picMinutes : 0,
       picusMinutes: selection.flights ? totals.picusMinutes : 0,
       sicMinutes: selection.flights ? totals.sicMinutes : 0,
@@ -455,51 +807,131 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
   }
 
+  String _analysisGroupByLabel(AppLocalizations l10n, _AnalysisGroupBy value) {
+    switch (value) {
+      case _AnalysisGroupBy.aircraft:
+        return l10n.reportsAnalyzeByAircraft;
+      case _AnalysisGroupBy.type:
+        return l10n.reportsAnalyzeByType;
+      case _AnalysisGroupBy.family:
+        return l10n.reportsAnalyzeByFamily;
+      case _AnalysisGroupBy.airport:
+        return l10n.reportsAnalyzeByAirport;
+      case _AnalysisGroupBy.pilot:
+        return l10n.reportsAnalyzeByPilot;
+      case _AnalysisGroupBy.year:
+        return l10n.reportsAnalyzeByYear;
+      case _AnalysisGroupBy.month:
+        return l10n.reportsAnalyzeByMonth;
+    }
+  }
+
+  String _analysisOrderByLabel(AppLocalizations l10n, _AnalysisOrderBy value) {
+    switch (value) {
+      case _AnalysisOrderBy.natural:
+        return l10n.reportsOrderByNatural;
+      case _AnalysisOrderBy.hours:
+        return l10n.reportsOrderByHours;
+      case _AnalysisOrderBy.landings:
+        return l10n.reportsOrderByLandings;
+      case _AnalysisOrderBy.takeoff:
+        return l10n.reportsOrderByTakeoff;
+      case _AnalysisOrderBy.operations:
+        return l10n.reportsOrderByOperations;
+    }
+  }
+
+  int _naturalCompare(_AnalysisGroup a, _AnalysisGroup b) {
+    if (_analysisGroupBy == _AnalysisGroupBy.year) {
+      final yearA = int.tryParse(a.title) ?? -1;
+      final yearB = int.tryParse(b.title) ?? -1;
+      return yearB.compareTo(yearA);
+    }
+    if (_analysisGroupBy == _AnalysisGroupBy.month) {
+      return b.title.compareTo(a.title);
+    }
+    return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+  }
+
+  int _groupCompareByMetric(
+    _AnalysisGroup a,
+    _AnalysisGroup b, {
+    required int Function(_AnalysisGroup group) selector,
+  }) {
+    final metricDiff = selector(b).compareTo(selector(a));
+    if (metricDiff != 0) {
+      return metricDiff;
+    }
+    return _naturalCompare(a, b);
+  }
+
+  int _analysisSortCompare(_AnalysisGroup a, _AnalysisGroup b) {
+    switch (_analysisOrderBy) {
+      case _AnalysisOrderBy.natural:
+        return _naturalCompare(a, b);
+      case _AnalysisOrderBy.hours:
+        return _groupCompareByMetric(
+          a,
+          b,
+          selector: (group) => group.totals.totalMinutes,
+        );
+      case _AnalysisOrderBy.landings:
+        return _groupCompareByMetric(
+          a,
+          b,
+          selector: (group) => group.totals.landings,
+        );
+      case _AnalysisOrderBy.takeoff:
+        return _groupCompareByMetric(
+          a,
+          b,
+          selector: (group) => group.totals.takeoffs,
+        );
+      case _AnalysisOrderBy.operations:
+        return _groupCompareByMetric(
+          a,
+          b,
+          selector: (group) => group.totals.operations,
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final includePreviousExperience =
-        ref.watch(includePreviousExperienceProvider);
+    final l10n = AppLocalizations.of(context)!;
+    final includePreviousExperience = ref.watch(
+      includePreviousExperienceProvider,
+    );
     final eventTypes = ref.watch(reportsEventTypesProvider);
     final savedQueries = ref.watch(savedReportsQueriesProvider);
     final customTimeLabels =
         ref.watch(customTimeLabelsProvider).valueOrNull ??
-            const CustomTimeLabels();
+        const CustomTimeLabels();
     final logbookUseCases = ref.read(logbookUseCasesProvider);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        const minWideWidth = 980.0;
-        const minWideHeight = 700.0;
-        if (constraints.maxWidth < minWideWidth ||
-            constraints.maxHeight < minWideHeight) {
-          return Center(
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Text(
-                  'Increase window size to at least '
-                  '${minWideWidth.toInt()}x${minWideHeight.toInt()} '
-                  'to use Reports wide layout.',
-                ),
-              ),
-            ),
-          );
-        }
+        final compact =
+            constraints.maxWidth < 900 || constraints.maxHeight < 700;
+        final section = widget.section;
+        final showTabbedLayout = section == null;
 
         return Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(compact ? 8 : 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TabBar(
-                controller: _tabController,
-                onTap: _onTabChanged,
-                tabs: const [
-                  Tab(text: 'Overview'),
-                  Tab(text: 'Flights'),
-                  Tab(text: 'Analizes'),
-                ],
-              ),
+              if (showTabbedLayout)
+                TabBar(
+                  controller: _tabController,
+                  onTap: _onTabChanged,
+                  isScrollable: compact,
+                  tabs: [
+                    Tab(text: l10n.reportsTabOverview),
+                    Tab(text: l10n.reportsTabFlights),
+                    Tab(text: l10n.reportsTabAnalyses),
+                  ],
+                ),
               if (_loading) ...[
                 const SizedBox(height: 8),
                 const LinearProgressIndicator(),
@@ -513,115 +945,388 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
               ],
               const SizedBox(height: 8),
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                Column(
-                  children: [
-                    _FiltersCard(
-                      from: _from,
-                      to: _to,
-                      preset: _preset,
-                      includePreviousExperience: includePreviousExperience,
-                      eventTypes: eventTypes,
-                      savedQueries: savedQueries,
-                      filters: _filters,
-                      matchMode: _filterMatchMode,
-                      onPresetChanged: _applyPreset,
-                      onPickStart: () => _pickDateTime(isStart: true),
-                      onPickEnd: () => _pickDateTime(isStart: false),
-                      onIncludePreviousExperienceChanged:
-                          _setIncludePreviousExperience,
-                      onEventTypesChanged: _setEventTypes,
-                      onMatchModeChanged: _setMatchMode,
-                      onAddFilter: _addFilter,
-                      onRemoveFilter: _removeFilter,
-                      onSaveQuery: _saveCurrentQuery,
-                      onApplySavedQuery: _applySavedQuery,
-                      onDeleteSavedQuery: _deleteSavedQuery,
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: _TotalsCard(
-                        totals: _data.totals,
+                child: showTabbedLayout
+                    ? TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildOverviewSection(
+                            compact: compact,
+                            includePreviousExperience:
+                                includePreviousExperience,
+                            eventTypes: eventTypes,
+                            savedQueries: savedQueries,
+                            customTimeLabels: customTimeLabels,
+                          ),
+                          _buildFlightsSection(logbookUseCases),
+                          _buildAnalizesSection(compact: compact),
+                        ],
+                      )
+                    : _buildPanelSection(
+                        section: section,
+                        compact: compact,
+                        includePreviousExperience: includePreviousExperience,
+                        eventTypes: eventTypes,
+                        savedQueries: savedQueries,
                         customTimeLabels: customTimeLabels,
+                        logbookUseCases: logbookUseCases,
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: _generatePdf,
-                            icon: const Icon(Icons.picture_as_pdf_outlined),
-                            label: const Text('Generate Logbook PDF'),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _openMapDialog,
-                            icon: const Icon(Icons.map_outlined),
-                            label: const Text('Map'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                _EntriesPanel(
-                  entries: _entries,
-                  onEntryTap: (entry) {
-                    LogbookEntryDialogs.show(
-                      context,
-                      entry: entry,
-                      useCases: logbookUseCases,
-                    );
-                  },
-                ),
-                Column(
-                  children: [
-                    Row(
-                      children: [
-                        const Text('Analyze by:'),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: DropdownButtonFormField<_AnalysisGroupBy>(
-                            initialValue: _analysisGroupBy,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              isDense: true,
-                            ),
-                            items: _AnalysisGroupBy.values
-                                .map(
-                                  (value) => DropdownMenuItem(
-                                    value: value,
-                                    child: Text(value.label),
-                                  ),
-                                )
-                                .toList(growable: false),
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() => _analysisGroupBy = value);
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: _AnalysisList(groups: _buildAnalysisGroups()),
-                    ),
-                  ],
-                ),
-                  ],
-                ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPanelSection({
+    required ReportsPanelSection? section,
+    required bool compact,
+    required bool includePreviousExperience,
+    required ReportsEventTypesSelection eventTypes,
+    required List<SavedReportsQuery> savedQueries,
+    required CustomTimeLabels customTimeLabels,
+    required LogbookUseCases logbookUseCases,
+  }) {
+    switch (section) {
+      case ReportsPanelSection.filters:
+        return _buildFiltersSection(
+          includePreviousExperience: includePreviousExperience,
+          eventTypes: eventTypes,
+          savedQueries: savedQueries,
+        );
+      case ReportsPanelSection.totals:
+        return _TotalsCard(
+          totals: _data.totals,
+          customTimeLabels: customTimeLabels,
+        );
+      case ReportsPanelSection.analizes:
+        return _buildAnalizesSection(compact: compact);
+      case ReportsPanelSection.reports:
+        return _buildReportsSection(compact: compact);
+      case ReportsPanelSection.flights:
+        return _buildFlightsSection(logbookUseCases);
+      case ReportsPanelSection.overview:
+      case null:
+        return _buildOverviewSection(
+          compact: compact,
+          includePreviousExperience: includePreviousExperience,
+          eventTypes: eventTypes,
+          savedQueries: savedQueries,
+          customTimeLabels: customTimeLabels,
+        );
+    }
+  }
+
+  Widget _buildOverviewSection({
+    required bool compact,
+    required bool includePreviousExperience,
+    required ReportsEventTypesSelection eventTypes,
+    required List<SavedReportsQuery> savedQueries,
+    required CustomTimeLabels customTimeLabels,
+  }) {
+    return Column(
+      children: [
+        _buildFiltersSection(
+          includePreviousExperience: includePreviousExperience,
+          eventTypes: eventTypes,
+          savedQueries: savedQueries,
+        ),
+        const SizedBox(height: 10),
+        Expanded(
+          child: _TotalsCard(
+            totals: _data.totals,
+            customTimeLabels: customTimeLabels,
+          ),
+        ),
+        const SizedBox(height: 10),
+        _buildReportsControls(compact: compact),
+      ],
+    );
+  }
+
+  Widget _buildFiltersSection({
+    required bool includePreviousExperience,
+    required ReportsEventTypesSelection eventTypes,
+    required List<SavedReportsQuery> savedQueries,
+  }) {
+    return _FiltersCard(
+      from: _from,
+      to: _to,
+      preset: _preset,
+      includePreviousExperience: includePreviousExperience,
+      eventTypes: eventTypes,
+      savedQueries: savedQueries,
+      filters: _filters,
+      matchMode: _filterMatchMode,
+      onPresetChanged: _applyPreset,
+      onPickStart: () => _pickDateTime(isStart: true),
+      onPickEnd: () => _pickDateTime(isStart: false),
+      onIncludePreviousExperienceChanged: _setIncludePreviousExperience,
+      onEventTypesChanged: _setEventTypes,
+      onMatchModeChanged: _setMatchMode,
+      onAddFilter: _addFilter,
+      onRemoveFilter: _removeFilter,
+      onSaveQuery: _saveCurrentQuery,
+      onApplySavedQuery: _applySavedQuery,
+      onDeleteSavedQuery: _deleteSavedQuery,
+    );
+  }
+
+  Widget _buildFlightsSection(LogbookUseCases logbookUseCases) {
+    return _EntriesPanel(
+      entries: _entries,
+      onEntryTap: (entry) {
+        LogbookEntryDialogs.show(
+          context,
+          entry: entry,
+          useCases: logbookUseCases,
+        );
+      },
+    );
+  }
+
+  Widget _buildAnalizesSection({required bool compact}) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<_AnalysisGroupBy>(
+                initialValue: _analysisGroupBy,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: l10n.reportsAnalyzeByLabel,
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                items: _AnalysisGroupBy.values
+                    .map(
+                      (value) => DropdownMenuItem(
+                        value: value,
+                        child: _overflowText(
+                          _analysisGroupByLabel(l10n, value),
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+                selectedItemBuilder: (context) => _AnalysisGroupBy.values
+                    .map(
+                      (value) => _dropdownSelectedItem(
+                        _analysisGroupByLabel(l10n, value),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _analysisGroupBy = value);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: DropdownButtonFormField<_AnalysisOrderBy>(
+                initialValue: _analysisOrderBy,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: l10n.reportsOrderByLabel,
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                items: _AnalysisOrderBy.values
+                    .map(
+                      (value) => DropdownMenuItem(
+                        value: value,
+                        child: _overflowText(
+                          _analysisOrderByLabel(l10n, value),
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+                selectedItemBuilder: (context) => _AnalysisOrderBy.values
+                    .map(
+                      (value) => _dropdownSelectedItem(
+                        _analysisOrderByLabel(l10n, value),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _analysisOrderBy = value);
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Expanded(child: _AnalysisList(groups: _buildAnalysisGroups())),
+      ],
+    );
+  }
+
+  Widget _buildReportsSection({required bool compact}) {
+    return Column(children: [_buildReportsControls(compact: compact)]);
+  }
+
+  Widget _buildReportsControls({required bool compact}) {
+    final l10n = AppLocalizations.of(context)!;
+    final includeHoursBefore = ref.watch(includeHoursBeforeProvider);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _isGeneratingPdf ? null : _openMapDialog,
+                icon: const Icon(Icons.map_outlined),
+                label: Text(l10n.reportsShowMap),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.reportsShowPath),
+                  const SizedBox(width: 6),
+                  Switch(
+                    value: _showPathOnMap,
+                    onChanged: _isGeneratingPdf
+                        ? null
+                        : (value) => setState(() => _showPathOnMap = value),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.reportsIncludeHoursBefore),
+                  const SizedBox(width: 6),
+                  Switch(
+                    value: includeHoursBefore,
+                    onChanged: _isGeneratingPdf
+                        ? null
+                        : (value) => ref
+                              .read(includeHoursBeforeProvider.notifier)
+                              .setValue(value),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (_isGeneratingPdf) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                SizedBox(
+                  width: 180,
+                  child: LinearProgressIndicator(value: _pdfGenerationProgress),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _pdfGenerationStatus,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: compact ? 180 : 150,
+                child: DropdownButtonFormField<ReportPdfPageSize>(
+                  initialValue: _selectedPageSize,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: l10n.reportsPageSizeLabel,
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  items: ReportPdfPageSize.values
+                      .map(
+                        (value) => DropdownMenuItem(
+                          value: value,
+                          child: _overflowText(value.label),
+                        ),
+                      )
+                      .toList(growable: false),
+                  selectedItemBuilder: (context) => ReportPdfPageSize.values
+                      .map((value) => _dropdownSelectedItem(value.label))
+                      .toList(growable: false),
+                  onChanged: (value) {
+                    if (_isGeneratingPdf) return;
+                    if (value == null) return;
+                    setState(() => _selectedPageSize = value);
+                  },
+                ),
+              ),
+              SizedBox(
+                width: compact ? 260 : 330,
+                child: DropdownButtonFormField<_XslTemplateOption>(
+                  key: ValueKey(
+                    _selectedTemplate?.fileName ?? 'template_selector',
+                  ),
+                  initialValue: _selectedTemplate,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: l10n.reportsXmlTemplateLabel,
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  items: _xslTemplateOptions
+                      .map(
+                        (template) => DropdownMenuItem<_XslTemplateOption>(
+                          value: template,
+                          child: _overflowText(template.description),
+                        ),
+                      )
+                      .toList(growable: false),
+                  selectedItemBuilder: (context) => _xslTemplateOptions
+                      .map(
+                        (template) =>
+                            _dropdownSelectedItem(template.description),
+                      )
+                      .toList(growable: false),
+                  onChanged: (value) {
+                    if (_isGeneratingPdf) return;
+                    if (value == null) return;
+                    setState(() {
+                      _selectedTemplate = value;
+                      _selectedPageSize = value.template.defaultPageSize;
+                    });
+                  },
+                ),
+              ),
+              FilledButton.icon(
+                onPressed: _isGeneratingPdf ? null : _generatePdf,
+                icon: _isGeneratingPdf
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.picture_as_pdf_outlined),
+                label: Text(
+                  _isGeneratingPdf
+                      ? l10n.reportsGeneratingShort
+                      : l10n.reportsGeneratePdf,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -641,69 +1346,202 @@ enum _ReportDateRangePreset {
   custom,
 }
 
-extension on _ReportDateRangePreset {
-  String get label {
-    switch (this) {
-      case _ReportDateRangePreset.sinceBeginning:
-        return 'Since beginning';
-      case _ReportDateRangePreset.last7Days:
-        return 'Last 7 days';
-      case _ReportDateRangePreset.last14Days:
-        return 'Last 14 days';
-      case _ReportDateRangePreset.last21Days:
-        return 'Last 21 days';
-      case _ReportDateRangePreset.last28Days:
-        return 'Last 28 days';
-      case _ReportDateRangePreset.last1Month:
-        return 'Last month (rolling)';
-      case _ReportDateRangePreset.last365Days:
-        return 'Last 365 days';
-      case _ReportDateRangePreset.currentMonth:
-        return 'Current month';
-      case _ReportDateRangePreset.currentYear:
-        return 'Current year';
-      case _ReportDateRangePreset.lastMonth:
-        return 'Last month';
-      case _ReportDateRangePreset.lastYear:
-        return 'Last year';
-      case _ReportDateRangePreset.custom:
-        return 'Custom';
-    }
+String _reportDateRangePresetLabel(
+  AppLocalizations l10n,
+  _ReportDateRangePreset value,
+) {
+  switch (value) {
+    case _ReportDateRangePreset.sinceBeginning:
+      return l10n.logbookFilterPresetSinceFirstFlight;
+    case _ReportDateRangePreset.last7Days:
+      return l10n.logbookFilterPresetLast7Days;
+    case _ReportDateRangePreset.last14Days:
+      return l10n.logbookFilterPresetLast14Days;
+    case _ReportDateRangePreset.last21Days:
+      return l10n.logbookFilterPresetLast21Days;
+    case _ReportDateRangePreset.last28Days:
+      return l10n.logbookFilterPresetLast28Days;
+    case _ReportDateRangePreset.last1Month:
+      return l10n.reportsDatePresetLastMonthRolling;
+    case _ReportDateRangePreset.last365Days:
+      return l10n.logbookFilterPresetLast365Days;
+    case _ReportDateRangePreset.currentMonth:
+      return l10n.logbookFilterPresetCurrentMonth;
+    case _ReportDateRangePreset.currentYear:
+      return l10n.logbookFilterPresetCurrentYear;
+    case _ReportDateRangePreset.lastMonth:
+      return l10n.logbookFilterPresetLastMonth;
+    case _ReportDateRangePreset.lastYear:
+      return l10n.logbookFilterPresetLastYear;
+    case _ReportDateRangePreset.custom:
+      return l10n.logbookFilterPresetCustom;
   }
 }
 
-enum _AnalysisGroupBy {
-  aircraft,
-  type,
-  family,
-  year,
-  month,
+enum _AnalysisGroupBy { aircraft, type, family, airport, pilot, year, month }
+
+enum _AnalysisOrderBy { natural, hours, landings, takeoff, operations }
+
+String _reportFilterFieldLabel(
+  AppLocalizations l10n,
+  ReportsFilterField field,
+) {
+  switch (field) {
+    case ReportsFilterField.departureIcao:
+      return l10n.reportsFilterFieldDepartureIcao;
+    case ReportsFilterField.departureIata:
+      return l10n.reportsFilterFieldDepartureIata;
+    case ReportsFilterField.departureName:
+      return l10n.reportsFilterFieldDepartureName;
+    case ReportsFilterField.departureCity:
+      return l10n.reportsFilterFieldDepartureCity;
+    case ReportsFilterField.departureCountry:
+      return l10n.reportsFilterFieldDepartureCountry;
+    case ReportsFilterField.arrivalIcao:
+      return l10n.reportsFilterFieldArrivalIcao;
+    case ReportsFilterField.arrivalIata:
+      return l10n.reportsFilterFieldArrivalIata;
+    case ReportsFilterField.arrivalName:
+      return l10n.reportsFilterFieldArrivalName;
+    case ReportsFilterField.arrivalCity:
+      return l10n.reportsFilterFieldArrivalCity;
+    case ReportsFilterField.arrivalCountry:
+      return l10n.reportsFilterFieldArrivalCountry;
+    case ReportsFilterField.aircraftTail:
+      return l10n.reportsFilterFieldAircraftRegistration;
+    case ReportsFilterField.aircraftTypeCode:
+      return l10n.reportsFilterFieldAircraftTypeCode;
+    case ReportsFilterField.aircraftTypeFamily:
+      return l10n.reportsFilterFieldAircraftTypeFamily;
+    case ReportsFilterField.aircraftTypeName:
+      return l10n.reportsFilterFieldAircraftTypeName;
+    case ReportsFilterField.pilotName:
+      return l10n.reportsFilterFieldPilotName;
+    case ReportsFilterField.approachType:
+      return l10n.reportsFilterFieldApproachType;
+    case ReportsFilterField.remarks:
+      return l10n.reportsFilterFieldRemarks;
+    case ReportsFilterField.notes:
+      return l10n.reportsFilterFieldNotes;
+    case ReportsFilterField.blockTime:
+      return l10n.reportsFilterFieldBlockTime;
+    case ReportsFilterField.flightTime:
+      return l10n.reportsFilterFieldFlightTime;
+    case ReportsFilterField.totalTime:
+      return l10n.reportsFilterFieldTotalTime;
+    case ReportsFilterField.nightTime:
+      return l10n.reportsFilterFieldNightTime;
+    case ReportsFilterField.ifrTime:
+      return l10n.reportsFilterFieldIfrTime;
+    case ReportsFilterField.instrumentTime:
+      return l10n.reportsFilterFieldInstrumentTime;
+    case ReportsFilterField.simulatedInstrumentTime:
+      return l10n.reportsFilterFieldSimInstrumentTime;
+    case ReportsFilterField.picTime:
+      return l10n.reportsFilterFieldPicTime;
+    case ReportsFilterField.picusTime:
+      return l10n.reportsFilterFieldPicusTime;
+    case ReportsFilterField.sicTime:
+      return l10n.reportsFilterFieldSicTime;
+    case ReportsFilterField.dualTime:
+      return l10n.reportsFilterFieldDualTime;
+    case ReportsFilterField.instructorTime:
+      return l10n.reportsFilterFieldInstructorTime;
+    case ReportsFilterField.crossCountryTime:
+      return l10n.reportsFilterFieldCrossCountryTime;
+    case ReportsFilterField.custom1Time:
+      return l10n.reportsFilterFieldCustom1Time;
+    case ReportsFilterField.custom2Time:
+      return l10n.reportsFilterFieldCustom2Time;
+    case ReportsFilterField.custom3Time:
+      return l10n.reportsFilterFieldCustom3Time;
+    case ReportsFilterField.custom4Time:
+      return l10n.reportsFilterFieldCustom4Time;
+    case ReportsFilterField.distanceNm:
+      return l10n.reportsFilterFieldDistanceNm;
+    case ReportsFilterField.takeoffs:
+      return l10n.reportsFilterFieldTakeoffs;
+    case ReportsFilterField.takeoffsDay:
+      return l10n.reportsFilterFieldTakeoffsDay;
+    case ReportsFilterField.takeoffsNight:
+      return l10n.reportsFilterFieldTakeoffsNight;
+    case ReportsFilterField.landings:
+      return l10n.reportsFilterFieldLandings;
+    case ReportsFilterField.landingsDay:
+      return l10n.reportsFilterFieldLandingsDay;
+    case ReportsFilterField.landingsNight:
+      return l10n.reportsFilterFieldLandingsNight;
+    case ReportsFilterField.ifrApproaches:
+      return l10n.reportsFilterFieldIfrApproaches;
+    case ReportsFilterField.isMultiPilot:
+      return l10n.reportsFilterFieldMultiPilot;
+    case ReportsFilterField.isSimulator:
+      return l10n.reportsFilterFieldSimulator;
+  }
+}
+
+String _reportFilterOperatorLabel(
+  AppLocalizations l10n,
+  ReportsFilterOperator operator,
+) {
+  switch (operator) {
+    case ReportsFilterOperator.contains:
+      return l10n.reportsFilterOperatorContains;
+    case ReportsFilterOperator.startsWith:
+      return l10n.reportsFilterOperatorStartsWith;
+    case ReportsFilterOperator.doesNotStartWith:
+      return l10n.reportsFilterOperatorDoesNotStartWith;
+    case ReportsFilterOperator.endsWith:
+      return l10n.reportsFilterOperatorEndsWith;
+    case ReportsFilterOperator.doesNotEndWith:
+      return l10n.reportsFilterOperatorDoesNotEndWith;
+    case ReportsFilterOperator.isExactly:
+      return l10n.reportsFilterOperatorIs;
+    case ReportsFilterOperator.isNot:
+      return l10n.reportsFilterOperatorIsNot;
+    case ReportsFilterOperator.greaterThan:
+      return l10n.reportsFilterOperatorGreaterThan;
+    case ReportsFilterOperator.lessThan:
+      return l10n.reportsFilterOperatorLessThan;
+    case ReportsFilterOperator.equals:
+      return l10n.reportsFilterOperatorEquals;
+    case ReportsFilterOperator.isTrue:
+      return l10n.reportsFilterOperatorIsTrue;
+    case ReportsFilterOperator.isFalse:
+      return l10n.reportsFilterOperatorIsFalse;
+  }
 }
 
 extension on _AnalysisGroupBy {
-  String get label {
+  String keyFor(
+    ReportsFlightRow row, {
+    required String unknownAircraft,
+    required String unknownType,
+    required String unknownFamily,
+    required String unknownAirport,
+    required String unknownPilot,
+  }) {
     switch (this) {
       case _AnalysisGroupBy.aircraft:
-        return 'By Aircraft';
+        return row.registration.trim().isEmpty
+            ? unknownAircraft
+            : row.registration;
       case _AnalysisGroupBy.type:
-        return 'By Type';
+        return row.modelCode.trim().isEmpty ? unknownType : row.modelCode;
       case _AnalysisGroupBy.family:
-        return 'By Family';
-      case _AnalysisGroupBy.year:
-        return 'By Year';
-      case _AnalysisGroupBy.month:
-        return 'By Month';
-    }
-  }
-
-  String keyFor(ReportsFlightRow row) {
-    switch (this) {
-      case _AnalysisGroupBy.aircraft:
-        return row.registration.trim().isEmpty ? 'Unknown' : row.registration;
-      case _AnalysisGroupBy.type:
-        return row.modelCode.trim().isEmpty ? 'Unknown type' : row.modelCode;
-      case _AnalysisGroupBy.family:
-        return row.modelFamily.trim().isEmpty ? 'Unknown family' : row.modelFamily;
+        return row.modelFamily.trim().isEmpty ? unknownFamily : row.modelFamily;
+      case _AnalysisGroupBy.airport:
+        final fromIcao = row.fromIcao.trim();
+        final toIcao = row.toIcao.trim();
+        if (fromIcao.isNotEmpty) {
+          return fromIcao;
+        }
+        if (toIcao.isNotEmpty) {
+          return toIcao;
+        }
+        return unknownAirport;
+      case _AnalysisGroupBy.pilot:
+        return row.pilotNames.trim().isEmpty ? unknownPilot : row.pilotNames;
       case _AnalysisGroupBy.year:
         return row.departureDateTime.year.toString();
       case _AnalysisGroupBy.month:
@@ -721,11 +1559,42 @@ class _AnalysisGroupAccumulator {
   int ifrMinutes = 0;
   int instrumentMinutes = 0;
   int nightMinutes = 0;
+  int takeoffs = 0;
   int landings = 0;
+  int operations = 0;
   DateTime? firstFlightUtc;
   DateTime? lastFlightUtc;
 
   void add(ReportsFlightRow row) {
+    _addBase(row);
+    takeoffs += row.takeoffs;
+    landings += row.landings;
+    operations += 1;
+  }
+
+  void addForAirport(
+    ReportsFlightRow row, {
+    required String airportIcao,
+    required String unknownAirportLabel,
+  }) {
+    _addBase(row);
+    final fromIcao = row.fromIcao.trim();
+    final toIcao = row.toIcao.trim();
+    final isUnknownBucket = airportIcao == unknownAirportLabel;
+    final matchesFrom =
+        fromIcao == airportIcao || (isUnknownBucket && fromIcao.isEmpty);
+    final matchesTo =
+        toIcao == airportIcao || (isUnknownBucket && toIcao.isEmpty);
+    if (matchesFrom && row.takeoffs > 0) {
+      takeoffs += row.takeoffs;
+    }
+    if (matchesTo && row.landings > 0) {
+      landings += row.landings;
+    }
+    operations += 1;
+  }
+
+  void _addBase(ReportsFlightRow row) {
     totalMinutes += row.totalMinutes;
     picMinutes += row.picMinutes;
     picusMinutes += row.picusMinutes;
@@ -734,11 +1603,12 @@ class _AnalysisGroupAccumulator {
     ifrMinutes += row.ifrMinutes;
     instrumentMinutes += row.instrumentMinutes;
     nightMinutes += row.nightMinutes;
-    landings += row.landings;
-    if (firstFlightUtc == null || row.departureDateTime.isBefore(firstFlightUtc!)) {
+    if (firstFlightUtc == null ||
+        row.departureDateTime.isBefore(firstFlightUtc!)) {
       firstFlightUtc = row.departureDateTime;
     }
-    if (lastFlightUtc == null || row.departureDateTime.isAfter(lastFlightUtc!)) {
+    if (lastFlightUtc == null ||
+        row.departureDateTime.isAfter(lastFlightUtc!)) {
       lastFlightUtc = row.departureDateTime;
     }
   }
@@ -796,221 +1666,319 @@ class _FiltersCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ExpansionTile(
-        initiallyExpanded: true,
-        title: const Text('Filters'),
-        subtitle: Text(
-          '${filters.length} filters • ${DateFormat('dd/MM/yyyy HH:mm').format(from)} UTC - ${DateFormat('dd/MM/yyyy HH:mm').format(to)} UTC',
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
-        children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              FilterChip(
-                label: const Text('Flight'),
-                selected: eventTypes.flights,
-                onSelected: (value) =>
-                    onEventTypesChanged(eventTypes.copyWith(flights: value)),
+    final l10n = AppLocalizations.of(context)!;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 760;
+        final maxFieldWidth = compact ? constraints.maxWidth - 40 : 250.0;
+        return Card(
+          child: ExpansionTile(
+            initiallyExpanded: true,
+            title: Text(l10n.logbookFilterTitle),
+            subtitle: Text(
+              l10n.reportsFiltersSummary(
+                filters.length,
+                DateFormat('dd/MM/yyyy HH:mm').format(from),
+                DateFormat('dd/MM/yyyy HH:mm').format(to),
               ),
-              FilterChip(
-                label: const Text('Sim'),
-                selected: eventTypes.simulator,
-                onSelected: (value) =>
-                    onEventTypesChanged(eventTypes.copyWith(simulator: value)),
-              ),
-              FilterChip(
-                label: const Text('Duty'),
-                selected: eventTypes.duty,
-                onSelected: (value) =>
-                    onEventTypesChanged(eventTypes.copyWith(duty: value)),
-              ),
-              FilterChip(
-                label: const Text('Positioning'),
-                selected: eventTypes.positioning,
-                onSelected: (value) => onEventTypesChanged(
-                  eventTypes.copyWith(positioning: value),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              SizedBox(
-                width: 250,
-                child: DropdownButtonFormField<_ReportDateRangePreset>(
-                  initialValue: preset,
-                  decoration: const InputDecoration(
-                    labelText: 'Date range',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  items: _ReportDateRangePreset.values
-                      .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(value.label),
-                        ),
-                      )
-                      .toList(growable: false),
-                  onChanged: (value) {
-                    if (value != null) {
-                      onPresetChanged(value);
-                    }
-                  },
-                ),
-              ),
-              _DateTimeButton(label: 'From', value: from, onTap: onPickStart),
-              _DateTimeButton(label: 'To', value: to, onTap: onPickEnd),
-              SizedBox(
-                width: 200,
-                child: DropdownButtonFormField<bool>(
-                  initialValue: includePreviousExperience,
-                  decoration: const InputDecoration(
-                    labelText: 'Previous experience',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: true, child: Text('Include')),
-                    DropdownMenuItem(value: false, child: Text('Exclude')),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      onIncludePreviousExperienceChanged(value);
-                    }
-                  },
-                ),
-              ),
-              SizedBox(
-                width: 150,
-                child: DropdownButtonFormField<ReportsFilterMatchMode>(
-                  initialValue: matchMode,
-                  decoration: const InputDecoration(
-                    labelText: 'Match mode',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: ReportsFilterMatchMode.all,
-                      child: Text('All'),
-                    ),
-                    DropdownMenuItem(
-                      value: ReportsFilterMatchMode.any,
-                      child: Text('Any'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      onMatchModeChanged(value);
-                    }
-                  },
-                ),
-              ),
-              SizedBox(
-                height: 40,
-                child: FilledButton.icon(
-                  onPressed: onAddFilter,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Filter'),
-                ),
-              ),
-            ],
-          ),
-          if (filters.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (var index = 0; index < filters.length; index++)
-                  InputChip(
-                    visualDensity: VisualDensity.compact,
-                    label: Text(
-                      '${filters[index].field.label} · ${filters[index].operator.label} · ${filters[index].displayValue}',
-                    ),
-                    onDeleted: () => onRemoveFilter(index),
-                  ),
-              ],
             ),
-          ],
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            childrenPadding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
             children: [
-              SizedBox(
-                width: 260,
-                child: DropdownButtonFormField<String>(
-                  initialValue: null,
-                  decoration: const InputDecoration(
-                    labelText: 'Saved queries',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  items: savedQueries
-                      .map(
-                        (query) => DropdownMenuItem(
-                          value: query.id,
-                          child: Text(query.name),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: compact ? 460 : 520),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilterChip(
+                            label: Text(l10n.logbookEventFlight),
+                            selected: eventTypes.flights,
+                            onSelected: (value) => onEventTypesChanged(
+                              eventTypes.copyWith(flights: value),
+                            ),
+                          ),
+                          FilterChip(
+                            label: Text(l10n.reportsEventSimShort),
+                            selected: eventTypes.simulator,
+                            onSelected: (value) => onEventTypesChanged(
+                              eventTypes.copyWith(simulator: value),
+                            ),
+                          ),
+                          FilterChip(
+                            label: Text(l10n.logbookEventDuty),
+                            selected: eventTypes.duty,
+                            onSelected: (value) => onEventTypesChanged(
+                              eventTypes.copyWith(duty: value),
+                            ),
+                          ),
+                          FilterChip(
+                            label: Text(l10n.logbookEventPositioning),
+                            selected: eventTypes.positioning,
+                            onSelected: (value) => onEventTypesChanged(
+                              eventTypes.copyWith(positioning: value),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          SizedBox(
+                            width: maxFieldWidth,
+                            child:
+                                DropdownButtonFormField<_ReportDateRangePreset>(
+                                  initialValue: preset,
+                                  isExpanded: true,
+                                  decoration: InputDecoration(
+                                    labelText: l10n.logbookFilterRange,
+                                    border: OutlineInputBorder(),
+                                    isDense: true,
+                                  ),
+                                  items: _ReportDateRangePreset.values
+                                      .map(
+                                        (value) => DropdownMenuItem(
+                                          value: value,
+                                          child: _overflowText(
+                                            _reportDateRangePresetLabel(
+                                              l10n,
+                                              value,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(growable: false),
+                                  selectedItemBuilder: (context) =>
+                                      _ReportDateRangePreset.values
+                                          .map(
+                                            (value) => _dropdownSelectedItem(
+                                              _reportDateRangePresetLabel(
+                                                l10n,
+                                                value,
+                                              ),
+                                            ),
+                                          )
+                                          .toList(growable: false),
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      onPresetChanged(value);
+                                    }
+                                  },
+                                ),
+                          ),
+                          _DateTimeButton(
+                            label: l10n.logbookFilterFromDate,
+                            value: from,
+                            onTap: onPickStart,
+                            width: maxFieldWidth,
+                          ),
+                          _DateTimeButton(
+                            label: l10n.logbookFilterToDate,
+                            value: to,
+                            onTap: onPickEnd,
+                            width: maxFieldWidth,
+                          ),
+                          SizedBox(
+                            width: compact ? maxFieldWidth : 200,
+                            child: DropdownButtonFormField<bool>(
+                              initialValue: includePreviousExperience,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                labelText: l10n.reportsPreviousExperienceLabel,
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                              items: [
+                                DropdownMenuItem(
+                                  value: true,
+                                  child: _overflowText(l10n.reportsInclude),
+                                ),
+                                DropdownMenuItem(
+                                  value: false,
+                                  child: _overflowText(l10n.reportsExclude),
+                                ),
+                              ],
+                              selectedItemBuilder: (context) => [
+                                _dropdownSelectedItem(l10n.reportsInclude),
+                                _dropdownSelectedItem(l10n.reportsExclude),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  onIncludePreviousExperienceChanged(value);
+                                }
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            width: compact ? maxFieldWidth : 150,
+                            child:
+                                DropdownButtonFormField<ReportsFilterMatchMode>(
+                                  initialValue: matchMode,
+                                  isExpanded: true,
+                                  decoration: InputDecoration(
+                                    labelText: l10n.reportsMatchModeLabel,
+                                    border: OutlineInputBorder(),
+                                    isDense: true,
+                                  ),
+                                  items: [
+                                    DropdownMenuItem(
+                                      value: ReportsFilterMatchMode.all,
+                                      child: _overflowText(
+                                        l10n.reportsMatchAll,
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: ReportsFilterMatchMode.any,
+                                      child: _overflowText(
+                                        l10n.reportsMatchAny,
+                                      ),
+                                    ),
+                                  ],
+                                  selectedItemBuilder: (context) => [
+                                    _dropdownSelectedItem(l10n.reportsMatchAll),
+                                    _dropdownSelectedItem(l10n.reportsMatchAny),
+                                  ],
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      onMatchModeChanged(value);
+                                    }
+                                  },
+                                ),
+                          ),
+                          SizedBox(
+                            height: 40,
+                            child: FilledButton.icon(
+                              onPressed: onAddFilter,
+                              icon: const Icon(Icons.add),
+                              label: Text(l10n.reportsAddFilter),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (filters.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            for (var index = 0; index < filters.length; index++)
+                              InputChip(
+                                visualDensity: VisualDensity.compact,
+                                label: Text(
+                                  l10n.reportsFilterChipLabel(
+                                    _reportFilterFieldLabel(
+                                      l10n,
+                                      filters[index].field,
+                                    ),
+                                    _reportFilterOperatorLabel(
+                                      l10n,
+                                      filters[index].operator,
+                                    ),
+                                    filters[index].displayValue,
+                                  ),
+                                ),
+                                onDeleted: () => onRemoveFilter(index),
+                              ),
+                          ],
                         ),
-                      )
-                      .toList(growable: false),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    final query = savedQueries.firstWhere(
-                      (item) => item.id == value,
-                    );
-                    onApplySavedQuery(query);
-                  },
-                ),
-              ),
-              SizedBox(
-                height: 40,
-                child: OutlinedButton.icon(
-                  onPressed: onSaveQuery,
-                  icon: const Icon(Icons.save_outlined),
-                  label: const Text('Save Query'),
-                ),
-              ),
-              if (savedQueries.isNotEmpty)
-                PopupMenuButton<String>(
-                  onSelected: onDeleteSavedQuery,
-                  itemBuilder: (context) => savedQueries
-                      .map(
-                        (query) => PopupMenuItem(
-                          value: query.id,
-                          child: Text('Delete: ${query.name}'),
-                        ),
-                      )
-                      .toList(growable: false),
-                  child: Container(
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Theme.of(context).dividerColor),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.delete_outline, size: 18),
-                        SizedBox(width: 6),
-                        Text('Delete Saved'),
                       ],
-                    ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          SizedBox(
+                            width: compact ? maxFieldWidth : 260,
+                            child: DropdownButtonFormField<String>(
+                              initialValue: null,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                labelText: l10n.reportsSavedQueriesLabel,
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                              items: savedQueries
+                                  .map(
+                                    (query) => DropdownMenuItem(
+                                      value: query.id,
+                                      child: _overflowText(query.name),
+                                    ),
+                                  )
+                                  .toList(growable: false),
+                              selectedItemBuilder: (context) => savedQueries
+                                  .map(
+                                    (query) =>
+                                        _dropdownSelectedItem(query.name),
+                                  )
+                                  .toList(growable: false),
+                              onChanged: (value) {
+                                if (value == null) return;
+                                final query = savedQueries.firstWhere(
+                                  (item) => item.id == value,
+                                );
+                                onApplySavedQuery(query);
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            height: 40,
+                            child: OutlinedButton.icon(
+                              onPressed: onSaveQuery,
+                              icon: const Icon(Icons.save_outlined),
+                              label: Text(l10n.reportsSaveQuery),
+                            ),
+                          ),
+                          if (savedQueries.isNotEmpty)
+                            PopupMenuButton<String>(
+                              onSelected: onDeleteSavedQuery,
+                              itemBuilder: (context) => savedQueries
+                                  .map(
+                                    (query) => PopupMenuItem(
+                                      value: query.id,
+                                      child: Text(
+                                        l10n.reportsDeleteSavedQuery(
+                                          query.name,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(growable: false),
+                              child: Container(
+                                height: 40,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Theme.of(context).dividerColor,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.delete_outline, size: 18),
+                                    const SizedBox(width: 6),
+                                    Text(l10n.reportsDeleteSavedLabel),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
+              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -1020,16 +1988,18 @@ class _DateTimeButton extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onTap,
+    this.width = 190,
   });
 
   final String label;
   final DateTime value;
   final VoidCallback onTap;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 190,
+      width: width,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
@@ -1052,42 +2022,41 @@ class _DateTimeButton extends StatelessWidget {
 }
 
 class _TotalsCard extends StatelessWidget {
-  const _TotalsCard({
-    required this.totals,
-    required this.customTimeLabels,
-  });
+  const _TotalsCard({required this.totals, required this.customTimeLabels});
 
   final ReportsTotals totals;
   final CustomTimeLabels customTimeLabels;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final operations = <(String, String)>[
-      ('IFR Approaches', _formatCount(totals.ifrApproaches)),
-      ('Takeoff Day', _formatCount(totals.takeoffsDay)),
-      ('Takeoff Night', _formatCount(totals.takeoffsNight)),
-      ('Landing Day', _formatCount(totals.landingsDay)),
-      ('Landing Night', _formatCount(totals.landingsNight)),
+      (l10n.reportsMetricIfrApproaches, _formatCount(totals.ifrApproaches)),
+      (l10n.reportsMetricTakeoffDay, _formatCount(totals.takeoffsDay)),
+      (l10n.reportsMetricTakeoffNight, _formatCount(totals.takeoffsNight)),
+      (l10n.reportsMetricLandingDay, _formatCount(totals.landingsDay)),
+      (l10n.reportsMetricLandingNight, _formatCount(totals.landingsNight)),
     ];
     final times = <(String, String)>[
-      ('Total Block', _formatMinutes(totals.totalMinutes)),
-      ('PIC', _formatMinutes(totals.picMinutes)),
-      ('PICUS', _formatMinutes(totals.picusMinutes)),
-      ('SIC', _formatMinutes(totals.sicMinutes)),
-      ('Dual', _formatMinutes(totals.dualMinutes)),
-      ('Instructor', _formatMinutes(totals.instructorMinutes)),
-      ('Night', _formatMinutes(totals.nightMinutes)),
-      ('IFR', _formatMinutes(totals.ifrMinutes)),
+      (l10n.reportsMetricTotalBlock, _formatMinutes(totals.totalMinutes)),
+      (l10n.reportsMetricPic, _formatMinutes(totals.picMinutes)),
+      (l10n.reportsMetricPicus, _formatMinutes(totals.picusMinutes)),
+      (l10n.reportsMetricSic, _formatMinutes(totals.sicMinutes)),
+      (l10n.reportsMetricDual, _formatMinutes(totals.dualMinutes)),
+      (l10n.reportsMetricInstructor, _formatMinutes(totals.instructorMinutes)),
+      (l10n.reportsMetricNight, _formatMinutes(totals.nightMinutes)),
+      (l10n.reportsMetricIfr, _formatMinutes(totals.ifrMinutes)),
       (
-        'Instrument',
-        _formatMinutes(
-          totals.simulatedInstrumentMinutes + totals.ifrMinutes,
-        ),
+        l10n.reportsMetricInstrument,
+        _formatMinutes(totals.simulatedInstrumentMinutes + totals.ifrMinutes),
       ),
-      ('Cross-Country', _formatMinutes(totals.crossCountryMinutes)),
-      ('Simulator', _formatMinutes(totals.simulatorMinutes)),
-      ('Duty', _formatMinutes(totals.dutyMinutes)),
-      ('Distance NM', _formatCount(totals.distanceNM)),
+      (
+        l10n.reportsMetricCrossCountry,
+        _formatMinutes(totals.crossCountryMinutes),
+      ),
+      (l10n.reportsMetricSimulator, _formatMinutes(totals.simulatorMinutes)),
+      (l10n.reportsMetricDuty, _formatMinutes(totals.dutyMinutes)),
+      (l10n.reportsMetricDistanceNm, _formatCount(totals.distanceNM)),
       (customTimeLabels.custom1, _formatMinutes(totals.custom1Minutes)),
       (customTimeLabels.custom2, _formatMinutes(totals.custom2Minutes)),
       (customTimeLabels.custom3, _formatMinutes(totals.custom3Minutes)),
@@ -1103,10 +2072,10 @@ class _TotalsCard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'Flight count: ${_formatCount(totals.sectors)}',
+                    l10n.reportsFlightCount(_formatCount(totals.sectors)),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
@@ -1143,13 +2112,20 @@ class _MetricWrap extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const spacing = 8.0;
-        final minTileWidth = constraints.maxWidth >= 1000 ? 150.0 : 190.0;
-        final maxColumns = constraints.maxWidth >= 1000 ? 5 : 4;
-        final columns =
-            (constraints.maxWidth / minTileWidth).floor().clamp(1, maxColumns);
+        final isPhoneMiniWidth = constraints.maxWidth < 390;
+        final spacing = isPhoneMiniWidth ? 6.0 : 8.0;
+        final columns = isPhoneMiniWidth
+            ? 2
+            : constraints.maxWidth >= 700
+            ? 5
+            : (constraints.maxWidth / 170.0).floor().clamp(1, 4);
         final tileWidth =
             (constraints.maxWidth - (columns - 1) * spacing) / columns;
+        final tilePadding = isPhoneMiniWidth
+            ? const EdgeInsets.symmetric(horizontal: 7, vertical: 6)
+            : const EdgeInsets.symmetric(horizontal: 8, vertical: 7);
+        final labelFontSize = isPhoneMiniWidth ? 10.0 : 11.0;
+        final valueFontSize = isPhoneMiniWidth ? 13.0 : 14.0;
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
@@ -1158,12 +2134,10 @@ class _MetricWrap extends StatelessWidget {
               SizedBox(
                 width: tileWidth,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                  padding: tilePadding,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHighest
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest
                         .withValues(alpha: 0.6),
                   ),
                   child: Column(
@@ -1174,15 +2148,15 @@ class _MetricWrap extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontSize: 11,
-                            ),
+                          fontSize: labelFontSize,
+                        ),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         metric.$2,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                          fontSize: valueFontSize,
                         ),
                       ),
                     ],
@@ -1203,25 +2177,29 @@ class _AnalysisList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (groups.isEmpty) {
-      return const Card(
-        child: Center(child: Text('No data for selected query.')),
-      );
+      return Card(child: Center(child: Text(l10n.reportsNoDataForQuery)));
     }
 
-    final maxTotal =
-        groups.fold<int>(0, (maxValue, group) => group.totals.totalMinutes > maxValue
-            ? group.totals.totalMinutes
-            : maxValue);
+    final maxTotal = groups.fold<int>(
+      0,
+      (maxValue, group) => group.totals.totalMinutes > maxValue
+          ? group.totals.totalMinutes
+          : maxValue,
+    );
 
     return ListView.separated(
       itemCount: groups.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final group = groups[index];
         return Card(
           child: ExpansionTile(
-            tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
             childrenPadding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
             title: _AnalysisBarRow(
               label: group.title,
@@ -1231,67 +2209,89 @@ class _AnalysisList extends StatelessWidget {
             ),
             children: [
               _AnalysisBarRow(
-                label: 'PIC',
+                label: l10n.reportsMetricPic,
                 valueText: _formatMinutes(group.totals.picMinutes),
                 ratio: group.totals.totalMinutes > 0
                     ? group.totals.picMinutes / group.totals.totalMinutes
                     : 0,
               ),
               _AnalysisBarRow(
-                label: 'PICUS',
+                label: l10n.reportsMetricPicus,
                 valueText: _formatMinutes(group.totals.picusMinutes),
                 ratio: group.totals.totalMinutes > 0
                     ? group.totals.picusMinutes / group.totals.totalMinutes
                     : 0,
               ),
               _AnalysisBarRow(
-                label: 'SIC',
+                label: l10n.reportsMetricSic,
                 valueText: _formatMinutes(group.totals.sicMinutes),
                 ratio: group.totals.totalMinutes > 0
                     ? group.totals.sicMinutes / group.totals.totalMinutes
                     : 0,
               ),
               _AnalysisBarRow(
-                label: 'Dual',
+                label: l10n.reportsMetricDual,
                 valueText: _formatMinutes(group.totals.dualMinutes),
                 ratio: group.totals.totalMinutes > 0
                     ? group.totals.dualMinutes / group.totals.totalMinutes
                     : 0,
               ),
               _AnalysisBarRow(
-                label: 'Night',
+                label: l10n.reportsMetricNight,
                 valueText: _formatMinutes(group.totals.nightMinutes),
                 ratio: group.totals.totalMinutes > 0
                     ? group.totals.nightMinutes / group.totals.totalMinutes
                     : 0,
               ),
               _AnalysisBarRow(
-                label: 'IFR',
+                label: l10n.reportsMetricIfr,
                 valueText: _formatMinutes(group.totals.ifrMinutes),
                 ratio: group.totals.totalMinutes > 0
                     ? group.totals.ifrMinutes / group.totals.totalMinutes
                     : 0,
               ),
               _AnalysisBarRow(
-                label: 'Instrument',
+                label: l10n.reportsMetricInstrument,
                 valueText: _formatMinutes(group.totals.instrumentMinutes),
                 ratio: group.totals.totalMinutes > 0
                     ? group.totals.instrumentMinutes / group.totals.totalMinutes
                     : 0,
               ),
               _AnalysisBarRow(
-                label: 'Landings',
+                label: l10n.reportsMetricLandings,
                 valueText: '${group.totals.landings}',
+                ratio: group.totals.operations > 0
+                    ? group.totals.landings / group.totals.operations
+                    : 0,
+              ),
+              _AnalysisBarRow(
+                label: l10n.reportsMetricTakeoff,
+                valueText: '${group.totals.takeoffs}',
+                ratio: group.totals.operations > 0
+                    ? group.totals.takeoffs / group.totals.operations
+                    : 0,
+              ),
+              _AnalysisBarRow(
+                label: l10n.reportsMetricOperations,
+                valueText: '${group.totals.operations}',
                 ratio: 1,
               ),
               const SizedBox(height: 8),
               if (group.totals.firstFlightUtc != null)
                 Text(
-                  'First flight ${DateFormat('dd MMM yyyy HH:mm').format(group.totals.firstFlightUtc!)} UTC',
+                  l10n.reportsFirstFlightAt(
+                    DateFormat(
+                      'dd MMM yyyy HH:mm',
+                    ).format(group.totals.firstFlightUtc!),
+                  ),
                 ),
               if (group.totals.lastFlightUtc != null)
                 Text(
-                  'Last flight ${DateFormat('dd MMM yyyy HH:mm').format(group.totals.lastFlightUtc!)} UTC',
+                  l10n.reportsLastFlightAt(
+                    DateFormat(
+                      'dd MMM yyyy HH:mm',
+                    ).format(group.totals.lastFlightUtc!),
+                  ),
                 ),
             ],
           ),
@@ -1343,8 +2343,9 @@ class _AnalysisBarRow extends StatelessWidget {
                 minHeight: 8,
                 value: ratio.clamp(0, 1).toDouble(),
                 color: barColor,
-                backgroundColor:
-                    Theme.of(context).colorScheme.surfaceContainerHighest,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
               ),
             ),
           ),
@@ -1428,6 +2429,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final operators = _field.valueType.supportedOperators;
     return Dialog(
       child: SizedBox(
@@ -1440,10 +2442,13 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Add Filter',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      l10n.reportsAddFilter,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   IconButton(
@@ -1455,15 +2460,25 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
               const SizedBox(height: 8),
               DropdownButtonFormField<ReportsFilterField>(
                 initialValue: _field,
-                decoration: const InputDecoration(
-                  labelText: 'Field name',
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: l10n.reportsFieldNameLabel,
                   border: OutlineInputBorder(),
                 ),
                 items: ReportsFilterField.values
                     .map(
                       (field) => DropdownMenuItem(
                         value: field,
-                        child: Text(field.label),
+                        child: _overflowText(
+                          _reportFilterFieldLabel(l10n, field),
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+                selectedItemBuilder: (context) => ReportsFilterField.values
+                    .map(
+                      (field) => _dropdownSelectedItem(
+                        _reportFilterFieldLabel(l10n, field),
                       ),
                     )
                     .toList(growable: false),
@@ -1476,15 +2491,25 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
               const SizedBox(height: 12),
               DropdownButtonFormField<ReportsFilterOperator>(
                 initialValue: _operator,
-                decoration: const InputDecoration(
-                  labelText: 'Condition',
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: l10n.reportsConditionLabel,
                   border: OutlineInputBorder(),
                 ),
                 items: operators
                     .map(
                       (operator) => DropdownMenuItem(
                         value: operator,
-                        child: Text(operator.label),
+                        child: _overflowText(
+                          _reportFilterOperatorLabel(l10n, operator),
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+                selectedItemBuilder: (context) => operators
+                    .map(
+                      (operator) => _dropdownSelectedItem(
+                        _reportFilterOperatorLabel(l10n, operator),
                       ),
                     )
                     .toList(growable: false),
@@ -1503,7 +2528,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
                 alignment: Alignment.centerRight,
                 child: FilledButton(
                   onPressed: _save,
-                  child: const Text('Add'),
+                  child: Text(l10n.addAction),
                 ),
               ),
             ],
@@ -1514,12 +2539,13 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
   }
 
   Widget _buildValueField() {
+    final l10n = AppLocalizations.of(context)!;
     switch (_field.valueType) {
       case ReportsFilterValueType.text:
         return TextFormField(
           controller: _textController,
-          decoration: const InputDecoration(
-            labelText: 'Value',
+          decoration: InputDecoration(
+            labelText: l10n.reportsValueLabel,
             border: OutlineInputBorder(),
           ),
         );
@@ -1527,13 +2553,16 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
         return TextFormField(
           controller: _numberController,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Value',
+          decoration: InputDecoration(
+            labelText: l10n.reportsValueLabel,
             border: OutlineInputBorder(),
           ),
         );
       case ReportsFilterValueType.time:
-        return TimeInputField(controller: _timeController, label: 'Value');
+        return TimeInputField(
+          controller: _timeController,
+          label: l10n.reportsValueLabel,
+        );
       case ReportsFilterValueType.boolean:
         return const SizedBox.shrink();
     }
@@ -1558,6 +2587,7 @@ class _SaveQueryDialogState extends State<_SaveQueryDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Dialog(
       child: SizedBox(
         width: 420,
@@ -1569,10 +2599,13 @@ class _SaveQueryDialogState extends State<_SaveQueryDialog> {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Save Query',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      l10n.reportsSaveQuery,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   IconButton(
@@ -1584,8 +2617,8 @@ class _SaveQueryDialogState extends State<_SaveQueryDialog> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _controller,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
+                decoration: InputDecoration(
+                  labelText: l10n.fieldName,
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -1594,7 +2627,7 @@ class _SaveQueryDialogState extends State<_SaveQueryDialog> {
                 alignment: Alignment.centerRight,
                 child: FilledButton(
                   onPressed: () => Navigator.of(context).pop(_controller.text),
-                  child: const Text('Save'),
+                  child: Text(l10n.saveAction),
                 ),
               ),
             ],
@@ -1606,16 +2639,14 @@ class _SaveQueryDialogState extends State<_SaveQueryDialog> {
 }
 
 class _EntriesPanel extends StatelessWidget {
-  const _EntriesPanel({
-    required this.entries,
-    required this.onEntryTap,
-  });
+  const _EntriesPanel({required this.entries, required this.onEntryTap});
 
   final List<LogbookEntry> entries;
   final ValueChanged<LogbookEntry> onEntryTap;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -1623,15 +2654,15 @@ class _EntriesPanel extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Flights & Simulator',
+                    l10n.reportsFlightsAndSimulatorTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Text(
-                  '${entries.length} entries',
+                  l10n.reportsEntriesCount(entries.length),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1642,7 +2673,7 @@ class _EntriesPanel extends StatelessWidget {
             const SizedBox(height: 6),
             Expanded(
               child: entries.isEmpty
-                  ? const Center(child: Text('No flights/sim in selected period.'))
+                  ? Center(child: Text(l10n.reportsNoFlightsInPeriod))
                   : LogbookEntriesYearList(
                       entries: entries,
                       onEntryTap: onEntryTap,
@@ -1659,10 +2690,12 @@ class _FlightsMapDialog extends StatefulWidget {
   const _FlightsMapDialog({
     required this.flights,
     this.fullscreen = false,
+    this.initialShowLines = true,
   });
 
   final List<ReportsFlightRow> flights;
   final bool fullscreen;
+  final bool initialShowLines;
 
   @override
   State<_FlightsMapDialog> createState() => _FlightsMapDialogState();
@@ -1671,26 +2704,14 @@ class _FlightsMapDialog extends StatefulWidget {
 class _FlightsMapDialogState extends State<_FlightsMapDialog> {
   final _mapController = MapController();
   double _zoom = 2.0;
-  bool _showLines = true;
+  late bool _showLines;
   static const Color _mapLineColor = Color(0x994A90E2);
   static const Color _mapDotColor = Color(0xFF1565C0);
 
-  Future<void> _openFullscreen() async {
-    await showDialog<void>(
-      context: context,
-      builder: (_) => _FlightsMapDialog(
-        flights: widget.flights,
-        fullscreen: true,
-      ),
-    );
-  }
-
-  void _printMap() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Map printing is not configured yet.'),
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _showLines = widget.initialShowLines;
   }
 
   List<LatLng> _greatCirclePoints(LatLng from, LatLng to, {int segments = 48}) {
@@ -1699,7 +2720,8 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
     final lat2 = to.latitude * math.pi / 180.0;
     final lon2 = to.longitude * math.pi / 180.0;
 
-    final d = 2 *
+    final d =
+        2 *
         math.asin(
           math.sqrt(
             math.pow(math.sin((lat2 - lat1) / 2), 2).toDouble() +
@@ -1719,9 +2741,11 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
       final a = math.sin((1 - f) * d) / sinD;
       final b = math.sin(f * d) / sinD;
 
-      final x = a * math.cos(lat1) * math.cos(lon1) +
+      final x =
+          a * math.cos(lat1) * math.cos(lon1) +
           b * math.cos(lat2) * math.cos(lon2);
-      final y = a * math.cos(lat1) * math.sin(lon1) +
+      final y =
+          a * math.cos(lat1) * math.sin(lon1) +
           b * math.cos(lat2) * math.sin(lon2);
       final z = a * math.sin(lat1) + b * math.sin(lat2);
 
@@ -1734,6 +2758,7 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final lines = <Polyline>[];
     final markers = <Marker>[];
     final airports = <String>{};
@@ -1762,33 +2787,27 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
           ),
         );
       }
-      final fromKey = '${fromPoint.latitude.toStringAsFixed(4)}_${fromPoint.longitude.toStringAsFixed(4)}';
+      final fromKey =
+          '${fromPoint.latitude.toStringAsFixed(4)}_${fromPoint.longitude.toStringAsFixed(4)}';
       if (markerKeys.add(fromKey)) {
         markers.add(
           Marker(
             point: fromPoint,
             width: 14,
             height: 14,
-            child: const Icon(
-              Icons.circle,
-              size: 9,
-              color: _mapDotColor,
-            ),
+            child: const Icon(Icons.circle, size: 9, color: _mapDotColor),
           ),
         );
       }
-      final toKey = '${toPoint.latitude.toStringAsFixed(4)}_${toPoint.longitude.toStringAsFixed(4)}';
+      final toKey =
+          '${toPoint.latitude.toStringAsFixed(4)}_${toPoint.longitude.toStringAsFixed(4)}';
       if (markerKeys.add(toKey)) {
         markers.add(
           Marker(
             point: toPoint,
             width: 14,
             height: 14,
-            child: const Icon(
-              Icons.circle,
-              size: 9,
-              color: _mapDotColor,
-            ),
+            child: const Icon(Icons.circle, size: 9, color: _mapDotColor),
           ),
         );
       }
@@ -1814,29 +2833,23 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
                 children: [
                   Expanded(
                     child: Text(
-                      widget.fullscreen ? 'Flight Map (Full Screen)' : 'Flight Map',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      l10n.reportsFlightMapTitle,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   IconButton(
-                    tooltip: _showLines ? 'Hide lines' : 'Show lines',
+                    tooltip: _showLines
+                        ? l10n.reportsHideLines
+                        : l10n.reportsShowLines,
                     onPressed: () => setState(() => _showLines = !_showLines),
                     icon: Icon(_showLines ? Icons.route : Icons.scatter_plot),
                   ),
-                  IconButton(
-                    tooltip: 'Print map',
-                    onPressed: _printMap,
-                    icon: const Icon(Icons.print_outlined),
-                  ),
-                  if (!widget.fullscreen)
-                    IconButton(
-                      tooltip: 'Full screen',
-                      onPressed: _openFullscreen,
-                      icon: const Icon(Icons.open_in_full),
-                    ),
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Done'),
+                    child: Text(l10n.reportsDone),
                   ),
                 ],
               ),
@@ -1844,7 +2857,7 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
             const Divider(height: 1),
             Expanded(
               child: markers.isEmpty
-                  ? const Center(child: Text('No coordinates available.'))
+                  ? Center(child: Text(l10n.reportsNoCoordinatesAvailable))
                   : Stack(
                       children: [
                         FlutterMap(
@@ -1855,8 +2868,12 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
                           ),
                           children: [
                             TileLayer(
-                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              urlTemplate:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                               userAgentPackageName: 'com.rietlabs.simplelog',
+                              tileProvider: NetworkTileProvider(
+                                cachingProvider: appMapCachingProvider(),
+                              ),
                             ),
                             PolylineLayer(polylines: lines),
                             MarkerLayer(markers: markers),
@@ -1871,7 +2888,9 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
                                 horizontal: 10,
                                 vertical: 8,
                               ),
-                              child: Text('Airports: $airportCount'),
+                              child: Text(
+                                l10n.reportsAirportsCount(airportCount),
+                              ),
                             ),
                           ),
                         ),
@@ -1884,14 +2903,20 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
                                 IconButton(
                                   onPressed: () {
                                     _zoom += 1;
-                                    _mapController.move(_mapController.camera.center, _zoom);
+                                    _mapController.move(
+                                      _mapController.camera.center,
+                                      _zoom,
+                                    );
                                   },
                                   icon: const Icon(Icons.add),
                                 ),
                                 IconButton(
                                   onPressed: () {
                                     _zoom -= 1;
-                                    _mapController.move(_mapController.camera.center, _zoom);
+                                    _mapController.move(
+                                      _mapController.camera.center,
+                                      _zoom,
+                                    );
                                   },
                                   icon: const Icon(Icons.remove),
                                 ),
@@ -1907,6 +2932,22 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
       ),
     );
   }
+}
+
+Widget _overflowText(String value) {
+  return Text(
+    value,
+    maxLines: 1,
+    softWrap: false,
+    overflow: TextOverflow.ellipsis,
+  );
+}
+
+Widget _dropdownSelectedItem(String value) {
+  return Align(
+    alignment: AlignmentDirectional.centerStart,
+    child: _overflowText(value),
+  );
 }
 
 String _formatMinutes(int minutes) {

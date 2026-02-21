@@ -24,7 +24,7 @@ class LogbookEntriesList extends StatelessWidget {
     }
     return ListView.separated(
       itemCount: entries.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final entry = entries[index];
         return LogbookListItem(

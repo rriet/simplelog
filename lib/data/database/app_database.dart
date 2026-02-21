@@ -46,13 +46,13 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'simplelog'));
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onUpgrade: (migrator, from, to) async {
-          if (from < 2) {
-            await migrator.database.customStatement('''
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        await migrator.database.customStatement('''
               CREATE TABLE aircraft_types_new (
                 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 code TEXT NOT NULL,
@@ -73,7 +73,7 @@ class AppDatabase extends _$AppDatabase {
                 CHECK(engine_count BETWEEN 1 AND 9)
               );
             ''');
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('''
               INSERT INTO aircraft_types_new (
                 id,
                 code,
@@ -107,18 +107,16 @@ class AppDatabase extends _$AppDatabase {
                 is_locked
               FROM aircraft_types;
             ''');
-            await migrator.database.customStatement(
-              'DROP TABLE aircraft_types;',
-            );
-            await migrator.database.customStatement(
-              'ALTER TABLE aircraft_types_new RENAME TO aircraft_types;',
-            );
-          }
-          if (from < 3) {
-            await migrator.addColumn(positionings, positionings.isLocked);
-          }
-          if (from < 4) {
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('DROP TABLE aircraft_types;');
+        await migrator.database.customStatement(
+          'ALTER TABLE aircraft_types_new RENAME TO aircraft_types;',
+        );
+      }
+      if (from < 3) {
+        await migrator.addColumn(positionings, positionings.isLocked);
+      }
+      if (from < 4) {
+        await migrator.database.customStatement('''
               CREATE TABLE flights_new (
                 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 aircraft_id INTEGER NOT NULL REFERENCES aircrafts(id),
@@ -157,7 +155,7 @@ class AppDatabase extends _$AppDatabase {
                 signature_image BLOB NULL
               );
             ''');
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('''
               INSERT INTO flights_new (
                 id,
                 aircraft_id,
@@ -233,13 +231,13 @@ class AppDatabase extends _$AppDatabase {
                 signature_image
               FROM flights;
             ''');
-            await migrator.database.customStatement('DROP TABLE flights;');
-            await migrator.database.customStatement(
-              'ALTER TABLE flights_new RENAME TO flights;',
-            );
-          }
-          if (from < 5) {
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('DROP TABLE flights;');
+        await migrator.database.customStatement(
+          'ALTER TABLE flights_new RENAME TO flights;',
+        );
+      }
+      if (from < 5) {
+        await migrator.database.customStatement('''
               CREATE TABLE simulator_trainings_new (
                 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 aircraft_id INTEGER NOT NULL REFERENCES aircrafts(id),
@@ -252,7 +250,7 @@ class AppDatabase extends _$AppDatabase {
                 signature_image BLOB NULL
               );
             ''');
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('''
               INSERT INTO simulator_trainings_new (
                 id,
                 aircraft_id,
@@ -276,14 +274,14 @@ class AppDatabase extends _$AppDatabase {
                 signature_image
               FROM simulator_trainings;
             ''');
-            await migrator.database.customStatement(
-              'DROP TABLE simulator_trainings;',
-            );
-            await migrator.database.customStatement(
-              'ALTER TABLE simulator_trainings_new RENAME TO simulator_trainings;',
-            );
+        await migrator.database.customStatement(
+          'DROP TABLE simulator_trainings;',
+        );
+        await migrator.database.customStatement(
+          'ALTER TABLE simulator_trainings_new RENAME TO simulator_trainings;',
+        );
 
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('''
               CREATE TABLE positionings_new (
                 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 departure_place_id INTEGER NOT NULL REFERENCES airports(id),
@@ -294,7 +292,7 @@ class AppDatabase extends _$AppDatabase {
                 is_locked INTEGER NOT NULL
               );
             ''');
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('''
               INSERT INTO positionings_new (
                 id,
                 departure_place_id,
@@ -314,21 +312,19 @@ class AppDatabase extends _$AppDatabase {
                 is_locked
               FROM positionings;
             ''');
-            await migrator.database.customStatement(
-              'DROP TABLE positionings;',
-            );
-            await migrator.database.customStatement(
-              'ALTER TABLE positionings_new RENAME TO positionings;',
-            );
-          }
-          if (from < 6) {
-            await migrator.addColumn(aircrafts, aircrafts.notes);
-          }
-          if (from < 7) {
-            await migrator.addColumn(positionings, positionings.notes);
-          }
-          if (from < 8) {
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('DROP TABLE positionings;');
+        await migrator.database.customStatement(
+          'ALTER TABLE positionings_new RENAME TO positionings;',
+        );
+      }
+      if (from < 6) {
+        await migrator.addColumn(aircrafts, aircrafts.notes);
+      }
+      if (from < 7) {
+        await migrator.addColumn(positionings, positionings.notes);
+      }
+      if (from < 8) {
+        await migrator.database.customStatement('''
               CREATE TABLE aircrafts_new (
                 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 aircraft_type_id INTEGER NOT NULL REFERENCES aircraft_types(id),
@@ -343,7 +339,7 @@ class AppDatabase extends _$AppDatabase {
                 CHECK ("is_locked" IN (0, 1))
               );
             ''');
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('''
               INSERT INTO aircrafts_new (
                 id,
                 aircraft_type_id,
@@ -365,18 +361,18 @@ class AppDatabase extends _$AppDatabase {
                 notes
               FROM aircrafts;
             ''');
-            await migrator.database.customStatement('DROP TABLE aircrafts;');
-            await migrator.database.customStatement(
-              'ALTER TABLE aircrafts_new RENAME TO aircrafts;',
-            );
-          }
-          if (from < 9) {
-            await migrator.createTable(limitRules);
-            await migrator.createTable(ruleSnapshots);
-            await migrator.addColumn(dutyPeriods, dutyPeriods.restBeforeMinutes);
-          }
-          if (from < 10) {
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('DROP TABLE aircrafts;');
+        await migrator.database.customStatement(
+          'ALTER TABLE aircrafts_new RENAME TO aircrafts;',
+        );
+      }
+      if (from < 9) {
+        await migrator.createTable(limitRules);
+        await migrator.createTable(ruleSnapshots);
+        await migrator.addColumn(dutyPeriods, dutyPeriods.restBeforeMinutes);
+      }
+      if (from < 10) {
+        await migrator.database.customStatement('''
               CREATE TABLE limit_rules_new (
                 rule_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 rule_name TEXT NOT NULL,
@@ -394,7 +390,7 @@ class AppDatabase extends _$AppDatabase {
                 notes TEXT NULL
               );
             ''');
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('''
               INSERT INTO limit_rules_new (
                 rule_id,
                 rule_name,
@@ -428,19 +424,19 @@ class AppDatabase extends _$AppDatabase {
                 notes
               FROM limit_rules;
             ''');
-            await migrator.database.customStatement('DROP TABLE rule_snapshots;');
-            await migrator.database.customStatement('DROP TABLE limit_rules;');
-            await migrator.database.customStatement(
-              'ALTER TABLE limit_rules_new RENAME TO limit_rules;',
-            );
-            await migrator.createTable(ruleSnapshots);
-            await migrator.database.customStatement('DROP TABLE IF EXISTS pilots;');
-          }
-          if (from < 11) {
-            await migrator.createTable(previousExperiences);
-          }
-          if (from < 12) {
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('DROP TABLE rule_snapshots;');
+        await migrator.database.customStatement('DROP TABLE limit_rules;');
+        await migrator.database.customStatement(
+          'ALTER TABLE limit_rules_new RENAME TO limit_rules;',
+        );
+        await migrator.createTable(ruleSnapshots);
+        await migrator.database.customStatement('DROP TABLE IF EXISTS pilots;');
+      }
+      if (from < 11) {
+        await migrator.createTable(previousExperiences);
+      }
+      if (from < 12) {
+        await migrator.database.customStatement('''
               CREATE TABLE previous_experiences_new (
                 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 aircraft_type_id INTEGER NOT NULL REFERENCES aircraft_types(id),
@@ -471,7 +467,7 @@ class AppDatabase extends _$AppDatabase {
                 landings_night INTEGER NOT NULL
               );
             ''');
-            await migrator.database.customStatement('''
+        await migrator.database.customStatement('''
               INSERT INTO previous_experiences_new (
                 id,
                 aircraft_type_id,
@@ -531,15 +527,35 @@ class AppDatabase extends _$AppDatabase {
                 landings_night
               FROM previous_experiences;
             ''');
-            await migrator.database.customStatement(
-              'DROP TABLE previous_experiences;',
-            );
-            await migrator.database.customStatement(
-              'ALTER TABLE previous_experiences_new RENAME TO previous_experiences;',
-            );
-          }
-        },
-      );
+        await migrator.database.customStatement(
+          'DROP TABLE previous_experiences;',
+        );
+        await migrator.database.customStatement(
+          'ALTER TABLE previous_experiences_new RENAME TO previous_experiences;',
+        );
+      }
+      if (from < 13) {
+        await migrator.addColumn(flights, flights.timeTotalBlockMinutes);
+        await migrator.addColumn(flights, flights.pilotFunction);
+        await migrator.database.customStatement('''
+              UPDATE flights
+              SET
+                time_total_block_minutes = time_block_minutes,
+                pilot_function = CASE
+                  WHEN UPPER(TRIM(approach_type)) IN ('PF', 'PNF', 'PF/PNF', 'PNF/PF', 'IRP 3', 'IRP 4')
+                    THEN UPPER(TRIM(approach_type))
+                  WHEN (take_offs_days + take_offs_night) > 0 AND (landings_day + landings_night) > 0
+                    THEN 'PF'
+                  WHEN (take_offs_days + take_offs_night) > 0 AND (landings_day + landings_night) = 0
+                    THEN 'PF/PNF'
+                  WHEN (take_offs_days + take_offs_night) = 0 AND (landings_day + landings_night) > 0
+                    THEN 'PNF/PF'
+                  ELSE 'PNF'
+                END;
+            ''');
+      }
+    },
+  );
 
   Future<void> clearAllData() async {
     await transaction(() async {
@@ -562,11 +578,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> assertTimelineUniqueness(int timeLineId) async {
     final results = await Future.wait([
-      _countByTimelineId(
-        flights,
-        flights.departureDateTimeId,
-        timeLineId,
-      ),
+      _countByTimelineId(flights, flights.departureDateTimeId, timeLineId),
       _countByTimelineId(
         positionings,
         positionings.departureDateTimeId,
@@ -595,7 +607,8 @@ class AppDatabase extends _$AppDatabase {
     final dutyStartCount = results[3];
     final dutyEndCount = results[4];
 
-    final total = flightCount +
+    final total =
+        flightCount +
         positioningCount +
         simulatorCount +
         dutyStartCount +

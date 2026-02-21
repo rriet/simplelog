@@ -2,9 +2,11 @@ import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/flight/flight_calculations.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
@@ -25,16 +27,13 @@ import 'package:simplelog/features/logbook/application/providers/logbook_feature
 import 'package:simplelog/presentation/shared/widgets/time_input_field.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
+import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 import 'package:simplelog/state/providers/flight_form_settings_provider.dart';
 import 'package:simplelog/state/providers/flight_time_fields_visibility_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
 class FlightEditScreen extends ConsumerStatefulWidget {
-  const FlightEditScreen({
-    super.key,
-    this.flightId,
-    this.prefill,
-  });
+  const FlightEditScreen({super.key, this.flightId, this.prefill});
 
   final int? flightId;
   final FlightPrefill? prefill;
@@ -48,30 +47,66 @@ class FlightEditScreen extends ConsumerStatefulWidget {
 class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   final _remarksController = TextEditingController();
   final _notesController = TextEditingController();
-  final _chocksOffTimeController =
-      TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _takeOffTimeController =
-      TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _landingTimeController =
-      TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _chocksOnTimeController =
-      TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _picController = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _picusController = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _sicController = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _dualController = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _instructorController = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _ifrController = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _instrumentController = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _simInstrumentController = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _nightController = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _crossController = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _custom1Controller = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _custom2Controller = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _custom3Controller = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _custom4Controller = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _flightController = TextEditingController(text: TimeInputField.formatMinutes(0));
-  final _blockController = TextEditingController(text: TimeInputField.formatMinutes(0));
+  final _chocksOffTimeController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _takeOffTimeController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _landingTimeController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _chocksOnTimeController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _picController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _picusController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _sicController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _dualController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _instructorController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _ifrController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _instrumentController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _simInstrumentController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _nightController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _crossController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _custom1Controller = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _custom2Controller = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _custom3Controller = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _custom4Controller = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _flightController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
+  final _blockController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
   final _takeoffDayController = TextEditingController(text: '0');
   final _takeoffNightController = TextEditingController(text: '0');
   final _landingDayController = TextEditingController(text: '0');
@@ -99,6 +134,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   int? _fromAirportId;
   int? _toAirportId;
   String _pilotFunction = 'PF';
+  int _timeTotalBlockMinutes = 0;
   final List<_CrewDraftRow> _crewRows = [];
   final Map<int, String> _airportLabelCache = {};
   final Map<int, String> _crewLabelCache = {};
@@ -113,8 +149,13 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   int _lastCalculatedNightMinutes = 0;
   int _lastCalculatedFlightMinutes = 0;
 
-  DateTime get _chocksOffMinute =>
-      DateTime(_chocksOff.year, _chocksOff.month, _chocksOff.day, _chocksOff.hour, _chocksOff.minute);
+  DateTime get _chocksOffMinute => DateTime(
+    _chocksOff.year,
+    _chocksOff.month,
+    _chocksOff.day,
+    _chocksOff.hour,
+    _chocksOff.minute,
+  );
 
   @override
   void initState() {
@@ -159,8 +200,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   }
 
   Future<void> _load() async {
-    final logTakeoffLanding =
-        await ref.read(flightFormTakeoffLandingLogProvider.future);
+    final logTakeoffLanding = await ref.read(
+      flightFormTakeoffLandingLogProvider.future,
+    );
     final checks = await ref.read(flightFormTimeChecksProvider.future);
     _logTakeoffLanding = logTakeoffLanding;
     _checks = checks;
@@ -171,7 +213,8 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         calculatedNight: 0,
         calculatedFlight: 0,
       );
-      _chocksOff = prefill?.chocksOff ??
+      _chocksOff =
+          prefill?.chocksOff ??
           DateTime(_chocksOff.year, _chocksOff.month, _chocksOff.day);
       _aircraftId = prefill?.aircraftId;
       _fromAirportId = prefill?.fromAirportId;
@@ -179,6 +222,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       _takeOff = null;
       _landing = null;
       _chocksOn = null;
+      _timeTotalBlockMinutes = 0;
       _chocksOffTimeController.text = prefill?.chocksOff == null
           ? ''
           : TimeInputField.formatMinutes(
@@ -191,8 +235,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         _crewRows
           ..clear()
           ..addAll(
-            prefill.crewAssignments
-                .map((e) => _CrewDraftRow(crewId: e.crewId, position: e.position)),
+            prefill.crewAssignments.map(
+              (e) => _CrewDraftRow(crewId: e.crewId, position: e.position),
+            ),
           );
       } else {
         await _insertDefaultSelfCrewIfAny();
@@ -214,7 +259,12 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     _toAirportId = flight.arrivalAirportId;
     final totalTakeoffs = flight.takeOffsDays + flight.takeOffsNight;
     final totalLandings = flight.landingsDay + flight.landingsNight;
-    _pilotFunction = _pilotFunctionFromCounts(totalTakeoffs, totalLandings);
+    _pilotFunction = _normalizePilotFunction(
+      flight.pilotFunction,
+      fallbackTakeoffs: totalTakeoffs,
+      fallbackLandings: totalLandings,
+    );
+    _timeTotalBlockMinutes = flight.timeTotalBlockMinutes;
     _remarksController.text = flight.remarks;
     _notesController.text = flight.notes;
     _ifrApproachesController.text = '${flight.ifrApproaches}';
@@ -230,17 +280,20 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     _takeoffNightController.text = '$_takeoffsNight';
     _landingDayController.text = '$_landingsDay';
     _landingNightController.text = '$_landingsNight';
-    final dep = loaded.departureLine?.eventDateTime ?? DateTime.now();
+    final dep = loaded.departureLine == null
+        ? DateTime.now()
+        : DbDateTime.dbToUtc(loaded.departureLine!.eventDateTime);
     _chocksOff = dep;
-    _takeOff = _toTimeOfDay(flight.takeOffDateTime);
-    _landing = _toTimeOfDay(flight.landingDateTime);
-    _chocksOn = _toTimeOfDay(flight.arrivalDateTime);
-    final unknownTimes = _chocksOff.hour == 0 &&
-        _chocksOff.minute == 0 &&
-        _chocksOn == null;
+    _takeOff = _toTimeOfDayFromDb(flight.takeOffDateTime);
+    _landing = _toTimeOfDayFromDb(flight.landingDateTime);
+    _chocksOn = _toTimeOfDayFromDb(flight.arrivalDateTime);
+    final unknownTimes =
+        _chocksOff.hour == 0 && _chocksOff.minute == 0 && _chocksOn == null;
     _chocksOffTimeController.text = unknownTimes
         ? ''
-        : TimeInputField.formatMinutes(_chocksOff.hour * 60 + _chocksOff.minute);
+        : TimeInputField.formatMinutes(
+            _chocksOff.hour * 60 + _chocksOff.minute,
+          );
     _takeOffTimeController.text = _takeOff == null
         ? ''
         : TimeInputField.formatMinutes(_takeOff!.hour * 60 + _takeOff!.minute);
@@ -249,34 +302,57 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         : TimeInputField.formatMinutes(_landing!.hour * 60 + _landing!.minute);
     _chocksOnTimeController.text = _chocksOn == null
         ? ''
-        : TimeInputField.formatMinutes(_chocksOn!.hour * 60 + _chocksOn!.minute);
-    _blockController.text = TimeInputField.formatMinutes(flight.timeBlockMinutes);
+        : TimeInputField.formatMinutes(
+            _chocksOn!.hour * 60 + _chocksOn!.minute,
+          );
+    _blockController.text = TimeInputField.formatMinutes(
+      flight.timeBlockMinutes,
+    );
     _picController.text = TimeInputField.formatMinutes(flight.timePICMinutes);
-    _picusController.text = TimeInputField.formatMinutes(flight.timePICUSMinutes);
+    _picusController.text = TimeInputField.formatMinutes(
+      flight.timePICUSMinutes,
+    );
     _sicController.text = TimeInputField.formatMinutes(flight.timeSICMinutes);
     _dualController.text = TimeInputField.formatMinutes(flight.timeDualMinutes);
-    _instructorController.text =
-        TimeInputField.formatMinutes(flight.timeInstructorMinutes);
+    _instructorController.text = TimeInputField.formatMinutes(
+      flight.timeInstructorMinutes,
+    );
     _ifrController.text = TimeInputField.formatMinutes(flight.timeIFRMinutes);
-    _instrumentController.text =
-        TimeInputField.formatMinutes(flight.timeInstrumentMinutes);
-    _simInstrumentController.text =
-        TimeInputField.formatMinutes(flight.timeSimulatedInstrumentMinutes);
-    _nightController.text = TimeInputField.formatMinutes(flight.timeNightMinutes);
-    _crossController.text =
-        TimeInputField.formatMinutes(flight.timeCrossCountryMinutes);
-    _custom1Controller.text = TimeInputField.formatMinutes(flight.timeCustom1Minutes);
-    _custom2Controller.text = TimeInputField.formatMinutes(flight.timeCustom2Minutes);
-    _custom3Controller.text = TimeInputField.formatMinutes(flight.timeCustom3Minutes);
-    _custom4Controller.text = TimeInputField.formatMinutes(flight.timeCustom4Minutes);
-    _flightController.text = TimeInputField.formatMinutes(flight.timeFlightMinutes);
+    _instrumentController.text = TimeInputField.formatMinutes(
+      flight.timeInstrumentMinutes,
+    );
+    _simInstrumentController.text = TimeInputField.formatMinutes(
+      flight.timeSimulatedInstrumentMinutes,
+    );
+    _nightController.text = TimeInputField.formatMinutes(
+      flight.timeNightMinutes,
+    );
+    _crossController.text = TimeInputField.formatMinutes(
+      flight.timeCrossCountryMinutes,
+    );
+    _custom1Controller.text = TimeInputField.formatMinutes(
+      flight.timeCustom1Minutes,
+    );
+    _custom2Controller.text = TimeInputField.formatMinutes(
+      flight.timeCustom2Minutes,
+    );
+    _custom3Controller.text = TimeInputField.formatMinutes(
+      flight.timeCustom3Minutes,
+    );
+    _custom4Controller.text = TimeInputField.formatMinutes(
+      flight.timeCustom4Minutes,
+    );
+    _flightController.text = TimeInputField.formatMinutes(
+      flight.timeFlightMinutes,
+    );
     _lastCalculatedNightMinutes = flight.timeNightMinutes;
     _lastCalculatedFlightMinutes = flight.timeFlightMinutes;
     _crewRows
       ..clear()
       ..addAll(
-        loaded.crewAssignments
-            .map((e) => _CrewDraftRow(crewId: e.crewId, position: e.position)),
+        loaded.crewAssignments.map(
+          (e) => _CrewDraftRow(crewId: e.crewId, position: e.position),
+        ),
       );
     setState(() => _loading = false);
   }
@@ -284,19 +360,18 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   Future<void> _insertDefaultSelfCrewIfAny() async {
     if (!widget.isCreate || _crewRows.isNotEmpty) return;
     final db = ref.read(databaseProvider);
-    final selfCrew = await (db.select(db.crew)
-          ..where((t) => t.isSelf.equals(true))
-          ..limit(1))
-        .getSingleOrNull();
+    final selfCrew =
+        await (db.select(db.crew)
+              ..where((t) => t.isSelf.equals(true))
+              ..limit(1))
+            .getSingleOrNull();
     if (!mounted || selfCrew == null) return;
-    final defaultPosition =
-        await ref.read(simulatorDefaultCrewPositionProvider.future);
+    final defaultPosition = await ref.read(
+      simulatorDefaultCrewPositionProvider.future,
+    );
     if (!mounted) return;
     _crewRows.add(
-      _CrewDraftRow(
-        crewId: selfCrew.id,
-        position: defaultPosition,
-      ),
+      _CrewDraftRow(crewId: selfCrew.id, position: defaultPosition),
     );
   }
 
@@ -386,14 +461,16 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       AircraftEditScreen(
         item: placeholder,
         isCreate: true,
+        initialIsSimulator: false,
       ),
     );
     if (!mounted || result != true) return;
     final db = ref.read(databaseProvider);
-    final created = await (db.select(db.aircrafts)
-          ..orderBy([(t) => OrderingTerm.desc(t.id)])
-          ..limit(1))
-        .getSingleOrNull();
+    final created =
+        await (db.select(db.aircrafts)
+              ..orderBy([(t) => OrderingTerm.desc(t.id)])
+              ..limit(1))
+            .getSingleOrNull();
     if (!mounted || created == null) return;
     setState(() => _aircraftId = created.id);
   }
@@ -407,8 +484,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     _clearKeyboardFocus();
     if (selected == null || !mounted) return;
     final name = (selected.name ?? '').trim();
-    _airportLabelCache[selected.id] =
-        name.isEmpty ? selected.icao : '${selected.icao} - $name';
+    _airportLabelCache[selected.id] = name.isEmpty
+        ? selected.icao
+        : '${selected.icao} - $name';
     setState(() {
       if (isFrom) {
         _fromAirportId = selected.id;
@@ -434,34 +512,34 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     );
     final result = await _showStandardFormDialog<dynamic>(
       screenContext,
-      AirportEditScreen(
-        item: placeholder,
-        isCreate: true,
-      ),
+      AirportEditScreen(item: placeholder, isCreate: true),
     );
     if (!mounted) return;
     final db = ref.read(databaseProvider);
     int? airportId = result is int ? result : null;
     if (airportId == null && result == true) {
-      final created = await (db.select(db.airports)
-            ..orderBy([(t) => OrderingTerm.desc(t.id)])
-            ..limit(1))
-          .getSingleOrNull();
+      final created =
+          await (db.select(db.airports)
+                ..orderBy([(t) => OrderingTerm.desc(t.id)])
+                ..limit(1))
+              .getSingleOrNull();
       airportId = created?.id;
       if (created != null) {
         final name = (created.name ?? '').trim();
-        _airportLabelCache[created.id] =
-            name.isEmpty ? created.icao : '${created.icao} - $name';
+        _airportLabelCache[created.id] = name.isEmpty
+            ? created.icao
+            : '${created.icao} - $name';
       }
     } else if (airportId != null) {
       final existingId = airportId;
-      final created = await (db.select(db.airports)
-            ..where((t) => t.id.equals(existingId)))
-          .getSingleOrNull();
+      final created = await (db.select(
+        db.airports,
+      )..where((t) => t.id.equals(existingId))).getSingleOrNull();
       if (created != null) {
         final name = (created.name ?? '').trim();
-        _airportLabelCache[created.id] =
-            name.isEmpty ? created.icao : '${created.icao} - $name';
+        _airportLabelCache[created.id] = name.isEmpty
+            ? created.icao
+            : '${created.icao} - $name';
       }
     }
     if (airportId == null) return;
@@ -512,6 +590,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     _landingNightController.text = '$_landingsNight';
     _lastCalculatedNightMinutes = calc.nightMinutes;
     _lastCalculatedFlightMinutes = calc.flightMinutes;
+    _timeTotalBlockMinutes = calc.totalBlockMinutes;
     _blockController.text = TimeInputField.formatMinutes(calc.totalMinutes);
     _distanceNmController.text = '${calc.distanceNm}';
     _applyChecksToControllers(
@@ -523,10 +602,12 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
 
   Future<_FlightCalcResult?> _calculate() async {
     final db = ref.read(databaseProvider);
-    final from = await (db.select(db.airports)..where((t) => t.id.equals(_fromAirportId!)))
-        .getSingleOrNull();
-    final to = await (db.select(db.airports)..where((t) => t.id.equals(_toAirportId!)))
-        .getSingleOrNull();
+    final from = await (db.select(
+      db.airports,
+    )..where((t) => t.id.equals(_fromAirportId!))).getSingleOrNull();
+    final to = await (db.select(
+      db.airports,
+    )..where((t) => t.id.equals(_toAirportId!))).getSingleOrNull();
     if (from == null || to == null) return null;
     final dep = _chocksOffMinute;
     final arr = _resolveChocksOnDateTime();
@@ -541,18 +622,37 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       depTimeEpochSeconds: _wallClockAsUtcEpochSeconds(takeoffDateTime),
       arrTimeEpochSeconds: _wallClockAsUtcEpochSeconds(landingDateTime),
     );
-    final totalMinutes = arr.difference(dep).inMinutes.clamp(0, 24 * 60);
-    final hasTakeoffAndLanding = _logTakeoffLanding && _takeOff != null && _landing != null;
+    final totalBlockMinutes = arr.difference(dep).inMinutes.clamp(0, 24 * 60);
+    final factoring = await ref.read(flightFactoringSettingsProvider.future);
+    final totalMinutes = _applyPilotFunctionFactoring(
+      totalBlockMinutes: totalBlockMinutes,
+      pilotFunction: _pilotFunction,
+      irp3Percent: factoring.irp3Percent,
+      irp3SubtractMinutes: factoring.irp3SubtractMinutes,
+      irp4Percent: factoring.irp4Percent,
+      irp4SubtractMinutes: factoring.irp4SubtractMinutes,
+    );
+    final hasTakeoffAndLanding =
+        _logTakeoffLanding && _takeOff != null && _landing != null;
     final flightMinutes = hasTakeoffAndLanding
-        ? landingDateTime.difference(takeoffDateTime).inMinutes.clamp(0, 24 * 60)
+        ? landingDateTime
+              .difference(takeoffDateTime)
+              .inMinutes
+              .clamp(0, 24 * 60)
         : 0;
     final distanceNm = flightCalc.flightDistanceNm.round();
     var tkDay = 0;
     var tkNight = 0;
     var ldDay = 0;
     var ldNight = 0;
-    final takeoffCount = (_pilotFunction == 'PF' || _pilotFunction == 'PF/PM') ? 1 : 0;
-    final landingCount = (_pilotFunction == 'PF' || _pilotFunction == 'PM/PF') ? 1 : 0;
+    final takeoffCount = switch (_pilotFunction) {
+      'PF' || 'PF/PNF' => 1,
+      _ => 0,
+    };
+    final landingCount = switch (_pilotFunction) {
+      'PF' || 'PNF/PF' => 1,
+      _ => 0,
+    };
     if (takeoffCount > 0) {
       if (flightCalc.dayTakeOff) {
         tkDay = takeoffCount;
@@ -568,6 +668,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       }
     }
     return _FlightCalcResult(
+      totalBlockMinutes: totalBlockMinutes,
       totalMinutes: totalMinutes,
       nightMinutes: flightCalc.nightTimeMinutes.clamp(0, totalMinutes),
       flightMinutes: flightMinutes,
@@ -609,11 +710,26 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       _crossController,
       _checks.crossCountry ? totalMinutes : 0,
     );
-    _setControllerMinutes(_custom1Controller, _checks.custom1 ? totalMinutes : 0);
-    _setControllerMinutes(_custom2Controller, _checks.custom2 ? totalMinutes : 0);
-    _setControllerMinutes(_custom3Controller, _checks.custom3 ? totalMinutes : 0);
-    _setControllerMinutes(_custom4Controller, _checks.custom4 ? totalMinutes : 0);
-    _setControllerMinutes(_flightController, _checks.flight ? calculatedFlight : 0);
+    _setControllerMinutes(
+      _custom1Controller,
+      _checks.custom1 ? totalMinutes : 0,
+    );
+    _setControllerMinutes(
+      _custom2Controller,
+      _checks.custom2 ? totalMinutes : 0,
+    );
+    _setControllerMinutes(
+      _custom3Controller,
+      _checks.custom3 ? totalMinutes : 0,
+    );
+    _setControllerMinutes(
+      _custom4Controller,
+      _checks.custom4 ? totalMinutes : 0,
+    );
+    _setControllerMinutes(
+      _flightController,
+      _checks.flight ? calculatedFlight : 0,
+    );
   }
 
   void _setControllerMinutes(TextEditingController c, int minutes) {
@@ -683,7 +799,8 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       fieldLabel: 'Chocks OFF',
       allowEmpty: true,
     );
-    if (chocksOffMinutes == null && _chocksOffTimeController.text.trim().isNotEmpty) {
+    if (chocksOffMinutes == null &&
+        _chocksOffTimeController.text.trim().isNotEmpty) {
       return false;
     }
     final chocksOffValue = chocksOffMinutes ?? 0;
@@ -701,7 +818,8 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         fieldLabel: 'TakeOff',
         allowEmpty: true,
       );
-      if (takeoffMinutes == null && _takeOffTimeController.text.trim().isNotEmpty) {
+      if (takeoffMinutes == null &&
+          _takeOffTimeController.text.trim().isNotEmpty) {
         return false;
       }
       _takeOff = takeoffMinutes == null
@@ -713,7 +831,8 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         fieldLabel: 'Landing',
         allowEmpty: true,
       );
-      if (landingMinutes == null && _landingTimeController.text.trim().isNotEmpty) {
+      if (landingMinutes == null &&
+          _landingTimeController.text.trim().isNotEmpty) {
         return false;
       }
       _landing = landingMinutes == null
@@ -726,7 +845,8 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       fieldLabel: 'Chocks ON',
       allowEmpty: true,
     );
-    if (chocksOnMinutes == null && _chocksOnTimeController.text.trim().isNotEmpty) {
+    if (chocksOnMinutes == null &&
+        _chocksOnTimeController.text.trim().isNotEmpty) {
       return false;
     }
     _chocksOn = chocksOnMinutes == null
@@ -757,19 +877,35 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final landing = _logTakeoffLanding ? _resolveLandingDateTime() : null;
 
     final block = TimeInputField.parseMinutes(_blockController.text) ?? 0;
+    final totalBlock = arrival == null
+        ? (_timeTotalBlockMinutes > 0 ? _timeTotalBlockMinutes : block)
+        : arrival.difference(departure).inMinutes.clamp(0, 24 * 60);
     final pic = TimeInputField.parseMinutes(_picController.text) ?? 0;
     final picus = TimeInputField.parseMinutes(_picusController.text) ?? 0;
     final sic = TimeInputField.parseMinutes(_sicController.text) ?? 0;
     final dual = TimeInputField.parseMinutes(_dualController.text) ?? 0;
-    final instructor = TimeInputField.parseMinutes(_instructorController.text) ?? 0;
-    final selectedPrimaryRoles =
-        [pic, picus, sic, dual, instructor].where((value) => value > 0).length;
+    final instructor =
+        TimeInputField.parseMinutes(_instructorController.text) ?? 0;
+    final selectedPrimaryRoles = [
+      pic,
+      picus,
+      sic,
+      dual,
+      instructor,
+    ].where((value) => value > 0).length;
     if (selectedPrimaryRoles > 1) {
       final continueSave = await _confirmMultiplePrimaryTimes();
       if (!continueSave) return;
     }
+    final consistencyWarnings = <String>[];
+    if (pic + picus + sic + dual + instructor != block) {
+      consistencyWarnings.add(
+        'PIC + PICUS + SIC + Dual + Instructor must equal Block time.',
+      );
+    }
     final ifr = TimeInputField.parseMinutes(_ifrController.text) ?? 0;
-    final instrument = TimeInputField.parseMinutes(_instrumentController.text) ?? 0;
+    final instrument =
+        TimeInputField.parseMinutes(_instrumentController.text) ?? 0;
     final simInstrument =
         TimeInputField.parseMinutes(_simInstrumentController.text) ?? 0;
     final night = TimeInputField.parseMinutes(_nightController.text) ?? 0;
@@ -778,7 +914,17 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final custom2 = TimeInputField.parseMinutes(_custom2Controller.text) ?? 0;
     final custom3 = TimeInputField.parseMinutes(_custom3Controller.text) ?? 0;
     final custom4 = TimeInputField.parseMinutes(_custom4Controller.text) ?? 0;
-    final flightTime = TimeInputField.parseMinutes(_flightController.text) ?? block;
+    final flightTime =
+        TimeInputField.parseMinutes(_flightController.text) ?? block;
+    if (night > block) {
+      consistencyWarnings.add('Night time is greater than Block time.');
+    }
+    if (cross > block) {
+      consistencyWarnings.add('Cross-country time is greater than Block time.');
+    }
+    if (ifr > block) {
+      consistencyWarnings.add('IFR time is greater than Block time.');
+    }
     final ifrApproaches = _parseCount(_ifrApproachesController.text);
     final distanceNm = _parseCount(_distanceNmController.text);
     final approachType = _approachTypeController.text.trim();
@@ -796,6 +942,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     _takeoffsNight = _parseCount(_takeoffNightController.text);
     _landingsDay = _parseCount(_landingDayController.text);
     _landingsNight = _parseCount(_landingNightController.text);
+    if (consistencyWarnings.isNotEmpty) {
+      final continueSave = await _confirmRuleWarnings(consistencyWarnings);
+      if (!continueSave) return;
+    }
 
     final useCases = ref.read(logbookUseCasesProvider);
     if (widget.isCreate) {
@@ -803,10 +953,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         aircraftId: _aircraftId!,
         departureAirportId: _fromAirportId!,
         arrivalAirportId: _toAirportId!,
-        departureDateTime: departure,
-        takeOffDateTime: takeoff,
-        landingDateTime: landing,
-        arrivalDateTime: arrival,
+        departureDateTime: DbDateTime.wallClockToDbUtc(departure),
+        takeOffDateTime: DbDateTime.wallClockToDbUtcOrNull(takeoff),
+        landingDateTime: DbDateTime.wallClockToDbUtcOrNull(landing),
+        arrivalDateTime: DbDateTime.wallClockToDbUtcOrNull(arrival),
         pilotFunction: _pilotFunction,
         ifrApproaches: ifrApproaches,
         approachType: approachType,
@@ -815,6 +965,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         landingsDay: _landingsDay,
         landingsNight: _landingsNight,
         timeBlockMinutes: block,
+        timeTotalBlockMinutes: totalBlock,
         timeFlightMinutes: flightTime,
         timePICMinutes: pic,
         timePICUSMinutes: picus,
@@ -843,10 +994,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         aircraftId: _aircraftId!,
         departureAirportId: _fromAirportId!,
         arrivalAirportId: _toAirportId!,
-        departureDateTime: departure,
-        takeOffDateTime: takeoff,
-        landingDateTime: landing,
-        arrivalDateTime: arrival,
+        departureDateTime: DbDateTime.wallClockToDbUtc(departure),
+        takeOffDateTime: DbDateTime.wallClockToDbUtcOrNull(takeoff),
+        landingDateTime: DbDateTime.wallClockToDbUtcOrNull(landing),
+        arrivalDateTime: DbDateTime.wallClockToDbUtcOrNull(arrival),
         pilotFunction: _pilotFunction,
         ifrApproaches: ifrApproaches,
         approachType: approachType,
@@ -855,6 +1006,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         landingsDay: _landingsDay,
         landingsNight: _landingsNight,
         timeBlockMinutes: block,
+        timeTotalBlockMinutes: totalBlock,
         timeFlightMinutes: flightTime,
         timePICMinutes: pic,
         timePICUSMinutes: picus,
@@ -903,14 +1055,43 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     return decision ?? false;
   }
 
+  Future<bool> _confirmRuleWarnings(List<String> warnings) async {
+    final decision = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Check Factoring Rules'),
+        content: Text('${warnings.join('\n')}\n\nContinue saving?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Review'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Save anyway'),
+          ),
+        ],
+      ),
+    );
+    return decision ?? false;
+  }
+
   DateTime? _resolveChocksOnDateTime() {
     if (_chocksOn == null) return null;
-    return _resolveDateTimeFromTime(_chocksOffMinute, _chocksOn!, allowNextDay: true);
+    return _resolveDateTimeFromTime(
+      _chocksOffMinute,
+      _chocksOn!,
+      allowNextDay: true,
+    );
   }
 
   DateTime? _resolveTakeOffDateTime() {
     if (_takeOff == null) return null;
-    return _resolveDateTimeFromTime(_chocksOffMinute, _takeOff!, allowNextDay: true);
+    return _resolveDateTimeFromTime(
+      _chocksOffMinute,
+      _takeOff!,
+      allowNextDay: true,
+    );
   }
 
   DateTime? _resolveLandingDateTime() {
@@ -924,16 +1105,54 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     TimeOfDay time, {
     required bool allowNextDay,
   }) {
-    final baseMinute = DateTime(base.year, base.month, base.day, base.hour, base.minute);
-    final sameDay = DateTime(base.year, base.month, base.day, time.hour, time.minute);
+    final baseMinute = DateTime(
+      base.year,
+      base.month,
+      base.day,
+      base.hour,
+      base.minute,
+    );
+    final sameDay = DateTime(
+      base.year,
+      base.month,
+      base.day,
+      time.hour,
+      time.minute,
+    );
     if (!allowNextDay) return sameDay;
-    if (sameDay.isBefore(baseMinute)) return sameDay.add(const Duration(days: 1));
+    if (sameDay.isBefore(baseMinute)) {
+      return sameDay.add(const Duration(days: 1));
+    }
     return sameDay;
+  }
+
+  int _applyPilotFunctionFactoring({
+    required int totalBlockMinutes,
+    required String pilotFunction,
+    required int irp3Percent,
+    required int irp3SubtractMinutes,
+    required int irp4Percent,
+    required int irp4SubtractMinutes,
+  }) {
+    final normalized = pilotFunction.trim().toUpperCase();
+    if (normalized != 'IRP 3' && normalized != 'IRP 4') {
+      return totalBlockMinutes;
+    }
+    final percent = normalized == 'IRP 3' ? irp3Percent : irp4Percent;
+    final subtract = normalized == 'IRP 3'
+        ? irp3SubtractMinutes
+        : irp4SubtractMinutes;
+    var base = totalBlockMinutes - subtract;
+    if (base < 0) base = 0;
+    final clampedPercent = percent.clamp(0, 100);
+    return ((base * clampedPercent) / 100).round();
   }
 
   void _showSnack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _clearKeyboardFocus() {
@@ -950,10 +1169,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final canCalculate = _canCalculate;
     final customTimeLabels =
         ref.watch(customTimeLabelsProvider).valueOrNull ??
-            const CustomTimeLabels();
+        const CustomTimeLabels();
     final timeFieldVisibility =
         ref.watch(flightTimeFieldsVisibilityProvider).valueOrNull ??
-            const FlightTimeFieldsVisibility();
+        const FlightTimeFieldsVisibility();
     final aircraftAsync = ref.watch(aircraftProvider(''));
     final airportsAsync = ref.watch(
       airportsProvider(
@@ -999,10 +1218,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                 child: const Text('Next'),
               ),
             ] else
-              TextButton(
-                onPressed: _save,
-                child: Text(l10n.saveAction),
-              ),
+              TextButton(onPressed: _save, child: Text(l10n.saveAction)),
           ],
         ],
       ),
@@ -1139,9 +1355,11 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           decoration: const InputDecoration(labelText: 'Pilot Function'),
           items: const [
             DropdownMenuItem(value: 'PF', child: Text('PF')),
-            DropdownMenuItem(value: 'PM', child: Text('PM')),
-            DropdownMenuItem(value: 'PF/PM', child: Text('PF/PM')),
-            DropdownMenuItem(value: 'PM/PF', child: Text('PM/PF')),
+            DropdownMenuItem(value: 'PNF', child: Text('PNF')),
+            DropdownMenuItem(value: 'PF/PNF', child: Text('PF/PNF')),
+            DropdownMenuItem(value: 'PNF/PF', child: Text('PNF/PF')),
+            DropdownMenuItem(value: 'IRP 3', child: Text('IRP 3')),
+            DropdownMenuItem(value: 'IRP 4', child: Text('IRP 4')),
           ],
           onChanged: (value) => setState(() => _pilotFunction = value ?? 'PF'),
         ),
@@ -1157,7 +1375,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                 onTap: _pickAircraft,
               ),
             ),
-            IconButton(onPressed: _createAircraftAndSelect, icon: const Icon(Icons.add)),
+            IconButton(
+              onPressed: _createAircraftAndSelect,
+              icon: const Icon(Icons.add),
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -1323,177 +1544,187 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
             ),
           ),
         const SizedBox(height: 8),
-        _buildTimeFieldsGrid(
-          [
-            _TimeFieldConfig(
-              label: 'PIC',
-              controller: _picController,
-              checked: _checks.pic,
-              visible: _shouldShowTimeField(_picController, visibility.pic),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(pic: v),
-                v,
-                _picController,
-              ),
+        _buildTimeFieldsGrid([
+          _TimeFieldConfig(
+            label: 'PIC',
+            controller: _picController,
+            checked: _checks.pic,
+            visible: _shouldShowTimeField(_picController, visibility.pic),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(pic: v),
+              v,
+              _picController,
             ),
-            _TimeFieldConfig(
-              label: 'PICUS',
-              controller: _picusController,
-              checked: _checks.picus,
-              visible: _shouldShowTimeField(_picusController, visibility.picus),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(picus: v),
-                v,
-                _picusController,
-              ),
+          ),
+          _TimeFieldConfig(
+            label: 'PICUS',
+            controller: _picusController,
+            checked: _checks.picus,
+            visible: _shouldShowTimeField(_picusController, visibility.picus),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(picus: v),
+              v,
+              _picusController,
             ),
-            _TimeFieldConfig(
-              label: 'SIC',
-              controller: _sicController,
-              checked: _checks.sic,
-              visible: _shouldShowTimeField(_sicController, visibility.sic),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(sic: v),
-                v,
-                _sicController,
-              ),
+          ),
+          _TimeFieldConfig(
+            label: 'SIC',
+            controller: _sicController,
+            checked: _checks.sic,
+            visible: _shouldShowTimeField(_sicController, visibility.sic),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(sic: v),
+              v,
+              _sicController,
             ),
-            _TimeFieldConfig(
-              label: 'Dual',
-              controller: _dualController,
-              checked: _checks.dual,
-              visible: _shouldShowTimeField(_dualController, visibility.dual),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(dual: v),
-                v,
-                _dualController,
-              ),
+          ),
+          _TimeFieldConfig(
+            label: 'Dual',
+            controller: _dualController,
+            checked: _checks.dual,
+            visible: _shouldShowTimeField(_dualController, visibility.dual),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(dual: v),
+              v,
+              _dualController,
             ),
-            _TimeFieldConfig(
-              label: 'Instructor',
-              controller: _instructorController,
-              checked: _checks.instructor,
-              visible: _shouldShowTimeField(
-                _instructorController,
-                visibility.instructor,
-              ),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(instructor: v),
-                v,
-                _instructorController,
-              ),
+          ),
+          _TimeFieldConfig(
+            label: 'Instructor',
+            controller: _instructorController,
+            checked: _checks.instructor,
+            visible: _shouldShowTimeField(
+              _instructorController,
+              visibility.instructor,
             ),
-            _TimeFieldConfig(
-              label: 'IFR',
-              controller: _ifrController,
-              checked: _checks.ifr,
-              visible: _shouldShowTimeField(_ifrController, visibility.ifr),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(ifr: v),
-                v,
-                _ifrController,
-              ),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(instructor: v),
+              v,
+              _instructorController,
             ),
-            _TimeFieldConfig(
-              label: 'Instrument',
-              controller: _instrumentController,
-              checked: _checks.instrument,
-              visible:
-                  _shouldShowTimeField(_instrumentController, visibility.instrument),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(instrument: v),
-                v,
-                _instrumentController,
-              ),
+          ),
+          _TimeFieldConfig(
+            label: 'IFR',
+            controller: _ifrController,
+            checked: _checks.ifr,
+            visible: _shouldShowTimeField(_ifrController, visibility.ifr),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(ifr: v),
+              v,
+              _ifrController,
             ),
-            _TimeFieldConfig(
-              label: 'Sim Instrument',
-              controller: _simInstrumentController,
-              checked: _checks.simInstrument,
-              visible: _shouldShowTimeField(
-                _simInstrumentController,
-                visibility.simInstrument,
-              ),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(simInstrument: v),
-                v,
-                _simInstrumentController,
-              ),
+          ),
+          _TimeFieldConfig(
+            label: 'Instrument',
+            controller: _instrumentController,
+            checked: _checks.instrument,
+            visible: _shouldShowTimeField(
+              _instrumentController,
+              visibility.instrument,
             ),
-            _TimeFieldConfig(
-              label: 'Night',
-              controller: _nightController,
-              checked: _checks.night,
-              visible: _shouldShowTimeField(_nightController, visibility.night),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(night: v),
-                v,
-                _nightController,
-                checkedMinutes: _lastCalculatedNightMinutes,
-              ),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(instrument: v),
+              v,
+              _instrumentController,
             ),
-            _TimeFieldConfig(
-              label: 'CrossCountry',
-              controller: _crossController,
-              checked: _checks.crossCountry,
-              visible:
-                  _shouldShowTimeField(_crossController, visibility.crossCountry),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(crossCountry: v),
-                v,
-                _crossController,
-              ),
+          ),
+          _TimeFieldConfig(
+            label: 'Sim Instrument',
+            controller: _simInstrumentController,
+            checked: _checks.simInstrument,
+            visible: _shouldShowTimeField(
+              _simInstrumentController,
+              visibility.simInstrument,
             ),
-            _TimeFieldConfig(
-              label: customTimeLabels.custom1,
-              controller: _custom1Controller,
-              checked: _checks.custom1,
-              visible:
-                  _shouldShowTimeField(_custom1Controller, visibility.custom1),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(custom1: v),
-                v,
-                _custom1Controller,
-              ),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(simInstrument: v),
+              v,
+              _simInstrumentController,
             ),
-            _TimeFieldConfig(
-              label: customTimeLabels.custom2,
-              controller: _custom2Controller,
-              checked: _checks.custom2,
-              visible:
-                  _shouldShowTimeField(_custom2Controller, visibility.custom2),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(custom2: v),
-                v,
-                _custom2Controller,
-              ),
+          ),
+          _TimeFieldConfig(
+            label: 'Night',
+            controller: _nightController,
+            checked: _checks.night,
+            visible: _shouldShowTimeField(_nightController, visibility.night),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(night: v),
+              v,
+              _nightController,
+              checkedMinutes: _lastCalculatedNightMinutes,
             ),
-            _TimeFieldConfig(
-              label: customTimeLabels.custom3,
-              controller: _custom3Controller,
-              checked: _checks.custom3,
-              visible:
-                  _shouldShowTimeField(_custom3Controller, visibility.custom3),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(custom3: v),
-                v,
-                _custom3Controller,
-              ),
+          ),
+          _TimeFieldConfig(
+            label: 'CrossCountry',
+            controller: _crossController,
+            checked: _checks.crossCountry,
+            visible: _shouldShowTimeField(
+              _crossController,
+              visibility.crossCountry,
             ),
-            _TimeFieldConfig(
-              label: customTimeLabels.custom4,
-              controller: _custom4Controller,
-              checked: _checks.custom4,
-              visible:
-                  _shouldShowTimeField(_custom4Controller, visibility.custom4),
-              onChanged: (v) => _updateChecksAndMaybeCopy(
-                _checks.copyWith(custom4: v),
-                v,
-                _custom4Controller,
-              ),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(crossCountry: v),
+              v,
+              _crossController,
             ),
-          ],
-        ),
+          ),
+          _TimeFieldConfig(
+            label: customTimeLabels.custom1,
+            controller: _custom1Controller,
+            checked: _checks.custom1,
+            visible: _shouldShowTimeField(
+              _custom1Controller,
+              visibility.custom1,
+            ),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(custom1: v),
+              v,
+              _custom1Controller,
+            ),
+          ),
+          _TimeFieldConfig(
+            label: customTimeLabels.custom2,
+            controller: _custom2Controller,
+            checked: _checks.custom2,
+            visible: _shouldShowTimeField(
+              _custom2Controller,
+              visibility.custom2,
+            ),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(custom2: v),
+              v,
+              _custom2Controller,
+            ),
+          ),
+          _TimeFieldConfig(
+            label: customTimeLabels.custom3,
+            controller: _custom3Controller,
+            checked: _checks.custom3,
+            visible: _shouldShowTimeField(
+              _custom3Controller,
+              visibility.custom3,
+            ),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(custom3: v),
+              v,
+              _custom3Controller,
+            ),
+          ),
+          _TimeFieldConfig(
+            label: customTimeLabels.custom4,
+            controller: _custom4Controller,
+            checked: _checks.custom4,
+            visible: _shouldShowTimeField(
+              _custom4Controller,
+              visibility.custom4,
+            ),
+            onChanged: (v) => _updateChecksAndMaybeCopy(
+              _checks.copyWith(custom4: v),
+              v,
+              _custom4Controller,
+            ),
+          ),
+        ]),
       ],
     );
   }
@@ -1559,7 +1790,8 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     if (!leftVisible && rightVisible) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: right ??
+        child:
+            right ??
             _timeCheckInput(
               label: rightLabel!,
               controller: rightController!,
@@ -1584,7 +1816,8 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: right ??
+            child:
+                right ??
                 _timeCheckInput(
                   label: rightLabel!,
                   controller: rightController!,
@@ -1664,13 +1897,15 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   Future<void> _updateChecksAndMaybeCopy(
     FlightFormTimeChecks nextChecks,
     bool checked,
-    TextEditingController target,
-    {int? checkedMinutes}
-  ) async {
+    TextEditingController target, {
+    int? checkedMinutes,
+  }) async {
     _checks = nextChecks;
     await ref.read(flightFormTimeChecksProvider.notifier).setValue(_checks);
     if (checked) {
-      final minutes = checkedMinutes ?? (TimeInputField.parseMinutes(_blockController.text) ?? 0);
+      final minutes =
+          checkedMinutes ??
+          (TimeInputField.parseMinutes(_blockController.text) ?? 0);
       target.text = TimeInputField.formatMinutes(minutes);
     }
     if (!mounted) return;
@@ -1685,15 +1920,15 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
 
   int _wallClockAsUtcEpochSeconds(DateTime dt) {
     return DateTime.utc(
-      dt.year,
-      dt.month,
-      dt.day,
-      dt.hour,
-      dt.minute,
-      dt.second,
-      dt.millisecond,
-      dt.microsecond,
-    ).millisecondsSinceEpoch ~/
+          dt.year,
+          dt.month,
+          dt.day,
+          dt.hour,
+          dt.minute,
+          dt.second,
+          dt.millisecond,
+          dt.microsecond,
+        ).millisecondsSinceEpoch ~/
         1000;
   }
 
@@ -1725,7 +1960,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
               onPressed: () async {
                 final draft = await _showAddCrewDialog(crewItems);
                 if (draft == null || !mounted) return;
-                final duplicate = _crewRows.any((row) => row.crewId == draft.crewId);
+                final duplicate = _crewRows.any(
+                  (row) => row.crewId == draft.crewId,
+                );
                 if (duplicate) return;
                 setState(() => _crewRows.add(draft));
               },
@@ -1747,7 +1984,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                       controller: _crewListController,
                       primary: false,
                       itemCount: _crewRows.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      separatorBuilder: (_, _) => const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final row = _crewRows[index];
                         return Padding(
@@ -1777,7 +2014,8 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                               IconButton(
                                 tooltip: 'Remove',
                                 visualDensity: VisualDensity.compact,
-                                onPressed: () => setState(() => _crewRows.removeAt(index)),
+                                onPressed: () =>
+                                    setState(() => _crewRows.removeAt(index)),
                                 icon: const Icon(Icons.remove_circle_outline),
                               ),
                             ],
@@ -1840,7 +2078,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                   isExpanded: true,
                   items: _positionOptions
                       .map(
-                        (p) => DropdownMenuItem(value: p, child: Text(_positionLabel(p))),
+                        (p) => DropdownMenuItem(
+                          value: p,
+                          child: Text(_positionLabel(p)),
+                        ),
                       )
                       .toList(growable: false),
                   onChanged: (value) {
@@ -1861,11 +2102,11 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
               onPressed: selectedCrewId == null
                   ? null
                   : () => Navigator.of(dialogContext).pop(
-                        _CrewDraftRow(
-                          crewId: selectedCrewId,
-                          position: selectedPosition,
-                        ),
+                      _CrewDraftRow(
+                        crewId: selectedCrewId,
+                        position: selectedPosition,
                       ),
+                    ),
               child: const Text('Add'),
             ),
           ],
@@ -1889,25 +2130,24 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     );
     final result = await _showStandardFormDialog<dynamic>(
       screenContext,
-      CrewEditScreen(
-        item: placeholder,
-        isCreate: true,
-      ),
+      CrewEditScreen(item: placeholder, isCreate: true),
     );
     if (!mounted || result != true) return null;
     final db = ref.read(databaseProvider);
-    final created = await (db.select(db.crew)
-          ..orderBy([(t) => OrderingTerm.desc(t.id)])
-          ..limit(1))
-        .getSingleOrNull();
+    final created =
+        await (db.select(db.crew)
+              ..orderBy([(t) => OrderingTerm.desc(t.id)])
+              ..limit(1))
+            .getSingleOrNull();
     if (!mounted || created == null) return null;
     _crewLabelCache[created.id] = created.name;
     return created.id;
   }
 
-  TimeOfDay? _toTimeOfDay(DateTime? d) {
+  TimeOfDay? _toTimeOfDayFromDb(DateTime? d) {
     if (d == null) return null;
-    return TimeOfDay(hour: d.hour, minute: d.minute);
+    final local = DbDateTime.dbToUtc(d);
+    return TimeOfDay(hour: local.hour, minute: local.minute);
   }
 
   Future<T?> _showStandardFormDialog<T>(BuildContext context, Widget child) {
@@ -1916,14 +2156,8 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       context: context,
       builder: (_) => Dialog(
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 520,
-            maxHeight: maxHeight,
-          ),
-          child: SizedBox(
-            width: 520,
-            child: child,
-          ),
+          constraints: BoxConstraints(maxWidth: 520, maxHeight: maxHeight),
+          child: SizedBox(width: 520, child: child),
         ),
       ),
     );
@@ -2010,23 +2244,35 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
 
   String _pilotFunctionFromCounts(int takeoffs, int landings) {
     if (takeoffs > 0 && landings > 0) return 'PF';
-    if (takeoffs == 0 && landings == 0) return 'PM';
-    if (takeoffs > 0 && landings == 0) return 'PF/PM';
-    if (takeoffs == 0 && landings > 0) return 'PM/PF';
-    return 'PM';
+    if (takeoffs == 0 && landings == 0) return 'PNF';
+    if (takeoffs > 0 && landings == 0) return 'PF/PNF';
+    if (takeoffs == 0 && landings > 0) return 'PNF/PF';
+    return 'PNF';
   }
 
   bool _isPilotFunctionValue(String value) {
     final v = value.trim().toUpperCase();
-    return v == 'PF' || v == 'PM' || v == 'PF/PM' || v == 'PM/PF';
+    return v == 'PF' ||
+        v == 'PNF' ||
+        v == 'PF/PNF' ||
+        v == 'PNF/PF' ||
+        v == 'IRP 3' ||
+        v == 'IRP 4';
+  }
+
+  String _normalizePilotFunction(
+    String value, {
+    required int fallbackTakeoffs,
+    required int fallbackLandings,
+  }) {
+    final v = value.trim().toUpperCase();
+    if (_isPilotFunctionValue(v)) return v;
+    return _pilotFunctionFromCounts(fallbackTakeoffs, fallbackLandings);
   }
 }
 
 class _CrewDraftRow {
-  _CrewDraftRow({
-    this.crewId,
-    this.position,
-  });
+  _CrewDraftRow({this.crewId, this.position});
 
   int? crewId;
   CrewPosition? position;
@@ -2066,6 +2312,7 @@ class _TimeFieldConfig {
 
 class _FlightCalcResult {
   const _FlightCalcResult({
+    required this.totalBlockMinutes,
     required this.totalMinutes,
     required this.nightMinutes,
     required this.flightMinutes,
@@ -2076,6 +2323,7 @@ class _FlightCalcResult {
     required this.landingsNight,
   });
 
+  final int totalBlockMinutes;
   final int totalMinutes;
   final int nightMinutes;
   final int flightMinutes;

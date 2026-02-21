@@ -45,8 +45,7 @@ class LogbookDutyGroupItem extends LogbookListItemModel {
 }
 
 class LogbookYearHeaderItem extends LogbookListItemModel {
-  const LogbookYearHeaderItem(this.year, DateTime date)
-      : _date = date;
+  const LogbookYearHeaderItem(this.year, DateTime date) : _date = date;
 
   final int year;
   final DateTime _date;
@@ -93,8 +92,7 @@ class _LogbookListState extends State<LogbookList> {
   static const double _stickyHeight = 40;
   bool _ownsController = true;
 
-  ScrollController get _controller =>
-      widget.controller ?? _internalController;
+  ScrollController get _controller => widget.controller ?? _internalController;
 
   @override
   void initState() {
@@ -117,6 +115,7 @@ class _LogbookListState extends State<LogbookList> {
       _controller.addListener(_handleScroll);
     }
     if (oldWidget.items != widget.items) {
+      _yearOffsets.clear();
       WidgetsBinding.instance.addPostFrameCallback((_) => _updateCurrentYear());
     }
   }
@@ -164,6 +163,7 @@ class _LogbookListState extends State<LogbookList> {
   }
 
   void _measureHeaders(RenderBox listBox) {
+    _yearOffsets.clear();
     for (final entry in _yearKeys.entries) {
       final box = entry.value.currentContext?.findRenderObject() as RenderBox?;
       if (box == null) continue;
@@ -177,13 +177,12 @@ class _LogbookListState extends State<LogbookList> {
     final l10n = AppLocalizations.of(context)!;
 
     if (widget.items.isEmpty) {
-      return Center(
-        child: Text(l10n.emptyResults),
-      );
+      return Center(child: Text(l10n.emptyResults));
     }
 
     final isCompact = MediaQuery.of(context).size.width < 600;
     final displayItems = _withYearHeaders(widget.items);
+    _syncYearKeys(displayItems);
 
     return Stack(
       children: [
@@ -193,24 +192,17 @@ class _LogbookListState extends State<LogbookList> {
           itemBuilder: (context, index) {
             final item = displayItems[index];
             if (item is LogbookYearHeaderItem) {
-              final key = _yearKeys.putIfAbsent(
-                item.year,
-                () => GlobalKey(),
-              );
-              return _YearHeader(
-                key: key,
-                year: item.year,
-              );
+              final key = _yearKeys.putIfAbsent(item.year, () => GlobalKey());
+              return _YearHeader(key: key, year: item.year);
             }
             return Column(
               children: [
                 Divider(
                   height: 1,
                   thickness: 1.2,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .outlineVariant
-                      .withValues(alpha: 0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outlineVariant.withValues(alpha: 0.6),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(
@@ -239,10 +231,7 @@ class _LogbookListState extends State<LogbookList> {
     );
   }
 
-  Widget _buildItem(
-    LogbookListItemModel item,
-    bool isCompact,
-  ) {
+  Widget _buildItem(LogbookListItemModel item, bool isCompact) {
     if (item is LogbookEntryItem) {
       return LogbookListItem(
         entry: item.entry,
@@ -284,6 +273,18 @@ class _LogbookListState extends State<LogbookList> {
     }
     return result;
   }
+
+  void _syncYearKeys(List<LogbookListItemModel> displayItems) {
+    final years = displayItems
+        .whereType<LogbookYearHeaderItem>()
+        .map((item) => item.year)
+        .toSet();
+    _yearKeys.removeWhere((year, _) => !years.contains(year));
+    _yearOffsets.removeWhere((year, _) => !years.contains(year));
+    if (_currentYear != null && !years.contains(_currentYear)) {
+      _currentYear = null;
+    }
+  }
 }
 
 class _LogbookDutyGroupCard extends StatelessWidget {
@@ -318,15 +319,11 @@ class _LogbookDutyGroupCard extends StatelessWidget {
     final showFactored = group.factoredMinutes != group.dutyMinutes;
     final entries = List<LogbookEntry>.from(group.entries)
       ..sort(
-        (a, b) =>
-            b.timeLine.eventDateTime.compareTo(a.timeLine.eventDateTime),
+        (a, b) => b.timeLine.eventDateTime.compareTo(a.timeLine.eventDateTime),
       );
 
     final isCompact = MediaQuery.of(context).size.width < 600;
-    final headerTitle = _DutyTitle(
-      titleText: titleText,
-      isCompact: isCompact,
-    );
+    final headerTitle = _DutyTitle(titleText: titleText, isCompact: isCompact);
     final headerTile = ListTile(
       title: isCompact
           ? Row(
@@ -444,10 +441,9 @@ class _LogbookDutyGroupCard extends StatelessWidget {
                   Divider(
                     height: 1,
                     thickness: 1.2,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .outlineVariant
-                        .withValues(alpha: 0.6),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withValues(alpha: 0.6),
                   ),
                   LogbookListItem(
                     entry: entry,
@@ -466,17 +462,13 @@ class _LogbookDutyGroupCard extends StatelessWidget {
     );
   }
 
-  String _formatDutyTitle(
-    BuildContext context,
-    DateTime start,
-    DateTime end,
-  ) {
+  String _formatDutyTitle(BuildContext context, DateTime start, DateTime end) {
     final locale = Localizations.localeOf(context).toString();
     final timeFormat = DateFormat('HH:mm', locale);
     final startTime = timeFormat.format(start);
     final endTime = timeFormat.format(end);
-    final startDate = DateTime(start.year, start.month, start.day);
-    final endDate = DateTime(end.year, end.month, end.day);
+    final startDate = DateTime.utc(start.year, start.month, start.day);
+    final endDate = DateTime.utc(end.year, end.month, end.day);
     final dayDelta = endDate.difference(startDate).inDays;
     final suffix = dayDelta > 0 ? ' (+$dayDelta)' : '';
     return 'Duty $startTime → $endTime$suffix';
@@ -491,10 +483,7 @@ class _LogbookDutyGroupCard extends StatelessWidget {
 }
 
 class _DutyTitle extends StatelessWidget {
-  const _DutyTitle({
-    required this.titleText,
-    required this.isCompact,
-  });
+  const _DutyTitle({required this.titleText, required this.isCompact});
 
   final String titleText;
   final bool isCompact;
@@ -523,10 +512,7 @@ class _DutyTitle extends StatelessWidget {
 }
 
 class _YearHeader extends StatelessWidget {
-  const _YearHeader({
-    super.key,
-    required this.year,
-  });
+  const _YearHeader({super.key, required this.year});
 
   final int year;
 
@@ -549,9 +535,7 @@ class _YearHeader extends StatelessWidget {
 }
 
 class _StickyYearHeader extends StatelessWidget {
-  const _StickyYearHeader({
-    required this.year,
-  });
+  const _StickyYearHeader({required this.year});
 
   final int year;
 

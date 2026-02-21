@@ -184,8 +184,9 @@ class _PreviousExperienceEditDialogState
   }
 
   void _setTime(String key, int minutes) {
-    _timeControllers[key] =
-        TextEditingController(text: TimeInputField.formatMinutes(minutes));
+    _timeControllers[key] = TextEditingController(
+      text: TimeInputField.formatMinutes(minutes),
+    );
   }
 
   void _setInt(String key, int value) {
@@ -209,9 +210,9 @@ class _PreviousExperienceEditDialogState
     final base = current ?? nowUtc;
     final date = await showDatePicker(
       context: context,
-      initialDate: DateTime(base.year, base.month, base.day),
-      firstDate: DateTime(1970),
-      lastDate: DateTime(2100),
+      initialDate: DateTime.utc(base.year, base.month, base.day),
+      firstDate: DateTime.utc(1970),
+      lastDate: DateTime.utc(2100),
     );
     if (date == null || !mounted) return;
     final time = await showTimePicker(
@@ -247,9 +248,7 @@ class _PreviousExperienceEditDialogState
     if (_firstFlight != null &&
         _lastFlight != null &&
         !_firstFlight!.isBefore(_lastFlight!)) {
-      await _showError(
-        'First flight must be earlier than last flight.',
-      );
+      await _showError('First flight must be earlier than last flight.');
       return;
     }
 
@@ -260,9 +259,7 @@ class _PreviousExperienceEditDialogState
     final dual = _minutes('dual');
     final sumPilotFunctions = pic + picus + sic + dual;
     if (sumPilotFunctions != blockMinutes) {
-      await _showError(
-        'PIC + PICUS + SIC + Dual must equal Total Block time.',
-      );
+      await _showError('PIC + PICUS + SIC + Dual must equal Total Block time.');
       return;
     }
 
@@ -393,10 +390,7 @@ class _PreviousExperienceEditDialogState
           children: [
             ListTile(
               title: Text(title),
-              trailing: TextButton(
-                onPressed: _save,
-                child: const Text('Save'),
-              ),
+              trailing: TextButton(onPressed: _save, child: const Text('Save')),
             ),
             const Divider(height: 1),
             Expanded(
@@ -421,7 +415,8 @@ class _PreviousExperienceEditDialogState
                               ),
                             )
                             .toList(growable: false),
-                        onChanged: (value) => setState(() => _aircraftTypeId = value),
+                        onChanged: (value) =>
+                            setState(() => _aircraftTypeId = value),
                         validator: (value) =>
                             value == null ? 'Select aircraft type.' : null,
                       ),
@@ -433,7 +428,8 @@ class _PreviousExperienceEditDialogState
                               label: 'First Flight (UTC)',
                               value: _firstFlight,
                               onPick: () => _pickDateTime(first: true),
-                              onClear: () => setState(() => _firstFlight = null),
+                              onClear: () =>
+                                  setState(() => _firstFlight = null),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -486,10 +482,7 @@ class _DateField extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text('$label: $text')),
-          IconButton(
-            onPressed: onClear,
-            icon: const Icon(Icons.clear),
-          ),
+          IconButton(onPressed: onClear, icon: const Icon(Icons.clear)),
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:simplelog/data/import/simplelog_import_options.dart';
+import 'package:simplelog/presentation/shared/widgets/time_input_field.dart';
 
 class SimpleLogImportOptionsDialog extends StatefulWidget {
   const SimpleLogImportOptionsDialog({
@@ -36,15 +37,25 @@ class _SimpleLogImportOptionsDialogState
   late bool _recalcTakeoffLanding;
   late bool _recalcCrossCountry;
   late bool _recalcInstrument;
-  late MergeStrategy _airportStrategy;
-  late MergeStrategy _crewStrategy;
-  late MergeStrategy _aircraftStrategy;
-  late MergeStrategy _aircraftTypeStrategy;
+  late bool _recalcIfr;
+  late bool _overrideAirports;
+  late bool _overrideAircraft;
+  late bool _overrideAircraftTypes;
+
+  bool _showConflictResolution = false;
+  bool _showRecalculations = false;
 
   late final TextEditingController _crossCountryThresholdController;
   late final TextEditingController _instrumentPercentController;
   late final TextEditingController _instrumentMinController;
   late final TextEditingController _instrumentSubtractController;
+  late final TextEditingController _ifrPercentController;
+  late final TextEditingController _ifrMinController;
+  late final TextEditingController _ifrSubtractController;
+  late final TextEditingController _irp3PercentController;
+  late final TextEditingController _irp3SubtractController;
+  late final TextEditingController _irp4PercentController;
+  late final TextEditingController _irp4SubtractController;
 
   @override
   void initState() {
@@ -55,19 +66,44 @@ class _SimpleLogImportOptionsDialogState
     _recalcTakeoffLanding = initial.recalculateTakeoffLanding;
     _recalcCrossCountry = initial.recalculateCrossCountry;
     _recalcInstrument = initial.recalculateInstrument;
-    _airportStrategy = initial.airportStrategy;
-    _crewStrategy = initial.crewStrategy;
-    _aircraftStrategy = initial.aircraftStrategy;
-    _aircraftTypeStrategy = initial.aircraftTypeStrategy;
+    _recalcIfr = initial.recalculateIfrTime;
+    _overrideAirports = initial.overrideAirportValues;
+    _overrideAircraft = initial.overrideAircraftValues;
+    _overrideAircraftTypes = initial.overrideAircraftTypeValues;
 
-    _crossCountryThresholdController =
-        TextEditingController(text: initial.crossCountryThresholdNm.toString());
-    _instrumentPercentController =
-        TextEditingController(text: initial.instrumentPercent.toString());
-    _instrumentMinController =
-        TextEditingController(text: initial.instrumentMinimumMinutes.toString());
-    _instrumentSubtractController =
-        TextEditingController(text: initial.instrumentSubtractMinutes.toString());
+    _crossCountryThresholdController = TextEditingController(
+      text: initial.crossCountryThresholdNm.toString(),
+    );
+    _instrumentPercentController = TextEditingController(
+      text: initial.instrumentPercent.toString(),
+    );
+    _instrumentMinController = TextEditingController(
+      text: TimeInputField.formatMinutes(initial.instrumentMinimumMinutes),
+    );
+    _instrumentSubtractController = TextEditingController(
+      text: TimeInputField.formatMinutes(initial.instrumentSubtractMinutes),
+    );
+    _ifrPercentController = TextEditingController(
+      text: initial.ifrPercent.toString(),
+    );
+    _ifrMinController = TextEditingController(
+      text: TimeInputField.formatMinutes(initial.ifrMinimumMinutes),
+    );
+    _ifrSubtractController = TextEditingController(
+      text: TimeInputField.formatMinutes(initial.ifrSubtractMinutes),
+    );
+    _irp3PercentController = TextEditingController(
+      text: initial.irp3Percent.toString(),
+    );
+    _irp3SubtractController = TextEditingController(
+      text: TimeInputField.formatMinutes(initial.irp3SubtractMinutes),
+    );
+    _irp4PercentController = TextEditingController(
+      text: initial.irp4Percent.toString(),
+    );
+    _irp4SubtractController = TextEditingController(
+      text: TimeInputField.formatMinutes(initial.irp4SubtractMinutes),
+    );
   }
 
   @override
@@ -76,12 +112,18 @@ class _SimpleLogImportOptionsDialogState
     _instrumentPercentController.dispose();
     _instrumentMinController.dispose();
     _instrumentSubtractController.dispose();
+    _ifrPercentController.dispose();
+    _ifrMinController.dispose();
+    _ifrSubtractController.dispose();
+    _irp3PercentController.dispose();
+    _irp3SubtractController.dispose();
+    _irp4PercentController.dispose();
+    _irp4SubtractController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final titleStyle = Theme.of(context).textTheme.titleMedium;
     return Dialog(
       child: SizedBox(
         width: 560,
@@ -98,7 +140,10 @@ class _SimpleLogImportOptionsDialogState
                     const Expanded(
                       child: Text(
                         'Import Options',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -115,93 +160,196 @@ class _SimpleLogImportOptionsDialogState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('File: ${widget.fileName}'),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Defaults: No recalculation. Existing data is kept.',
-                      ),
-                      const SizedBox(height: 16),
-                      Text('Recalculate', style: titleStyle),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Night time'),
-                        value: _recalcNight,
-                        onChanged: (value) =>
-                            setState(() => _recalcNight = value ?? false),
-                      ),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Total time (updates PIC/SIC/etc)'),
-                        value: _recalcTotal,
-                        onChanged: (value) =>
-                            setState(() => _recalcTotal = value ?? false),
-                      ),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Takeoff / Landing day-night'),
-                        value: _recalcTakeoffLanding,
-                        onChanged: (value) => setState(
-                            () => _recalcTakeoffLanding = value ?? false),
-                      ),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Cross-country'),
-                        value: _recalcCrossCountry,
-                        onChanged: (value) => setState(
-                            () => _recalcCrossCountry = value ?? false),
-                      ),
-                      _NumberField(
-                        label: 'Cross-country threshold (NM)',
-                        controller: _crossCountryThresholdController,
-                        enabled: _recalcCrossCountry,
-                      ),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Instrument time'),
-                        value: _recalcInstrument,
-                        onChanged: (value) =>
-                            setState(() => _recalcInstrument = value ?? false),
-                      ),
-                      _NumberField(
-                        label: 'Instrument percent (0-100)',
-                        controller: _instrumentPercentController,
-                        enabled: _recalcInstrument,
-                      ),
-                      _NumberField(
-                        label: 'Instrument minimum minutes',
-                        controller: _instrumentMinController,
-                        enabled: _recalcInstrument,
-                      ),
-                      _NumberField(
-                        label: 'Instrument subtract minutes',
-                        controller: _instrumentSubtractController,
-                        enabled: _recalcInstrument,
-                      ),
                       const SizedBox(height: 12),
-                      Text('Merge strategy', style: titleStyle),
                       const SizedBox(height: 8),
-                      _StrategyDropdown(
-                        label: 'Airports',
-                        value: _airportStrategy,
-                        onChanged: (value) =>
-                            setState(() => _airportStrategy = value),
+                      Card(
+                        margin: EdgeInsets.zero,
+                        child: ExpansionTile(
+                          initiallyExpanded: _showRecalculations,
+                          onExpansionChanged: (expanded) =>
+                              setState(() => _showRecalculations = expanded),
+                          title: const Text('Recalculations'),
+                          childrenPadding: const EdgeInsets.fromLTRB(
+                            16,
+                            0,
+                            16,
+                            8,
+                          ),
+                          children: [
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text(
+                                'Total time (updates PIC/SIC/etc)',
+                              ),
+                              value: _recalcTotal,
+                              onChanged: (value) =>
+                                  setState(() => _recalcTotal = value),
+                            ),
+                            if (_recalcTotal) ...[
+                              _CompactFieldRow(
+                                fields: [
+                                  _CompactFieldSpec.number(
+                                    label: 'IRP3 %',
+                                    controller: _irp3PercentController,
+                                  ),
+                                  _CompactFieldSpec.time(
+                                    label: 'IRP3 Time',
+                                    controller: _irp3SubtractController,
+                                  ),
+                                ],
+                              ),
+                              _CompactFieldRow(
+                                fields: [
+                                  _CompactFieldSpec.number(
+                                    label: 'IRP4 %',
+                                    controller: _irp4PercentController,
+                                  ),
+                                  _CompactFieldSpec.time(
+                                    label: 'IRP4 Time',
+                                    controller: _irp4SubtractController,
+                                  ),
+                                ],
+                              ),
+                            ],
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Night time'),
+                              value: _recalcNight,
+                              onChanged: (value) =>
+                                  setState(() => _recalcNight = value),
+                            ),
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text(
+                                'Takeoff & Landings (day/night)',
+                              ),
+                              value: _recalcTakeoffLanding,
+                              onChanged: (value) =>
+                                  setState(() => _recalcTakeoffLanding = value),
+                            ),
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Cross-country'),
+                              value: _recalcCrossCountry,
+                              onChanged: (value) =>
+                                  setState(() => _recalcCrossCountry = value),
+                            ),
+                            if (_recalcCrossCountry)
+                              _CompactFieldRow(
+                                fields: [
+                                  _CompactFieldSpec.number(
+                                    label: 'Cross-Country NM',
+                                    controller:
+                                        _crossCountryThresholdController,
+                                  ),
+                                ],
+                              ),
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Instrument time'),
+                              value: _recalcInstrument,
+                              onChanged: (value) =>
+                                  setState(() => _recalcInstrument = value),
+                            ),
+                            if (_recalcInstrument) ...[
+                              _CompactFieldRow(
+                                fields: [
+                                  _CompactFieldSpec.number(
+                                    label: 'Instrument %',
+                                    controller: _instrumentPercentController,
+                                  ),
+                                  _CompactFieldSpec.time(
+                                    label: 'Subtracted',
+                                    controller: _instrumentSubtractController,
+                                  ),
+                                  _CompactFieldSpec.time(
+                                    label: 'Minimum',
+                                    controller: _instrumentMinController,
+                                  ),
+                                ],
+                              ),
+                            ],
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('IFR time'),
+                              value: _recalcIfr,
+                              onChanged: (value) =>
+                                  setState(() => _recalcIfr = value),
+                            ),
+                            if (_recalcIfr) ...[
+                              _CompactFieldRow(
+                                fields: [
+                                  _CompactFieldSpec.number(
+                                    label: 'IFR %',
+                                    controller: _ifrPercentController,
+                                  ),
+                                  _CompactFieldSpec.time(
+                                    label: 'Subtracted',
+                                    controller: _ifrSubtractController,
+                                  ),
+                                  _CompactFieldSpec.time(
+                                    label: 'Minimum',
+                                    controller: _ifrMinController,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
-                      _StrategyDropdown(
-                        label: 'Crew',
-                        value: _crewStrategy,
-                        onChanged: (value) =>
-                            setState(() => _crewStrategy = value),
-                      ),
-                      _StrategyDropdown(
-                        label: 'Aircraft',
-                        value: _aircraftStrategy,
-                        onChanged: (value) =>
-                            setState(() => _aircraftStrategy = value),
-                      ),
-                      _StrategyDropdown(
-                        label: 'Aircraft Type',
-                        value: _aircraftTypeStrategy,
-                        onChanged: (value) =>
-                            setState(() => _aircraftTypeStrategy = value),
+                      const SizedBox(height: 8),
+                      Card(
+                        margin: EdgeInsets.zero,
+                        child: ExpansionTile(
+                          initiallyExpanded: _showConflictResolution,
+                          onExpansionChanged: (expanded) => setState(
+                            () => _showConflictResolution = expanded,
+                          ),
+                          title: const Text('Conflict Resolution'),
+                          children: [
+                            SwitchListTile(
+                              contentPadding: const EdgeInsets.fromLTRB(
+                                16,
+                                0,
+                                16,
+                                8,
+                              ),
+                              title: const Text('Override Airport on Conflict'),
+                              value: _overrideAirports,
+                              onChanged: (value) =>
+                                  setState(() => _overrideAirports = value),
+                            ),
+                            SwitchListTile(
+                              contentPadding: const EdgeInsets.fromLTRB(
+                                16,
+                                0,
+                                16,
+                                8,
+                              ),
+                              title: const Text(
+                                'Override Aircraft on Conflict',
+                              ),
+                              value: _overrideAircraft,
+                              onChanged: (value) =>
+                                  setState(() => _overrideAircraft = value),
+                            ),
+                            SwitchListTile(
+                              contentPadding: const EdgeInsets.fromLTRB(
+                                16,
+                                0,
+                                16,
+                                8,
+                              ),
+                              title: const Text(
+                                'Override Aircraft Type on Conflict',
+                              ),
+                              value: _overrideAircraftTypes,
+                              onChanged: (value) => setState(
+                                () => _overrideAircraftTypes = value,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -232,6 +380,15 @@ class _SimpleLogImportOptionsDialogState
     );
   }
 
+  int _parsePercent(TextEditingController c, {int fallback = 0}) {
+    final value = int.tryParse(c.text.trim()) ?? fallback;
+    return value.clamp(0, 100);
+  }
+
+  int _parseTime(TextEditingController c) {
+    return TimeInputField.parseMinutes(c.text.trim()) ?? 0;
+  }
+
   SimpleLogImportOptions _buildOptions() {
     return SimpleLogImportOptions(
       recalculateNightTime: _recalcNight,
@@ -241,89 +398,93 @@ class _SimpleLogImportOptionsDialogState
       crossCountryThresholdNm:
           int.tryParse(_crossCountryThresholdController.text.trim()) ?? 50,
       recalculateInstrument: _recalcInstrument,
-      instrumentPercent:
-          int.tryParse(_instrumentPercentController.text.trim()) ?? 0,
-      instrumentMinimumMinutes:
-          int.tryParse(_instrumentMinController.text.trim()) ?? 0,
-      instrumentSubtractMinutes:
-          int.tryParse(_instrumentSubtractController.text.trim()) ?? 0,
-      airportStrategy: _airportStrategy,
-      crewStrategy: _crewStrategy,
-      aircraftStrategy: _aircraftStrategy,
-      aircraftTypeStrategy: _aircraftTypeStrategy,
+      instrumentPercent: _parsePercent(_instrumentPercentController),
+      instrumentMinimumMinutes: _parseTime(_instrumentMinController),
+      instrumentSubtractMinutes: _parseTime(_instrumentSubtractController),
+      recalculateIfrTime: _recalcIfr,
+      ifrPercent: _parsePercent(_ifrPercentController),
+      ifrMinimumMinutes: _parseTime(_ifrMinController),
+      ifrSubtractMinutes: _parseTime(_ifrSubtractController),
+      irp3Percent: _parsePercent(_irp3PercentController, fallback: 100),
+      irp3SubtractMinutes: _parseTime(_irp3SubtractController),
+      irp4Percent: _parsePercent(_irp4PercentController, fallback: 100),
+      irp4SubtractMinutes: _parseTime(_irp4SubtractController),
+      overrideAirportValues: _overrideAirports,
+      overrideAircraftValues: _overrideAircraft,
+      overrideAircraftTypeValues: _overrideAircraftTypes,
     );
   }
 }
 
-class _NumberField extends StatelessWidget {
-  const _NumberField({
+class _CompactFieldSpec {
+  const _CompactFieldSpec._({
     required this.label,
     required this.controller,
-    required this.enabled,
+    required this.isTime,
   });
+
+  const _CompactFieldSpec.number({
+    required String label,
+    required TextEditingController controller,
+  }) : this._(label: label, controller: controller, isTime: false);
+
+  const _CompactFieldSpec.time({
+    required String label,
+    required TextEditingController controller,
+  }) : this._(label: label, controller: controller, isTime: true);
 
   final String label;
   final TextEditingController controller;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: TextField(
-        controller: controller,
-        enabled: enabled,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
-      ),
-    );
-  }
+  final bool isTime;
 }
 
-class _StrategyDropdown extends StatelessWidget {
-  const _StrategyDropdown({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
+class _CompactFieldRow extends StatelessWidget {
+  const _CompactFieldRow({required this.fields});
 
-  final String label;
-  final MergeStrategy value;
-  final ValueChanged<MergeStrategy> onChanged;
+  final List<_CompactFieldSpec> fields;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: DropdownButtonFormField<MergeStrategy>(
-        key: ValueKey(value),
-        initialValue: value,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
-        items: const [
-          DropdownMenuItem(
-            value: MergeStrategy.keep,
-            child: Text('Keep'),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final spacing = 8.0;
+        final count = fields.length;
+        final totalSpacing = (count - 1) * spacing;
+        final eachWidth = count == 0
+            ? constraints.maxWidth
+            : (constraints.maxWidth - totalSpacing) / count;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Wrap(
+            spacing: spacing,
+            runSpacing: 8,
+            children: [
+              for (final field in fields)
+                SizedBox(
+                  width: eachWidth,
+                  child: field.isTime
+                      ? TimeInputField(
+                          controller: field.controller,
+                          label: field.label,
+                          maxHours: 999,
+                        )
+                      : TextField(
+                          controller: field.controller,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          decoration: InputDecoration(
+                            labelText: field.label,
+                            border: const OutlineInputBorder(),
+                          ),
+                        ),
+                ),
+            ],
           ),
-          DropdownMenuItem(
-            value: MergeStrategy.override,
-            child: Text('Override'),
-          ),
-          DropdownMenuItem(
-            value: MergeStrategy.mix,
-            child: Text('Mix'),
-          ),
-        ],
-        onChanged: (value) {
-          if (value != null) onChanged(value);
-        },
-      ),
+        );
+      },
     );
   }
 }

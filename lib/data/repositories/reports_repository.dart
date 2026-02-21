@@ -35,43 +35,47 @@ class ReportsRepository {
     final custom3Expr = _db.flights.timeCustom3Minutes.sum();
     final custom4Expr = _db.flights.timeCustom4Minutes.sum();
 
-    final query = _db.selectOnly(_db.flights).join([
-      innerJoin(
-        depTimeLines,
-        depTimeLines.id.equalsExp(_db.flights.departureDateTimeId),
-      ),
-      innerJoin(_db.aircrafts, _db.aircrafts.id.equalsExp(_db.flights.aircraftId)),
-      leftOuterJoin(
-        _db.aircraftTypes,
-        _db.aircraftTypes.id.equalsExp(_db.aircrafts.aircraftTypeId),
-      ),
-    ])
-      ..where(depTimeLines.eventDateTime.isBiggerOrEqualValue(from))
-      ..where(depTimeLines.eventDateTime.isSmallerOrEqualValue(to))
-      ..where(_db.aircrafts.isSimulator.equals(false))
-      ..addColumns([
-        sectorsExpr,
-        takeoffDayExpr,
-        takeoffNightExpr,
-        landingDayExpr,
-        landingNightExpr,
-        ifrApproachesExpr,
-        distanceExpr,
-        totalExpr,
-        nightExpr,
-        ifrExpr,
-        simInstExpr,
-        picExpr,
-        picusExpr,
-        sicExpr,
-        dualExpr,
-        instructorExpr,
-        xcExpr,
-        custom1Expr,
-        custom2Expr,
-        custom3Expr,
-        custom4Expr,
-      ]);
+    final query =
+        _db.selectOnly(_db.flights).join([
+            innerJoin(
+              depTimeLines,
+              depTimeLines.id.equalsExp(_db.flights.departureDateTimeId),
+            ),
+            innerJoin(
+              _db.aircrafts,
+              _db.aircrafts.id.equalsExp(_db.flights.aircraftId),
+            ),
+            leftOuterJoin(
+              _db.aircraftTypes,
+              _db.aircraftTypes.id.equalsExp(_db.aircrafts.aircraftTypeId),
+            ),
+          ])
+          ..where(depTimeLines.eventDateTime.isBiggerOrEqualValue(from))
+          ..where(depTimeLines.eventDateTime.isSmallerOrEqualValue(to))
+          ..where(_db.aircrafts.isSimulator.equals(false))
+          ..addColumns([
+            sectorsExpr,
+            takeoffDayExpr,
+            takeoffNightExpr,
+            landingDayExpr,
+            landingNightExpr,
+            ifrApproachesExpr,
+            distanceExpr,
+            totalExpr,
+            nightExpr,
+            ifrExpr,
+            simInstExpr,
+            picExpr,
+            picusExpr,
+            sicExpr,
+            dualExpr,
+            instructorExpr,
+            xcExpr,
+            custom1Expr,
+            custom2Expr,
+            custom3Expr,
+            custom4Expr,
+          ]);
 
     final row = await query.getSingle();
     var totals = ReportsTotals(
@@ -108,7 +112,8 @@ class ReportsRepository {
       dutyMinutes: dutyMinutes,
     );
     if (includePreviousExperience) {
-      totals = totals +
+      totals =
+          totals +
           await _sumPreviousExperience(
             ReportsQuery(
               from: from,
@@ -126,87 +131,96 @@ class ReportsRepository {
     final depTimeLines = _db.alias(_db.timeLines, 'report_dep_tl');
     final depAirports = _db.alias(_db.airports, 'report_dep_airports');
     final arrAirports = _db.alias(_db.airports, 'report_arr_airports');
-    final flightsQuery = _db.select(_db.flights).join([
-      innerJoin(
-        depTimeLines,
-        depTimeLines.id.equalsExp(_db.flights.departureDateTimeId),
-      ),
-      innerJoin(_db.aircrafts, _db.aircrafts.id.equalsExp(_db.flights.aircraftId)),
-      leftOuterJoin(
-        _db.aircraftTypes,
-        _db.aircraftTypes.id.equalsExp(_db.aircrafts.aircraftTypeId),
-      ),
-      leftOuterJoin(
-        depAirports,
-        depAirports.id.equalsExp(_db.flights.departureAirportId),
-      ),
-      leftOuterJoin(
-        arrAirports,
-        arrAirports.id.equalsExp(_db.flights.arrivalAirportId),
-      ),
-    ])
-      ..where(depTimeLines.eventDateTime.isBiggerOrEqualValue(query.from))
-      ..where(depTimeLines.eventDateTime.isSmallerOrEqualValue(query.to))
-      ..orderBy([OrderingTerm.desc(depTimeLines.eventDateTime)]);
+    final flightsQuery =
+        _db.select(_db.flights).join([
+            innerJoin(
+              depTimeLines,
+              depTimeLines.id.equalsExp(_db.flights.departureDateTimeId),
+            ),
+            innerJoin(
+              _db.aircrafts,
+              _db.aircrafts.id.equalsExp(_db.flights.aircraftId),
+            ),
+            leftOuterJoin(
+              _db.aircraftTypes,
+              _db.aircraftTypes.id.equalsExp(_db.aircrafts.aircraftTypeId),
+            ),
+            leftOuterJoin(
+              depAirports,
+              depAirports.id.equalsExp(_db.flights.departureAirportId),
+            ),
+            leftOuterJoin(
+              arrAirports,
+              arrAirports.id.equalsExp(_db.flights.arrivalAirportId),
+            ),
+          ])
+          ..where(depTimeLines.eventDateTime.isBiggerOrEqualValue(query.from))
+          ..where(depTimeLines.eventDateTime.isSmallerOrEqualValue(query.to))
+          ..orderBy([OrderingTerm.desc(depTimeLines.eventDateTime)]);
 
     final rows = await flightsQuery.get();
     final pilotNamesByFlight = await _fetchPilotNamesByFlight(
       rows.map((row) => row.readTable(_db.flights).id).toList(growable: false),
     );
-    final flightData = rows.map((row) {
-      final flight = row.readTable(_db.flights);
-      final depTime = row.readTable(depTimeLines);
-      final aircraft = row.readTable(_db.aircrafts);
-      final type = row.readTableOrNull(_db.aircraftTypes);
-      final depAirport = row.readTableOrNull(depAirports);
-      final arrAirport = row.readTableOrNull(arrAirports);
-      return _ReportFlightData(
-        row: ReportsFlightRow(
-          flightId: flight.id,
-          departureDateTime: depTime.eventDateTime,
-          registration: aircraft.registration,
-          modelCode: type?.code ?? '',
-          modelFamily: type?.family ?? '',
-          fromIcao: depAirport?.icao ?? '',
-          toIcao: arrAirport?.icao ?? '',
-          fromLatitude: depAirport?.latitude,
-          fromLongitude: depAirport?.longitude,
-          toLatitude: arrAirport?.latitude,
-          toLongitude: arrAirport?.longitude,
-          totalMinutes: flight.timeBlockMinutes,
-          picMinutes: flight.timePICMinutes,
-          picusMinutes: flight.timePICUSMinutes,
-          sicMinutes: flight.timeSICMinutes,
-          dualMinutes: flight.timeDualMinutes,
-          ifrMinutes: flight.timeIFRMinutes,
-          instrumentMinutes:
-              flight.timeInstrumentMinutes + flight.timeSimulatedInstrumentMinutes,
-          nightMinutes: flight.timeNightMinutes,
-          landings: flight.landingsDay + flight.landingsNight,
-        ),
-        flight: flight,
-        isSimulator: aircraft.isSimulator,
-        isMultiPilot: type?.multiPilot == true,
-        departureIcao: depAirport?.icao ?? '',
-        departureIata: depAirport?.iata ?? '',
-        departureName: depAirport?.name ?? '',
-        departureCity: depAirport?.city ?? '',
-        departureCountry: depAirport?.country ?? '',
-        arrivalIcao: arrAirport?.icao ?? '',
-        arrivalIata: arrAirport?.iata ?? '',
-        arrivalName: arrAirport?.name ?? '',
-        arrivalCity: arrAirport?.city ?? '',
-        arrivalCountry: arrAirport?.country ?? '',
-        aircraftTail: aircraft.registration,
-        aircraftTypeCode: type?.code ?? '',
-        aircraftTypeFamily: type?.family ?? '',
-        aircraftTypeName: type?.longName ?? '',
-        pilotNames: pilotNamesByFlight[flight.id] ?? '',
-        approachType: flight.approachType,
-        remarks: flight.remarks,
-        notes: flight.notes,
-      );
-    }).toList(growable: false);
+    final flightData = rows
+        .map((row) {
+          final flight = row.readTable(_db.flights);
+          final depTime = row.readTable(depTimeLines);
+          final aircraft = row.readTable(_db.aircrafts);
+          final type = row.readTableOrNull(_db.aircraftTypes);
+          final depAirport = row.readTableOrNull(depAirports);
+          final arrAirport = row.readTableOrNull(arrAirports);
+          return _ReportFlightData(
+            row: ReportsFlightRow(
+              flightId: flight.id,
+              departureDateTime: depTime.eventDateTime,
+              registration: aircraft.registration,
+              modelCode: type?.code ?? '',
+              modelFamily: type?.family ?? '',
+              fromIcao: depAirport?.icao ?? '',
+              toIcao: arrAirport?.icao ?? '',
+              pilotNames: pilotNamesByFlight[flight.id] ?? '',
+              fromLatitude: depAirport?.latitude,
+              fromLongitude: depAirport?.longitude,
+              toLatitude: arrAirport?.latitude,
+              toLongitude: arrAirport?.longitude,
+              totalMinutes: flight.timeBlockMinutes,
+              picMinutes: flight.timePICMinutes,
+              picusMinutes: flight.timePICUSMinutes,
+              sicMinutes: flight.timeSICMinutes,
+              dualMinutes: flight.timeDualMinutes,
+              ifrMinutes: flight.timeIFRMinutes,
+              instrumentMinutes:
+                  flight.timeInstrumentMinutes +
+                  flight.timeSimulatedInstrumentMinutes,
+              nightMinutes: flight.timeNightMinutes,
+              takeoffs: flight.takeOffsDays + flight.takeOffsNight,
+              landings: flight.landingsDay + flight.landingsNight,
+            ),
+            flight: flight,
+            isSimulator: aircraft.isSimulator,
+            isMultiPilot: type?.multiPilot == true,
+            departureIcao: depAirport?.icao ?? '',
+            departureIata: depAirport?.iata ?? '',
+            departureName: depAirport?.name ?? '',
+            departureCity: depAirport?.city ?? '',
+            departureCountry: depAirport?.country ?? '',
+            arrivalIcao: arrAirport?.icao ?? '',
+            arrivalIata: arrAirport?.iata ?? '',
+            arrivalName: arrAirport?.name ?? '',
+            arrivalCity: arrAirport?.city ?? '',
+            arrivalCountry: arrAirport?.country ?? '',
+            aircraftTail: aircraft.registration,
+            aircraftTypeCode: type?.code ?? '',
+            aircraftTypeFamily: type?.family ?? '',
+            aircraftTypeName: type?.longName ?? '',
+            pilotNames: pilotNamesByFlight[flight.id] ?? '',
+            approachType: flight.approachType,
+            remarks: flight.remarks,
+            notes: flight.notes,
+          );
+        })
+        .toList(growable: false);
 
     final filteredFlightData = _applyFilters(
       flightData,
@@ -217,11 +231,10 @@ class ReportsRepository {
       from: query.from,
       to: query.to,
     );
-    final dutyMinutes = await _sumDutyMinutes(
-      from: query.from,
-      to: query.to,
-    );
-    final flights = filteredFlightData.map((e) => e.row).toList(growable: false);
+    final dutyMinutes = await _sumDutyMinutes(from: query.from, to: query.to);
+    final flights = filteredFlightData
+        .map((e) => e.row)
+        .toList(growable: false);
 
     var totals = _sumFlightData(filteredFlightData).copyWithExtraTimes(
       simulatorMinutes: simulatorMinutes,
@@ -238,7 +251,8 @@ class ReportsRepository {
     for (final row in rows) {
       final flight = row.flight;
       if (row.isSimulator) {
-        totals = totals +
+        totals =
+            totals +
             ReportsTotals(
               sectors: 0,
               takeoffsDay: 0,
@@ -267,7 +281,8 @@ class ReportsRepository {
             );
         continue;
       }
-      totals = totals +
+      totals =
+          totals +
           ReportsTotals(
             sectors: 1,
             takeoffsDay: flight.takeOffsDays,
@@ -292,8 +307,9 @@ class ReportsRepository {
             custom2Minutes: flight.timeCustom2Minutes,
             custom3Minutes: flight.timeCustom3Minutes,
             custom4Minutes: flight.timeCustom4Minutes,
-            multiPilotMinutes:
-                (!row.isSimulator && row.isMultiPilot) ? flight.timeBlockMinutes : 0,
+            multiPilotMinutes: (!row.isSimulator && row.isMultiPilot)
+                ? flight.timeBlockMinutes
+                : 0,
           );
     }
     return totals;
@@ -308,9 +324,7 @@ class ReportsRepository {
         _db.crew,
         _db.crew.id.equalsExp(_db.flightCrewAssignments.crewId),
       ),
-    ])
-          ..where(_db.flightCrewAssignments.flightId.isIn(flightIds)))
-        .get();
+    ])..where(_db.flightCrewAssignments.flightId.isIn(flightIds))).get();
 
     final map = <int, List<String>>{};
     for (final row in rows) {
@@ -329,13 +343,15 @@ class ReportsRepository {
     ReportsFilterMatchMode mode,
   ) {
     if (filters.isEmpty) return rows;
-    return rows.where((row) {
-      final matches = filters.map((f) => _matchesFilter(row, f));
-      if (mode == ReportsFilterMatchMode.all) {
-        return matches.every((m) => m);
-      }
-      return matches.any((m) => m);
-    }).toList(growable: false);
+    return rows
+        .where((row) {
+          final matches = filters.map((f) => _matchesFilter(row, f));
+          if (mode == ReportsFilterMatchMode.all) {
+            return matches.every((m) => m);
+          }
+          return matches.any((m) => m);
+        })
+        .toList(growable: false);
   }
 
   bool _matchesFilter(_ReportFlightData row, ReportsFilterCondition filter) {
@@ -500,10 +516,7 @@ class ReportsRepository {
     }
   }
 
-  Future<int> _sumSimulatorMinutes({
-    DateTime? from,
-    DateTime? to,
-  }) async {
+  Future<int> _sumSimulatorMinutes({DateTime? from, DateTime? to}) async {
     final startTimeLines = _db.alias(_db.timeLines, 'report_sim_tl');
     final minutesExpr = _db.simulatorTrainings.timeTotal.sum();
     final query = _db.selectOnly(_db.simulatorTrainings).join([
@@ -511,8 +524,7 @@ class ReportsRepository {
         startTimeLines,
         startTimeLines.id.equalsExp(_db.simulatorTrainings.startTimeLineId),
       ),
-    ])
-      ..addColumns([minutesExpr]);
+    ])..addColumns([minutesExpr]);
     if (from != null) {
       query.where(startTimeLines.eventDateTime.isBiggerOrEqualValue(from));
     }
@@ -523,10 +535,7 @@ class ReportsRepository {
     return row.read(minutesExpr) ?? 0;
   }
 
-  Future<int> _sumDutyMinutes({
-    DateTime? from,
-    DateTime? to,
-  }) async {
+  Future<int> _sumDutyMinutes({DateTime? from, DateTime? to}) async {
     final startTimeLines = _db.alias(_db.timeLines, 'report_duty_tl');
     final minutesExpr = _db.dutyPeriods.timeDutyMinutes.sum();
     final query = _db.selectOnly(_db.dutyPeriods).join([
@@ -534,8 +543,7 @@ class ReportsRepository {
         startTimeLines,
         startTimeLines.id.equalsExp(_db.dutyPeriods.dutyStartTimeLineId),
       ),
-    ])
-      ..addColumns([minutesExpr]);
+    ])..addColumns([minutesExpr]);
     if (from != null) {
       query.where(startTimeLines.eventDateTime.isBiggerOrEqualValue(from));
     }
@@ -559,7 +567,8 @@ class ReportsRepository {
       if (!includesStart || !includesEnd) {
         continue;
       }
-      totals = totals +
+      totals =
+          totals +
           ReportsTotals(
             sectors: 0,
             takeoffsDay: exp.takeOffsDays,

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/data/models/airport_row.dart';
@@ -14,10 +16,7 @@ import 'package:simplelog/presentation/shared/widgets/time_input_field.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
 class PositioningEditScreen extends ConsumerStatefulWidget {
-  const PositioningEditScreen({
-    super.key,
-    this.positioningId,
-  });
+  const PositioningEditScreen({super.key, this.positioningId});
 
   final int? positioningId;
 
@@ -69,17 +68,21 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       return;
     }
     final useCases = ref.read(logbookUseCasesProvider);
-    final loaded = await useCases.loadPositioningEditData(widget.positioningId!);
+    final loaded = await useCases.loadPositioningEditData(
+      widget.positioningId!,
+    );
     if (!mounted) return;
     if (loaded == null) {
       setState(() => _loading = false);
       return;
     }
     _positioning = loaded.positioning;
-    _departure = loaded.departureLine?.eventDateTime ?? DateTime.now();
+    _departure = loaded.departureLine == null
+        ? DateTime.now()
+        : DbDateTime.dbToUtc(loaded.departureLine!.eventDateTime);
     _departureAirportId = loaded.positioning.departurePlaceId;
     _arrivalAirportId = loaded.positioning.arrivalPlaceId;
-    _arrival = loaded.positioning.arrivalDateTime;
+    _arrival = DbDateTime.dbToUtcOrNull(loaded.positioning.arrivalDateTime);
     _departureTimeController.text = TimeInputField.formatMinutes(
       _departure.hour * 60 + _departure.minute,
     );
@@ -87,8 +90,9 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
         ? ''
         : TimeInputField.formatMinutes(_arrival!.hour * 60 + _arrival!.minute);
     _notesController.text = loaded.positioning.notes;
-    _timeController.text =
-        TimeInputField.formatMinutes(loaded.positioning.timeTotalMinutes);
+    _timeController.text = TimeInputField.formatMinutes(
+      loaded.positioning.timeTotalMinutes,
+    );
     setState(() => _loading = false);
   }
 
@@ -155,18 +159,16 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     );
     final result = await _showStandardFormDialog<dynamic>(
       context,
-      AirportEditScreen(
-        item: placeholder,
-        isCreate: true,
-      ),
+      AirportEditScreen(item: placeholder, isCreate: true),
     );
 
     if (!mounted) return;
     final id = result is int ? result : null;
     if (id == null) return;
     final db = ref.read(databaseProvider);
-    final created =
-        await (db.select(db.airports)..where((t) => t.id.equals(id))).getSingleOrNull();
+    final created = await (db.select(
+      db.airports,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
     if (!mounted || created == null) return;
     setState(() {
       if (asDeparture) {
@@ -241,7 +243,9 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     }
     if (arrival != null &&
         arrival.difference(_departure) > const Duration(hours: 24)) {
-      await _showError('Arrival time cannot be more than 24 hours after departure.');
+      await _showError(
+        'Arrival time cannot be more than 24 hours after departure.',
+      );
       return;
     }
     final parsed = TimeInputField.parseMinutes(_timeController.text);
@@ -255,8 +259,8 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       await useCases.createPositioning(
         departureAirportId: _departureAirportId!,
         arrivalAirportId: _arrivalAirportId!,
-        departureDateTime: _departure,
-        arrivalDateTime: arrival,
+        departureDateTime: DbDateTime.wallClockToDbUtc(_departure),
+        arrivalDateTime: DbDateTime.wallClockToDbUtcOrNull(arrival),
         totalMinutes: parsed,
         notes: _notesController.text.trim(),
       );
@@ -265,8 +269,8 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       if (item == null) return;
       await useCases.updatePositioning(
         positioning: item,
-        departureDateTime: _departure,
-        arrivalDateTime: arrival,
+        departureDateTime: DbDateTime.wallClockToDbUtc(_departure),
+        arrivalDateTime: DbDateTime.wallClockToDbUtcOrNull(arrival),
         departureAirportId: _departureAirportId!,
         arrivalAirportId: _arrivalAirportId!,
         totalMinutes: parsed,
@@ -314,12 +318,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isCreate ? 'New Positioning' : 'Edit Positioning'),
-        actions: [
-          TextButton(
-            onPressed: _save,
-            child: Text(l10n.saveAction),
-          ),
-        ],
+        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
       ),
       body: Form(
         key: _formKey,
@@ -389,8 +388,9 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
                       : () {
                           final calculated = _calculatedMinutes();
                           setState(() {
-                            _timeController.text =
-                                TimeInputField.formatMinutes(calculated);
+                            _timeController.text = TimeInputField.formatMinutes(
+                              calculated,
+                            );
                             _timeEdited = false;
                           });
                         },
@@ -478,17 +478,10 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       context: context,
       builder: (_) => Dialog(
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 520,
-            maxHeight: maxHeight,
-          ),
-          child: SizedBox(
-            width: 520,
-            child: child,
-          ),
+          constraints: BoxConstraints(maxWidth: 520, maxHeight: maxHeight),
+          child: SizedBox(width: 520, child: child),
         ),
       ),
     );
   }
-
 }

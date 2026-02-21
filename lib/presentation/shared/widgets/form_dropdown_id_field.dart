@@ -10,6 +10,7 @@ class FormDropdownIdField<T> extends StatelessWidget {
     required this.itemValue,
     required this.onChanged,
     this.isRequired = false,
+    this.showRequiredError = true,
     this.isDense = false,
   });
 
@@ -20,6 +21,7 @@ class FormDropdownIdField<T> extends StatelessWidget {
   final int Function(T value) itemValue;
   final ValueChanged<int?> onChanged;
   final bool isRequired;
+  final bool showRequiredError;
   final bool isDense;
 
   @override
@@ -30,7 +32,7 @@ class FormDropdownIdField<T> extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
-          errorText: isRequired && value == null ? '' : null,
+          errorText: isRequired && showRequiredError && value == null ? '' : null,
           isDense: isDense,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,

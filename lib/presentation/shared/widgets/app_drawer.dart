@@ -17,8 +17,6 @@ class AppDrawer extends StatelessWidget {
     AppScreen.airports,
     AppScreen.crew,
     AppScreen.dashboard,
-    AppScreen.reports,
-    AppScreen.database,
     AppScreen.settings,
   ];
 
@@ -90,7 +88,6 @@ String _screenLabel(AppLocalizations l10n, AppScreen screen) {
     AppScreen.aircraftTypes => l10n.screenAircraftTypes,
     AppScreen.airports => l10n.screenAirports,
     AppScreen.crew => l10n.screenCrew,
-    AppScreen.reports => l10n.screenReports,
     AppScreen.database => l10n.screenDatabase,
     AppScreen.settings => l10n.screenSettings,
   };
@@ -104,7 +101,6 @@ IconData _screenIcon(AppScreen screen) {
     AppScreen.aircraftTypes => Icons.category_outlined,
     AppScreen.airports => Icons.location_on_outlined,
     AppScreen.crew => Icons.people_outline,
-    AppScreen.reports => Icons.bar_chart_outlined,
     AppScreen.database => Icons.storage_outlined,
     AppScreen.settings => Icons.settings_outlined,
   };

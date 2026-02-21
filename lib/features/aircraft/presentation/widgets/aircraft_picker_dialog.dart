@@ -45,8 +45,12 @@ class AircraftPickerDialog extends StatelessWidget {
       itemKey: (row) => row.id,
       itemTitle: (row) => row.registration,
       itemSubtitle: (row) => row.type?.code ?? row.type?.longName ?? '-',
-      itemTrailingBuilder: (_, row) =>
-          row.aircraft.isSimulator ? const Icon(Icons.monitor, size: 18) : null,
+      itemTrailingBuilder: (_, row) => Icon(
+        row.aircraft.isSimulator
+            ? Icons.videogame_asset_outlined
+            : Icons.airplanemode_active_outlined,
+        size: 18,
+      ),
       isFavorite: (row) => row.aircraft.isFavorite,
       onToggleFavorite: (ref, row) async {
         await ref.read(aircraftControllerProvider.notifier).toggleFavorite(

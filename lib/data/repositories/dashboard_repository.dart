@@ -10,11 +10,9 @@ class DashboardRepository {
   String? _cachedFlightsIfrColumnName;
 
   Stream<List<LimitRule>> watchRules() {
-    return (_db.select(_db.limitRules)
-          ..orderBy([
-            (t) => OrderingTerm.asc(t.ruleName),
-          ]))
-        .watch();
+    return (_db.select(
+      _db.limitRules,
+    )..orderBy([(t) => OrderingTerm.asc(t.ruleName)])).watch();
   }
 
   Future<int> createRule(LimitRulesCompanion companion) {
@@ -26,19 +24,22 @@ class DashboardRepository {
   }
 
   Future<void> deleteRule(int ruleId) async {
-    await (_db.delete(_db.limitRules)..where((t) => t.ruleId.equals(ruleId))).go();
+    await (_db.delete(
+      _db.limitRules,
+    )..where((t) => t.ruleId.equals(ruleId))).go();
   }
 
   Future<DashboardRuleDetails> loadRuleDetails(LimitRule rule) async {
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final window = _resolveWindow(now, rule.windowType, rule.windowValue);
     final start = Variable.withDateTime(window.$1);
     final end = Variable.withDateTime(window.$2);
     final vars = <Variable>[start, end];
     final ifrColumn = await _resolveFlightsIfrColumnName();
 
-    final flightsTotalsRow = await _db.customSelect(
-      '''
+    final flightsTotalsRow = await _db
+        .customSelect(
+          '''
 SELECT
   COUNT(*) AS flights_count,
   COALESCE(SUM(f.time_block_minutes), 0) AS block_minutes,
@@ -51,20 +52,23 @@ FROM flights f
 INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
 WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
 ''',
-      variables: vars,
-      readsFrom: {_db.flights, _db.timeLines},
-    ).getSingle();
+          variables: vars,
+          readsFrom: {_db.flights, _db.timeLines},
+        )
+        .getSingle();
 
-    final dutyTotalsRow = await _db.customSelect(
-      '''
+    final dutyTotalsRow = await _db
+        .customSelect(
+          '''
 SELECT COALESCE(SUM(d.time_duty_minutes), 0) AS duty_minutes
 FROM duty_periods d
 INNER JOIN time_lines tl ON tl.id = d.duty_start_time_line_id
 WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
 ''',
-      variables: vars,
-      readsFrom: {_db.dutyPeriods, _db.timeLines},
-    ).getSingle();
+          variables: vars,
+          readsFrom: {_db.dutyPeriods, _db.timeLines},
+        )
+        .getSingle();
 
     return DashboardRuleDetails(
       windowStart: window.$1,
@@ -105,7 +109,7 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
     final rules = await rulesQuery.get();
     if (rules.isEmpty) return const [];
 
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final cards = <DashboardRuleCard>[];
     for (final rule in rules) {
       final window = _resolveWindow(now, rule.windowType, rule.windowValue);
@@ -143,48 +147,54 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
 
     final metric = rule.metric.toLowerCase();
     if (metric == 'duty' || metric == 'duty_time') {
-      final row = await _db.customSelect(
-        '''
+      final row = await _db
+          .customSelect(
+            '''
 SELECT COALESCE(SUM(d.time_duty_minutes), 0) AS value
 FROM duty_periods d
 INNER JOIN time_lines tl ON tl.id = d.duty_start_time_line_id
 WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
 ''',
-        variables: vars,
-        readsFrom: {_db.dutyPeriods, _db.timeLines},
-      ).getSingle();
+            variables: vars,
+            readsFrom: {_db.dutyPeriods, _db.timeLines},
+          )
+          .getSingle();
       final value = _readNumeric(row, 'value');
       return _convertByUnit(value, rule.limitUnit);
     }
 
     if (metric == 'ifr') {
       final ifrColumn = await _resolveFlightsIfrColumnName();
-      final row = await _db.customSelect(
-        '''
+      final row = await _db
+          .customSelect(
+            '''
 SELECT COALESCE(SUM(f.$ifrColumn), 0) AS value
 FROM flights f
 INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
 WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
 ''',
-        variables: vars,
-        readsFrom: {_db.flights, _db.timeLines},
-      ).getSingle();
+            variables: vars,
+            readsFrom: {_db.flights, _db.timeLines},
+          )
+          .getSingle();
       final value = _readNumeric(row, 'value');
       return _convertByUnit(value, rule.limitUnit);
     }
 
     final field = _flightMetricExpression(metric);
     if (field != null) {
-      final row = await _db.customSelect(
-        '''
+      final row = await _db
+          .customSelect(
+            '''
 SELECT COALESCE(SUM($field), 0) AS value
 FROM flights f
 INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
 WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
 ''',
-        variables: vars,
-        readsFrom: {_db.flights, _db.timeLines},
-      ).getSingle();
+            variables: vars,
+            readsFrom: {_db.flights, _db.timeLines},
+          )
+          .getSingle();
       final value = _readNumeric(row, 'value');
       return _convertByUnit(value, rule.limitUnit);
     }
@@ -221,17 +231,19 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
     final cleanType = parsed.$1;
     final reference = parsed.$2;
     final v = value <= 0 ? 1 : value;
-    final endOfToday = DateTime(now.year, now.month, now.day + 1).subtract(
-      const Duration(milliseconds: 1),
-    );
+    final endOfToday = DateTime.utc(
+      now.year,
+      now.month,
+      now.day + 1,
+    ).subtract(const Duration(milliseconds: 1));
     final anchor = switch (reference) {
       'same_time' => now,
-      'midnight_local' => DateTime(now.year, now.month, now.day),
+      'midnight_local' => DateTime.utc(now.year, now.month, now.day),
       'midnight_utc' => DateTime.utc(
-          now.toUtc().year,
-          now.toUtc().month,
-          now.toUtc().day,
-        ),
+        now.toUtc().year,
+        now.toUtc().month,
+        now.toUtc().day,
+      ),
       _ => now,
     };
 
@@ -251,39 +263,47 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
       case 'calendar_day':
       case 'calendar_days':
         return (
-          DateTime(now.year, now.month, now.day).subtract(
-            Duration(days: v - 1),
-          ),
+          DateTime.utc(
+            now.year,
+            now.month,
+            now.day,
+          ).subtract(Duration(days: v - 1)),
           endOfToday,
         );
       case 'calendar_month':
       case 'calendar_months':
         return (
-          DateTime(now.year, now.month - (v - 1), 1),
-          DateTime(now.year, now.month + 1, 1).subtract(
-            const Duration(milliseconds: 1),
-          ),
+          DateTime.utc(now.year, now.month - (v - 1), 1),
+          DateTime.utc(
+            now.year,
+            now.month + 1,
+            1,
+          ).subtract(const Duration(milliseconds: 1)),
         );
       case 'calendar_year':
       case 'calendar_years':
         return (
-          DateTime(now.year - (v - 1), 1, 1),
-          DateTime(now.year + 1, 1, 1).subtract(
-            const Duration(milliseconds: 1),
-          ),
+          DateTime.utc(now.year - (v - 1), 1, 1),
+          DateTime.utc(
+            now.year + 1,
+            1,
+            1,
+          ).subtract(const Duration(milliseconds: 1)),
         );
       case 'calendar_quarter':
         final quarterStartMonth = ((now.month - 1) ~/ 3) * 3 + 1;
-        final quarterStart = DateTime(now.year, quarterStartMonth, 1);
+        final quarterStart = DateTime.utc(now.year, quarterStartMonth, 1);
         return (
-          DateTime(
+          DateTime.utc(
             quarterStart.year,
             quarterStart.month - (3 * (v - 1)),
             1,
           ),
-          DateTime(now.year, quarterStartMonth + 3, 1).subtract(
-            const Duration(milliseconds: 1),
-          ),
+          DateTime.utc(
+            now.year,
+            quarterStartMonth + 3,
+            1,
+          ).subtract(const Duration(milliseconds: 1)),
         );
       default:
         return (anchor.subtract(Duration(days: v)), anchor);
@@ -373,7 +393,10 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
     final totalMonths = value.year * 12 + (value.month - 1) - months;
     final targetYear = totalMonths ~/ 12;
     final targetMonth = (totalMonths % 12) + 1;
-    final targetDay = math.min(value.day, _daysInMonth(targetYear, targetMonth));
+    final targetDay = math.min(
+      value.day,
+      _daysInMonth(targetYear, targetMonth),
+    );
     if (value.isUtc) {
       return DateTime.utc(
         targetYear,
@@ -386,7 +409,7 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
         value.microsecond,
       );
     }
-    return DateTime(
+    return DateTime.utc(
       targetYear,
       targetMonth,
       targetDay,
@@ -400,7 +423,10 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
 
   DateTime _subtractYears(DateTime value, int years) {
     final targetYear = value.year - years;
-    final targetDay = math.min(value.day, _daysInMonth(targetYear, value.month));
+    final targetDay = math.min(
+      value.day,
+      _daysInMonth(targetYear, value.month),
+    );
     if (value.isUtc) {
       return DateTime.utc(
         targetYear,
@@ -413,7 +439,7 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
         value.microsecond,
       );
     }
-    return DateTime(
+    return DateTime.utc(
       targetYear,
       value.month,
       targetDay,
@@ -426,8 +452,12 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
   }
 
   int _daysInMonth(int year, int month) {
-    final firstDayThisMonth = DateTime(year, month, 1);
-    final firstDayNextMonth = DateTime(firstDayThisMonth.year, firstDayThisMonth.month + 1, 1);
+    final firstDayThisMonth = DateTime.utc(year, month, 1);
+    final firstDayNextMonth = DateTime.utc(
+      firstDayThisMonth.year,
+      firstDayThisMonth.month + 1,
+      1,
+    );
     return firstDayNextMonth.subtract(const Duration(days: 1)).day;
   }
 }

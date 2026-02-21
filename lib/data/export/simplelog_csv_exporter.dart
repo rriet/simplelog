@@ -83,7 +83,9 @@ class SimpleLogCsvExporter {
     final timeLines = await db.select(db.timeLines).get();
     final crews = await db.select(db.crew).get();
     final flightAssignments = await db.select(db.flightCrewAssignments).get();
-    final simulatorAssignments = await db.select(db.simulatorCrewAssignments).get();
+    final simulatorAssignments = await db
+        .select(db.simulatorCrewAssignments)
+        .get();
 
     final aircraftById = {for (final row in aircrafts) row.id: row};
     final typeById = {for (final row in aircraftTypes) row.id: row};
@@ -100,7 +102,10 @@ class SimpleLogCsvExporter {
     final simulatorAssignmentsBySim = <int, List<SimulatorCrewAssignment>>{};
     for (final assignment in simulatorAssignments) {
       simulatorAssignmentsBySim
-          .putIfAbsent(assignment.simulatorId, () => <SimulatorCrewAssignment>[])
+          .putIfAbsent(
+            assignment.simulatorId,
+            () => <SimulatorCrewAssignment>[],
+          )
           .add(assignment);
     }
 
@@ -109,8 +114,9 @@ class SimpleLogCsvExporter {
       final departureTimeLine = timelineById[flight.departureDateTimeId];
       if (departureTimeLine == null) continue;
       final departureDateTime = _asUtcLiteral(departureTimeLine.eventDateTime);
-      final arrivalDateTime =
-          _asUtcLiteral(flight.arrivalDateTime ?? departureDateTime);
+      final arrivalDateTime = _asUtcLiteral(
+        flight.arrivalDateTime ?? departureDateTime,
+      );
       final aircraft = aircraftById[flight.aircraftId];
       if (aircraft == null) continue;
       final type = typeById[aircraft.aircraftTypeId];
@@ -124,145 +130,153 @@ class SimpleLogCsvExporter {
       rows.add(
         _ExportRow(
           sortDateTime: departureDateTime,
-          values: _headers.map((header) {
-            switch (header) {
-              case 'Date (DD/MM/YYYY)':
-                return DateFormat('dd/MM/yyyy').format(departureDateTime);
-              case 'Departure Time (HH:MM)':
-                return DateFormat('HH:mm').format(departureDateTime);
-              case 'Arrival Time (HH:MM)':
-                return flight.arrivalDateTime == null
-                    ? '00:00'
-                    : DateFormat('HH:mm').format(arrivalDateTime);
-              case 'Departure Epoch':
-                return (departureDateTime.millisecondsSinceEpoch ~/ 1000)
-                    .toString();
-              case 'Arrival Epoch':
-                return (arrivalDateTime.millisecondsSinceEpoch ~/ 1000)
-                    .toString();
-              case 'Departure Icao':
-                return depAirport?.icao ?? '';
-              case 'Departure Iata':
-                return depAirport?.iata ?? '';
-              case 'Departure Airport Name':
-                return depAirport?.name ?? '';
-              case 'Departure City':
-                return depAirport?.city ?? '';
-              case 'Departure Country':
-                return depAirport?.country ?? '';
-              case 'Departure Latitude':
-                return depAirport == null ? '' : depAirport.latitude.toString();
-              case 'Departure Longitude':
-                return depAirport == null ? '' : depAirport.longitude.toString();
-              case 'Arrival Icao':
-                return arrAirport?.icao ?? '';
-              case 'Arrival Iata':
-                return arrAirport?.iata ?? '';
-              case 'Arrival Airport Name':
-                return arrAirport?.name ?? '';
-              case 'Arrival City':
-                return arrAirport?.city ?? '';
-              case 'Arrival Country':
-                return arrAirport?.country ?? '';
-              case 'Arrival Latitude':
-                return arrAirport == null ? '' : arrAirport.latitude.toString();
-              case 'Arrival Longitude':
-                return arrAirport == null ? '' : arrAirport.longitude.toString();
-              case 'Aircraft Registration':
-                return aircraft.registration;
-              case 'Aircraft MTOW':
-                return (aircraft.mtow ?? type?.mtow ?? 0).toString();
-              case 'Aircraft Simulator':
-                return aircraft.isSimulator.toString();
-              case 'Model Make & Model':
-                return type?.code ?? '';
-              case 'Model Group':
-                return type?.family ?? '';
-              case 'Model Engine Type':
-                return _engineTypeLabel(type?.engineType);
-              case 'Model MTOW':
-                return (type?.mtow ?? aircraft.mtow ?? 0).toString();
-              case 'Model Multi Engine':
-                return ((type?.engineCount ?? 1) > 1).toString();
-              case 'Model Multi Pilot':
-                return (type?.multiPilot ?? false).toString();
-              case 'Model EFIS':
-                return (type?.efis ?? false).toString();
-              case 'Model Seaplane':
-                return ((type?.category == AircraftCategory.seaplane) ||
-                        (type?.category == AircraftCategory.amphibian))
-                    .toString();
-              case 'PIC Name':
-                return crewSet.pic?.name ?? '';
-              case 'PIC Email':
-                return crewSet.pic?.email ?? '';
-              case 'PIC Phone':
-                return crewSet.pic?.phone ?? '';
-              case 'PIC Comments':
-                return crewSet.pic?.notes ?? '';
-              case 'SIC Name':
-                return crewSet.sic?.name ?? '';
-              case 'SIC Email':
-                return crewSet.sic?.email ?? '';
-              case 'SIC Phone':
-                return crewSet.sic?.phone ?? '';
-              case 'SIC Comments':
-                return crewSet.sic?.notes ?? '';
-              case 'Pilot Function':
-                return _pilotFunctionFromTakeoffLanding(
-                  flight.takeOffsDays + flight.takeOffsNight,
-                  flight.landingsDay + flight.landingsNight,
-                );
-              case 'Remarks':
-                return flight.remarks;
-              case 'Private notes':
-                return flight.notes;
-              case 'Takeoff day':
-                return flight.takeOffsDays.toString();
-              case 'Takeoff night':
-                return flight.takeOffsNight.toString();
-              case 'Landing day':
-                return flight.landingsDay.toString();
-              case 'Landing night':
-                return flight.landingsNight.toString();
-              case 'IFR Approaches':
-                return flight.ifrApproaches.toString();
-              case 'Approach Type':
-                return flight.approachType;
-              case 'IFR Minutes':
-                return flight.timeIFRMinutes.toString();
-              case 'Simulated Instrument Minutes':
-                return flight.timeSimulatedInstrumentMinutes.toString();
-              case 'Night Minutes':
-                return flight.timeNightMinutes.toString();
-              case 'Corss country Minutes':
-                return flight.timeCrossCountryMinutes.toString();
-              case 'PIC Minutes':
-                return flight.timePICMinutes.toString();
-              case 'PICUS Minutes':
-                return flight.timePICUSMinutes.toString();
-              case 'SIC Minutes':
-                return flight.timeSICMinutes.toString();
-              case 'Dual Minutes':
-                return flight.timeDualMinutes.toString();
-              case 'Instructor Minutes':
-                return flight.timeInstructorMinutes.toString();
-              case 'Simulator Minutes':
-                return '0';
-              case 'Custom Time 1 Minutes':
-                return flight.timeCustom1Minutes.toString();
-              case 'Custom Time 2 Minutes':
-                return flight.timeCustom2Minutes.toString();
-              case 'Custom Time 3 Minutes':
-                return flight.timeCustom3Minutes.toString();
-              case 'Custom Time 4 Minutes':
-                return flight.timeCustom4Minutes.toString();
-              case 'Total Minutes':
-                return flight.timeBlockMinutes.toString();
-              default:
-                return '';
-            }
-          }).toList(growable: false),
+          sortTimelineId: departureTimeLine.id,
+          values: _headers
+              .map((header) {
+                switch (header) {
+                  case 'Date (DD/MM/YYYY)':
+                    return DateFormat('dd/MM/yyyy').format(departureDateTime);
+                  case 'Departure Time (HH:MM)':
+                    return DateFormat('HH:mm').format(departureDateTime);
+                  case 'Arrival Time (HH:MM)':
+                    return flight.arrivalDateTime == null
+                        ? '00:00'
+                        : DateFormat('HH:mm').format(arrivalDateTime);
+                  case 'Departure Epoch':
+                    return (departureDateTime.millisecondsSinceEpoch ~/ 1000)
+                        .toString();
+                  case 'Arrival Epoch':
+                    return (arrivalDateTime.millisecondsSinceEpoch ~/ 1000)
+                        .toString();
+                  case 'Departure Icao':
+                    return depAirport?.icao ?? '';
+                  case 'Departure Iata':
+                    return depAirport?.iata ?? '';
+                  case 'Departure Airport Name':
+                    return depAirport?.name ?? '';
+                  case 'Departure City':
+                    return depAirport?.city ?? '';
+                  case 'Departure Country':
+                    return depAirport?.country ?? '';
+                  case 'Departure Latitude':
+                    return depAirport == null
+                        ? ''
+                        : depAirport.latitude.toString();
+                  case 'Departure Longitude':
+                    return depAirport == null
+                        ? ''
+                        : depAirport.longitude.toString();
+                  case 'Arrival Icao':
+                    return arrAirport?.icao ?? '';
+                  case 'Arrival Iata':
+                    return arrAirport?.iata ?? '';
+                  case 'Arrival Airport Name':
+                    return arrAirport?.name ?? '';
+                  case 'Arrival City':
+                    return arrAirport?.city ?? '';
+                  case 'Arrival Country':
+                    return arrAirport?.country ?? '';
+                  case 'Arrival Latitude':
+                    return arrAirport == null
+                        ? ''
+                        : arrAirport.latitude.toString();
+                  case 'Arrival Longitude':
+                    return arrAirport == null
+                        ? ''
+                        : arrAirport.longitude.toString();
+                  case 'Aircraft Registration':
+                    return aircraft.registration;
+                  case 'Aircraft MTOW':
+                    return (aircraft.mtow ?? type?.mtow ?? 0).toString();
+                  case 'Aircraft Simulator':
+                    return aircraft.isSimulator.toString();
+                  case 'Model Make & Model':
+                    return type?.code ?? '';
+                  case 'Model Group':
+                    return type?.family ?? '';
+                  case 'Model Engine Type':
+                    return _engineTypeLabel(type?.engineType);
+                  case 'Model MTOW':
+                    return (type?.mtow ?? aircraft.mtow ?? 0).toString();
+                  case 'Model Multi Engine':
+                    return ((type?.engineCount ?? 1) > 1).toString();
+                  case 'Model Multi Pilot':
+                    return (type?.multiPilot ?? false).toString();
+                  case 'Model EFIS':
+                    return (type?.efis ?? false).toString();
+                  case 'Model Seaplane':
+                    return ((type?.category == AircraftCategory.seaplane) ||
+                            (type?.category == AircraftCategory.amphibian))
+                        .toString();
+                  case 'PIC Name':
+                    return crewSet.pic?.name ?? '';
+                  case 'PIC Email':
+                    return crewSet.pic?.email ?? '';
+                  case 'PIC Phone':
+                    return crewSet.pic?.phone ?? '';
+                  case 'PIC Comments':
+                    return crewSet.pic?.notes ?? '';
+                  case 'SIC Name':
+                    return crewSet.sic?.name ?? '';
+                  case 'SIC Email':
+                    return crewSet.sic?.email ?? '';
+                  case 'SIC Phone':
+                    return crewSet.sic?.phone ?? '';
+                  case 'SIC Comments':
+                    return crewSet.sic?.notes ?? '';
+                  case 'Pilot Function':
+                    return flight.pilotFunction;
+                  case 'Remarks':
+                    return flight.remarks;
+                  case 'Private notes':
+                    return flight.notes;
+                  case 'Takeoff day':
+                    return flight.takeOffsDays.toString();
+                  case 'Takeoff night':
+                    return flight.takeOffsNight.toString();
+                  case 'Landing day':
+                    return flight.landingsDay.toString();
+                  case 'Landing night':
+                    return flight.landingsNight.toString();
+                  case 'IFR Approaches':
+                    return flight.ifrApproaches.toString();
+                  case 'Approach Type':
+                    return flight.approachType;
+                  case 'IFR Minutes':
+                    return flight.timeIFRMinutes.toString();
+                  case 'Simulated Instrument Minutes':
+                    return flight.timeSimulatedInstrumentMinutes.toString();
+                  case 'Night Minutes':
+                    return flight.timeNightMinutes.toString();
+                  case 'Corss country Minutes':
+                    return flight.timeCrossCountryMinutes.toString();
+                  case 'PIC Minutes':
+                    return flight.timePICMinutes.toString();
+                  case 'PICUS Minutes':
+                    return flight.timePICUSMinutes.toString();
+                  case 'SIC Minutes':
+                    return flight.timeSICMinutes.toString();
+                  case 'Dual Minutes':
+                    return flight.timeDualMinutes.toString();
+                  case 'Instructor Minutes':
+                    return flight.timeInstructorMinutes.toString();
+                  case 'Simulator Minutes':
+                    return '0';
+                  case 'Custom Time 1 Minutes':
+                    return flight.timeCustom1Minutes.toString();
+                  case 'Custom Time 2 Minutes':
+                    return flight.timeCustom2Minutes.toString();
+                  case 'Custom Time 3 Minutes':
+                    return flight.timeCustom3Minutes.toString();
+                  case 'Custom Time 4 Minutes':
+                    return flight.timeCustom4Minutes.toString();
+                  case 'Total Minutes':
+                    return flight.timeBlockMinutes.toString();
+                  default:
+                    return '';
+                }
+              })
+              .toList(growable: false),
         ),
       );
     }
@@ -283,77 +297,87 @@ class SimpleLogCsvExporter {
       rows.add(
         _ExportRow(
           sortDateTime: startDateTime,
-          values: _headers.map((header) {
-            switch (header) {
-              case 'Date (DD/MM/YYYY)':
-                return DateFormat('dd/MM/yyyy').format(startDateTime);
-              case 'Departure Time (HH:MM)':
-                return DateFormat('HH:mm').format(startDateTime);
-              case 'Arrival Time (HH:MM)':
-                return DateFormat('HH:mm').format(endDateTime);
-              case 'Departure Epoch':
-                return (startDateTime.millisecondsSinceEpoch ~/ 1000).toString();
-              case 'Arrival Epoch':
-                return (endDateTime.millisecondsSinceEpoch ~/ 1000).toString();
-              case 'Aircraft Registration':
-                return aircraft.registration;
-              case 'Aircraft MTOW':
-                return (aircraft.mtow ?? type?.mtow ?? 0).toString();
-              case 'Aircraft Simulator':
-                return 'true';
-              case 'Model Make & Model':
-                return type?.code ?? '';
-              case 'Model Group':
-                return type?.family ?? '';
-              case 'Model Engine Type':
-                return _engineTypeLabel(type?.engineType);
-              case 'Model MTOW':
-                return (type?.mtow ?? aircraft.mtow ?? 0).toString();
-              case 'Model Multi Engine':
-                return ((type?.engineCount ?? 1) > 1).toString();
-              case 'Model Multi Pilot':
-                return (type?.multiPilot ?? false).toString();
-              case 'Model EFIS':
-                return (type?.efis ?? false).toString();
-              case 'Model Seaplane':
-                return ((type?.category == AircraftCategory.seaplane) ||
-                        (type?.category == AircraftCategory.amphibian))
-                    .toString();
-              case 'PIC Name':
-                return crewSet.pic?.name ?? '';
-              case 'PIC Email':
-                return crewSet.pic?.email ?? '';
-              case 'PIC Phone':
-                return crewSet.pic?.phone ?? '';
-              case 'PIC Comments':
-                return crewSet.pic?.notes ?? '';
-              case 'SIC Name':
-                return crewSet.sic?.name ?? '';
-              case 'SIC Email':
-                return crewSet.sic?.email ?? '';
-              case 'SIC Phone':
-                return crewSet.sic?.phone ?? '';
-              case 'SIC Comments':
-                return crewSet.sic?.notes ?? '';
-              case 'Pilot Function':
-                return crewSet.pic?.isSelf == true ? 'PF' : 'PNF';
-              case 'Remarks':
-                return simulator.remarks;
-              case 'Private notes':
-                return simulator.notes;
-              case 'Simulator Minutes':
-                return simulator.timeTotal.toString();
-              case 'Total Minutes':
-                return '0';
-              default:
-                return '';
-            }
-          }).map((value) => value).toList(growable: false),
+          sortTimelineId: startTimeLine.id,
+          values: _headers
+              .map((header) {
+                switch (header) {
+                  case 'Date (DD/MM/YYYY)':
+                    return DateFormat('dd/MM/yyyy').format(startDateTime);
+                  case 'Departure Time (HH:MM)':
+                    return DateFormat('HH:mm').format(startDateTime);
+                  case 'Arrival Time (HH:MM)':
+                    return DateFormat('HH:mm').format(endDateTime);
+                  case 'Departure Epoch':
+                    return (startDateTime.millisecondsSinceEpoch ~/ 1000)
+                        .toString();
+                  case 'Arrival Epoch':
+                    return (endDateTime.millisecondsSinceEpoch ~/ 1000)
+                        .toString();
+                  case 'Aircraft Registration':
+                    return aircraft.registration;
+                  case 'Aircraft MTOW':
+                    return (aircraft.mtow ?? type?.mtow ?? 0).toString();
+                  case 'Aircraft Simulator':
+                    return 'true';
+                  case 'Model Make & Model':
+                    return type?.code ?? '';
+                  case 'Model Group':
+                    return type?.family ?? '';
+                  case 'Model Engine Type':
+                    return _engineTypeLabel(type?.engineType);
+                  case 'Model MTOW':
+                    return (type?.mtow ?? aircraft.mtow ?? 0).toString();
+                  case 'Model Multi Engine':
+                    return ((type?.engineCount ?? 1) > 1).toString();
+                  case 'Model Multi Pilot':
+                    return (type?.multiPilot ?? false).toString();
+                  case 'Model EFIS':
+                    return (type?.efis ?? false).toString();
+                  case 'Model Seaplane':
+                    return ((type?.category == AircraftCategory.seaplane) ||
+                            (type?.category == AircraftCategory.amphibian))
+                        .toString();
+                  case 'PIC Name':
+                    return crewSet.pic?.name ?? '';
+                  case 'PIC Email':
+                    return crewSet.pic?.email ?? '';
+                  case 'PIC Phone':
+                    return crewSet.pic?.phone ?? '';
+                  case 'PIC Comments':
+                    return crewSet.pic?.notes ?? '';
+                  case 'SIC Name':
+                    return crewSet.sic?.name ?? '';
+                  case 'SIC Email':
+                    return crewSet.sic?.email ?? '';
+                  case 'SIC Phone':
+                    return crewSet.sic?.phone ?? '';
+                  case 'SIC Comments':
+                    return crewSet.sic?.notes ?? '';
+                  case 'Pilot Function':
+                    return '';
+                  case 'Remarks':
+                    return simulator.remarks;
+                  case 'Private notes':
+                    return simulator.notes;
+                  case 'Simulator Minutes':
+                    return simulator.timeTotal.toString();
+                  case 'Total Minutes':
+                    return '0';
+                  default:
+                    return '';
+                }
+              })
+              .map((value) => value)
+              .toList(growable: false),
         ),
       );
     }
 
-    rows.sort((a, b) => b.sortDateTime.compareTo(a.sortDateTime));
+    rows.sort((a, b) {
+      final byDate = b.sortDateTime.compareTo(a.sortDateTime);
+      if (byDate != 0) return byDate;
+      return b.sortTimelineId.compareTo(a.sortTimelineId);
+    });
     final buffer = StringBuffer();
     buffer.writeln(_serializeCsvRow(_headers));
     for (final row in rows) {
@@ -431,25 +455,12 @@ class SimpleLogCsvExporter {
     };
   }
 
-  String _pilotFunctionFromTakeoffLanding(int takeoff, int landing) {
-    if (takeoff > 0 && landing > 0) return 'PF';
-    if (takeoff == 0 && landing == 0) return 'PM';
-    if (takeoff > 0 && landing == 0) return 'PF/PM';
-    return 'PM/PF';
-  }
-
   /// Drift can return DateTime values with local timezone flag.
   /// Export requires UTC clock values exactly as stored in the logbook.
   DateTime _asUtcLiteral(DateTime value) {
-    return DateTime.utc(
-      value.year,
-      value.month,
-      value.day,
-      value.hour,
-      value.minute,
-      value.second,
-      value.millisecond,
-      value.microsecond,
+    return DateTime.fromMillisecondsSinceEpoch(
+      value.millisecondsSinceEpoch,
+      isUtc: true,
     );
   }
 }
@@ -457,18 +468,17 @@ class SimpleLogCsvExporter {
 class _ExportRow {
   const _ExportRow({
     required this.sortDateTime,
+    required this.sortTimelineId,
     required this.values,
   });
 
   final DateTime sortDateTime;
+  final int sortTimelineId;
   final List<String> values;
 }
 
 class _PicSicSet {
-  const _PicSicSet({
-    this.pic,
-    this.sic,
-  });
+  const _PicSicSet({this.pic, this.sic});
 
   final CrewData? pic;
   final CrewData? sic;

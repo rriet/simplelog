@@ -367,30 +367,30 @@ class ReportsTotals {
   final int multiPilotMinutes;
 
   const ReportsTotals.zero()
-      : sectors = 0,
-        takeoffsDay = 0,
-        takeoffsNight = 0,
-        landingsDay = 0,
-        landingsNight = 0,
-        ifrApproaches = 0,
-        distanceNM = 0,
-        totalMinutes = 0,
-        nightMinutes = 0,
-        ifrMinutes = 0,
-        simulatedInstrumentMinutes = 0,
-        picMinutes = 0,
-        picusMinutes = 0,
-        sicMinutes = 0,
-        dualMinutes = 0,
-        instructorMinutes = 0,
-        crossCountryMinutes = 0,
-        simulatorMinutes = 0,
-        dutyMinutes = 0,
-        custom1Minutes = 0,
-        custom2Minutes = 0,
-        custom3Minutes = 0,
-        custom4Minutes = 0,
-        multiPilotMinutes = 0;
+    : sectors = 0,
+      takeoffsDay = 0,
+      takeoffsNight = 0,
+      landingsDay = 0,
+      landingsNight = 0,
+      ifrApproaches = 0,
+      distanceNM = 0,
+      totalMinutes = 0,
+      nightMinutes = 0,
+      ifrMinutes = 0,
+      simulatedInstrumentMinutes = 0,
+      picMinutes = 0,
+      picusMinutes = 0,
+      sicMinutes = 0,
+      dualMinutes = 0,
+      instructorMinutes = 0,
+      crossCountryMinutes = 0,
+      simulatorMinutes = 0,
+      dutyMinutes = 0,
+      custom1Minutes = 0,
+      custom2Minutes = 0,
+      custom3Minutes = 0,
+      custom4Minutes = 0,
+      multiPilotMinutes = 0;
 
   ReportsTotals operator +(ReportsTotals other) {
     return ReportsTotals(
@@ -432,6 +432,7 @@ class ReportsFlightRow {
     required this.modelFamily,
     required this.fromIcao,
     required this.toIcao,
+    required this.pilotNames,
     required this.fromLatitude,
     required this.fromLongitude,
     required this.toLatitude,
@@ -444,6 +445,7 @@ class ReportsFlightRow {
     required this.ifrMinutes,
     required this.instrumentMinutes,
     required this.nightMinutes,
+    required this.takeoffs,
     required this.landings,
   });
 
@@ -454,6 +456,7 @@ class ReportsFlightRow {
   final String modelFamily;
   final String fromIcao;
   final String toIcao;
+  final String pilotNames;
   final double? fromLatitude;
   final double? fromLongitude;
   final double? toLatitude;
@@ -466,14 +469,12 @@ class ReportsFlightRow {
   final int ifrMinutes;
   final int instrumentMinutes;
   final int nightMinutes;
+  final int takeoffs;
   final int landings;
 }
 
 class ReportsData {
-  const ReportsData({
-    required this.totals,
-    required this.flights,
-  });
+  const ReportsData({required this.totals, required this.flights});
 
   final ReportsTotals totals;
   final List<ReportsFlightRow> flights;

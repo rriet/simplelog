@@ -170,382 +170,441 @@ class SimpleLogCsvImporter {
     }
 
     await db.transaction(() async {
-      for (var rowIndex = 1; rowIndex < rows.length; rowIndex += 1) {
-        if (rowIndex % 500 == 0) {
-          onProgress?.call(rowIndex - 1, totalRows);
+      var processedRows = 0;
+      for (var rowIndex = rows.length - 1; rowIndex >= 1; rowIndex -= 1) {
+        processedRows += 1;
+        if (processedRows % 500 == 0) {
+          onProgress?.call(processedRows, totalRows);
         }
         final row = rows[rowIndex];
         if (row.isEmpty) continue;
         try {
+          String get(int idx) => idx >= 0 && idx < row.length ? row[idx] : '';
 
-        String get(int idx) =>
-            idx >= 0 && idx < row.length ? row[idx] : '';
+          final dateText = get(idxDate);
+          final depTimeText = get(idxDepTime);
+          final arrTimeText = get(idxArrTime);
 
-        final dateText = get(idxDate);
-        final depTimeText = get(idxDepTime);
-        final arrTimeText = get(idxArrTime);
+          final depIcao = _pickCode(get(idxDepIcao), get(idxDepIata));
+          final arrIcao = _pickCode(get(idxArrIcao), get(idxArrIata));
+          if (depIcao.isEmpty || arrIcao.isEmpty) {
+            skipped += 1;
+            continue;
+          }
 
-        final depIcao = _pickCode(get(idxDepIcao), get(idxDepIata));
-        final arrIcao = _pickCode(get(idxArrIcao), get(idxArrIata));
-        if (depIcao.isEmpty || arrIcao.isEmpty) {
-          skipped += 1;
-          continue;
-        }
+          final depLatRaw = get(idxDepLat);
+          final depLonRaw = get(idxDepLon);
+          final arrLatRaw = get(idxArrLat);
+          final arrLonRaw = get(idxArrLon);
+          final depLat = _parseDouble(depLatRaw);
+          final depLon = _parseDouble(depLonRaw);
+          final arrLat = _parseDouble(arrLatRaw);
+          final arrLon = _parseDouble(arrLonRaw);
 
-        final depLatRaw = get(idxDepLat);
-        final depLonRaw = get(idxDepLon);
-        final arrLatRaw = get(idxArrLat);
-        final arrLonRaw = get(idxArrLon);
-        final depLat = _parseDouble(depLatRaw);
-        final depLon = _parseDouble(depLonRaw);
-        final arrLat = _parseDouble(arrLatRaw);
-        final arrLon = _parseDouble(arrLonRaw);
-
-        final depAirportId = await _getOrCreateAirport(
-          icao: depIcao,
-          iata: get(idxDepIata),
-          name: get(idxDepName),
-          city: get(idxDepCity),
-          country: get(idxDepCountry),
-          latitude: depLat,
-          longitude: depLon,
-          latitudeRaw: depLatRaw,
-          longitudeRaw: depLonRaw,
-          cache: airportCache,
-          options: options,
-        );
-        if (depAirportId.created) airports += 1;
-
-        final arrAirportId = await _getOrCreateAirport(
-          icao: arrIcao,
-          iata: get(idxArrIata),
-          name: get(idxArrName),
-          city: get(idxArrCity),
-          country: get(idxArrCountry),
-          latitude: arrLat,
-          longitude: arrLon,
-          latitudeRaw: arrLatRaw,
-          longitudeRaw: arrLonRaw,
-          cache: airportCache,
-          options: options,
-        );
-        if (arrAirportId.created) airports += 1;
-
-        final typeCode = get(idxModelCode).trim();
-        final typeFamily = get(idxModelGroup).trim();
-        final typeEngine = get(idxModelEngine).trim();
-        final typeMtow = _parseInt(get(idxModelMtow));
-        final typeMultiEngine = _parseBool(get(idxModelMultiEngine));
-        final typeMultiPilot = _parseBool(get(idxModelMultiPilot));
-        final typeEfis = _parseBool(get(idxModelEfis));
-        final typeComplex = typeMultiPilot;
-        final typeHighPerf = typeMultiPilot;
-
-        final aircraftTypeResult = await _getOrCreateAircraftType(
-          code: typeCode,
-          family: typeFamily,
-          engineType: _mapEngineType(typeEngine),
-          mtow: typeMtow,
-          engineCount: typeMultiEngine ? 2 : 1,
-          multiPilot: typeMultiPilot,
-          complex: typeComplex,
-          efis: typeEfis,
-          highPerformance: typeHighPerf,
-          cache: aircraftTypeCache,
-          options: options,
-        );
-        if (aircraftTypeResult != null &&
-            aircraftTypeResult.created) {
-          aircraftTypes += 1;
-        }
-        final aircraftTypeId = aircraftTypeResult?.id;
-
-        final registration = get(idxReg).trim().toUpperCase();
-        final aircraftId = await _getOrCreateAircraft(
-          registration: registration,
-          aircraftTypeId: aircraftTypeId,
-          mtow: _parseInt(get(idxAircraftMtow)),
-          isSimulator: _parseBool(get(idxAircraftSim)),
-          cache: aircraftCache,
-          options: options,
-        );
-        if (aircraftId == null) {
-          skipped += 1;
-          continue;
-        }
-        if (aircraftId.created) aircrafts += 1;
-
-        final departureDate = _parseDateTime(
-          dateFormat,
-          dateText,
-          depTimeText,
-        );
-        if (departureDate == null) {
-          skipped += 1;
-          continue;
-        }
-
-        DateTime? arrivalDate;
-        if (_isMissingTime(depTimeText) && _isMissingTime(arrTimeText)) {
-          arrivalDate = null;
-        } else {
-          arrivalDate = _parseArrivalDateTime(
-            dateFormat,
-            dateText,
-            depTimeText,
-            arrTimeText,
+          final depAirportId = await _getOrCreateAirport(
+            icao: depIcao,
+            iata: get(idxDepIata),
+            name: get(idxDepName),
+            city: get(idxDepCity),
+            country: get(idxDepCountry),
+            latitude: depLat,
+            longitude: depLon,
+            latitudeRaw: depLatRaw,
+            longitudeRaw: depLonRaw,
+            cache: airportCache,
+            options: options,
           );
-        }
+          if (depAirportId.created) airports += 1;
 
-        final departureTimelineId = await db.into(db.timeLines).insert(
-              TimeLinesCompanion.insert(eventDateTime: departureDate),
-            );
+          final arrAirportId = await _getOrCreateAirport(
+            icao: arrIcao,
+            iata: get(idxArrIata),
+            name: get(idxArrName),
+            city: get(idxArrCity),
+            country: get(idxArrCountry),
+            latitude: arrLat,
+            longitude: arrLon,
+            latitudeRaw: arrLatRaw,
+            longitudeRaw: arrLonRaw,
+            cache: airportCache,
+            options: options,
+          );
+          if (arrAirportId.created) airports += 1;
 
-        final isSimulator = _parseBool(get(idxAircraftSim));
-        int? flightId;
-        int? simId;
+          final typeCode = get(idxModelCode).trim();
+          final typeFamily = get(idxModelGroup).trim();
+          final typeEngine = get(idxModelEngine).trim();
+          final typeMtow = _parseInt(get(idxModelMtow));
+          final typeMultiEngine = _parseBool(get(idxModelMultiEngine));
+          final typeMultiPilot = _parseBool(get(idxModelMultiPilot));
+          final typeEfis = _parseBool(get(idxModelEfis));
+          final typeComplex = typeMultiPilot;
+          final typeHighPerf = typeMultiPilot;
 
-        final totalMinutesRaw = _parseInt(get(idxTotalMinutes));
-        var computedTotal = totalMinutesRaw;
-        final shouldDeriveMissingBlockTime =
-            options.recalculateTotalTime ||
-            options.recalculateCrossCountry ||
-            options.recalculateInstrument;
-        if (shouldDeriveMissingBlockTime &&
-            computedTotal == 0 &&
-            arrivalDate != null) {
-          computedTotal = arrivalDate.difference(departureDate).inMinutes;
-        }
+          final aircraftTypeResult = await _getOrCreateAircraftType(
+            code: typeCode,
+            family: typeFamily,
+            engineType: _mapEngineType(typeEngine),
+            mtow: typeMtow,
+            engineCount: typeMultiEngine ? 2 : 1,
+            multiPilot: typeMultiPilot,
+            complex: typeComplex,
+            efis: typeEfis,
+            highPerformance: typeHighPerf,
+            cache: aircraftTypeCache,
+            options: options,
+          );
+          if (aircraftTypeResult != null && aircraftTypeResult.created) {
+            aircraftTypes += 1;
+          }
+          final aircraftTypeId = aircraftTypeResult?.id;
 
-        final distanceValue = _calculateDistanceNm(
-          depLat,
-          depLon,
-          arrLat,
-          arrLon,
-        );
-        final distanceNm =
-            distanceValue.isFinite ? distanceValue.round() : 0;
+          final registration = get(idxReg).trim().toUpperCase();
+          final aircraftId = await _getOrCreateAircraft(
+            registration: registration,
+            aircraftTypeId: aircraftTypeId,
+            mtow: _parseInt(get(idxAircraftMtow)),
+            isSimulator: _parseBool(get(idxAircraftSim)),
+            cache: aircraftCache,
+            options: options,
+          );
+          if (aircraftId == null) {
+            skipped += 1;
+            continue;
+          }
+          if (aircraftId.created) aircrafts += 1;
 
-        FlightCalculations? calculations;
-        if (arrivalDate != null &&
-            _hasCoords(depLat, depLon, arrLat, arrLon)) {
           final depEpochFromCsv = _parseInt(get(idxDepEpoch));
-          final arrEpochFromCsv = _parseInt(get(idxArrEpoch));
-          final depEpoch = depEpochFromCsv > 0
-              ? depEpochFromCsv
-              : _wallClockAsUtcEpochSeconds(departureDate);
-          final arrEpoch = arrEpochFromCsv > 0
-              ? arrEpochFromCsv
-              : _wallClockAsUtcEpochSeconds(arrivalDate);
-          calculations = FlightCalculations(
-            latDep: depLat,
-            longDep: depLon,
-            latArr: arrLat,
-            longArr: arrLon,
-            depTimeEpochSeconds: depEpoch,
-            arrTimeEpochSeconds: arrEpoch,
+          final departureDate = depEpochFromCsv > 0
+              ? DateTime.fromMillisecondsSinceEpoch(
+                  depEpochFromCsv * 1000,
+                  isUtc: true,
+                )
+              : _parseDateTime(dateFormat, dateText, depTimeText);
+          if (departureDate == null) {
+            skipped += 1;
+            continue;
+          }
+
+          DateTime? arrivalDate;
+          if (_isMissingTime(depTimeText) && _isMissingTime(arrTimeText)) {
+            arrivalDate = null;
+          } else {
+            final arrEpochFromCsv = _parseInt(get(idxArrEpoch));
+            arrivalDate = arrEpochFromCsv > 0
+                ? DateTime.fromMillisecondsSinceEpoch(
+                    arrEpochFromCsv * 1000,
+                    isUtc: true,
+                  )
+                : _parseArrivalDateTime(
+                    dateFormat,
+                    dateText,
+                    depTimeText,
+                    arrTimeText,
+                  );
+          }
+
+          final departureTimelineId = await db
+              .into(db.timeLines)
+              .insert(TimeLinesCompanion.insert(eventDateTime: departureDate));
+
+          final isSimulator = _parseBool(get(idxAircraftSim));
+          int? flightId;
+          int? simId;
+
+          final totalMinutesRaw = _parseInt(get(idxTotalMinutes));
+          var computedTotal = totalMinutesRaw;
+          final shouldDeriveMissingBlockTime =
+              options.recalculateTotalTime ||
+              options.recalculateCrossCountry ||
+              options.recalculateInstrument;
+          if (shouldDeriveMissingBlockTime &&
+              computedTotal == 0 &&
+              arrivalDate != null) {
+            computedTotal = arrivalDate.difference(departureDate).inMinutes;
+          }
+          final totalBlockMinutes = () {
+            if (arrivalDate == null) return computedTotal;
+            final diff = arrivalDate.difference(departureDate).inMinutes;
+            if (diff > 0) return diff;
+            return computedTotal;
+          }();
+
+          final distanceValue = _calculateDistanceNm(
+            depLat,
+            depLon,
+            arrLat,
+            arrLon,
           );
-        }
+          final distanceNm = distanceValue.isFinite ? distanceValue.round() : 0;
 
-        if (isSimulator) {
-          final simMinutes = _parseInt(get(idxSimulatorMinutes));
-          final simTime = simMinutes > 0 ? simMinutes : totalMinutesRaw;
-          simId = await db.into(db.simulatorTrainings).insert(
-                SimulatorTrainingsCompanion.insert(
-                  aircraftId: aircraftId.id,
-                  startTimeLineId: departureTimelineId,
-                  endDateTime: arrivalDate == null
-                      ? const Value(null)
-                      : Value(arrivalDate),
-                  timeTotal: simTime,
-                  remarks: get(idxRemarks),
-                  notes: get(idxNotes),
-                  isLocked: false,
-                  signatureImage: const Value(null),
-                ),
-              );
-          simulators += 1;
-        } else {
-          var picMinutes = _parseInt(get(idxPicMinutes));
-          var picusMinutes = _parseInt(get(idxPicusMinutes));
-          var sicMinutes = _parseInt(get(idxSicMinutes));
-          var dualMinutes = _parseInt(get(idxDualMinutes));
-          var instructorMinutes = _parseInt(get(idxInstructorMinutes));
-
-          if (options.recalculateTotalTime && computedTotal > 0) {
-            final role = _pickRole(
-              picMinutes,
-              picusMinutes,
-              sicMinutes,
-              dualMinutes,
-              instructorMinutes,
-            );
-            picMinutes = role == _Role.pic ? computedTotal : 0;
-            picusMinutes = role == _Role.picus ? computedTotal : 0;
-            sicMinutes = role == _Role.sic ? computedTotal : 0;
-            dualMinutes = role == _Role.dual ? computedTotal : 0;
-            instructorMinutes =
-                role == _Role.instructor ? computedTotal : 0;
-          }
-
-          var nightMinutes = _parseInt(get(idxNightMinutes));
-          if (options.recalculateNightTime && calculations != null) {
-            nightMinutes = calculations.nightTimeMinutes;
-          }
-
-          var takeoffDay = _parseInt(get(idxTakeoffDay));
-          var takeoffNight = _parseInt(get(idxTakeoffNight));
-          var landingDay = _parseInt(get(idxLandingDay));
-          var landingNight = _parseInt(get(idxLandingNight));
-          if (options.recalculateTakeoffLanding && calculations != null) {
-            final totalTakeoffs = takeoffDay + takeoffNight;
-            final totalLandings = landingDay + landingNight;
-            if (totalTakeoffs > 0) {
-              if (calculations.dayTakeOff) {
-                takeoffDay = totalTakeoffs;
-                takeoffNight = 0;
-              } else {
-                takeoffDay = 0;
-                takeoffNight = totalTakeoffs;
-              }
-            }
-            if (totalLandings > 0) {
-              if (calculations.dayLanding) {
-                landingDay = totalLandings;
-                landingNight = 0;
-              } else {
-                landingDay = 0;
-                landingNight = totalLandings;
-              }
-            }
-          }
-
-          var crossCountryMinutes = _parseInt(get(idxCrossCountry));
-          if (options.recalculateCrossCountry && computedTotal > 0) {
-            crossCountryMinutes =
-                distanceNm >= options.crossCountryThresholdNm
-                    ? computedTotal
-                    : 0;
-          }
-
-          var instrumentMinutes = 0;
-          if (options.recalculateInstrument && computedTotal > 0) {
-            instrumentMinutes = _calculateInstrumentMinutes(
-              computedTotal,
-              options,
+          FlightCalculations? calculations;
+          if (arrivalDate != null &&
+              _hasCoords(depLat, depLon, arrLat, arrLon)) {
+            final depEpoch = depEpochFromCsv > 0
+                ? depEpochFromCsv
+                : _wallClockAsUtcEpochSeconds(departureDate);
+            final arrEpochFromCsv = _parseInt(get(idxArrEpoch));
+            final arrEpoch = arrEpochFromCsv > 0
+                ? arrEpochFromCsv
+                : _wallClockAsUtcEpochSeconds(arrivalDate);
+            calculations = FlightCalculations(
+              latDep: depLat,
+              longDep: depLon,
+              latArr: arrLat,
+              longArr: arrLon,
+              depTimeEpochSeconds: depEpoch,
+              arrTimeEpochSeconds: arrEpoch,
             );
           }
 
-          flightId = await db.into(db.flights).insert(
-                FlightsCompanion.insert(
-                  aircraftId: aircraftId.id,
-                  departureAirportId: depAirportId.id,
-                  arrivalAirportId: arrAirportId.id,
-                  departureDateTimeId: departureTimelineId,
-                  takeOffDateTime: const Value(null),
-                  landingDateTime: const Value(null),
-                  arrivalDateTime: arrivalDate == null
-                      ? const Value(null)
-                      : Value(arrivalDate),
-                  timePICMinutes: picMinutes,
-                  timePICUSMinutes: picusMinutes,
-                  timeSICMinutes: sicMinutes,
-                  timeDualMinutes: dualMinutes,
-                  timeInstructorMinutes: instructorMinutes,
-                  timeIFRMinutes: _parseInt(get(idxIfrMinutes)),
-                  timeInstrumentMinutes: instrumentMinutes,
-                  timeSimulatedInstrumentMinutes:
-                      _parseInt(get(idxSimInstrument)),
-                  timeNightMinutes: nightMinutes,
-                  timeCrossCountryMinutes: crossCountryMinutes,
-                  timeCustom1Minutes: _parseInt(get(idxCustom1)),
-                  timeCustom2Minutes: _parseInt(get(idxCustom2)),
-                  timeCustom3Minutes: _parseInt(get(idxCustom3)),
-                  timeCustom4Minutes: _parseInt(get(idxCustom4)),
-                  // Old SimpleLog CSV doesn't provide takeoff/landing timestamps,
-                  // so flight time cannot be derived reliably.
-                  timeFlightMinutes: 0,
-                  timeBlockMinutes: computedTotal,
-                  distanceNM: distanceNm,
-                  ifrApproaches: _parseInt(get(idxIfrApproaches)),
-                  takeOffsDays: takeoffDay,
-                  takeOffsNight: takeoffNight,
-                  landingsDay: landingDay,
-                  landingsNight: landingNight,
-                  approachType: get(idxApproachType),
-                  remarks: get(idxRemarks),
-                  notes: get(idxNotes),
-                  isLocked: false,
-                  signatureImage: const Value(null),
-                ),
+          if (isSimulator) {
+            final simMinutes = _parseInt(get(idxSimulatorMinutes));
+            final simTime = simMinutes > 0 ? simMinutes : totalMinutesRaw;
+            simId = await db
+                .into(db.simulatorTrainings)
+                .insert(
+                  SimulatorTrainingsCompanion.insert(
+                    aircraftId: aircraftId.id,
+                    startTimeLineId: departureTimelineId,
+                    endDateTime: arrivalDate == null
+                        ? const Value(null)
+                        : Value(arrivalDate),
+                    timeTotal: simTime,
+                    remarks: get(idxRemarks),
+                    notes: get(idxNotes),
+                    isLocked: false,
+                    signatureImage: const Value(null),
+                  ),
+                );
+            simulators += 1;
+          } else {
+            var picMinutes = _parseInt(get(idxPicMinutes));
+            var picusMinutes = _parseInt(get(idxPicusMinutes));
+            var sicMinutes = _parseInt(get(idxSicMinutes));
+            var dualMinutes = _parseInt(get(idxDualMinutes));
+            var instructorMinutes = _parseInt(get(idxInstructorMinutes));
+
+            if (options.recalculateTotalTime && computedTotal > 0) {
+              final role = _pickRole(
+                picMinutes,
+                picusMinutes,
+                sicMinutes,
+                dualMinutes,
+                instructorMinutes,
               );
-          flights += 1;
-        }
+              picMinutes = role == _Role.pic ? computedTotal : 0;
+              picusMinutes = role == _Role.picus ? computedTotal : 0;
+              sicMinutes = role == _Role.sic ? computedTotal : 0;
+              dualMinutes = role == _Role.dual ? computedTotal : 0;
+              instructorMinutes = role == _Role.instructor ? computedTotal : 0;
+            }
 
-        final picName = get(idxPicName).trim();
-        final sicName = get(idxSicName).trim();
+            var nightMinutes = _parseInt(get(idxNightMinutes));
+            if (options.recalculateNightTime && calculations != null) {
+              nightMinutes = calculations.nightTimeMinutes;
+            }
 
-        if (picName.isNotEmpty) {
-          final picId = await _getOrCreateCrew(
-            name: picName,
-            email: get(idxPicEmail),
-            phone: get(idxPicPhone),
-            notes: get(idxPicComments),
-            cache: crewCache,
-            options: options,
-          );
-          if (picId != null) {
-            if (picId.created) crew += 1;
-            if (flightId != null) {
-              await db.into(db.flightCrewAssignments).insert(
-                    FlightCrewAssignmentsCompanion.insert(
-                      flightId: flightId,
-                      crewId: picId.id,
-                      position: _mapCrewPosition(get(idxPilotFunction)),
-                    ),
+            var takeoffDay = _parseInt(get(idxTakeoffDay));
+            var takeoffNight = _parseInt(get(idxTakeoffNight));
+            var landingDay = _parseInt(get(idxLandingDay));
+            var landingNight = _parseInt(get(idxLandingNight));
+            final pilotFunctionRaw = get(idxPilotFunction).trim();
+            final pilotFunction = pilotFunctionRaw.isNotEmpty
+                ? pilotFunctionRaw
+                : _canonicalPilotFunction(
+                    '',
+                    takeoffCount: takeoffDay + takeoffNight,
+                    landingCount: landingDay + landingNight,
                   );
-            } else if (isSimulator) {
-              await db.into(db.simulatorCrewAssignments).insert(
-                    SimulatorCrewAssignmentsCompanion.insert(
-                      simulatorId: simId!,
-                      crewId: picId.id,
-                      position: _mapCrewPosition(get(idxPilotFunction)),
+            if (options.recalculateTotalTime && computedTotal > 0) {
+              computedTotal = _applyIrpFactoring(
+                totalMinutes: totalBlockMinutes,
+                pilotFunction: _canonicalPilotFunction(
+                  pilotFunction,
+                  takeoffCount: takeoffDay + takeoffNight,
+                  landingCount: landingDay + landingNight,
+                ),
+                irp3Percent: options.irp3Percent,
+                irp3SubtractMinutes: options.irp3SubtractMinutes,
+                irp4Percent: options.irp4Percent,
+                irp4SubtractMinutes: options.irp4SubtractMinutes,
+              );
+            }
+            if (options.recalculateTakeoffLanding && calculations != null) {
+              final totalTakeoffs = takeoffDay + takeoffNight;
+              final totalLandings = landingDay + landingNight;
+              if (totalTakeoffs > 0) {
+                if (calculations.dayTakeOff) {
+                  takeoffDay = totalTakeoffs;
+                  takeoffNight = 0;
+                } else {
+                  takeoffDay = 0;
+                  takeoffNight = totalTakeoffs;
+                }
+              }
+              if (totalLandings > 0) {
+                if (calculations.dayLanding) {
+                  landingDay = totalLandings;
+                  landingNight = 0;
+                } else {
+                  landingDay = 0;
+                  landingNight = totalLandings;
+                }
+              }
+            }
+
+            var crossCountryMinutes = _parseInt(get(idxCrossCountry));
+            if (options.recalculateCrossCountry && computedTotal > 0) {
+              crossCountryMinutes =
+                  distanceNm >= options.crossCountryThresholdNm
+                  ? computedTotal
+                  : 0;
+            }
+
+            var ifrMinutes = _parseInt(get(idxIfrMinutes));
+            if (options.recalculateIfrTime && computedTotal > 0) {
+              ifrMinutes = _calculateFactoredMinutes(
+                totalMinutes: computedTotal,
+                percent: options.ifrPercent,
+                subtractMinutes: options.ifrSubtractMinutes,
+                minimumMinutes: options.ifrMinimumMinutes,
+              );
+            }
+
+            var instrumentMinutes = 0;
+            if (options.recalculateInstrument && computedTotal > 0) {
+              instrumentMinutes = _calculateFactoredMinutes(
+                totalMinutes: computedTotal,
+                percent: options.instrumentPercent,
+                subtractMinutes: options.instrumentSubtractMinutes,
+                minimumMinutes: options.instrumentMinimumMinutes,
+              );
+            }
+
+            flightId = await db
+                .into(db.flights)
+                .insert(
+                  FlightsCompanion.insert(
+                    aircraftId: aircraftId.id,
+                    departureAirportId: depAirportId.id,
+                    arrivalAirportId: arrAirportId.id,
+                    departureDateTimeId: departureTimelineId,
+                    takeOffDateTime: const Value(null),
+                    landingDateTime: const Value(null),
+                    arrivalDateTime: arrivalDate == null
+                        ? const Value(null)
+                        : Value(arrivalDate),
+                    timePICMinutes: picMinutes,
+                    timePICUSMinutes: picusMinutes,
+                    timeSICMinutes: sicMinutes,
+                    timeDualMinutes: dualMinutes,
+                    timeInstructorMinutes: instructorMinutes,
+                    timeIFRMinutes: ifrMinutes,
+                    timeInstrumentMinutes: instrumentMinutes,
+                    timeSimulatedInstrumentMinutes: _parseInt(
+                      get(idxSimInstrument),
                     ),
-                  );
+                    timeNightMinutes: nightMinutes,
+                    timeCrossCountryMinutes: crossCountryMinutes,
+                    timeCustom1Minutes: _parseInt(get(idxCustom1)),
+                    timeCustom2Minutes: _parseInt(get(idxCustom2)),
+                    timeCustom3Minutes: _parseInt(get(idxCustom3)),
+                    timeCustom4Minutes: _parseInt(get(idxCustom4)),
+                    // Old SimpleLog CSV doesn't provide takeoff/landing timestamps,
+                    // so flight time cannot be derived reliably.
+                    timeFlightMinutes: 0,
+                    timeBlockMinutes: computedTotal,
+                    timeTotalBlockMinutes: Value(totalBlockMinutes),
+                    distanceNM: distanceNm,
+                    ifrApproaches: _parseInt(get(idxIfrApproaches)),
+                    takeOffsDays: takeoffDay,
+                    takeOffsNight: takeoffNight,
+                    landingsDay: landingDay,
+                    landingsNight: landingNight,
+                    pilotFunction: Value(pilotFunction),
+                    approachType: get(idxApproachType),
+                    remarks: get(idxRemarks),
+                    notes: get(idxNotes),
+                    isLocked: false,
+                    signatureImage: const Value(null),
+                  ),
+                );
+            flights += 1;
+          }
+
+          final picName = get(idxPicName).trim();
+          final sicName = get(idxSicName).trim();
+
+          if (picName.isNotEmpty) {
+            final picId = await _getOrCreateCrew(
+              name: picName,
+              email: get(idxPicEmail),
+              phone: get(idxPicPhone),
+              notes: get(idxPicComments),
+              cache: crewCache,
+              options: options,
+            );
+            if (picId != null) {
+              if (picId.created) crew += 1;
+              if (flightId != null) {
+                await db
+                    .into(db.flightCrewAssignments)
+                    .insert(
+                      FlightCrewAssignmentsCompanion.insert(
+                        flightId: flightId,
+                        crewId: picId.id,
+                        position: CrewPosition.pic,
+                      ),
+                    );
+              } else if (isSimulator) {
+                await db
+                    .into(db.simulatorCrewAssignments)
+                    .insert(
+                      SimulatorCrewAssignmentsCompanion.insert(
+                        simulatorId: simId!,
+                        crewId: picId.id,
+                        position: CrewPosition.pic,
+                      ),
+                    );
+              }
             }
           }
-        }
 
-        if (sicName.isNotEmpty) {
-          final sicId = await _getOrCreateCrew(
-            name: sicName,
-            email: get(idxSicEmail),
-            phone: get(idxSicPhone),
-            notes: get(idxSicComments),
-            cache: crewCache,
-            options: options,
-          );
-          if (sicId != null) {
-            if (sicId.created) crew += 1;
-            if (flightId != null) {
-              await db.into(db.flightCrewAssignments).insert(
-                    FlightCrewAssignmentsCompanion.insert(
-                      flightId: flightId,
-                      crewId: sicId.id,
-                      position: CrewPosition.sic,
-                    ),
-                  );
-            } else if (isSimulator) {
-              await db.into(db.simulatorCrewAssignments).insert(
-                    SimulatorCrewAssignmentsCompanion.insert(
-                      simulatorId: simId!,
-                      crewId: sicId.id,
-                      position: CrewPosition.sic,
-                    ),
-                  );
+          if (sicName.isNotEmpty) {
+            final sicId = await _getOrCreateCrew(
+              name: sicName,
+              email: get(idxSicEmail),
+              phone: get(idxSicPhone),
+              notes: get(idxSicComments),
+              cache: crewCache,
+              options: options,
+            );
+            if (sicId != null) {
+              if (sicId.created) crew += 1;
+              if (flightId != null) {
+                await db
+                    .into(db.flightCrewAssignments)
+                    .insert(
+                      FlightCrewAssignmentsCompanion.insert(
+                        flightId: flightId,
+                        crewId: sicId.id,
+                        position: CrewPosition.sic,
+                      ),
+                    );
+              } else if (isSimulator) {
+                await db
+                    .into(db.simulatorCrewAssignments)
+                    .insert(
+                      SimulatorCrewAssignmentsCompanion.insert(
+                        simulatorId: simId!,
+                        crewId: sicId.id,
+                        position: CrewPosition.sic,
+                      ),
+                    );
+              }
             }
           }
-        }
         } catch (_) {
           errors += 1;
         }
@@ -660,13 +719,10 @@ class SimpleLogCsvImporter {
     var errors = 0;
 
     final totalRows = rows.length - headerRowIndex - 1;
-    final mergeMode =
-        options.overrideExistingData ? MergeStrategy.override : MergeStrategy.keep;
     final entityOptions = SimpleLogImportOptions(
-      airportStrategy: mergeMode,
-      crewStrategy: mergeMode,
-      aircraftStrategy: mergeMode,
-      aircraftTypeStrategy: mergeMode,
+      overrideAirportValues: options.overrideExistingData,
+      overrideAircraftValues: options.overrideExistingData,
+      overrideAircraftTypeValues: options.overrideExistingData,
     );
 
     final airportCache = <String, Airport>{};
@@ -694,7 +750,11 @@ class SimpleLogCsvImporter {
 
     final existingFlightKeys = await _loadExistingFlightDateKeys();
     await db.transaction(() async {
-      for (var rowIndex = headerRowIndex + 1; rowIndex < rows.length; rowIndex += 1) {
+      for (
+        var rowIndex = headerRowIndex + 1;
+        rowIndex < rows.length;
+        rowIndex += 1
+      ) {
         final processed = rowIndex - headerRowIndex;
         if (processed % 250 == 0) {
           onProgress?.call(processed, totalRows);
@@ -703,7 +763,8 @@ class SimpleLogCsvImporter {
         final row = rows[rowIndex];
         if (row.isEmpty) continue;
         try {
-          String get(int idx) => idx >= 0 && idx < row.length ? row[idx].trim() : '';
+          String get(int idx) =>
+              idx >= 0 && idx < row.length ? row[idx].trim() : '';
 
           final dateText = get(idxDate);
           final fromCode = get(idxFrom).toUpperCase();
@@ -719,7 +780,10 @@ class SimpleLogCsvImporter {
             continue;
           }
 
-          final departureDateTime = _parseSouthwestDateTime(dateText, departText);
+          final departureDateTime = _parseSouthwestDateTime(
+            dateText,
+            departText,
+          );
           final arrivalDateTime = _parseSouthwestDateTime(dateText, arriveText);
           if (departureDateTime == null || arrivalDateTime == null) {
             skipped += 1;
@@ -761,17 +825,23 @@ class SimpleLogCsvImporter {
           if (arrAirportId.created) airports += 1;
 
           final isDeadhead = get(idxDhd).toUpperCase() == 'DH';
-          final calculatedBlock = resolvedArrival.difference(departureDateTime).inMinutes;
+          final calculatedBlock = resolvedArrival
+              .difference(departureDateTime)
+              .inMinutes;
           final blockFromFile = _parseBlockHhMmToMinutes(get(idxBlock));
           final blockMinutes = options.recalculateBlockTime
               ? calculatedBlock
               : (blockFromFile > 0 ? blockFromFile : calculatedBlock);
 
           if (isDeadhead) {
-            final timelineId = await db.into(db.timeLines).insert(
+            final timelineId = await db
+                .into(db.timeLines)
+                .insert(
                   TimeLinesCompanion.insert(eventDateTime: departureDateTime),
                 );
-            await db.into(db.positionings).insert(
+            await db
+                .into(db.positionings)
+                .insert(
                   PositioningsCompanion.insert(
                     departurePlaceId: depAirportId.id,
                     arrivalPlaceId: arrAirportId.id,
@@ -823,7 +893,8 @@ class SimpleLogCsvImporter {
 
           final depAirport = airportCache[_airportKey(fromCode)];
           final arrAirport = airportCache[_airportKey(toCode)];
-          final hasCoords = depAirport != null &&
+          final hasCoords =
+              depAirport != null &&
               arrAirport != null &&
               _hasCoords(
                 depAirport.latitude,
@@ -840,7 +911,9 @@ class SimpleLogCsvImporter {
               longDep: depAirport.longitude,
               latArr: arrAirport.latitude,
               longArr: arrAirport.longitude,
-              depTimeEpochSeconds: _wallClockAsUtcEpochSeconds(departureDateTime),
+              depTimeEpochSeconds: _wallClockAsUtcEpochSeconds(
+                departureDateTime,
+              ),
               arrTimeEpochSeconds: _wallClockAsUtcEpochSeconds(resolvedArrival),
             );
             distanceNm = calculations.flightDistanceNm.round();
@@ -870,17 +943,25 @@ class SimpleLogCsvImporter {
             }
           }
 
-          final nightMinutes = options.recalculateNightTime && calculations != null
+          final nightMinutes =
+              options.recalculateNightTime && calculations != null
               ? calculations.nightTimeMinutes
               : 0;
           final ifrMinutes = options.recalculateIfrTime ? blockMinutes : 0;
           final crossCountryMinutes = options.recalculateCrossCountry
-              ? (distanceNm >= options.crossCountryThresholdNm ? blockMinutes : 0)
+              ? (distanceNm >= options.crossCountryThresholdNm
+                    ? blockMinutes
+                    : 0)
               : 0;
-          final instrumentMinutes = options.recalculateInstrumentTime ? blockMinutes : 0;
+          final instrumentMinutes = options.recalculateInstrumentTime
+              ? blockMinutes
+              : 0;
 
-          final selfPosition = _normalizeSelfPosition(options.defaultSelfPosition);
+          final selfPosition = _normalizeSelfPosition(
+            options.defaultSelfPosition,
+          );
           final selfIsPic = selfPosition == CrewPosition.pic;
+          final pilotFunction = selfIsPic ? 'PF' : 'PNF';
           final picMinutes = selfIsPic ? blockMinutes : 0;
           final sicMinutes = selfIsPic ? 0 : blockMinutes;
 
@@ -892,10 +973,14 @@ class SimpleLogCsvImporter {
 
           late final int flightId;
           if (existing != null) {
-            await (db.update(db.timeLines)
-                  ..where((t) => t.id.equals(existing.departureTimelineId)))
-                .write(TimeLinesCompanion(eventDateTime: Value(departureDateTime)));
-            await (db.update(db.flights)..where((t) => t.id.equals(existing.flightId))).write(
+            await (db.update(
+              db.timeLines,
+            )..where((t) => t.id.equals(existing.departureTimelineId))).write(
+              TimeLinesCompanion(eventDateTime: Value(departureDateTime)),
+            );
+            await (db.update(
+              db.flights,
+            )..where((t) => t.id.equals(existing.flightId))).write(
               FlightsCompanion(
                 aircraftId: Value(aircraftResult.id),
                 departureAirportId: Value(depAirportId.id),
@@ -917,26 +1002,32 @@ class SimpleLogCsvImporter {
                 timeCustom4Minutes: const Value(0),
                 timeFlightMinutes: const Value(0),
                 timeBlockMinutes: Value(blockMinutes),
+                timeTotalBlockMinutes: Value(blockMinutes),
                 distanceNM: Value(distanceNm),
                 ifrApproaches: const Value(0),
                 takeOffsDays: Value(takeoffsDay),
                 takeOffsNight: Value(takeoffsNight),
                 landingsDay: Value(landingsDay),
                 landingsNight: Value(landingsNight),
+                pilotFunction: Value(pilotFunction),
                 approachType: const Value(''),
                 remarks: const Value(''),
                 notes: Value(notes),
               ),
             );
-            await (db.delete(db.flightCrewAssignments)
-                  ..where((t) => t.flightId.equals(existing.flightId)))
-                .go();
+            await (db.delete(
+              db.flightCrewAssignments,
+            )..where((t) => t.flightId.equals(existing.flightId))).go();
             flightId = existing.flightId;
           } else {
-            final timelineId = await db.into(db.timeLines).insert(
+            final timelineId = await db
+                .into(db.timeLines)
+                .insert(
                   TimeLinesCompanion.insert(eventDateTime: departureDateTime),
                 );
-            flightId = await db.into(db.flights).insert(
+            flightId = await db
+                .into(db.flights)
+                .insert(
                   FlightsCompanion.insert(
                     aircraftId: aircraftResult.id,
                     departureAirportId: depAirportId.id,
@@ -961,12 +1052,14 @@ class SimpleLogCsvImporter {
                     timeCustom4Minutes: 0,
                     timeFlightMinutes: 0,
                     timeBlockMinutes: blockMinutes,
+                    timeTotalBlockMinutes: Value(blockMinutes),
                     distanceNM: distanceNm,
                     ifrApproaches: 0,
                     takeOffsDays: takeoffsDay,
                     takeOffsNight: takeoffsNight,
                     landingsDay: landingsDay,
                     landingsNight: landingsNight,
+                    pilotFunction: Value(pilotFunction),
                     approachType: '',
                     remarks: '',
                     notes: notes,
@@ -981,7 +1074,9 @@ class SimpleLogCsvImporter {
           }
 
           if (selfCrew != null) {
-            await db.into(db.flightCrewAssignments).insert(
+            await db
+                .into(db.flightCrewAssignments)
+                .insert(
                   FlightCrewAssignmentsCompanion.insert(
                     flightId: flightId,
                     crewId: selfCrew.id,
@@ -995,7 +1090,8 @@ class SimpleLogCsvImporter {
               name: coPilot.name,
               email: '',
               phone: '',
-              notes: options.addCopilotStaffNumberToNotes &&
+              notes:
+                  options.addCopilotStaffNumberToNotes &&
                       (coPilot.staffNumber ?? '').isNotEmpty
                   ? 'Staff Number: ${coPilot.staffNumber}'
                   : '',
@@ -1005,7 +1101,9 @@ class SimpleLogCsvImporter {
             if (coPilotCrew?.created == true) crew += 1;
             if (coPilotCrew != null &&
                 (selfCrew == null || coPilotCrew.id != selfCrew.id)) {
-              await db.into(db.flightCrewAssignments).insert(
+              await db
+                  .into(db.flightCrewAssignments)
+                  .insert(
                     FlightCrewAssignmentsCompanion.insert(
                       flightId: flightId,
                       crewId: coPilotCrew.id,
@@ -1135,9 +1233,7 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
         continue;
       }
       if ((char == '\n' || char == '\r') && !inQuotes) {
-        if (char == '\r' &&
-            i + 1 < content.length &&
-            content[i + 1] == '\n') {
+        if (char == '\r' && i + 1 < content.length && content[i + 1] == '\n') {
           i += 1;
         }
         row.add(buffer.toString());
@@ -1183,7 +1279,7 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       final timeParts = timeText.split(':');
       final hour = timeParts.length > 1 ? int.parse(timeParts[0]) : 0;
       final minute = timeParts.length > 1 ? int.parse(timeParts[1]) : 0;
-      return DateTime(date.year, date.month, date.day, hour, minute);
+      return DateTime.utc(date.year, date.month, date.day, hour, minute);
     } catch (_) {
       return null;
     }
@@ -1204,20 +1300,19 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
     return arrival;
   }
 
-  int _parseInt(String value) =>
-      int.tryParse(value.trim()) ?? 0;
+  int _parseInt(String value) => int.tryParse(value.trim()) ?? 0;
 
   int _wallClockAsUtcEpochSeconds(DateTime dt) {
     return DateTime.utc(
-      dt.year,
-      dt.month,
-      dt.day,
-      dt.hour,
-      dt.minute,
-      dt.second,
-      dt.millisecond,
-      dt.microsecond,
-    ).millisecondsSinceEpoch ~/
+          dt.year,
+          dt.month,
+          dt.day,
+          dt.hour,
+          dt.minute,
+          dt.second,
+          dt.millisecond,
+          dt.microsecond,
+        ).millisecondsSinceEpoch ~/
         1000;
   }
 
@@ -1247,12 +1342,6 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
     }
   }
 
-  CrewPosition _mapCrewPosition(String value) {
-    final clean = value.trim().toLowerCase();
-    if (clean == 'pnf' || clean == 'sic') return CrewPosition.sic;
-    return CrewPosition.pic;
-  }
-
   Future<_IdResult> _getOrCreateAirport({
     required String icao,
     required String iata,
@@ -1269,7 +1358,7 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
     final key = _airportKey(icao);
     final existing = cache[key];
     if (existing != null) {
-      if (options.airportStrategy == MergeStrategy.keep) {
+      if (!options.overrideAirportValues) {
         return _IdResult(id: existing.id, created: false);
       }
 
@@ -1280,33 +1369,58 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       final hasLat = latitudeRaw.trim().isNotEmpty;
       final hasLon = longitudeRaw.trim().isNotEmpty;
 
-      final mergedIata =
-          _mergeText(existing.iata, iata, options.airportStrategy, hasIata);
-      final mergedName =
-          _mergeText(existing.name, name, options.airportStrategy, hasName);
-      final mergedCity =
-          _mergeText(existing.city, city, options.airportStrategy, hasCity);
+      final mergedIata = _mergeText(
+        existing.iata,
+        iata,
+        options.overrideAirportValues,
+        hasIata,
+      );
+      final mergedName = _mergeText(
+        existing.name,
+        name,
+        options.overrideAirportValues,
+        hasName,
+      );
+      final mergedCity = _mergeText(
+        existing.city,
+        city,
+        options.overrideAirportValues,
+        hasCity,
+      );
       final mergedCountry = _mergeText(
         existing.country,
         country,
-        options.airportStrategy,
+        options.overrideAirportValues,
         hasCountry,
       );
       final mergedLat = _mergeDouble(
         existing.latitude,
         latitude,
-        options.airportStrategy,
+        options.overrideAirportValues,
         hasLat,
       );
       final mergedLon = _mergeDouble(
         existing.longitude,
         longitude,
-        options.airportStrategy,
+        options.overrideAirportValues,
         hasLon,
       );
 
-      await (db.update(db.airports)..where((tbl) => tbl.id.equals(existing.id)))
-          .write(
+      final hasAirportChanges =
+          mergedIata != existing.iata ||
+          mergedName != existing.name ||
+          mergedCity != existing.city ||
+          mergedCountry != existing.country ||
+          mergedLat != existing.latitude ||
+          mergedLon != existing.longitude;
+
+      if (!hasAirportChanges) {
+        return _IdResult(id: existing.id, created: false);
+      }
+
+      await (db.update(
+        db.airports,
+      )..where((tbl) => tbl.id.equals(existing.id))).write(
         AirportsCompanion(
           iata: Value(mergedIata),
           name: Value(mergedName),
@@ -1331,13 +1445,17 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       );
       return _IdResult(id: existing.id, created: false);
     }
-    final id = await db.into(db.airports).insert(
+    final id = await db
+        .into(db.airports)
+        .insert(
           AirportsCompanion.insert(
             icao: icao.toUpperCase(),
             iata: iata.trim().isEmpty ? const Value(null) : Value(iata),
             name: name.trim().isEmpty ? const Value(null) : Value(name),
             city: city.trim().isEmpty ? const Value(null) : Value(city),
-            country: country.trim().isEmpty ? const Value(null) : Value(country),
+            country: country.trim().isEmpty
+                ? const Value(null)
+                : Value(country),
             latitude: latitude,
             longitude: longitude,
             isFavorite: false,
@@ -1377,56 +1495,68 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
     final key = _normalizeKey(clean);
     final existing = cache[key];
     if (existing != null) {
-      if (options.aircraftTypeStrategy == MergeStrategy.keep) {
+      if (!options.overrideAircraftTypeValues) {
         return _IdResult(id: existing.id, created: false);
       }
 
       final mergedFamily = _mergeText(
         existing.family,
         family,
-        options.aircraftTypeStrategy,
+        options.overrideAircraftTypeValues,
         family.trim().isNotEmpty,
       );
       final mergedLongName = _mergeText(
         existing.longName,
         clean,
-        options.aircraftTypeStrategy,
+        options.overrideAircraftTypeValues,
         clean.isNotEmpty,
       );
-      final mergedEngineType = options.aircraftTypeStrategy ==
-              MergeStrategy.keep
+      final mergedEngineType = !options.overrideAircraftTypeValues
           ? existing.engineType
           : engineType;
       final mergedMtow = _mergeInt(
         existing.mtow,
         mtow,
-        options.aircraftTypeStrategy,
+        options.overrideAircraftTypeValues,
         mtow > 0,
       );
       final mergedEngineCount = _mergeInt(
         existing.engineCount,
         engineCount == 0 ? 1 : engineCount,
-        options.aircraftTypeStrategy,
+        options.overrideAircraftTypeValues,
         engineCount > 0,
       );
-      final mergedMultiPilot = options.aircraftTypeStrategy ==
-              MergeStrategy.keep
+      final mergedMultiPilot = !options.overrideAircraftTypeValues
           ? existing.multiPilot
           : multiPilot;
-      final mergedComplex = options.aircraftTypeStrategy == MergeStrategy.keep
+      final mergedComplex = !options.overrideAircraftTypeValues
           ? existing.complex
           : complex;
-      final mergedEfis = options.aircraftTypeStrategy == MergeStrategy.keep
+      final mergedEfis = !options.overrideAircraftTypeValues
           ? existing.efis
           : efis;
-      final mergedHighPerformance =
-          options.aircraftTypeStrategy == MergeStrategy.keep
-              ? existing.highPerformance
-              : highPerformance;
+      final mergedHighPerformance = !options.overrideAircraftTypeValues
+          ? existing.highPerformance
+          : highPerformance;
 
-      await (db.update(db.aircraftTypes)
-            ..where((tbl) => tbl.id.equals(existing.id)))
-          .write(
+      final hasAircraftTypeChanges =
+          (mergedFamily ?? clean) != existing.family ||
+          (mergedLongName ?? clean) != existing.longName ||
+          mergedEngineType != existing.engineType ||
+          mergedMtow != existing.mtow ||
+          mergedEngineCount != existing.engineCount ||
+          mergedMultiPilot != existing.multiPilot ||
+          mergedComplex != existing.complex ||
+          mergedEfis != existing.efis ||
+          mergedHighPerformance != existing.highPerformance;
+
+      if (!hasAircraftTypeChanges) {
+        return _IdResult(id: existing.id, created: false);
+      }
+
+      await (db.update(
+        db.aircraftTypes,
+      )..where((tbl) => tbl.id.equals(existing.id))).write(
         AircraftTypesCompanion(
           family: Value(mergedFamily ?? clean),
           longName: Value(mergedLongName ?? clean),
@@ -1453,7 +1583,9 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       );
       return _IdResult(id: existing.id, created: false);
     }
-    final id = await db.into(db.aircraftTypes).insert(
+    final id = await db
+        .into(db.aircraftTypes)
+        .insert(
           AircraftTypesCompanion.insert(
             code: clean,
             family: family.trim().isEmpty ? clean : family.trim(),
@@ -1501,26 +1633,35 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
     final key = _normalizeKey(registration);
     final existing = cache[key];
     if (existing != null) {
-      if (options.aircraftStrategy == MergeStrategy.keep) {
+      if (!options.overrideAircraftValues) {
         return _IdResult(id: existing.id, created: false);
       }
 
-      final mergedTypeId = options.aircraftStrategy == MergeStrategy.keep
+      final mergedTypeId = !options.overrideAircraftValues
           ? existing.aircraftTypeId
           : aircraftTypeId;
       final mergedMtow = _mergeNullableInt(
         existing.mtow,
         mtow,
-        options.aircraftStrategy,
+        options.overrideAircraftValues,
         (mtow ?? 0) > 0,
       );
-      final mergedSimulator = options.aircraftStrategy == MergeStrategy.keep
+      final mergedSimulator = !options.overrideAircraftValues
           ? existing.isSimulator
           : isSimulator;
 
-      await (db.update(db.aircrafts)
-            ..where((tbl) => tbl.id.equals(existing.id)))
-          .write(
+      final hasAircraftChanges =
+          mergedTypeId != existing.aircraftTypeId ||
+          mergedMtow != existing.mtow ||
+          mergedSimulator != existing.isSimulator;
+
+      if (!hasAircraftChanges) {
+        return _IdResult(id: existing.id, created: false);
+      }
+
+      await (db.update(
+        db.aircrafts,
+      )..where((tbl) => tbl.id.equals(existing.id))).write(
         AircraftsCompanion(
           aircraftTypeId: Value(mergedTypeId),
           mtow: Value(mergedMtow),
@@ -1535,7 +1676,9 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       );
       return _IdResult(id: existing.id, created: false);
     }
-    final id = await db.into(db.aircrafts).insert(
+    final id = await db
+        .into(db.aircrafts)
+        .insert(
           AircraftsCompanion.insert(
             aircraftTypeId: aircraftTypeId,
             registration: registration,
@@ -1571,7 +1714,7 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
     final key = _crewKey(clean);
     final existing = cache[key];
     if (existing != null) {
-      if (options.crewStrategy == MergeStrategy.keep) {
+      if (!options.overrideExistingValues) {
         return _IdResult(id: existing.id, created: false);
       }
 
@@ -1579,15 +1722,37 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       final hasPhone = phone.trim().isNotEmpty;
       final hasNotes = notes.trim().isNotEmpty;
 
-      final mergedEmail =
-          _mergeText(existing.email, email, options.crewStrategy, hasEmail);
-      final mergedPhone =
-          _mergeText(existing.phone, phone, options.crewStrategy, hasPhone);
-      final mergedNotes =
-          _mergeText(existing.notes, notes, options.crewStrategy, hasNotes);
+      final mergedEmail = _mergeText(
+        existing.email,
+        email,
+        options.overrideExistingValues,
+        hasEmail,
+      );
+      final mergedPhone = _mergeText(
+        existing.phone,
+        phone,
+        options.overrideExistingValues,
+        hasPhone,
+      );
+      final mergedNotes = _mergeText(
+        existing.notes,
+        notes,
+        options.overrideExistingValues,
+        hasNotes,
+      );
 
-      await (db.update(db.crew)..where((tbl) => tbl.id.equals(existing.id)))
-          .write(
+      final hasCrewChanges =
+          mergedEmail != existing.email ||
+          mergedPhone != existing.phone ||
+          mergedNotes != existing.notes;
+
+      if (!hasCrewChanges) {
+        return _IdResult(id: existing.id, created: false);
+      }
+
+      await (db.update(
+        db.crew,
+      )..where((tbl) => tbl.id.equals(existing.id))).write(
         CrewCompanion(
           email: Value(mergedEmail),
           phone: Value(mergedPhone),
@@ -1602,7 +1767,9 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       );
       return _IdResult(id: existing.id, created: false);
     }
-    final id = await db.into(db.crew).insert(
+    final id = await db
+        .into(db.crew)
+        .insert(
           CrewCompanion.insert(
             name: clean,
             email: email.trim().isEmpty ? const Value(null) : Value(email),
@@ -1639,12 +1806,7 @@ String _airportKey(String icao) => icao.trim().toLowerCase();
 
 String _crewKey(String name) => name.trim().toLowerCase();
 
-bool _hasCoords(
-  double latDep,
-  double longDep,
-  double latArr,
-  double longArr,
-) {
+bool _hasCoords(double latDep, double longDep, double latArr, double longArr) {
   return (latDep != 0 || longDep != 0) && (latArr != 0 || longArr != 0);
 }
 
@@ -1662,7 +1824,8 @@ double _calculateDistanceNm(
   }
   final dLat = _degToRad(latArr - latDep);
   final dLon = _degToRad(longArr - longDep);
-  final a = sin(dLat / 2) * sin(dLat / 2) +
+  final a =
+      sin(dLat / 2) * sin(dLat / 2) +
       cos(_degToRad(latDep)) *
           cos(_degToRad(latArr)) *
           sin(dLon / 2) *
@@ -1674,96 +1837,118 @@ double _calculateDistanceNm(
 String? _mergeText(
   String? existing,
   String incoming,
-  MergeStrategy strategy,
+  bool overrideExistingValues,
   bool hasIncoming,
 ) {
   final clean = incoming.trim();
-  switch (strategy) {
-    case MergeStrategy.keep:
-      return existing;
-    case MergeStrategy.override:
-      return clean.isEmpty ? null : clean;
-    case MergeStrategy.mix:
-      return hasIncoming ? clean : existing;
-  }
+  if (!overrideExistingValues) return existing;
+  return hasIncoming ? (clean.isEmpty ? null : clean) : existing;
 }
 
 double _mergeDouble(
   double existing,
   double incoming,
-  MergeStrategy strategy,
+  bool overrideExistingValues,
   bool hasIncoming,
 ) {
-  switch (strategy) {
-    case MergeStrategy.keep:
-      return existing;
-    case MergeStrategy.override:
-      return incoming;
-    case MergeStrategy.mix:
-      return hasIncoming ? incoming : existing;
-  }
+  if (!overrideExistingValues) return existing;
+  return hasIncoming ? incoming : existing;
 }
 
 int _mergeInt(
   int existing,
   int incoming,
-  MergeStrategy strategy,
+  bool overrideExistingValues,
   bool hasIncoming,
 ) {
-  switch (strategy) {
-    case MergeStrategy.keep:
-      return existing;
-    case MergeStrategy.override:
-      return incoming;
-    case MergeStrategy.mix:
-      return hasIncoming ? incoming : existing;
-  }
+  if (!overrideExistingValues) return existing;
+  return hasIncoming ? incoming : existing;
 }
 
 int? _mergeNullableInt(
   int? existing,
   int? incoming,
-  MergeStrategy strategy,
+  bool overrideExistingValues,
   bool hasIncoming,
 ) {
-  switch (strategy) {
-    case MergeStrategy.keep:
-      return existing;
-    case MergeStrategy.override:
-      return hasIncoming ? incoming : null;
-    case MergeStrategy.mix:
-      return hasIncoming ? incoming : existing;
-  }
+  if (!overrideExistingValues) return existing;
+  return hasIncoming ? incoming : existing;
 }
 
-int _calculateInstrumentMinutes(
-  int totalMinutes,
-  SimpleLogImportOptions options,
-) {
-  final percent = options.instrumentPercent.clamp(0, 100);
-  var result = ((totalMinutes * percent) / 100).round();
-  result -= options.instrumentSubtractMinutes;
+int _calculateFactoredMinutes({
+  required int totalMinutes,
+  required int percent,
+  required int subtractMinutes,
+  required int minimumMinutes,
+}) {
+  final clampedPercent = percent.clamp(0, 100);
+  var result = ((totalMinutes * clampedPercent) / 100).round();
+  result -= subtractMinutes;
   if (result < 0) result = 0;
-  if (result < options.instrumentMinimumMinutes) {
-    result = options.instrumentMinimumMinutes;
+  if (result < minimumMinutes) {
+    result = minimumMinutes;
   }
   if (result > totalMinutes) result = totalMinutes;
   return result;
 }
 
-_Role _pickRole(
-  int pic,
-  int picus,
-  int sic,
-  int dual,
-  int instructor,
-) {
+_Role _pickRole(int pic, int picus, int sic, int dual, int instructor) {
   if (pic > 0) return _Role.pic;
   if (picus > 0) return _Role.picus;
   if (sic > 0) return _Role.sic;
   if (dual > 0) return _Role.dual;
   if (instructor > 0) return _Role.instructor;
   return _Role.none;
+}
+
+String _canonicalPilotFunction(
+  String raw, {
+  required int takeoffCount,
+  required int landingCount,
+}) {
+  final normalized = raw.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
+  switch (normalized) {
+    case 'PF':
+      return 'PF';
+    case 'PNF':
+    case 'PM':
+      return 'PNF';
+    case 'PF/PNF':
+      return 'PF/PNF';
+    case 'PNF/PF':
+    case 'PM/PF':
+      return 'PNF/PF';
+    case 'IRP3':
+      return 'IRP 3';
+    case 'IRP4':
+      return 'IRP 4';
+  }
+  if (takeoffCount > 0 && landingCount > 0) return 'PF';
+  if (takeoffCount > 0 && landingCount == 0) return 'PF/PNF';
+  if (takeoffCount == 0 && landingCount > 0) return 'PNF/PF';
+  return 'PNF';
+}
+
+int _applyIrpFactoring({
+  required int totalMinutes,
+  required String pilotFunction,
+  required int irp3Percent,
+  required int irp3SubtractMinutes,
+  required int irp4Percent,
+  required int irp4SubtractMinutes,
+}) {
+  final normalized = pilotFunction.trim().toUpperCase().replaceAll(' ', '');
+  if (normalized != 'IRP3' && normalized != 'IRP4') {
+    return totalMinutes;
+  }
+  final percent = normalized == 'IRP3' ? irp3Percent : irp4Percent;
+  final subtract = normalized == 'IRP3'
+      ? irp3SubtractMinutes
+      : irp4SubtractMinutes;
+  var base = totalMinutes - subtract;
+  if (base < 0) base = 0;
+  final clampedPercent = percent.clamp(0, 100);
+  return ((base * clampedPercent) / 100).round();
 }
 
 DateTime? _parseSouthwestDateTime(String date, String time) {
@@ -1854,8 +2039,13 @@ DateTime _dallasLocalToUtc({
   final dstEnd = _firstSunday(year, 11, 2); // 02:00 local
   final isDst = !local.isBefore(dstStart) && local.isBefore(dstEnd);
   final offsetHours = isDst ? 5 : 6; // Dallas: UTC-5 (DST), UTC-6 (standard)
-  final shiftedUtc =
-      DateTime.utc(year, month, day, hour, minute).add(Duration(hours: offsetHours));
+  final shiftedUtc = DateTime.utc(
+    year,
+    month,
+    day,
+    hour,
+    minute,
+  ).add(Duration(hours: offsetHours));
   // Store as wall-clock UTC (non-timezone-shifting DateTime) to match app model.
   return DateTime(
     shiftedUtc.year,
@@ -1886,10 +2076,7 @@ class _IdResult {
 }
 
 class _SouthwestCopilot {
-  const _SouthwestCopilot({
-    required this.name,
-    required this.staffNumber,
-  });
+  const _SouthwestCopilot({required this.name, required this.staffNumber});
 
   final String name;
   final String? staffNumber;
