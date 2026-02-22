@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/sync/local_sync_discovery.dart';
 import 'package:simplelog/data/sync/local_sync_server.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/database_sync_controller_provider.dart';
 
@@ -457,23 +458,14 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     if (!mounted) {
       return false;
     }
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.databaseSyncSchemaMismatchTitle),
-        content: Text(
-          l10n.databaseSyncSchemaMismatchMessage(
-            localVersion.toString(),
-            remoteVersion.toString(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
+    await showAppMessageDialog(
+      context,
+      title: l10n.databaseSyncSchemaMismatchTitle,
+      message: l10n.databaseSyncSchemaMismatchMessage(
+        localVersion.toString(),
+        remoteVersion.toString(),
       ),
+      okLabel: l10n.okAction,
     );
     return false;
   }
@@ -501,17 +493,10 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     if (navigator.canPop()) {
       navigator.pop();
     }
-    await showDialog<void>(
-      context: navigator.context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.databaseSyncSuccess),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
-      ),
+    await showAppMessageDialog(
+      navigator.context,
+      title: l10n.databaseSyncSuccess,
+      okLabel: l10n.okAction,
     );
   }
 
@@ -555,17 +540,10 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     if (navigator.canPop()) {
       navigator.pop();
     }
-    await showDialog<void>(
-      context: navigator.context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.databaseSyncDisconnected),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
-      ),
+    await showAppMessageDialog(
+      navigator.context,
+      title: l10n.databaseSyncDisconnected,
+      okLabel: l10n.okAction,
     );
   }
 

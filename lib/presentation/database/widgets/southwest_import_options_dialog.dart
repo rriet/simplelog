@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 
 class SouthwestImportOptionsDialog extends StatefulWidget {
   const SouthwestImportOptionsDialog({
@@ -20,10 +20,8 @@ class SouthwestImportOptionsDialog extends StatefulWidget {
   }) {
     return showDialog<SouthwestImportOptions>(
       context: context,
-      builder: (context) => SouthwestImportOptionsDialog(
-        fileName: fileName,
-        initial: initial,
-      ),
+      builder: (context) =>
+          SouthwestImportOptionsDialog(fileName: fileName, initial: initial),
     );
   }
 
@@ -156,28 +154,21 @@ class _SouthwestImportOptionsDialogState
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Calculate Cross-country time'),
                         value: _recalcCrossCountry,
-                        onChanged: (value) => setState(
-                          () => _recalcCrossCountry = value ?? true,
-                        ),
+                        onChanged: (value) =>
+                            setState(() => _recalcCrossCountry = value ?? true),
                       ),
-                      TextField(
+                      NumberInputField(
                         controller: _crossCountryController,
+                        label: 'Cross-country threshold (NM)',
                         enabled: _recalcCrossCountry,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        decoration: const InputDecoration(
-                          labelText: 'Cross-country threshold (NM)',
-                          border: OutlineInputBorder(),
-                        ),
                       ),
                       const SizedBox(height: 8),
                       CheckboxListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Calculate Instrument time'),
                         value: _recalcInstrument,
-                        onChanged: (value) => setState(
-                          () => _recalcInstrument = value ?? false,
-                        ),
+                        onChanged: (value) =>
+                            setState(() => _recalcInstrument = value ?? false),
                       ),
                       CheckboxListTile(
                         contentPadding: EdgeInsets.zero,
@@ -188,7 +179,9 @@ class _SouthwestImportOptionsDialogState
                       ),
                       CheckboxListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Add CoPilot staff number to crew notes'),
+                        title: const Text(
+                          'Add CoPilot staff number to crew notes',
+                        ),
                         value: _addCopilotStaff,
                         onChanged: (value) =>
                             setState(() => _addCopilotStaff = value ?? true),
@@ -223,7 +216,10 @@ class _SouthwestImportOptionsDialogState
                           recalculateIfrTime: _recalcIfr,
                           recalculateCrossCountry: _recalcCrossCountry,
                           crossCountryThresholdNm:
-                              int.tryParse(_crossCountryController.text.trim()) ?? 50,
+                              int.tryParse(
+                                _crossCountryController.text.trim(),
+                              ) ??
+                              50,
                           recalculateInstrumentTime: _recalcInstrument,
                           overrideExistingData: _overrideExisting,
                           addCopilotStaffNumberToNotes: _addCopilotStaff,

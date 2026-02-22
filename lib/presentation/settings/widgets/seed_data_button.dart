@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 
 import 'package:simplelog/state/providers/settings_controller_provider.dart';
 
@@ -16,9 +17,7 @@ class SeedDataButton extends ConsumerWidget {
         await ref.read(settingsControllerProvider.notifier).seedTestData();
 
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.seedDataDone)),
-          );
+          await showAppMessageDialog(context, message: l10n.seedDataDone);
         }
       },
       icon: const Icon(Icons.auto_awesome),

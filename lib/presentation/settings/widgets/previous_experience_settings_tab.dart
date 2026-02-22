@@ -7,7 +7,10 @@ import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/data/models/previous_experience_row.dart';
 import 'package:simplelog/features/aircraft_types/application/providers/aircraft_type_repository_provider.dart';
 import 'package:simplelog/presentation/settings/providers/previous_experience_providers.dart';
-import 'package:simplelog/presentation/shared/widgets/time_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 
 class PreviousExperienceSettingsTab extends ConsumerWidget {
   const PreviousExperienceSettingsTab({super.key});
@@ -116,8 +119,9 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
       typesAsync = await useCases.watchAircraftTypes('').first;
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unable to load aircraft types: $error')),
+        await showAppMessageDialog(
+          context,
+          message: 'Unable to load aircraft types: $error',
         );
       }
       return;
@@ -133,7 +137,7 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
   }
 
   static String _formatMinutes(int minutes) {
-    return TimeInputField.formatMinutes(minutes);
+    return HourInputField.formatHours(minutes);
   }
 }
 
@@ -197,7 +201,7 @@ class _PreviousExperienceEditDialogState
 
   void _setTime(String key, int minutes) {
     _timeControllers[key] = TextEditingController(
-      text: TimeInputField.formatMinutes(minutes),
+      text: HourInputField.formatHours(minutes),
     );
   }
 
@@ -249,18 +253,23 @@ class _PreviousExperienceEditDialogState
   }
 
   int _minutes(String key) =>
-      TimeInputField.parseMinutes(_timeControllers[key]!.text) ?? 0;
+      HourInputField.parseHours(_timeControllers[key]!.text) ?? 0;
 
   int _intValue(String key) => int.tryParse(_intControllers[key]!.text) ?? 0;
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_aircraftTypeId == null) return;
+    if (_firstFlight == null || _lastFlight == null) {
+      await showAppMessageDialog(
+        context,
+        message: 'First Flight and Last Flight are required.',
+      );
+      return;
+    }
 
     final warnings = <String>[];
-    if (_firstFlight != null &&
-        _lastFlight != null &&
-        !_firstFlight!.isBefore(_lastFlight!)) {
+    if (!_firstFlight!.isBefore(_lastFlight!)) {
       warnings.add('First flight should be earlier than last flight.');
     }
 
@@ -421,12 +430,9 @@ class _PreviousExperienceEditDialogState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      DropdownButtonFormField<int>(
-                        initialValue: _aircraftTypeId,
-                        decoration: const InputDecoration(
-                          labelText: 'Aircraft Type',
-                          border: OutlineInputBorder(),
-                        ),
+                      DropdownInputField<int>(
+                        value: _aircraftTypeId,
+                        label: 'Aircraft Type',
                         items: widget.aircraftTypes
                             .map(
                               (type) => DropdownMenuItem<int>(
@@ -437,8 +443,9 @@ class _PreviousExperienceEditDialogState
                             .toList(growable: false),
                         onChanged: (value) =>
                             setState(() => _aircraftTypeId = value),
-                        validator: (value) =>
-                            value == null ? 'Select aircraft type.' : null,
+                        errorText: _aircraftTypeId == null
+                            ? 'Select aircraft type.'
+                            : null,
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -570,27 +577,20 @@ class _TimeGrid extends StatelessWidget {
           children: [
             Text('Times', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
-            Theme(
-              data: Theme.of(context).copyWith(
-                inputDecorationTheme: Theme.of(
-                  context,
-                ).inputDecorationTheme.copyWith(isDense: true),
-              ),
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 10,
-                children: fields
-                    .map(
-                      (field) => SizedBox(
-                        width: width,
-                        child: TimeInputField(
-                          controller: controllers[field.$2]!,
-                          label: field.$1,
-                        ),
+            Wrap(
+              spacing: 12,
+              runSpacing: 10,
+              children: fields
+                  .map(
+                    (field) => SizedBox(
+                      width: width,
+                      child: HourInputField(
+                        controller: controllers[field.$2]!,
+                        label: field.$1,
                       ),
-                    )
-                    .toList(growable: false),
-              ),
+                    ),
+                  )
+                  .toList(growable: false),
             ),
           ],
         );
@@ -617,31 +617,20 @@ class _IntGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = (constraints.maxWidth - 12) / 2;
-        return Theme(
-          data: Theme.of(context).copyWith(
-            inputDecorationTheme: Theme.of(
-              context,
-            ).inputDecorationTheme.copyWith(isDense: true),
-          ),
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 10,
-            children: fields
-                .map(
-                  (field) => SizedBox(
-                    width: width,
-                    child: TextFormField(
-                      controller: controllers[field.$2],
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: field.$1,
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
+        return Wrap(
+          spacing: 12,
+          runSpacing: 10,
+          children: fields
+              .map(
+                (field) => SizedBox(
+                  width: width,
+                  child: NumberInputField(
+                    controller: controllers[field.$2]!,
+                    label: field.$1,
                   ),
-                )
-                .toList(growable: false),
-          ),
+                ),
+              )
+              .toList(growable: false),
         );
       },
     );

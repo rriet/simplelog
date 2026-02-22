@@ -10,8 +10,10 @@ class AppTheme {
 
   static ThemeData light() {
     final colorScheme =
-        ColorScheme.fromSeed(seedColor: _navy, brightness: Brightness.light)
-            .copyWith(
+        ColorScheme.fromSeed(
+          seedColor: _navy,
+          brightness: Brightness.light,
+        ).copyWith(
           primary: _navy,
           onPrimary: Colors.white,
           secondary: _red,
@@ -37,6 +39,10 @@ class AppTheme {
       colorScheme: colorScheme,
       useMaterial3: true,
       fontFamily: _fontFamily,
+      inputDecorationTheme: const InputDecorationTheme(
+        isDense: true,
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
       scaffoldBackgroundColor: colorScheme.surface,
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
@@ -51,8 +57,10 @@ class AppTheme {
 
   static ThemeData dark() {
     final colorScheme =
-        ColorScheme.fromSeed(seedColor: _navy, brightness: Brightness.dark)
-            .copyWith(
+        ColorScheme.fromSeed(
+          seedColor: _navy,
+          brightness: Brightness.dark,
+        ).copyWith(
           primary: _yellow,
           onPrimary: const Color(0xFF1F1F1F),
           secondary: _red,
@@ -78,6 +86,10 @@ class AppTheme {
       colorScheme: colorScheme,
       useMaterial3: true,
       fontFamily: _fontFamily,
+      inputDecorationTheme: const InputDecorationTheme(
+        isDense: true,
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
       scaffoldBackgroundColor: colorScheme.surface,
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,

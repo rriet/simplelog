@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,8 +8,9 @@ import 'package:simplelog/features/aircraft_types/application/providers/aircraft
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
-import 'package:simplelog/presentation/shared/widgets/form_dropdown_field.dart';
-import 'package:simplelog/presentation/shared/widgets/form_text_field.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/uppercase_text_formatter.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
@@ -49,12 +50,15 @@ class _AircraftTypeEditScreenState
   void initState() {
     super.initState();
     final item = widget.item;
-    _codeController = TextEditingController(text: widget.isCreate ? '' : item.code);
+    _codeController = TextEditingController(
+      text: widget.isCreate ? '' : item.code,
+    );
     _familyController = TextEditingController(
       text: widget.isCreate ? '' : item.family,
     );
-    _longNameController =
-        TextEditingController(text: widget.isCreate ? '' : item.longName);
+    _longNameController = TextEditingController(
+      text: widget.isCreate ? '' : item.longName,
+    );
     _manufacturerController = TextEditingController(
       text: widget.isCreate ? '' : (item.manufacturer ?? ''),
     );
@@ -157,18 +161,11 @@ class _AircraftTypeEditScreenState
   Future<void> _showValidationError(ValidationResult validation) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.validationErrorTitle),
-        content: Text(validation.message ?? l10n.validationErrorGeneric),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
-      ),
+    await showAppMessageDialog(
+      context,
+      title: l10n.validationErrorTitle,
+      message: validation.message ?? l10n.validationErrorGeneric,
+      okLabel: l10n.okAction,
     );
   }
 
@@ -180,6 +177,9 @@ class _AircraftTypeEditScreenState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final title = widget.isCreate
+        ? l10n.createAircraftTypeTitle
+        : l10n.editAircraftTypeTitle;
     final categories = AircraftCategory.values
         .where((value) => value != AircraftCategory.unknown)
         .toList();
@@ -187,30 +187,18 @@ class _AircraftTypeEditScreenState
         .where((value) => value != EngineType.unknown)
         .toList();
     final engineCounts = List.generate(9, (index) => index + 1);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isCreate ? l10n.createAircraftTypeTitle : l10n.editAircraftTypeTitle,
-        ),
-        actions: [
-          TextButton(
-            onPressed: _save,
-            child: Text(l10n.saveAction),
-          ),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+    final form = Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            FormTextField(
+            TextInputField(
               controller: _codeController,
               label: l10n.fieldCode,
-              inputFormatters: const [
-                UpperCaseTextFormatter(),
-              ],
+              inputFormatters: const [UpperCaseTextFormatter()],
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return l10n.codeRequired;
@@ -218,6 +206,7 @@ class _AircraftTypeEditScreenState
                 return null;
               },
             ),
+            const SizedBox(height: 8),
             StreamBuilder<List<String>>(
               stream: _watchFamilies(),
               builder: (context, snapshot) {
@@ -225,10 +214,9 @@ class _AircraftTypeEditScreenState
                   if (_familyController.text.trim().isNotEmpty)
                     _familyController.text.trim(),
                   ...?snapshot.data,
-                }.toList()
-                  ..sort();
+                }.toList()..sort();
 
-                return FormTextField(
+                return TextInputField(
                   controller: _familyController,
                   label: l10n.fieldFamily,
                   suffixIcon: IconButton(
@@ -260,69 +248,94 @@ class _AircraftTypeEditScreenState
                 );
               },
             ),
-            FormTextField(
+            const SizedBox(height: 8),
+            TextInputField(
               controller: _longNameController,
               label: l10n.fieldLongName,
             ),
-            FormTextField(
+            const SizedBox(height: 8),
+            TextInputField(
               controller: _manufacturerController,
               label: l10n.fieldManufacturer,
             ),
-            FormDropdownField<AircraftCategory>(
+            const SizedBox(height: 8),
+            DropdownInputField<AircraftCategory>(
               label: l10n.fieldCategory,
               value: _category,
-              items: categories,
-              itemLabel: (value) => value.name,
+              items: [
+                for (final value in categories)
+                  DropdownMenuItem(value: value, child: Text(value.name)),
+              ],
               onChanged: (value) {
                 if (value != null) {
                   setState(() => _category = value);
                 }
               },
             ),
-            FormDropdownField<EngineType>(
+            const SizedBox(height: 8),
+            DropdownInputField<EngineType>(
               label: l10n.fieldEngineType,
               value: _engineType,
-              items: engineTypes,
-              itemLabel: (value) => value.name,
+              items: [
+                for (final value in engineTypes)
+                  DropdownMenuItem(value: value, child: Text(value.name)),
+              ],
               onChanged: (value) {
                 if (value != null) {
                   setState(() => _engineType = value);
                 }
               },
             ),
-            FormTextField(
+            const SizedBox(height: 8),
+            TextInputField(
               controller: _mtowController,
               label: l10n.fieldMtow,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             ),
-            FormDropdownField<int>(
+            const SizedBox(height: 8),
+            DropdownInputField<int>(
               label: l10n.fieldEngineCount,
               value: _engineCount,
-              items: engineCounts,
-              itemLabel: (value) => value.toString(),
+              items: [
+                for (final value in engineCounts)
+                  DropdownMenuItem(value: value, child: Text(value.toString())),
+              ],
               onChanged: (value) {
                 if (value != null) {
                   setState(() => _engineCount = value);
                 }
               },
             ),
+            const SizedBox(height: 8),
             SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              visualDensity: const VisualDensity(vertical: -1),
               title: Text(l10n.fieldMultiPilot),
               value: _multiPilot,
               onChanged: (value) => setState(() => _multiPilot = value),
             ),
             SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              visualDensity: const VisualDensity(vertical: -1),
               title: Text(l10n.fieldComplex),
               value: _complex,
               onChanged: (value) => setState(() => _complex = value),
             ),
             SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              visualDensity: const VisualDensity(vertical: -1),
               title: Text(l10n.fieldEfis),
               value: _efis,
               onChanged: (value) => setState(() => _efis = value),
             ),
             SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              visualDensity: const VisualDensity(vertical: -1),
               title: Text(l10n.fieldHighPerformance),
               value: _highPerformance,
               onChanged: (value) => setState(() => _highPerformance = value),
@@ -330,6 +343,39 @@ class _AircraftTypeEditScreenState
           ],
         ),
       ),
+    );
+    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
+
+    if (isInDialog) {
+      return Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              title: Text(title),
+              trailing: TextButton(
+                onPressed: _save,
+                child: Text(l10n.saveAction),
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(fit: FlexFit.loose, child: form),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
+      ),
+      body: form,
     );
   }
 }

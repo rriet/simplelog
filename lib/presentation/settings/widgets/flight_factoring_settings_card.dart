@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:simplelog/presentation/shared/widgets/time_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 
 class FlightFactoringSettingsCard extends ConsumerStatefulWidget {
@@ -53,25 +54,25 @@ class _FlightFactoringSettingsCardState
       _crossCountryThresholdController.text = settings.crossCountryThresholdNm
           .toString();
       _instrumentPercentController.text = settings.instrumentPercent.toString();
-      _instrumentMinController.text = TimeInputField.formatMinutes(
+      _instrumentMinController.text = HourInputField.formatHours(
         settings.instrumentMinimumMinutes,
       );
-      _instrumentSubtractController.text = TimeInputField.formatMinutes(
+      _instrumentSubtractController.text = HourInputField.formatHours(
         settings.instrumentSubtractMinutes,
       );
       _ifrPercentController.text = settings.ifrPercent.toString();
-      _ifrMinController.text = TimeInputField.formatMinutes(
+      _ifrMinController.text = HourInputField.formatHours(
         settings.ifrMinimumMinutes,
       );
-      _ifrSubtractController.text = TimeInputField.formatMinutes(
+      _ifrSubtractController.text = HourInputField.formatHours(
         settings.ifrSubtractMinutes,
       );
       _irp3PercentController.text = settings.irp3Percent.toString();
-      _irp3SubtractController.text = TimeInputField.formatMinutes(
+      _irp3SubtractController.text = HourInputField.formatHours(
         settings.irp3SubtractMinutes,
       );
       _irp4PercentController.text = settings.irp4Percent.toString();
-      _irp4SubtractController.text = TimeInputField.formatMinutes(
+      _irp4SubtractController.text = HourInputField.formatHours(
         settings.irp4SubtractMinutes,
       );
     }
@@ -175,21 +176,13 @@ class _FlightFactoringSettingsCardState
                 SizedBox(
                   width: eachWidth,
                   child: field.isTime
-                      ? TimeInputField(
+                      ? HourInputField(
                           controller: field.controller,
                           label: field.label,
-                          maxHours: 999,
                         )
-                      : TextField(
+                      : NumberInputField(
                           controller: field.controller,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          decoration: InputDecoration(
-                            labelText: field.label,
-                            border: const OutlineInputBorder(),
-                          ),
+                          label: field.label,
                         ),
                 ),
             ],
@@ -212,30 +205,27 @@ class _FlightFactoringSettingsCardState
         fallback: 0,
       ),
       instrumentMinimumMinutes:
-          TimeInputField.parseMinutes(_instrumentMinController.text.trim()) ??
-          0,
+          HourInputField.parseHours(_instrumentMinController.text.trim()) ?? 0,
       instrumentSubtractMinutes:
-          TimeInputField.parseMinutes(
+          HourInputField.parseHours(
             _instrumentSubtractController.text.trim(),
           ) ??
           0,
       ifrPercent: percentValue(_ifrPercentController, fallback: 0),
       ifrMinimumMinutes:
-          TimeInputField.parseMinutes(_ifrMinController.text.trim()) ?? 0,
+          HourInputField.parseHours(_ifrMinController.text.trim()) ?? 0,
       ifrSubtractMinutes:
-          TimeInputField.parseMinutes(_ifrSubtractController.text.trim()) ?? 0,
+          HourInputField.parseHours(_ifrSubtractController.text.trim()) ?? 0,
       irp3Percent: percentValue(_irp3PercentController, fallback: 100),
       irp3SubtractMinutes:
-          TimeInputField.parseMinutes(_irp3SubtractController.text.trim()) ?? 0,
+          HourInputField.parseHours(_irp3SubtractController.text.trim()) ?? 0,
       irp4Percent: percentValue(_irp4PercentController, fallback: 100),
       irp4SubtractMinutes:
-          TimeInputField.parseMinutes(_irp4SubtractController.text.trim()) ?? 0,
+          HourInputField.parseHours(_irp4SubtractController.text.trim()) ?? 0,
     );
     await ref.read(flightFactoringSettingsProvider.notifier).setValue(next);
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Factoring settings saved.')));
+    await showAppMessageDialog(context, message: 'Factoring settings saved.');
   }
 }
 

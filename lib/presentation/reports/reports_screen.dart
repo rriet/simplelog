@@ -23,7 +23,8 @@ import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
 import 'package:simplelog/presentation/reports/providers/report_pdf_application_service_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
-import 'package:simplelog/presentation/shared/widgets/time_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/time_input_field.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
@@ -517,12 +518,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
     await ref.read(savedReportsQueriesProvider.notifier).addQuery(query);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          AppLocalizations.of(context)!.reportsSavedQuery(query.name),
-        ),
-      ),
+    await _showInfoDialog(
+      AppLocalizations.of(context)!.reportsSavedQuery(query.name),
     );
   }
 
@@ -567,16 +564,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     }
     final selectedTemplate = _selectedTemplate;
     if (selectedTemplate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.reportsNoTemplateAvailable,
-          ),
-        ),
+      await _showInfoDialog(
+        AppLocalizations.of(context)!.reportsNoTemplateAvailable,
       );
       return;
     }
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final l10n = AppLocalizations.of(context)!;
     await _setPdfGenerationProgress(l10n.reportsPdfPreparing, progress: 0.1);
 
@@ -607,16 +599,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       );
       if (!mounted) return;
       await _setPdfGenerationProgress(l10n.reportsPdfDone, progress: 1);
-      messenger?.showSnackBar(
-        SnackBar(content: Text(l10n.reportsPdfExported(path))),
-      );
+      await _showInfoDialog(l10n.reportsPdfExported(path));
     } catch (error, stackTrace) {
       debugPrint('PDF generation failed: $error');
       debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
-      messenger?.showSnackBar(
-        SnackBar(content: Text(l10n.reportsPdfFailed(error.toString()))),
-      );
+      await _showInfoDialog(l10n.reportsPdfFailed(error.toString()));
     } finally {
       if (mounted) {
         await Future<void>.delayed(const Duration(milliseconds: 250));
@@ -640,6 +628,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       _pdfGenerationProgress = progress.clamp(0, 1);
     });
     await Future<void>.delayed(const Duration(milliseconds: 16));
+  }
+
+  Future<void> _showInfoDialog(String message) async {
+    if (!mounted) return;
+    await showAppMessageDialog(context, message: message);
   }
 
   Future<ReportTemplateTotals> _loadStandardStartingTotals(

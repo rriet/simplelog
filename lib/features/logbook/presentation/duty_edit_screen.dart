@@ -5,7 +5,10 @@ import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/data/database/app_database.dart';
-import 'package:simplelog/presentation/shared/widgets/time_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
 
 class DutyEditScreen extends ConsumerStatefulWidget {
   const DutyEditScreen({
@@ -29,6 +32,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _startTimeController = TextEditingController();
   final _endTimeController = TextEditingController();
+  final _dutyTimeController = TextEditingController();
   final _factoredController = TextEditingController();
   bool _factoredEdited = false;
   bool _loading = true;
@@ -45,13 +49,14 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     final now = DateTime.now();
     _start = widget.initialStart ?? now;
     _end = widget.initialEnd ?? now.add(const Duration(hours: 2));
-    _startTimeController.text = TimeInputField.formatMinutes(
+    _startTimeController.text = ClockTimeInputField.formatMinutesOfDay(
       _start.hour * 60 + _start.minute,
     );
-    _endTimeController.text = TimeInputField.formatMinutes(
+    _endTimeController.text = ClockTimeInputField.formatMinutesOfDay(
       _end.hour * 60 + _end.minute,
     );
-    _factoredController.text = TimeInputField.formatMinutes(_dutyMinutes);
+    _dutyTimeController.text = HourInputField.formatHours(_dutyMinutes);
+    _factoredController.text = HourInputField.formatHours(_dutyMinutes);
     _loadExisting();
   }
 
@@ -59,6 +64,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
   void dispose() {
     _startTimeController.dispose();
     _endTimeController.dispose();
+    _dutyTimeController.dispose();
     _factoredController.dispose();
     super.dispose();
   }
@@ -88,16 +94,17 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
       _end = DbDateTime.dbToUtc(endLine.eventDateTime);
       _endTimelineId = endLine.id;
     }
-    _startTimeController.text = TimeInputField.formatMinutes(
+    _startTimeController.text = ClockTimeInputField.formatMinutesOfDay(
       _start.hour * 60 + _start.minute,
     );
-    _endTimeController.text = TimeInputField.formatMinutes(
+    _endTimeController.text = ClockTimeInputField.formatMinutesOfDay(
       _end.hour * 60 + _end.minute,
     );
     _duty = loaded.duty;
-    _factoredController.text = TimeInputField.formatMinutes(
+    _factoredController.text = HourInputField.formatHours(
       loaded.duty.timeFactoredDutyMinutes,
     );
+    _dutyTimeController.text = HourInputField.formatHours(_dutyMinutes);
     _loading = false;
     setState(() {});
   }
@@ -171,8 +178,10 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
   }
 
   void _updateFactoredIfNeeded() {
-    if (_factoredEdited) return;
-    _factoredController.text = TimeInputField.formatMinutes(_dutyMinutes);
+    _dutyTimeController.text = HourInputField.formatHours(_dutyMinutes);
+    if (!_factoredEdited) {
+      _factoredController.text = HourInputField.formatHours(_dutyMinutes);
+    }
   }
 
   String _dateLabel(DateTime value) {
@@ -180,30 +189,14 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     return DateFormat('dd/MMM yyyy', locale).format(value);
   }
 
-  String _endResolvedLabel() {
-    final locale = Localizations.localeOf(context).toString();
-    final time = DateFormat('HH:mm', locale).format(_end);
-    final startDate = DateTime(_start.year, _start.month, _start.day);
-    final endDate = DateTime(_end.year, _end.month, _end.day);
-    if (endDate == startDate) return time;
-    return '$time (+1)';
-  }
-
   Future<void> _showError(String message) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.validationErrorTitle),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
-      ),
+    await showAppMessageDialog(
+      context,
+      title: l10n.validationErrorTitle,
+      message: message,
+      okLabel: l10n.okAction,
     );
   }
 
@@ -216,7 +209,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
 
     final dutyMinutes = _dutyMinutes;
     final factoredMinutes =
-        TimeInputField.parseMinutes(_factoredController.text) ?? dutyMinutes;
+        HourInputField.parseHours(_factoredController.text) ?? dutyMinutes;
     if (factoredMinutes > dutyMinutes) {
       await _showError('Factored duty time is greater than total duty time.');
       return;
@@ -258,29 +251,24 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     }
 
     final title = widget.isCreate ? 'New Duty' : 'Edit Duty';
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+    final form = Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Date'),
-              subtitle: Text(_dateLabel(_start)),
-              trailing: const Icon(Icons.calendar_today),
+            DateSelectorInputField(
+              label: 'Date',
+              valueText: _dateLabel(_start),
               onTap: _pickDate,
             ),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: TimeInputField(
+                  child: ClockTimeInputField(
                     controller: _startTimeController,
                     label: 'Duty Start',
                     onChangedMinutes: _onStartTimeChanged,
@@ -288,7 +276,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: TimeInputField(
+                  child: ClockTimeInputField(
                     controller: _endTimeController,
                     label: 'Duty End',
                     onChangedMinutes: _onEndTimeChanged,
@@ -296,36 +284,78 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Resolved End: ${_endResolvedLabel()}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Duty Time: ${TimeInputField.formatMinutes(_dutyMinutes)}',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            TimeInputField(
-              controller: _factoredController,
-              label: 'Factored Duty Time',
-              fallbackMinutes: _dutyMinutes,
-              onChangedMinutes: (_) => _factoredEdited = true,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return l10n.codeRequired;
-                }
-                final parsed = TimeInputField.parseMinutes(value);
-                if (parsed == null || parsed <= 0) {
-                  return l10n.validationErrorGeneric;
-                }
-                return null;
-              },
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _dutyTimeController,
+                    enabled: false,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Duty Time',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: HourInputField(
+                    controller: _factoredController,
+                    label: 'Factored Duty Time',
+                    fallbackMinutes: _dutyMinutes,
+                    onChangedMinutes: (_) => _factoredEdited = true,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return l10n.codeRequired;
+                      }
+                      final parsed = HourInputField.parseHours(value);
+                      if (parsed == null || parsed <= 0) {
+                        return l10n.validationErrorGeneric;
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
+    );
+    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
+
+    if (isInDialog) {
+      return Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              title: Text(title),
+              trailing: TextButton(
+                onPressed: _save,
+                child: Text(l10n.saveAction),
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(fit: FlexFit.loose, child: form),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
+      ),
+      body: form,
     );
   }
 }

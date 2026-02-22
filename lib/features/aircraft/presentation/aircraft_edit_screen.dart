@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
 import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
@@ -10,8 +9,10 @@ import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
 import 'package:simplelog/features/aircraft_types/presentation/aircraft_type_edit_screen.dart';
-import 'package:simplelog/presentation/shared/widgets/form_dropdown_id_field.dart';
-import 'package:simplelog/presentation/shared/widgets/form_text_field.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/uppercase_text_formatter.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
@@ -28,8 +29,7 @@ class AircraftEditScreen extends ConsumerStatefulWidget {
   final bool? initialIsSimulator;
 
   @override
-  ConsumerState<AircraftEditScreen> createState() =>
-      _AircraftEditScreenState();
+  ConsumerState<AircraftEditScreen> createState() => _AircraftEditScreenState();
 }
 
 class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
@@ -87,8 +87,9 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     if (_aircraftTypeId == null) {
       setState(() => _showAircraftTypeError = true);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.aircraftTypeRequired)),
+        await showAppMessageDialog(
+          context,
+          message: AppLocalizations.of(context)!.aircraftTypeRequired,
         );
       }
       return;
@@ -142,18 +143,11 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
   Future<void> _showValidationError(ValidationResult validation) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.validationErrorTitle),
-        content: Text(validation.message ?? l10n.validationErrorGeneric),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
-      ),
+    await showAppMessageDialog(
+      context,
+      title: l10n.validationErrorTitle,
+      message: validation.message ?? l10n.validationErrorGeneric,
+      okLabel: l10n.okAction,
     );
   }
 
@@ -179,10 +173,8 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     if (isCompact) {
       final newId = await Navigator.of(context).push<int?>(
         MaterialPageRoute(
-          builder: (_) => AircraftTypeEditScreen(
-            item: placeholder,
-            isCreate: true,
-          ),
+          builder: (_) =>
+              AircraftTypeEditScreen(item: placeholder, isCreate: true),
         ),
       );
       if (newId != null) {
@@ -193,16 +185,18 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
 
     final newId = await showDialog<int?>(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 520,
-          height: 640,
-          child: AircraftTypeEditScreen(
-            item: placeholder,
-            isCreate: true,
+      builder: (context) {
+        final size = MediaQuery.sizeOf(context);
+        return Dialog(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: size.height * 0.9,
+            ),
+            child: AircraftTypeEditScreen(item: placeholder, isCreate: true),
           ),
-        ),
-      ),
+        );
+      },
     );
     if (newId != null) {
       setState(() => _aircraftTypeId = newId);
@@ -213,32 +207,18 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final types = ref.watch(aircraftTypesProvider(''));
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isCreate
-              ? (_isSimulatorMode ? 'Add Simulator' : 'Add Aircraft')
-              : (_isSimulatorMode ? 'Edit Simulator' : l10n.editAircraftTitle),
-        ),
-        actions: [
-          TextButton(
-            onPressed: _save,
-            child: Text(l10n.saveAction),
-          ),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+    final form = Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            FormTextField(
+            TextInputField(
               controller: _registrationController,
               label: l10n.fieldRegistration,
-              inputFormatters: const [
-                UpperCaseTextFormatter(),
-              ],
+              inputFormatters: const [UpperCaseTextFormatter()],
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return l10n.codeRequired;
@@ -246,12 +226,14 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
                 return null;
               },
             ),
+            const SizedBox(height: 10),
             types.when(
               data: (rows) {
                 final options = rows
                     .map((row) => _TypeOption(row.id, row.code))
                     .toList();
-                final safeValue = options.any((opt) => opt.id == _aircraftTypeId)
+                final safeValue =
+                    options.any((opt) => opt.id == _aircraftTypeId)
                     ? _aircraftTypeId
                     : null;
 
@@ -259,34 +241,43 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: FormDropdownIdField<_TypeOption>(
+                      child: DropdownInputField<int>(
                         label: l10n.fieldAircraftType,
                         value: safeValue,
-                        items: options,
-                        itemLabel: (value) => value.label,
-                        itemValue: (value) => value.id,
-                        onChanged: (value) =>
-                            setState(() {
-                              _aircraftTypeId = value;
-                              if (value != null) {
-                                _showAircraftTypeError = false;
-                              }
-                            }),
-                        isRequired: true,
-                        showRequiredError: _showAircraftTypeError,
-                        isDense: true,
+                        items: options
+                            .map(
+                              (option) => DropdownMenuItem<int>(
+                                value: option.id,
+                                child: Text(option.label),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (value) => setState(() {
+                          _aircraftTypeId = value;
+                          if (value != null) {
+                            _showAircraftTypeError = false;
+                          }
+                        }),
+                        errorText: _showAircraftTypeError && safeValue == null
+                            ? l10n.aircraftTypeRequired
+                            : null,
                       ),
                     ),
                     const SizedBox(width: 8),
                     SizedBox(
-                      height: 48,
-                      width: 48,
+                      height: 40,
+                      width: 40,
                       child: Center(
                         child: IconButton(
                           tooltip: l10n.createAircraftTypeTitle,
-                          iconSize: 32,
+                          iconSize: 24,
                           icon: const Icon(Icons.add_circle_outline),
                           onPressed: _createAircraftType,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 40,
+                            minHeight: 40,
+                          ),
                         ),
                       ),
                     ),
@@ -302,18 +293,22 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
                 child: Text(error.toString()),
               ),
             ),
-            FormTextField(
+            const SizedBox(height: 10),
+            NumberInputField(
               controller: _mtowController,
               label: l10n.fieldMtow,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             ),
-            FormTextField(
+            const SizedBox(height: 10),
+            TextInputField(
               controller: _notesController,
               label: l10n.fieldNotes,
               maxLines: 4,
             ),
+            const SizedBox(height: 4),
             SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              visualDensity: const VisualDensity(vertical: -1),
               title: Text(l10n.fieldIsFavorite),
               value: _isFavorite,
               onChanged: (value) => setState(() => _isFavorite = value),
@@ -321,6 +316,43 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
           ],
         ),
       ),
+    );
+
+    final title = widget.isCreate
+        ? (_isSimulatorMode ? 'Add Simulator' : 'Add Aircraft')
+        : (_isSimulatorMode ? 'Edit Simulator' : l10n.editAircraftTitle);
+    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
+
+    if (isInDialog) {
+      return Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              title: Text(title),
+              trailing: TextButton(
+                onPressed: _save,
+                child: Text(l10n.saveAction),
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(fit: FlexFit.loose, child: form),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
+      ),
+      body: form,
     );
   }
 }
@@ -331,5 +363,3 @@ class _TypeOption {
   final int id;
   final String label;
 }
-
- 

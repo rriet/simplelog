@@ -12,6 +12,7 @@ import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 import 'aircraft_type_edit_screen.dart';
@@ -43,8 +44,9 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
   }
 
   Future<void> _confirmDelete(AircraftTypeRow row) async {
-    final dataController =
-        ref.read(aircraftTypeDataControllerProvider.notifier);
+    final dataController = ref.read(
+      aircraftTypeDataControllerProvider.notifier,
+    );
     final validation = await dataController.validateDelete(row.type);
     if (!validation.isValid) {
       if (!mounted) return;
@@ -58,9 +60,7 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.confirmDeleteTitle),
-        content: Text(
-          l10n.confirmDeleteAircraftType(row.code),
-        ),
+        content: Text(l10n.confirmDeleteAircraftType(row.code)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -82,18 +82,11 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
   Future<void> _showValidationError(ValidationResult validation) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.validationErrorTitle),
-        content: Text(validation.message ?? l10n.validationErrorGeneric),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
-      ),
+    await showAppMessageDialog(
+      context,
+      title: l10n.validationErrorTitle,
+      message: validation.message ?? l10n.validationErrorGeneric,
+      okLabel: l10n.okAction,
     );
   }
 
@@ -119,10 +112,8 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
     if (isCompact) {
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => AircraftTypeEditScreen(
-            item: placeholder,
-            isCreate: true,
-          ),
+          builder: (_) =>
+              AircraftTypeEditScreen(item: placeholder, isCreate: true),
         ),
       );
       return;
@@ -130,16 +121,18 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 520,
-          height: 640,
-          child: AircraftTypeEditScreen(
-            item: placeholder,
-            isCreate: true,
+      builder: (context) {
+        final size = MediaQuery.sizeOf(context);
+        return Dialog(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: size.height * 0.9,
+            ),
+            child: AircraftTypeEditScreen(item: placeholder, isCreate: true),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -149,9 +142,7 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
     if (isCompact) {
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => AircraftTypeEditScreen(
-            item: row.type,
-          ),
+          builder: (_) => AircraftTypeEditScreen(item: row.type),
         ),
       );
       return;
@@ -159,23 +150,27 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 520,
-          height: 640,
-          child: AircraftTypeEditScreen(
-            item: row.type,
+      builder: (context) {
+        final size = MediaQuery.sizeOf(context);
+        return Dialog(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: size.height * 0.9,
+            ),
+            child: AircraftTypeEditScreen(item: row.type),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   Future<void> _showAircraftTypeDetails(AircraftTypeRow row) async {
     final l10n = AppLocalizations.of(context)!;
     final logbookUseCases = ref.read(logbookUseCasesProvider);
-    final entriesFuture =
-        logbookUseCases.fetchEntriesForAircraftType(row.type.id);
+    final entriesFuture = logbookUseCases.fetchEntriesForAircraftType(
+      row.type.id,
+    );
 
     await showDialog<void>(
       context: context,
@@ -213,16 +208,15 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
                         child: FutureBuilder<List<LogbookEntry>>(
                           future: entriesFuture,
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
                               return const Center(
                                 child: CircularProgressIndicator(),
                               );
                             }
                             final entries = snapshot.data ?? [];
                             if (entries.isEmpty) {
-                              return Center(
-                                child: Text(l10n.emptyResults),
-                              );
+                              return Center(child: Text(l10n.emptyResults));
                             }
                             return Column(
                               children: [
@@ -231,11 +225,12 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
                                 Expanded(
                                   child: LogbookEntriesYearList(
                                     entries: entries,
-                                    onEntryTap: (entry) => LogbookEntryDialogs.show(
-                                      context,
-                                      entry: entry,
-                                      useCases: logbookUseCases,
-                                    ),
+                                    onEntryTap: (entry) =>
+                                        LogbookEntryDialogs.show(
+                                          context,
+                                          entry: entry,
+                                          useCases: logbookUseCases,
+                                        ),
                                   ),
                                 ),
                               ],
@@ -257,13 +252,18 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
   Future<void> _showFamilyDetails(FamilyGroup group) async {
     final l10n = AppLocalizations.of(context)!;
     final logbookUseCases = ref.read(logbookUseCasesProvider);
-    final typeIds = group.rows.map((row) => row.type.id).toSet().toList(growable: false);
+    final typeIds = group.rows
+        .map((row) => row.type.id)
+        .toSet()
+        .toList(growable: false);
 
     Future<List<LogbookEntry>> entriesFuture() async {
       final all = <LogbookEntry>[];
       final seenTimelineIds = <int>{};
       for (final typeId in typeIds) {
-        final entries = await logbookUseCases.fetchEntriesForAircraftType(typeId);
+        final entries = await logbookUseCases.fetchEntriesForAircraftType(
+          typeId,
+        );
         for (final entry in entries) {
           if (entry.type != LogbookEventType.flight) continue;
           if (seenTimelineIds.add(entry.timeLine.id)) {
@@ -271,7 +271,9 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
           }
         }
       }
-      all.sort((a, b) => b.timeLine.eventDateTime.compareTo(a.timeLine.eventDateTime));
+      all.sort(
+        (a, b) => b.timeLine.eventDateTime.compareTo(a.timeLine.eventDateTime),
+      );
       return all;
     }
 
@@ -380,9 +382,7 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
           child: aircraftTypes.when(
             data: (items) {
               if (items.isEmpty) {
-                return Center(
-                  child: Text(l10n.emptyResults),
-                );
+                return Center(child: Text(l10n.emptyResults));
               }
 
               final groups = _groupByFamily(items);
@@ -397,9 +397,7 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stackTrace) => Center(
-              child: Text(error.toString()),
-            ),
+            error: (error, stackTrace) => Center(child: Text(error.toString())),
           ),
         ),
         const SizedBox(height: 8),

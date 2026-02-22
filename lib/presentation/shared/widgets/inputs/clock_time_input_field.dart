@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class TimeInputField extends StatefulWidget {
-  const TimeInputField({
+/// Input field for wall-clock time in 24h format (`HH:mm`).
+///
+/// Valid range is `00:00` to `23:59`.
+class ClockTimeInputField extends StatefulWidget {
+  const ClockTimeInputField({
     super.key,
     required this.controller,
     required this.label,
@@ -11,9 +14,7 @@ class TimeInputField extends StatefulWidget {
     this.onCleared,
     this.validator,
     this.suffixIcon,
-    this.forceTextField = false,
     this.allowEmpty = false,
-    this.maxHours,
   });
 
   final TextEditingController controller;
@@ -23,21 +24,16 @@ class TimeInputField extends StatefulWidget {
   final VoidCallback? onCleared;
   final String? Function(String?)? validator;
   final Widget? suffixIcon;
-  final bool forceTextField;
   final bool allowEmpty;
-  final int? maxHours;
 
-  @override
-  State<TimeInputField> createState() => _TimeInputFieldState();
-
-  static String formatMinutes(int minutes) {
-    if (minutes <= 0) return '0:00';
-    final hours = minutes ~/ 60;
-    final mins = minutes % 60;
-    return '$hours:${mins.toString().padLeft(2, '0')}';
+  static String formatMinutesOfDay(int minutes) {
+    final safe = minutes.clamp(0, 23 * 60 + 59);
+    final hours = safe ~/ 60;
+    final mins = safe % 60;
+    return '${hours.toString().padLeft(2, '0')}:${mins.toString().padLeft(2, '0')}';
   }
 
-  static int? parseMinutes(String value, {int? maxHours}) {
+  static int? parseMinutesOfDay(String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return null;
     if (trimmed.contains(':')) {
@@ -46,8 +42,7 @@ class TimeInputField extends StatefulWidget {
       final hours = int.tryParse(parts[0]);
       final minutes = int.tryParse(parts[1]);
       if (hours == null || minutes == null) return null;
-      if (minutes < 0 || minutes > 59 || hours < 0) return null;
-      if (maxHours != null && hours > maxHours) return null;
+      if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
       return hours * 60 + minutes;
     }
     final digits = trimmed.replaceAll(RegExp(r'[^0-9]'), '');
@@ -60,23 +55,21 @@ class TimeInputField extends StatefulWidget {
     }
     final hours = raw ~/ 100;
     final mins = raw % 100;
-    if (mins > 59) return null;
-    if (maxHours != null && hours > maxHours) return null;
+    if (hours > 23 || mins > 59) return null;
     return hours * 60 + mins;
   }
 
-  static bool isValidTimeText(
-    String value, {
-    bool allowEmpty = false,
-    int? maxHours,
-  }) {
+  static bool isValidClockText(String value, {bool allowEmpty = false}) {
     final trimmed = value.trim();
     if (allowEmpty && trimmed.isEmpty) return true;
-    return parseMinutes(trimmed, maxHours: maxHours) != null;
+    return parseMinutesOfDay(trimmed) != null;
   }
+
+  @override
+  State<ClockTimeInputField> createState() => _ClockTimeInputFieldState();
 }
 
-class _TimeInputFieldState extends State<TimeInputField> {
+class _ClockTimeInputFieldState extends State<ClockTimeInputField> {
   final FocusNode _focusNode = FocusNode();
   final GlobalKey<FormFieldState<String>> _fieldKey =
       GlobalKey<FormFieldState<String>>();
@@ -102,25 +95,26 @@ class _TimeInputFieldState extends State<TimeInputField> {
       );
       return;
     }
+
     final text = widget.controller.text.trim();
     if (widget.allowEmpty && text.isEmpty) {
       _fieldKey.currentState?.validate();
       widget.onCleared?.call();
       return;
     }
+
     if (text.isEmpty) {
-      final fallback = TimeInputField.formatMinutes(widget.fallbackMinutes);
+      final fallback = ClockTimeInputField.formatMinutesOfDay(
+        widget.fallbackMinutes,
+      );
       widget.controller.text = fallback;
       widget.onChangedMinutes?.call(widget.fallbackMinutes);
       _fieldKey.currentState?.validate();
       return;
     }
 
-    if (!TimeInputField.isValidTimeText(
-      text,
-      allowEmpty: widget.allowEmpty,
-      maxHours: widget.maxHours,
-    )) {
+    final parsed = ClockTimeInputField.parseMinutesOfDay(text);
+    if (parsed == null) {
       _fieldKey.currentState?.validate();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -129,6 +123,8 @@ class _TimeInputFieldState extends State<TimeInputField> {
       return;
     }
 
+    widget.controller.text = ClockTimeInputField.formatMinutesOfDay(parsed);
+    widget.onChangedMinutes?.call(parsed);
     _fieldKey.currentState?.validate();
   }
 
@@ -139,14 +135,18 @@ class _TimeInputFieldState extends State<TimeInputField> {
       controller: widget.controller,
       focusNode: _focusNode,
       keyboardType: TextInputType.number,
-      inputFormatters: const [TimeInputFormatter()],
+      inputFormatters: const [ClockTimeInputFormatter()],
       decoration: InputDecoration(
         labelText: widget.label,
         border: const OutlineInputBorder(),
+        suffixIconConstraints: const BoxConstraints(
+          minWidth: 24,
+          minHeight: 24,
+        ),
         suffixIcon: widget.suffixIcon,
       ),
       onChanged: (value) {
-        final parsed = TimeInputField.parseMinutes(value);
+        final parsed = ClockTimeInputField.parseMinutesOfDay(value);
         if (parsed != null) {
           widget.onChangedMinutes?.call(parsed);
         } else if (widget.allowEmpty && value.trim().isEmpty) {
@@ -156,15 +156,11 @@ class _TimeInputFieldState extends State<TimeInputField> {
       autovalidateMode: AutovalidateMode.disabled,
       validator: (value) {
         final raw = value ?? '';
-        if (!TimeInputField.isValidTimeText(
+        if (!ClockTimeInputField.isValidClockText(
           raw,
           allowEmpty: widget.allowEmpty,
-          maxHours: widget.maxHours,
         )) {
-          final hoursHint = widget.maxHours != null
-              ? ' and hours must be between 00 and ${widget.maxHours!.toString().padLeft(2, '0')}'
-              : '';
-          return 'Invalid time. Minutes must be between 00 and 59$hoursHint.';
+          return 'Invalid time. Use 00:00 to 23:59.';
         }
         return widget.validator?.call(value);
       },
@@ -172,8 +168,8 @@ class _TimeInputFieldState extends State<TimeInputField> {
   }
 }
 
-class TimeInputFormatter extends TextInputFormatter {
-  const TimeInputFormatter();
+class ClockTimeInputFormatter extends TextInputFormatter {
+  const ClockTimeInputFormatter();
 
   @override
   TextEditingValue formatEditUpdate(
@@ -184,10 +180,13 @@ class TimeInputFormatter extends TextInputFormatter {
     if (digits.isEmpty) {
       return const TextEditingValue(text: '');
     }
-    final minutes = int.tryParse(digits) ?? 0;
-    final hours = digits.length <= 2 ? 0 : minutes ~/ 100;
-    final mins = digits.length <= 2 ? minutes : minutes % 100;
-    final text = '$hours:${mins.toString().padLeft(2, '0')}';
+
+    final raw = int.tryParse(digits) ?? 0;
+    final hours = digits.length <= 2 ? 0 : raw ~/ 100;
+    final mins = digits.length <= 2 ? raw : raw % 100;
+    final text =
+        '${hours.toString().padLeft(2, '0')}:${mins.toString().padLeft(2, '0')}';
+
     return TextEditingValue(
       text: text,
       selection: TextSelection.collapsed(offset: text.length),

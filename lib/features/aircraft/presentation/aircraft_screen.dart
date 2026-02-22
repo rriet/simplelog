@@ -10,6 +10,7 @@ import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 import 'package:simplelog/presentation/shared/widgets/delete_confirmation_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart';
@@ -71,18 +72,11 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
   Future<void> _showValidationError(ValidationResult validation) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.validationErrorTitle),
-        content: Text(validation.message ?? l10n.validationErrorGeneric),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
-      ),
+    await showAppMessageDialog(
+      context,
+      title: l10n.validationErrorTitle,
+      message: validation.message ?? l10n.validationErrorGeneric,
+      okLabel: l10n.okAction,
     );
   }
 
@@ -196,13 +190,18 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
     await showDialog<void>(
       context: context,
       builder: (context) => Dialog(
-        child: SizedBox(
-          width: 520,
-          height: 640,
-          child: AircraftEditScreen(
-            item: placeholder,
-            isCreate: true,
-            initialIsSimulator: false,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 520,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: SizedBox(
+            width: 520,
+            child: AircraftEditScreen(
+              item: placeholder,
+              isCreate: true,
+              initialIsSimulator: false,
+            ),
           ),
         ),
       ),
@@ -238,13 +237,18 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
     await showDialog<void>(
       context: context,
       builder: (context) => Dialog(
-        child: SizedBox(
-          width: 520,
-          height: 640,
-          child: AircraftEditScreen(
-            item: placeholder,
-            isCreate: true,
-            initialIsSimulator: true,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 520,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: SizedBox(
+            width: 520,
+            child: AircraftEditScreen(
+              item: placeholder,
+              isCreate: true,
+              initialIsSimulator: true,
+            ),
           ),
         ),
       ),
@@ -268,11 +272,16 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
     await showDialog<void>(
       context: context,
       builder: (context) => Dialog(
-        child: SizedBox(
-          width: 520,
-          height: 640,
-          child: AircraftEditScreen(
-            item: row.aircraft,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 520,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: SizedBox(
+            width: 520,
+            child: AircraftEditScreen(
+              item: row.aircraft,
+            ),
           ),
         ),
       ),

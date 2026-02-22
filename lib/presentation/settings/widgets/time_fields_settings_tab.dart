@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/flight_time_fields_visibility_provider.dart';
@@ -38,9 +39,7 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
     );
     await ref.read(customTimeLabelsProvider.notifier).setLabels(value);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Time field labels saved')),
-    );
+    await showAppMessageDialog(context, message: 'Time field labels saved');
   }
 
   Future<void> _updateVisibility(
@@ -61,7 +60,9 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
     bool? custom4,
     bool? flight,
   }) {
-    return ref.read(flightTimeFieldsVisibilityProvider.notifier).setValue(
+    return ref
+        .read(flightTimeFieldsVisibilityProvider.notifier)
+        .setValue(
           current.copyWith(
             pic: pic,
             picus: picus,
@@ -102,7 +103,10 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
       children: [
         const FlightTakeoffLandingSwitch(),
         const SizedBox(height: 8),
-        Text('Visible Time Fields', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Visible Time Fields',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         SwitchListTile(
           value: visibility.pic,
@@ -175,7 +179,10 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
           onChanged: (v) => _updateVisibility(visibility, custom4: v),
         ),
         const Divider(height: 24),
-        Text('Custom Time Labels', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Custom Time Labels',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _c1,

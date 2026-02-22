@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
-import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/data/database/app_database.dart';
@@ -15,10 +14,16 @@ import 'package:simplelog/features/aircraft/application/providers/aircraft_featu
 import 'package:simplelog/features/aircraft/presentation/aircraft_edit_screen.dart';
 import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_picker_dialog.dart';
 import 'package:simplelog/features/crew/application/providers/crew_feature_providers.dart';
-import 'package:simplelog/features/crew/presentation/crew_edit_screen.dart';
-import 'package:simplelog/features/crew/presentation/widgets/crew_picker_dialog.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
-import 'package:simplelog/presentation/shared/widgets/time_input_field.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/picker_with_add_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
@@ -49,17 +54,17 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   DateTime _start = DateTime.now();
   DateTime? _end;
   int? _aircraftId;
-  final List<_CrewDraftRow> _crewRows = [];
+  final List<CrewDraftSelection> _crewRows = [];
   final Map<int, String> _crewLabelCache = {};
 
   @override
   void initState() {
     super.initState();
-    _startTimeController.text = TimeInputField.formatMinutes(
+    _startTimeController.text = ClockTimeInputField.formatMinutesOfDay(
       _start.hour * 60 + _start.minute,
     );
     _endTimeController.text = '';
-    _timeController.text = TimeInputField.formatMinutes(0);
+    _timeController.text = HourInputField.formatHours(0);
     _loadExisting();
   }
 
@@ -92,23 +97,26 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
         ? DateTime.now()
         : DbDateTime.dbToUtc(loaded.startLine!.eventDateTime);
     _end = DbDateTime.dbToUtcOrNull(loaded.simulatorTraining.endDateTime);
-    _startTimeController.text = TimeInputField.formatMinutes(
+    _startTimeController.text = ClockTimeInputField.formatMinutesOfDay(
       _start.hour * 60 + _start.minute,
     );
     _endTimeController.text = _end == null
         ? ''
-        : TimeInputField.formatMinutes(_end!.hour * 60 + _end!.minute);
+        : ClockTimeInputField.formatMinutesOfDay(
+            _end!.hour * 60 + _end!.minute,
+          );
     _aircraftId = loaded.simulatorTraining.aircraftId;
     _remarksController.text = loaded.simulatorTraining.remarks;
     _notesController.text = loaded.simulatorTraining.notes;
-    _timeController.text = TimeInputField.formatMinutes(
+    _timeController.text = HourInputField.formatHours(
       loaded.simulatorTraining.timeTotal,
     );
     _crewRows
       ..clear()
       ..addAll(
         loaded.crewAssignments.map(
-          (item) => _CrewDraftRow(crewId: item.crewId, position: item.position),
+          (item) =>
+              CrewDraftSelection(crewId: item.crewId, position: item.position),
         ),
       );
     setState(() => _loading = false);
@@ -129,7 +137,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     if (!mounted) return;
     setState(() {
       _crewRows.add(
-        _CrewDraftRow(crewId: selfCrew.id, position: defaultPosition),
+        CrewDraftSelection(crewId: selfCrew.id, position: defaultPosition),
       );
     });
   }
@@ -141,7 +149,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
 
   void _updateTimeIfAuto() {
     if (_timeEdited) return;
-    _timeController.text = TimeInputField.formatMinutes(_calculatedMinutes());
+    _timeController.text = HourInputField.formatHours(_calculatedMinutes());
   }
 
   Future<void> _pickSimulator() async {
@@ -165,9 +173,9 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       isLocked: false,
       notes: null,
     );
-    final result = await _showStandardFormDialog<dynamic>(
-      context,
-      AircraftEditScreen(
+    final result = await showConstrainedEditDialog<dynamic>(
+      context: context,
+      child: AircraftEditScreen(
         item: placeholder,
         isCreate: true,
         initialIsSimulator: true,
@@ -186,45 +194,13 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   }
 
   Future<int?> _createCrewAndReturnId() async {
-    final placeholder = CrewData(
-      id: kPlaceholderId,
-      name: '',
-      email: null,
-      notes: null,
-      phone: null,
-      picture: null,
-      isSelf: false,
-      isFavorite: false,
-      isLocked: false,
-    );
-
-    final result = await _showStandardFormDialog<dynamic>(
-      context,
-      CrewEditScreen(item: placeholder, isCreate: true),
-    );
-    if (!mounted || result != true) return null;
-    final db = ref.read(databaseProvider);
-    final created =
-        await (db.select(db.crew)
-              ..orderBy([(t) => OrderingTerm.desc(t.id)])
-              ..limit(1))
-            .getSingleOrNull();
-    if (!mounted || created == null) return null;
-    _crewLabelCache[created.id] = created.name;
-    return created.id;
-  }
-
-  Future<T?> _showStandardFormDialog<T>(BuildContext context, Widget child) {
-    final maxHeight = MediaQuery.of(context).size.height * 0.9;
-    return showDialog<T>(
+    final createdId = await createCrewAndReturnId(
       context: context,
-      builder: (_) => Dialog(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 520, maxHeight: maxHeight),
-          child: SizedBox(width: 520, child: child),
-        ),
-      ),
+      ref: ref,
+      crewLabelCache: _crewLabelCache,
     );
+    if (!mounted) return null;
+    return createdId;
   }
 
   Future<void> _pickStartDate() async {
@@ -297,7 +273,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       await _showError('End time cannot be more than 24 hours after start.');
       return;
     }
-    final parsed = TimeInputField.parseMinutes(_timeController.text);
+    final parsed = HourInputField.parseHours(_timeController.text);
     if (parsed == null || parsed <= 0) {
       await _showError('Enter a valid simulator session time.');
       return;
@@ -311,8 +287,8 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     final crewAssignments = _crewRows
         .map(
           (row) => SimulatorCrewAssignmentInput(
-            crewId: row.crewId!,
-            position: row.position!,
+            crewId: row.crewId,
+            position: row.position,
           ),
         )
         .toList(growable: false);
@@ -349,18 +325,11 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   Future<void> _showError(String message) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.validationErrorTitle),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
-      ),
+    await showAppMessageDialog(
+      context,
+      title: l10n.validationErrorTitle,
+      message: message,
+      okLabel: l10n.okAction,
     );
   }
 
@@ -374,137 +343,146 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isCreate
-              ? 'New Simulator Training'
-              : 'Edit Simulator Training',
-        ),
-        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+    final form = Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Date'),
-              subtitle: Text(_dateLabel(_start)),
-              trailing: const Icon(Icons.calendar_today),
+            DateSelectorInputField(
+              label: 'Date',
+              valueText: _dateLabel(_start),
               onTap: _pickStartDate,
             ),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: TimeInputField(
+                  child: ClockTimeInputField(
                     controller: _startTimeController,
                     label: 'Start Time',
-                    maxHours: 23,
                     onChangedMinutes: _onStartTimeChanged,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
-                  child: TimeInputField(
+                  child: ClockTimeInputField(
                     controller: _endTimeController,
                     label: 'End Time',
-                    maxHours: 23,
                     onChangedMinutes: _onEndTimeChanged,
                     onCleared: _clearEndTime,
                     allowEmpty: true,
+                    suffixIcon: IconButton(
+                      tooltip: 'Clear',
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 24,
+                        height: 24,
+                      ),
+                      onPressed: _end == null ? null : _clearEndTime,
+                      icon: const Icon(Icons.clear),
+                    ),
                   ),
-                ),
-                IconButton(
-                  tooltip: 'Clear',
-                  onPressed: _end == null ? null : _clearEndTime,
-                  icon: const Icon(Icons.clear),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TimeInputField(
-                    controller: _timeController,
-                    label: 'Session Time',
-                    fallbackMinutes: _calculatedMinutes(),
-                    onChangedMinutes: (_) => _timeEdited = true,
-                    validator: (value) {
-                      final parsed = TimeInputField.parseMinutes(value ?? '');
-                      if (parsed == null || parsed <= 0) {
-                        return l10n.validationErrorGeneric;
-                      }
-                      return null;
-                    },
-                  ),
+            HourInputField(
+              controller: _timeController,
+              label: 'Session Time',
+              fallbackMinutes: _calculatedMinutes(),
+              onChangedMinutes: (_) => _timeEdited = true,
+              suffixIcon: IconButton(
+                tooltip: 'Use calculated time',
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints.tightFor(
+                  width: 24,
+                  height: 24,
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  tooltip: 'Use calculated time',
-                  onPressed: _end == null
-                      ? null
-                      : () {
-                          final calculated = _calculatedMinutes();
-                          setState(() {
-                            _timeController.text = TimeInputField.formatMinutes(
-                              calculated,
-                            );
-                            _timeEdited = false;
-                          });
-                        },
-                  icon: const Icon(Icons.calculate_outlined),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Simulator'),
-                    subtitle: Text(_simulatorLabel(_aircraftId, aircraftAsync)),
-                    trailing: const Icon(Icons.search),
-                    onTap: _pickSimulator,
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Add simulator',
-                  onPressed: _createSimulatorAndSelect,
-                  icon: const Icon(Icons.add),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildCrewList(crewAsync),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _remarksController,
-              minLines: 1,
-              maxLines: 1,
-              decoration: const InputDecoration(
-                labelText: 'Remarks',
-                border: OutlineInputBorder(),
+                onPressed: _end == null
+                    ? null
+                    : () {
+                        final calculated = _calculatedMinutes();
+                        setState(() {
+                          _timeController.text = HourInputField.formatHours(
+                            calculated,
+                          );
+                          _timeEdited = false;
+                        });
+                      },
+                icon: const Icon(Icons.calculate_outlined),
               ),
+              validator: (value) {
+                final parsed = HourInputField.parseHours(value ?? '');
+                if (parsed == null || parsed <= 0) {
+                  return l10n.validationErrorGeneric;
+                }
+                return null;
+              },
             ),
-            const SizedBox(height: 12),
-            TextFormField(
+            const SizedBox(height: 8),
+            PickerWithAddInputField(
+              label: 'Simulator',
+              valueText: _simulatorLabel(_aircraftId, aircraftAsync),
+              onTap: _pickSimulator,
+              onAdd: _createSimulatorAndSelect,
+              addTooltip: 'Add simulator',
+            ),
+            const SizedBox(height: 8),
+            _buildCrewList(crewAsync),
+            const SizedBox(height: 8),
+            TextInputField(controller: _remarksController, label: 'Remarks'),
+            const SizedBox(height: 8),
+            TextInputField(
               controller: _notesController,
+              label: 'Notes',
               minLines: 3,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Notes',
-                border: OutlineInputBorder(),
-              ),
             ),
           ],
         ),
       ),
+    );
+
+    final title = widget.isCreate
+        ? 'New Simulator Training'
+        : 'Edit Simulator Training';
+    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
+
+    if (isInDialog) {
+      return Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              title: Text(title),
+              trailing: TextButton(
+                onPressed: _save,
+                child: Text(l10n.saveAction),
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(fit: FlexFit.loose, child: form),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
+      ),
+      body: form,
     );
   }
 
@@ -523,7 +501,14 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
             ),
             OutlinedButton.icon(
               onPressed: () async {
-                final draft = await _showAddCrewDialog(crewItems);
+                final draft = await showAddCrewDialog(
+                  context: context,
+                  initialCrewId: crewItems.isNotEmpty
+                      ? crewItems.first.id
+                      : null,
+                  crewLabel: (crewId) => _crewLabel(crewId, crewItems),
+                  onCreateCrew: _createCrewAndReturnId,
+                );
                 if (draft == null || !mounted) return;
                 final duplicate = _crewRows.any(
                   (row) => row.crewId == draft.crewId,
@@ -571,7 +556,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                               SizedBox(
                                 width: 120,
                                 child: Text(
-                                  _positionLabel(row.position!),
+                                  crewPositionLabel(row.position),
                                   style: Theme.of(context).textTheme.bodySmall,
                                   textAlign: TextAlign.left,
                                   overflow: TextOverflow.ellipsis,
@@ -614,50 +599,9 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   bool _validateCrewRows() {
     final ids = <int>{};
     for (final row in _crewRows) {
-      if (row.crewId == null || row.position == null) return false;
-      if (!ids.add(row.crewId!)) return false;
+      if (!ids.add(row.crewId)) return false;
     }
     return true;
-  }
-
-  static const List<CrewPosition> _positionOptions = [
-    CrewPosition.pic,
-    CrewPosition.sic,
-    CrewPosition.instructor,
-    CrewPosition.observer,
-    CrewPosition.relief,
-    CrewPosition.reliefCaptain,
-    CrewPosition.reliefFirstOfficer,
-    CrewPosition.cabinSenior,
-    CrewPosition.cabinCrew,
-    CrewPosition.other,
-  ];
-
-  String _positionLabel(CrewPosition value) {
-    switch (value) {
-      case CrewPosition.pic:
-        return 'PIC';
-      case CrewPosition.sic:
-        return 'SIC';
-      case CrewPosition.instructor:
-        return 'Instructor';
-      case CrewPosition.observer:
-        return 'Observer';
-      case CrewPosition.relief:
-        return 'Relief';
-      case CrewPosition.reliefCaptain:
-        return 'Relief Captain';
-      case CrewPosition.reliefFirstOfficer:
-        return 'Relief First Officer';
-      case CrewPosition.cabinSenior:
-        return 'Cabin Senior';
-      case CrewPosition.cabinCrew:
-        return 'Cabin Crew';
-      case CrewPosition.other:
-        return 'Other';
-      case CrewPosition.unknown:
-        return 'Unknown';
-    }
   }
 
   String _crewLabel(int? crewId, List<CrewRow> crewItems) {
@@ -669,99 +613,4 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     }
     return 'Crew #$crewId';
   }
-
-  Future<_CrewDraftRow?> _showAddCrewDialog(List<CrewRow> initialItems) async {
-    var selectedCrewId = initialItems.isNotEmpty ? initialItems.first.id : null;
-    var selectedPosition = CrewPosition.other;
-
-    return showDialog<_CrewDraftRow>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setLocalState) => AlertDialog(
-          title: const Text('Add Crew'),
-          content: SizedBox(
-            width: 420,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Crew'),
-                        subtitle: Text(
-                          _crewLabel(selectedCrewId, initialItems),
-                        ),
-                        trailing: const Icon(Icons.search),
-                        onTap: () async {
-                          final selected = await CrewPickerDialog.show(
-                            dialogContext,
-                            title: 'Select crew',
-                          );
-                          if (selected == null) return;
-                          setLocalState(() => selectedCrewId = selected.id);
-                        },
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Create crew',
-                      onPressed: () async {
-                        final createdId = await _createCrewAndReturnId();
-                        if (createdId == null) return;
-                        setLocalState(() => selectedCrewId = createdId);
-                      },
-                      icon: const Icon(Icons.add_circle_outline),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<CrewPosition>(
-                  initialValue: selectedPosition,
-                  isExpanded: true,
-                  items: _positionOptions
-                      .map(
-                        (position) => DropdownMenuItem<CrewPosition>(
-                          value: position,
-                          child: Text(_positionLabel(position)),
-                        ),
-                      )
-                      .toList(growable: false),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setLocalState(() => selectedPosition = value);
-                  },
-                  decoration: const InputDecoration(labelText: 'Position'),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: selectedCrewId == null
-                  ? null
-                  : () => Navigator.of(dialogContext).pop(
-                      _CrewDraftRow(
-                        crewId: selectedCrewId,
-                        position: selectedPosition,
-                      ),
-                    ),
-              child: const Text('Add'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CrewDraftRow {
-  _CrewDraftRow({this.crewId, this.position});
-
-  int? crewId;
-  CrewPosition? position;
 }

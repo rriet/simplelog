@@ -8,7 +8,6 @@ import 'package:simplelog/core/flight/flight_calculations.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/data/database/app_database.dart';
-import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/data/models/airport_row.dart';
@@ -21,10 +20,19 @@ import 'package:simplelog/features/airports/application/providers/airports_featu
 import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_picker_dialog.dart';
 import 'package:simplelog/features/crew/application/providers/crew_feature_providers.dart';
-import 'package:simplelog/features/crew/presentation/crew_edit_screen.dart';
-import 'package:simplelog/features/crew/presentation/widgets/crew_picker_dialog.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
-import 'package:simplelog/presentation/shared/widgets/time_input_field.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/picker_with_add_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/time_input_field.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
@@ -48,16 +56,16 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   final _remarksController = TextEditingController();
   final _notesController = TextEditingController();
   final _chocksOffTimeController = TextEditingController(
-    text: TimeInputField.formatMinutes(0),
+    text: ClockTimeInputField.formatMinutesOfDay(0),
   );
   final _takeOffTimeController = TextEditingController(
-    text: TimeInputField.formatMinutes(0),
+    text: ClockTimeInputField.formatMinutesOfDay(0),
   );
   final _landingTimeController = TextEditingController(
-    text: TimeInputField.formatMinutes(0),
+    text: ClockTimeInputField.formatMinutesOfDay(0),
   );
   final _chocksOnTimeController = TextEditingController(
-    text: TimeInputField.formatMinutes(0),
+    text: ClockTimeInputField.formatMinutesOfDay(0),
   );
   final _picController = TextEditingController(
     text: TimeInputField.formatMinutes(0),
@@ -135,7 +143,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   int? _toAirportId;
   String _pilotFunction = 'PF';
   int _timeTotalBlockMinutes = 0;
-  final List<_CrewDraftRow> _crewRows = [];
+  final List<CrewDraftSelection> _crewRows = [];
   final Map<int, String> _airportLabelCache = {};
   final Map<int, String> _crewLabelCache = {};
 
@@ -225,7 +233,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       _timeTotalBlockMinutes = 0;
       _chocksOffTimeController.text = prefill?.chocksOff == null
           ? ''
-          : TimeInputField.formatMinutes(
+          : ClockTimeInputField.formatMinutesOfDay(
               _chocksOff.hour * 60 + _chocksOff.minute,
             );
       _takeOffTimeController.text = '';
@@ -236,7 +244,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           ..clear()
           ..addAll(
             prefill.crewAssignments.map(
-              (e) => _CrewDraftRow(crewId: e.crewId, position: e.position),
+              (e) => CrewDraftSelection(crewId: e.crewId, position: e.position),
             ),
           );
       } else {
@@ -291,18 +299,22 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         _chocksOff.hour == 0 && _chocksOff.minute == 0 && _chocksOn == null;
     _chocksOffTimeController.text = unknownTimes
         ? ''
-        : TimeInputField.formatMinutes(
+        : ClockTimeInputField.formatMinutesOfDay(
             _chocksOff.hour * 60 + _chocksOff.minute,
           );
     _takeOffTimeController.text = _takeOff == null
         ? ''
-        : TimeInputField.formatMinutes(_takeOff!.hour * 60 + _takeOff!.minute);
+        : ClockTimeInputField.formatMinutesOfDay(
+            _takeOff!.hour * 60 + _takeOff!.minute,
+          );
     _landingTimeController.text = _landing == null
         ? ''
-        : TimeInputField.formatMinutes(_landing!.hour * 60 + _landing!.minute);
+        : ClockTimeInputField.formatMinutesOfDay(
+            _landing!.hour * 60 + _landing!.minute,
+          );
     _chocksOnTimeController.text = _chocksOn == null
         ? ''
-        : TimeInputField.formatMinutes(
+        : ClockTimeInputField.formatMinutesOfDay(
             _chocksOn!.hour * 60 + _chocksOn!.minute,
           );
     _blockController.text = TimeInputField.formatMinutes(
@@ -351,7 +363,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       ..clear()
       ..addAll(
         loaded.crewAssignments.map(
-          (e) => _CrewDraftRow(crewId: e.crewId, position: e.position),
+          (e) => CrewDraftSelection(crewId: e.crewId, position: e.position),
         ),
       );
     setState(() => _loading = false);
@@ -371,7 +383,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     );
     if (!mounted) return;
     _crewRows.add(
-      _CrewDraftRow(crewId: selfCrew.id, position: defaultPosition),
+      CrewDraftSelection(crewId: selfCrew.id, position: defaultPosition),
     );
   }
 
@@ -408,11 +420,25 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     });
   }
 
+  void _clearChocksOffTime() {
+    setState(() {
+      _chocksOff = DateTime(_chocksOff.year, _chocksOff.month, _chocksOff.day);
+      _chocksOffTimeController.text = '';
+    });
+  }
+
   void _onTakeoffTimeChanged(int totalMinutes) {
     final hour = (totalMinutes ~/ 60) % 24;
     final minute = totalMinutes % 60;
     setState(() {
       _takeOff = TimeOfDay(hour: hour, minute: minute);
+    });
+  }
+
+  void _clearTakeoffTime() {
+    setState(() {
+      _takeOff = null;
+      _takeOffTimeController.text = '';
     });
   }
 
@@ -424,11 +450,25 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     });
   }
 
+  void _clearLandingTime() {
+    setState(() {
+      _landing = null;
+      _landingTimeController.text = '';
+    });
+  }
+
   void _onChocksOnTimeChanged(int totalMinutes) {
     final hour = (totalMinutes ~/ 60) % 24;
     final minute = totalMinutes % 60;
     setState(() {
       _chocksOn = TimeOfDay(hour: hour, minute: minute);
+    });
+  }
+
+  void _clearChocksOnTime() {
+    setState(() {
+      _chocksOn = null;
+      _chocksOnTimeController.text = '';
     });
   }
 
@@ -456,9 +496,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       isLocked: false,
       notes: null,
     );
-    final result = await _showStandardFormDialog<dynamic>(
-      screenContext,
-      AircraftEditScreen(
+    final result = await showConstrainedEditDialog<dynamic>(
+      context: screenContext,
+      child: AircraftEditScreen(
         item: placeholder,
         isCreate: true,
         initialIsSimulator: false,
@@ -510,9 +550,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       isFavorite: false,
       isLocked: false,
     );
-    final result = await _showStandardFormDialog<dynamic>(
-      screenContext,
-      AirportEditScreen(item: placeholder, isCreate: true),
+    final result = await showConstrainedEditDialog<dynamic>(
+      context: screenContext,
+      child: AirportEditScreen(item: placeholder, isCreate: true),
     );
     if (!mounted) return;
     final db = ref.read(databaseProvider);
@@ -862,7 +902,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   }) {
     final raw = controller.text.trim();
     if (allowEmpty && raw.isEmpty) return null;
-    final minutes = TimeInputField.parseMinutes(raw, maxHours: 23);
+    final minutes = ClockTimeInputField.parseMinutesOfDay(raw);
     if (minutes == null) {
       _showSnack('$fieldLabel must be a valid time between 00:00 and 23:59.');
     }
@@ -930,11 +970,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final approachType = _approachTypeController.text.trim();
 
     final crewAssignments = _crewRows
-        .where((r) => r.crewId != null && r.position != null)
         .map(
           (r) => SimulatorCrewAssignmentInput(
-            crewId: r.crewId!,
-            position: r.position!,
+            crewId: r.crewId,
+            position: r.position,
           ),
         )
         .toList(growable: false);
@@ -1150,9 +1189,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
 
   void _showSnack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppMessageDialog(context, message: message);
   }
 
   void _clearKeyboardFocus() {
@@ -1186,6 +1223,77 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
+    final title = widget.isCreate ? 'New Flight' : 'Edit Flight';
+    final formBody = Focus(
+      focusNode: _formFocusNode,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_page == 0)
+              Column(
+                children: [
+                  _buildPage1(aircraftAsync, airportsAsync, crewAsync, l10n),
+                  const SizedBox(height: 4),
+                  _buildPage3(crewAsync),
+                ],
+              )
+            else if (_page == 1)
+              _buildPage2(l10n, customTimeLabels, timeFieldVisibility),
+          ],
+        ),
+      ),
+    );
+    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
+    final actions = <Widget>[
+      if (_page == 0) ...[
+        TextButton(
+          onPressed: canCalculate ? _calculateAndNext : null,
+          child: const Text('Calculate'),
+        ),
+        TextButton(
+          onPressed: canGoNext ? _next : null,
+          child: const Text('Next'),
+        ),
+      ] else ...[
+        if (_page == 1) ...[
+          TextButton(
+            onPressed: canCalculate ? _calculateInPlace : null,
+            child: const Text('Calculate'),
+          ),
+          TextButton(onPressed: _save, child: Text(l10n.saveAction)),
+        ] else
+          TextButton(onPressed: _save, child: Text(l10n.saveAction)),
+      ],
+    ];
+
+    if (isInDialog) {
+      return Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: _page > 0
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => setState(() => _page -= 1),
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
+              title: Text(title),
+              trailing: Wrap(spacing: 4, children: actions),
+            ),
+            const Divider(height: 1),
+            Flexible(fit: FlexFit.loose, child: formBody),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         leading: _page > 0
@@ -1194,51 +1302,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                 onPressed: () => setState(() => _page -= 1),
               )
             : null,
-        title: Text(widget.isCreate ? 'New Flight' : 'Edit Flight'),
-        actions: [
-          if (_page == 0) ...[
-            TextButton(
-              onPressed: canCalculate ? _calculateAndNext : null,
-              child: const Text('Calculate'),
-            ),
-            TextButton(
-              onPressed: canGoNext ? _next : null,
-              child: const Text('Next'),
-            ),
-          ] else ...[
-            if (_page == 1) ...[
-              TextButton(
-                onPressed: canCalculate ? _calculateInPlace : null,
-                child: const Text('Calculate'),
-              ),
-              TextButton(
-                onPressed: _isFirstPageReady
-                    ? () => setState(() => _page = 2)
-                    : null,
-                child: const Text('Next'),
-              ),
-            ] else
-              TextButton(onPressed: _save, child: Text(l10n.saveAction)),
-          ],
-        ],
+        title: Text(title),
+        actions: actions,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Focus(
-            focusNode: _formFocusNode,
-            child: Column(
-              children: [
-                if (_page == 0)
-                  _buildPage1(aircraftAsync, airportsAsync, crewAsync, l10n)
-                else if (_page == 1)
-                  _buildPage2(l10n, customTimeLabels, timeFieldVisibility),
-                if (_page == 2) _buildPage3(crewAsync),
-              ],
-            ),
-          ),
-        ],
-      ),
+      body: formBody,
     );
   }
 
@@ -1252,21 +1319,42 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Date'),
-          subtitle: Text(DateFormat('dd/MMM yyyy', locale).format(_chocksOff)),
-          trailing: const Icon(Icons.calendar_today),
-          onTap: _pickFlightDate,
+        Row(
+          children: [
+            Expanded(
+              child: DateSelectorInputField(
+                label: 'Date',
+                valueText: DateFormat('dd/MMM yyyy', locale).format(_chocksOff),
+                onTap: _pickFlightDate,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: DropdownInputField<String>(
+                label: 'Pilot Function',
+                value: _pilotFunction,
+                items: const [
+                  DropdownMenuItem(value: 'PF', child: Text('PF')),
+                  DropdownMenuItem(value: 'PNF', child: Text('PNF')),
+                  DropdownMenuItem(value: 'PF/PNF', child: Text('PF/PNF')),
+                  DropdownMenuItem(value: 'PNF/PF', child: Text('PNF/PF')),
+                  DropdownMenuItem(value: 'IRP 3', child: Text('IRP 3')),
+                  DropdownMenuItem(value: 'IRP 4', child: Text('IRP 4')),
+                ],
+                onChanged: (value) =>
+                    setState(() => _pilotFunction = value ?? 'PF'),
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 8),
         if (_logTakeoffLanding) ...[
           Row(
             children: [
               Expanded(
-                child: TimeInputField(
+                child: ClockTimeInputField(
                   controller: _chocksOffTimeController,
                   label: 'Chocks OFF',
-                  maxHours: 23,
                   onChangedMinutes: _onChocksOffTimeChanged,
                   onCleared: () => setState(
                     () => _chocksOff = DateTime(
@@ -1276,17 +1364,38 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                     ),
                   ),
                   allowEmpty: true,
+                  suffixIcon: IconButton(
+                    tooltip: 'Clear',
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 24,
+                      height: 24,
+                    ),
+                    onPressed: _clearChocksOffTime,
+                    icon: const Icon(Icons.clear),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: TimeInputField(
+                child: ClockTimeInputField(
                   controller: _takeOffTimeController,
                   label: 'TakeOff',
-                  maxHours: 23,
                   onChangedMinutes: _onTakeoffTimeChanged,
                   onCleared: () => setState(() => _takeOff = null),
                   allowEmpty: true,
+                  suffixIcon: IconButton(
+                    tooltip: 'Clear',
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 24,
+                      height: 24,
+                    ),
+                    onPressed: _takeOff == null ? null : _clearTakeoffTime,
+                    icon: const Icon(Icons.clear),
+                  ),
                 ),
               ),
             ],
@@ -1295,24 +1404,44 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           Row(
             children: [
               Expanded(
-                child: TimeInputField(
+                child: ClockTimeInputField(
                   controller: _landingTimeController,
                   label: 'Landing',
-                  maxHours: 23,
                   onChangedMinutes: _onLandingTimeChanged,
                   onCleared: () => setState(() => _landing = null),
                   allowEmpty: true,
+                  suffixIcon: IconButton(
+                    tooltip: 'Clear',
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 24,
+                      height: 24,
+                    ),
+                    onPressed: _landing == null ? null : _clearLandingTime,
+                    icon: const Icon(Icons.clear),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: TimeInputField(
+                child: ClockTimeInputField(
                   controller: _chocksOnTimeController,
                   label: 'Chocks ON',
-                  maxHours: 23,
                   onChangedMinutes: _onChocksOnTimeChanged,
                   onCleared: () => setState(() => _chocksOn = null),
                   allowEmpty: true,
+                  suffixIcon: IconButton(
+                    tooltip: 'Clear',
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 24,
+                      height: 24,
+                    ),
+                    onPressed: _chocksOn == null ? null : _clearChocksOnTime,
+                    icon: const Icon(Icons.clear),
+                  ),
                 ),
               ),
             ],
@@ -1321,10 +1450,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           Row(
             children: [
               Expanded(
-                child: TimeInputField(
+                child: ClockTimeInputField(
                   controller: _chocksOffTimeController,
                   label: 'Chocks OFF',
-                  maxHours: 23,
                   onChangedMinutes: _onChocksOffTimeChanged,
                   onCleared: () => setState(
                     () => _chocksOff = DateTime(
@@ -1334,87 +1462,65 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                     ),
                   ),
                   allowEmpty: true,
+                  suffixIcon: IconButton(
+                    tooltip: 'Clear',
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 24,
+                      height: 24,
+                    ),
+                    onPressed: _clearChocksOffTime,
+                    icon: const Icon(Icons.clear),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: TimeInputField(
+                child: ClockTimeInputField(
                   controller: _chocksOnTimeController,
                   label: 'Chocks ON',
-                  maxHours: 23,
                   onChangedMinutes: _onChocksOnTimeChanged,
                   onCleared: () => setState(() => _chocksOn = null),
                   allowEmpty: true,
+                  suffixIcon: IconButton(
+                    tooltip: 'Clear',
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 24,
+                      height: 24,
+                    ),
+                    onPressed: _chocksOn == null ? null : _clearChocksOnTime,
+                    icon: const Icon(Icons.clear),
+                  ),
                 ),
               ),
             ],
           ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: _pilotFunction,
-          decoration: const InputDecoration(labelText: 'Pilot Function'),
-          items: const [
-            DropdownMenuItem(value: 'PF', child: Text('PF')),
-            DropdownMenuItem(value: 'PNF', child: Text('PNF')),
-            DropdownMenuItem(value: 'PF/PNF', child: Text('PF/PNF')),
-            DropdownMenuItem(value: 'PNF/PF', child: Text('PNF/PF')),
-            DropdownMenuItem(value: 'IRP 3', child: Text('IRP 3')),
-            DropdownMenuItem(value: 'IRP 4', child: Text('IRP 4')),
-          ],
-          onChanged: (value) => setState(() => _pilotFunction = value ?? 'PF'),
+        PickerWithAddInputField(
+          label: 'Aircraft',
+          valueText: _aircraftLabel(aircraftAsync),
+          onTap: _pickAircraft,
+          onAdd: _createAircraftAndSelect,
+          addTooltip: 'Add aircraft',
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Aircraft'),
-                subtitle: Text(_aircraftLabel(aircraftAsync)),
-                trailing: const Icon(Icons.search),
-                onTap: _pickAircraft,
-              ),
-            ),
-            IconButton(
-              onPressed: _createAircraftAndSelect,
-              icon: const Icon(Icons.add),
-            ),
-          ],
+        PickerWithAddInputField(
+          label: 'From Airport',
+          valueText: _airportLabel(_fromAirportId, airportsAsync),
+          onTap: () => _pickAirport(isFrom: true),
+          onAdd: () => _createAirport(isFrom: true),
+          addTooltip: 'Add airport',
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('From Airport'),
-                subtitle: Text(_airportLabel(_fromAirportId, airportsAsync)),
-                trailing: const Icon(Icons.search),
-                onTap: () => _pickAirport(isFrom: true),
-              ),
-            ),
-            IconButton(
-              onPressed: () => _createAirport(isFrom: true),
-              icon: const Icon(Icons.add),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('To Airport'),
-                subtitle: Text(_airportLabel(_toAirportId, airportsAsync)),
-                trailing: const Icon(Icons.search),
-                onTap: () => _pickAirport(isFrom: false),
-              ),
-            ),
-            IconButton(
-              onPressed: () => _createAirport(isFrom: false),
-              icon: const Icon(Icons.add),
-            ),
-          ],
+        PickerWithAddInputField(
+          label: 'To Airport',
+          valueText: _airportLabel(_toAirportId, airportsAsync),
+          onTap: () => _pickAirport(isFrom: false),
+          onAdd: () => _createAirport(isFrom: false),
+          addTooltip: 'Add airport',
         ),
       ],
     );
@@ -1431,24 +1537,16 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: NumberInputField(
                 controller: _takeoffDayController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Takeoff Day',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Takeoff Day',
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: TextFormField(
+              child: NumberInputField(
                 controller: _takeoffNightController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Takeoff Night',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Takeoff Night',
               ),
             ),
           ],
@@ -1457,24 +1555,16 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: NumberInputField(
                 controller: _landingDayController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Landing Day',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Landing Day',
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: TextFormField(
+              child: NumberInputField(
                 controller: _landingNightController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Landing Night',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Landing Night',
               ),
             ),
           ],
@@ -1483,31 +1573,24 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: NumberInputField(
                 controller: _ifrApproachesController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'IFR Approaches',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'IFR Approaches',
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: TextFormField(
+              child: TextInputField(
                 controller: _approachTypeController,
-                decoration: const InputDecoration(
-                  labelText: 'Approach Type',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Approach Type',
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         const Divider(height: 1),
-        const SizedBox(height: 12),
-        TimeInputField(controller: _blockController, label: 'Total Block'),
+        const SizedBox(height: 8),
+        HourInputField(controller: _blockController, label: 'Total Block'),
         const SizedBox(height: 8),
         if (_logTakeoffLanding)
           _timeCheckPair(
@@ -1521,29 +1604,35 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
               _flightController,
               checkedMinutes: _lastCalculatedFlightMinutes,
             ),
-            rightLabel: 'Distance NM',
-            right: TextFormField(
-              controller: _distanceNmController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Distance NM',
-                border: OutlineInputBorder(),
+            left: HourInputField(
+              controller: _flightController,
+              label: 'Flight',
+              suffixIcon: Checkbox(
+                value: _checks.flight,
+                onChanged: (_takeOff != null && _landing != null)
+                    ? (v) => _updateChecksAndMaybeCopy(
+                        _checks.copyWith(flight: v ?? false),
+                        v ?? false,
+                        _flightController,
+                        checkedMinutes: _lastCalculatedFlightMinutes,
+                      )
+                    : null,
               ),
+            ),
+            rightLabel: 'Distance NM',
+            right: NumberInputField(
+              controller: _distanceNmController,
+              label: 'Distance NM',
             ),
           )
         else
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: TextFormField(
+            child: NumberInputField(
               controller: _distanceNmController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Distance NM',
-                border: OutlineInputBorder(),
-              ),
+              label: 'Distance NM',
             ),
           ),
-        const SizedBox(height: 8),
         _buildTimeFieldsGrid([
           _TimeFieldConfig(
             label: 'PIC',
@@ -1735,19 +1824,16 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       children: [
         _buildCrewList(crewAsync),
         const SizedBox(height: 8),
-        TextFormField(
+        TextInputField(
           controller: _remarksController,
+          label: 'Remarks',
           maxLines: 1,
-          decoration: const InputDecoration(
-            labelText: 'Remarks',
-            border: OutlineInputBorder(),
-          ),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _notesController,
-          minLines: 3,
-          maxLines: 5,
+          minLines: 2,
+          maxLines: 2,
           decoration: const InputDecoration(
             labelText: 'Notes',
             border: OutlineInputBorder(),
@@ -1770,6 +1856,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     ValueChanged<bool>? rightOnChanged,
     bool rightVisible = true,
     bool rightEnabled = true,
+    Widget? left,
     Widget? right,
   }) {
     if (!leftVisible && !rightVisible) {
@@ -1778,13 +1865,15 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     if (leftVisible && !rightVisible) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: _timeCheckInput(
-          label: leftLabel,
-          controller: leftController,
-          checked: leftChecked,
-          onChanged: leftOnChanged,
-          enabled: leftEnabled,
-        ),
+        child:
+            left ??
+            _timeCheckInput(
+              label: leftLabel,
+              controller: leftController,
+              checked: leftChecked,
+              onChanged: leftOnChanged,
+              enabled: leftEnabled,
+            ),
       );
     }
     if (!leftVisible && rightVisible) {
@@ -1806,13 +1895,15 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       child: Row(
         children: [
           Expanded(
-            child: _timeCheckInput(
-              label: leftLabel,
-              controller: leftController,
-              checked: leftChecked,
-              onChanged: leftOnChanged,
-              enabled: leftEnabled,
-            ),
+            child:
+                left ??
+                _timeCheckInput(
+                  label: leftLabel,
+                  controller: leftController,
+                  checked: leftChecked,
+                  onChanged: leftOnChanged,
+                  enabled: leftEnabled,
+                ),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -1883,10 +1974,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     required ValueChanged<bool> onChanged,
     bool enabled = true,
   }) {
-    return TimeInputField(
+    return HourInputField(
       controller: controller,
       label: label,
-      forceTextField: true,
       suffixIcon: Checkbox(
         value: checked,
         onChanged: enabled ? (v) => onChanged(v ?? false) : null,
@@ -1956,9 +2046,16 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
-            OutlinedButton.icon(
+            TextButton.icon(
               onPressed: () async {
-                final draft = await _showAddCrewDialog(crewItems);
+                final draft = await showAddCrewDialog(
+                  context: context,
+                  initialCrewId: crewItems.isNotEmpty
+                      ? crewItems.first.id
+                      : null,
+                  crewLabel: (crewId) => _crewLabel(crewId, crewItems),
+                  onCreateCrew: _createCrewAndReturnId,
+                );
                 if (draft == null || !mounted) return;
                 final duplicate = _crewRows.any(
                   (row) => row.crewId == draft.crewId,
@@ -1972,7 +2069,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           ],
         ),
         SizedBox(
-          height: 170,
+          height: 112,
           child: Card(
             margin: EdgeInsets.zero,
             child: _crewRows.isEmpty
@@ -2005,7 +2102,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                               SizedBox(
                                 width: 120,
                                 child: Text(
-                                  _positionLabel(row.position!),
+                                  crewPositionLabel(row.position),
                                   style: Theme.of(context).textTheme.bodySmall,
                                   textAlign: TextAlign.left,
                                   overflow: TextOverflow.ellipsis,
@@ -2030,137 +2127,20 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     );
   }
 
-  Future<_CrewDraftRow?> _showAddCrewDialog(List<CrewRow> crewItems) async {
-    int? selectedCrewId = crewItems.isNotEmpty ? crewItems.first.id : null;
-    CrewPosition selectedPosition = CrewPosition.other;
-    return showDialog<_CrewDraftRow>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setLocalState) => AlertDialog(
-          title: const Text('Add Crew'),
-          content: SizedBox(
-            width: 420,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Crew'),
-                        subtitle: Text(_crewLabel(selectedCrewId, crewItems)),
-                        trailing: const Icon(Icons.search),
-                        onTap: () async {
-                          final selected = await CrewPickerDialog.show(
-                            dialogContext,
-                            title: 'Select crew',
-                          );
-                          if (selected == null) return;
-                          setLocalState(() => selectedCrewId = selected.id);
-                        },
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Create crew',
-                      onPressed: () async {
-                        final createdId = await _createCrewAndReturnId();
-                        if (createdId == null) return;
-                        setLocalState(() => selectedCrewId = createdId);
-                      },
-                      icon: const Icon(Icons.add_circle_outline),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<CrewPosition>(
-                  initialValue: selectedPosition,
-                  isExpanded: true,
-                  items: _positionOptions
-                      .map(
-                        (p) => DropdownMenuItem(
-                          value: p,
-                          child: Text(_positionLabel(p)),
-                        ),
-                      )
-                      .toList(growable: false),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setLocalState(() => selectedPosition = value);
-                  },
-                  decoration: const InputDecoration(labelText: 'Position'),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: selectedCrewId == null
-                  ? null
-                  : () => Navigator.of(dialogContext).pop(
-                      _CrewDraftRow(
-                        crewId: selectedCrewId,
-                        position: selectedPosition,
-                      ),
-                    ),
-              child: const Text('Add'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<int?> _createCrewAndReturnId() async {
-    final screenContext = context;
-    final placeholder = CrewData(
-      id: kPlaceholderId,
-      name: '',
-      email: null,
-      notes: null,
-      phone: null,
-      picture: null,
-      isSelf: false,
-      isFavorite: false,
-      isLocked: false,
+    final createdId = await createCrewAndReturnId(
+      context: context,
+      ref: ref,
+      crewLabelCache: _crewLabelCache,
     );
-    final result = await _showStandardFormDialog<dynamic>(
-      screenContext,
-      CrewEditScreen(item: placeholder, isCreate: true),
-    );
-    if (!mounted || result != true) return null;
-    final db = ref.read(databaseProvider);
-    final created =
-        await (db.select(db.crew)
-              ..orderBy([(t) => OrderingTerm.desc(t.id)])
-              ..limit(1))
-            .getSingleOrNull();
-    if (!mounted || created == null) return null;
-    _crewLabelCache[created.id] = created.name;
-    return created.id;
+    if (!mounted) return null;
+    return createdId;
   }
 
   TimeOfDay? _toTimeOfDayFromDb(DateTime? d) {
     if (d == null) return null;
     final local = DbDateTime.dbToUtc(d);
     return TimeOfDay(hour: local.hour, minute: local.minute);
-  }
-
-  Future<T?> _showStandardFormDialog<T>(BuildContext context, Widget child) {
-    final maxHeight = MediaQuery.of(context).size.height * 0.9;
-    return showDialog<T>(
-      context: context,
-      builder: (_) => Dialog(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 520, maxHeight: maxHeight),
-          child: SizedBox(width: 520, child: child),
-        ),
-      ),
-    );
   }
 
   String _aircraftLabel(AsyncValue<List<AircraftRow>> aircraftAsync) {
@@ -2202,46 +2182,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     return 'Crew #$crewId';
   }
 
-  String _positionLabel(CrewPosition value) {
-    switch (value) {
-      case CrewPosition.pic:
-        return 'PIC';
-      case CrewPosition.sic:
-        return 'SIC';
-      case CrewPosition.instructor:
-        return 'Instructor';
-      case CrewPosition.observer:
-        return 'Observer';
-      case CrewPosition.relief:
-        return 'Relief';
-      case CrewPosition.reliefCaptain:
-        return 'Relief Captain';
-      case CrewPosition.reliefFirstOfficer:
-        return 'Relief First Officer';
-      case CrewPosition.cabinSenior:
-        return 'Cabin Senior';
-      case CrewPosition.cabinCrew:
-        return 'Cabin Crew';
-      case CrewPosition.other:
-        return 'Other';
-      case CrewPosition.unknown:
-        return 'Unknown';
-    }
-  }
-
-  static const List<CrewPosition> _positionOptions = [
-    CrewPosition.pic,
-    CrewPosition.sic,
-    CrewPosition.instructor,
-    CrewPosition.observer,
-    CrewPosition.relief,
-    CrewPosition.reliefCaptain,
-    CrewPosition.reliefFirstOfficer,
-    CrewPosition.cabinSenior,
-    CrewPosition.cabinCrew,
-    CrewPosition.other,
-  ];
-
   String _pilotFunctionFromCounts(int takeoffs, int landings) {
     if (takeoffs > 0 && landings > 0) return 'PF';
     if (takeoffs == 0 && landings == 0) return 'PNF';
@@ -2269,13 +2209,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     if (_isPilotFunctionValue(v)) return v;
     return _pilotFunctionFromCounts(fallbackTakeoffs, fallbackLandings);
   }
-}
-
-class _CrewDraftRow {
-  _CrewDraftRow({this.crewId, this.position});
-
-  int? crewId;
-  CrewPosition? position;
 }
 
 class FlightPrefill {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 
 class CustomTimeLabelsCard extends ConsumerStatefulWidget {
@@ -36,9 +37,7 @@ class _CustomTimeLabelsCardState extends ConsumerState<CustomTimeLabelsCard> {
     );
     await ref.read(customTimeLabelsProvider.notifier).setLabels(value);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Custom time labels saved')),
-    );
+    await showAppMessageDialog(context, message: 'Custom time labels saved');
   }
 
   @override

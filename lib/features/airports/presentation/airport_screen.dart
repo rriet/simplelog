@@ -15,6 +15,7 @@ import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 import 'airport_edit_screen.dart';
 import 'widgets/airport_search_bar.dart';
@@ -51,10 +52,7 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
 
   Future<void> _openFilters() async {
     final current = ref.read(airportFiltersProvider);
-    final updated = await AirportFiltersDialog.show(
-      context,
-      initial: current,
-    );
+    final updated = await AirportFiltersDialog.show(context, initial: current);
     if (!mounted || updated == null) return;
     await ref.read(airportFiltersProvider.notifier).setFilters(updated);
   }
@@ -73,9 +71,7 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.confirmDeleteTitle),
-        content: Text(
-          l10n.confirmDeleteAirport(row.icao),
-        ),
+        content: Text(l10n.confirmDeleteAirport(row.icao)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -97,18 +93,11 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
   Future<void> _showValidationError(ValidationResult validation) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.validationErrorTitle),
-        content: Text(validation.message ?? l10n.validationErrorGeneric),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
-      ),
+    await showAppMessageDialog(
+      context,
+      title: l10n.validationErrorTitle,
+      message: validation.message ?? l10n.validationErrorGeneric,
+      okLabel: l10n.okAction,
     );
   }
 
@@ -159,16 +148,15 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
                         child: FutureBuilder<List<LogbookEntry>>(
                           future: entriesFuture,
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
                               return const Center(
                                 child: CircularProgressIndicator(),
                               );
                             }
                             final entries = snapshot.data ?? [];
                             if (entries.isEmpty) {
-                              return Center(
-                                child: Text(l10n.emptyResults),
-                              );
+                              return Center(child: Text(l10n.emptyResults));
                             }
                             return Column(
                               children: [
@@ -177,11 +165,12 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
                                 Expanded(
                                   child: LogbookEntriesYearList(
                                     entries: entries,
-                                    onEntryTap: (entry) => LogbookEntryDialogs.show(
-                                      context,
-                                      entry: entry,
-                                      useCases: logbookUseCases,
-                                    ),
+                                    onEntryTap: (entry) =>
+                                        LogbookEntryDialogs.show(
+                                          context,
+                                          entry: entry,
+                                          useCases: logbookUseCases,
+                                        ),
                                   ),
                                 ),
                               ],
@@ -218,10 +207,7 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
     if (isCompact) {
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => AirportEditScreen(
-            item: placeholder,
-            isCreate: true,
-          ),
+          builder: (_) => AirportEditScreen(item: placeholder, isCreate: true),
         ),
       );
       return;
@@ -229,16 +215,18 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 520,
-          height: 640,
-          child: AirportEditScreen(
-            item: placeholder,
-            isCreate: true,
+      builder: (context) {
+        final size = MediaQuery.sizeOf(context);
+        return Dialog(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: size.height * 0.9,
+            ),
+            child: AirportEditScreen(item: placeholder, isCreate: true),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -247,26 +235,25 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
 
     if (isCompact) {
       await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => AirportEditScreen(
-            item: row.airport,
-          ),
-        ),
+        MaterialPageRoute(builder: (_) => AirportEditScreen(item: row.airport)),
       );
       return;
     }
 
     await showDialog<void>(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 520,
-          height: 640,
-          child: AirportEditScreen(
-            item: row.airport,
+      builder: (context) {
+        final size = MediaQuery.sizeOf(context);
+        return Dialog(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: size.height * 0.9,
+            ),
+            child: AirportEditScreen(item: row.airport),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -295,9 +282,7 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
     final l10n = AppLocalizations.of(context)!;
     final filters = ref.watch(airportFiltersProvider);
     final airports = ref.watch(
-      airportsProvider(
-        AirportSearchParams(query: _query, filters: filters),
-      ),
+      airportsProvider(AirportSearchParams(query: _query, filters: filters)),
     );
     final isCompact = MediaQuery.of(context).size.width < 600;
 
@@ -322,9 +307,7 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
               onOpenDetails: _showAirportDetails,
             ),
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stackTrace) => Center(
-              child: Text(error.toString()),
-            ),
+            error: (error, stackTrace) => Center(child: Text(error.toString())),
           ),
         ),
         const SizedBox(height: 8),
@@ -346,10 +329,7 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
 }
 
 class _AirportHeader extends StatelessWidget {
-  const _AirportHeader({
-    required this.airport,
-    required this.onOpenMap,
-  });
+  const _AirportHeader({required this.airport, required this.onOpenMap});
 
   final Airport airport;
   final VoidCallback onOpenMap;
@@ -372,14 +352,12 @@ class _AirportHeader extends StatelessWidget {
           style: Theme.of(context).textTheme.titleLarge,
         ),
         if (subtitle.isNotEmpty)
-          Text(
-            subtitle,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 6),
         TextButton.icon(
-          onPressed:
-              (airport.latitude == 0 && airport.longitude == 0) ? null : onOpenMap,
+          onPressed: (airport.latitude == 0 && airport.longitude == 0)
+              ? null
+              : onOpenMap,
           icon: const Icon(Icons.map_outlined, size: 16),
           label: Text(
             '${_formatLat(airport.latitude)} ${_formatLon(airport.longitude)}',
@@ -421,7 +399,8 @@ Future<void> _showAirportExpandedMapDialog(
                       initialCenter: center,
                       initialZoom: 11,
                       interactionOptions: const InteractionOptions(
-                        flags: InteractiveFlag.drag |
+                        flags:
+                            InteractiveFlag.drag |
                             InteractiveFlag.pinchZoom |
                             InteractiveFlag.doubleTapZoom |
                             InteractiveFlag.scrollWheelZoom,
@@ -460,10 +439,7 @@ Future<void> _showAirportExpandedMapDialog(
                           icon: Icons.add,
                           onPressed: () {
                             final zoom = controller.camera.zoom + 1;
-                            controller.move(
-                              controller.camera.center,
-                              zoom,
-                            );
+                            controller.move(controller.camera.center, zoom);
                           },
                         ),
                         const SizedBox(height: 8),
@@ -471,10 +447,7 @@ Future<void> _showAirportExpandedMapDialog(
                           icon: Icons.remove,
                           onPressed: () {
                             final zoom = controller.camera.zoom - 1;
-                            controller.move(
-                              controller.camera.center,
-                              zoom,
-                            );
+                            controller.move(controller.camera.center, zoom);
                           },
                         ),
                       ],
@@ -491,10 +464,7 @@ Future<void> _showAirportExpandedMapDialog(
 }
 
 class _MapZoomButton extends StatelessWidget {
-  const _MapZoomButton({
-    required this.icon,
-    required this.onPressed,
-  });
+  const _MapZoomButton({required this.icon, required this.onPressed});
 
   final IconData icon;
   final VoidCallback onPressed;
@@ -505,10 +475,7 @@ class _MapZoomButton extends StatelessWidget {
       color: Theme.of(context).colorScheme.surface,
       elevation: 2,
       shape: const CircleBorder(),
-      child: IconButton(
-        icon: Icon(icon),
-        onPressed: onPressed,
-      ),
+      child: IconButton(icon: Icon(icon), onPressed: onPressed),
     );
   }
 }
@@ -523,9 +490,7 @@ String _formatDms(double value, {required bool isLat}) {
   final minutesFull = (abs - degrees) * 60;
   final minutes = minutesFull.floor();
   final seconds = ((minutesFull - minutes) * 60).round();
-  final direction = isLat
-      ? (value >= 0 ? 'N' : 'S')
-      : (value >= 0 ? 'E' : 'W');
+  final direction = isLat ? (value >= 0 ? 'N' : 'S') : (value >= 0 ? 'E' : 'W');
   final degSymbol = '\u00B0';
   final minSymbol = '\u2032';
   final secSymbol = '\u2033';

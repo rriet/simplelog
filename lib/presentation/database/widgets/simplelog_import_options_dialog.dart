@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:simplelog/data/import/simplelog_import_options.dart';
-import 'package:simplelog/presentation/shared/widgets/time_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 
 class SimpleLogImportOptionsDialog extends StatefulWidget {
   const SimpleLogImportOptionsDialog({
@@ -78,31 +78,31 @@ class _SimpleLogImportOptionsDialogState
       text: initial.instrumentPercent.toString(),
     );
     _instrumentMinController = TextEditingController(
-      text: TimeInputField.formatMinutes(initial.instrumentMinimumMinutes),
+      text: HourInputField.formatHours(initial.instrumentMinimumMinutes),
     );
     _instrumentSubtractController = TextEditingController(
-      text: TimeInputField.formatMinutes(initial.instrumentSubtractMinutes),
+      text: HourInputField.formatHours(initial.instrumentSubtractMinutes),
     );
     _ifrPercentController = TextEditingController(
       text: initial.ifrPercent.toString(),
     );
     _ifrMinController = TextEditingController(
-      text: TimeInputField.formatMinutes(initial.ifrMinimumMinutes),
+      text: HourInputField.formatHours(initial.ifrMinimumMinutes),
     );
     _ifrSubtractController = TextEditingController(
-      text: TimeInputField.formatMinutes(initial.ifrSubtractMinutes),
+      text: HourInputField.formatHours(initial.ifrSubtractMinutes),
     );
     _irp3PercentController = TextEditingController(
       text: initial.irp3Percent.toString(),
     );
     _irp3SubtractController = TextEditingController(
-      text: TimeInputField.formatMinutes(initial.irp3SubtractMinutes),
+      text: HourInputField.formatHours(initial.irp3SubtractMinutes),
     );
     _irp4PercentController = TextEditingController(
       text: initial.irp4Percent.toString(),
     );
     _irp4SubtractController = TextEditingController(
-      text: TimeInputField.formatMinutes(initial.irp4SubtractMinutes),
+      text: HourInputField.formatHours(initial.irp4SubtractMinutes),
     );
   }
 
@@ -386,7 +386,7 @@ class _SimpleLogImportOptionsDialogState
   }
 
   int _parseTime(TextEditingController c) {
-    return TimeInputField.parseMinutes(c.text.trim()) ?? 0;
+    return HourInputField.parseHours(c.text.trim()) ?? 0;
   }
 
   SimpleLogImportOptions _buildOptions() {
@@ -464,21 +464,13 @@ class _CompactFieldRow extends StatelessWidget {
                 SizedBox(
                   width: eachWidth,
                   child: field.isTime
-                      ? TimeInputField(
+                      ? HourInputField(
                           controller: field.controller,
                           label: field.label,
-                          maxHours: 999,
                         )
-                      : TextField(
+                      : NumberInputField(
                           controller: field.controller,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          decoration: InputDecoration(
-                            labelText: field.label,
-                            border: const OutlineInputBorder(),
-                          ),
+                          label: field.label,
                         ),
                 ),
             ],

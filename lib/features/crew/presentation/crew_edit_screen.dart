@@ -13,15 +13,12 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/features/crew/application/providers/crew_feature_providers.dart';
 
 import 'package:simplelog/data/database/app_database.dart';
-import 'package:simplelog/presentation/shared/widgets/form_text_field.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
 class CrewEditScreen extends ConsumerStatefulWidget {
-  const CrewEditScreen({
-    super.key,
-    required this.item,
-    this.isCreate = false,
-  });
+  const CrewEditScreen({super.key, required this.item, this.isCreate = false});
 
   final CrewData item;
   final bool isCreate;
@@ -44,14 +41,18 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
   void initState() {
     super.initState();
     final item = widget.item;
-    _nameController =
-        TextEditingController(text: widget.isCreate ? '' : item.name);
-    _emailController =
-        TextEditingController(text: widget.isCreate ? '' : (item.email ?? ''));
-    _notesController =
-        TextEditingController(text: widget.isCreate ? '' : (item.notes ?? ''));
-    _phoneController =
-        TextEditingController(text: widget.isCreate ? '' : (item.phone ?? ''));
+    _nameController = TextEditingController(
+      text: widget.isCreate ? '' : item.name,
+    );
+    _emailController = TextEditingController(
+      text: widget.isCreate ? '' : (item.email ?? ''),
+    );
+    _notesController = TextEditingController(
+      text: widget.isCreate ? '' : (item.notes ?? ''),
+    );
+    _phoneController = TextEditingController(
+      text: widget.isCreate ? '' : (item.phone ?? ''),
+    );
     _isSelf = widget.isCreate ? false : item.isSelf;
     _isFavorite = widget.isCreate ? false : item.isFavorite;
     _pictureBytes = widget.isCreate ? null : item.picture;
@@ -132,32 +133,25 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
   Future<void> _showValidationError(ValidationResult validation) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.validationErrorTitle),
-        content: Text(validation.message ?? l10n.validationErrorGeneric),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
-      ),
+    await showAppMessageDialog(
+      context,
+      title: l10n.validationErrorTitle,
+      message: validation.message ?? l10n.validationErrorGeneric,
+      okLabel: l10n.okAction,
     );
   }
 
   Future<void> _pickAndCrop(ImageSource source) async {
     final bytes = await Navigator.of(context, rootNavigator: true)
         .push<Uint8List?>(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => _PhotoPickRoute(
-          source: source,
-          title: AppLocalizations.of(context)!.cropPhotoTitle,
-        ),
-      ),
-    );
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => _PhotoPickRoute(
+              source: source,
+              title: AppLocalizations.of(context)!.cropPhotoTitle,
+            ),
+          ),
+        );
 
     if (!mounted || bytes == null) {
       return;
@@ -185,7 +179,8 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
     required String galleryLabel,
     required String removeLabel,
   }) async {
-    final isDesktop = Theme.of(context).platform == TargetPlatform.macOS ||
+    final isDesktop =
+        Theme.of(context).platform == TargetPlatform.macOS ||
         Theme.of(context).platform == TargetPlatform.windows ||
         Theme.of(context).platform == TargetPlatform.linux;
     final selection = await showModalBottomSheet<_PhotoAction>(
@@ -238,21 +233,14 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isCreate ? l10n.createCrewTitle : l10n.editCrewTitle),
-        actions: [
-          TextButton(
-            onPressed: _save,
-            child: Text(l10n.saveAction),
-          ),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+    final title = widget.isCreate ? l10n.createCrewTitle : l10n.editCrewTitle;
+    final form = Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _PictureField(
               label: l10n.fieldPicture,
@@ -264,7 +252,7 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
                 removeLabel: l10n.removePicture,
               ),
             ),
-            FormTextField(
+            TextInputField(
               controller: _nameController,
               label: l10n.fieldName,
               validator: (value) {
@@ -274,27 +262,37 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
                 return null;
               },
             ),
-            FormTextField(
+            const SizedBox(height: 8),
+            TextInputField(
               controller: _emailController,
               label: l10n.fieldEmail,
               keyboardType: TextInputType.emailAddress,
             ),
-            FormTextField(
+            const SizedBox(height: 8),
+            TextInputField(
               controller: _phoneController,
               label: l10n.fieldPhone,
               keyboardType: TextInputType.phone,
             ),
-            FormTextField(
+            const SizedBox(height: 8),
+            TextInputField(
               controller: _notesController,
               label: l10n.fieldNotes,
               maxLines: 4,
             ),
+            const SizedBox(height: 8),
             SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              visualDensity: const VisualDensity(vertical: -1),
               title: Text(l10n.fieldIsSelf),
               value: _isSelf,
               onChanged: (value) => setState(() => _isSelf = value),
             ),
             SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              visualDensity: const VisualDensity(vertical: -1),
               title: Text(l10n.fieldIsFavorite),
               value: _isFavorite,
               onChanged: (value) => setState(() => _isFavorite = value),
@@ -303,9 +301,41 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
         ),
       ),
     );
+    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
+
+    if (isInDialog) {
+      return Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              title: Text(title),
+              trailing: TextButton(
+                onPressed: _save,
+                child: Text(l10n.saveAction),
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(fit: FlexFit.loose, child: form),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
+      ),
+      body: form,
+    );
   }
 }
-
 
 class _PictureField extends StatelessWidget {
   const _PictureField({
@@ -339,17 +369,15 @@ class _PictureField extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 42,
-                        backgroundImage:
-                            bytes == null ? null : MemoryImage(bytes!),
+                        backgroundImage: bytes == null
+                            ? null
+                            : MemoryImage(bytes!),
                         child: bytes == null
                             ? const Icon(Icons.person, size: 36)
                             : null,
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        hint,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
+                      Text(hint, style: Theme.of(context).textTheme.bodySmall),
                     ],
                   ),
                 ),
@@ -365,10 +393,7 @@ class _PictureField extends StatelessWidget {
 enum _PhotoAction { camera, gallery, remove }
 
 class _PhotoPickRoute extends StatefulWidget {
-  const _PhotoPickRoute({
-    required this.source,
-    required this.title,
-  });
+  const _PhotoPickRoute({required this.source, required this.title});
 
   final ImageSource source;
   final String title;
@@ -415,9 +440,7 @@ class _PhotoPickRouteState extends State<_PhotoPickRoute> {
                 toolbarTitle: widget.title,
                 lockAspectRatio: false,
               ),
-              IOSUiSettings(
-                title: widget.title,
-              ),
+              IOSUiSettings(title: widget.title),
             ],
           )
           .timeout(const Duration(seconds: 30));
@@ -468,14 +491,8 @@ class _PhotoPickRouteState extends State<_PhotoPickRoute> {
     }
   }
 
-  
-
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

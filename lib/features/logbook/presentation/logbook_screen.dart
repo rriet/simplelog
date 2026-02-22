@@ -18,6 +18,7 @@ import 'widgets/logbook_list.dart';
 import 'package:simplelog/presentation/reports/reports_screen.dart';
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 
 class LogbookScreen extends ConsumerStatefulWidget {
   const LogbookScreen({super.key});
@@ -505,8 +506,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     }
     await showDialog<void>(
       context: context,
-      builder: (context) =>
-          Dialog(child: SizedBox(width: 520, height: 560, child: screen)),
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 520,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: SizedBox(width: 520, child: screen),
+        ),
+      ),
     );
     await _refreshDutyById(group.dutyId);
   }
@@ -538,8 +546,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     }
     await showDialog<void>(
       context: context,
-      builder: (context) =>
-          const Dialog(child: SizedBox(width: 520, height: 560, child: screen)),
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 520,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: const SizedBox(width: 520, child: screen),
+        ),
+      ),
     );
     await _loadNextPage(reset: true);
   }
@@ -607,8 +622,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     }
     final changed = await showDialog<bool>(
       context: context,
-      builder: (context) =>
-          Dialog(child: SizedBox(width: 560, height: 700, child: screen)),
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 560,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: SizedBox(width: 560, child: screen),
+        ),
+      ),
     );
     if (changed == true) {
       await _refreshEntryByTimelineId(timelineId);
@@ -629,8 +651,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     }
     final created = await showDialog<bool>(
       context: context,
-      builder: (context) =>
-          const Dialog(child: SizedBox(width: 560, height: 700, child: screen)),
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 560,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: const SizedBox(width: 560, child: screen),
+        ),
+      ),
     );
     if (created == true) {
       await _loadNextPage(reset: true);
@@ -651,8 +680,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     }
     final changed = await showDialog<bool>(
       context: context,
-      builder: (context) =>
-          Dialog(child: SizedBox(width: 640, height: 780, child: screen)),
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 640,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: SizedBox(width: 640, child: screen),
+        ),
+      ),
     );
     if (changed == true) {
       await _refreshEntryByTimelineId(timelineId);
@@ -673,8 +709,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     }
     final created = await showDialog<bool>(
       context: context,
-      builder: (context) =>
-          const Dialog(child: SizedBox(width: 640, height: 780, child: screen)),
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 640,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: const SizedBox(width: 640, child: screen),
+        ),
+      ),
     );
     if (created == true) {
       await _loadNextPage(reset: true);
@@ -723,12 +766,9 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final prefill = await _buildFlightPrefill(isReturn: true);
     if (!mounted) return;
     if (prefill == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.reportsNoPreviousFlightFound,
-          ),
-        ),
+      await showAppMessageDialog(
+        context,
+        message: AppLocalizations.of(context)!.reportsNoPreviousFlightFound,
       );
       return;
     }
@@ -739,12 +779,9 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final prefill = await _buildFlightPrefill(isReturn: false);
     if (!mounted) return;
     if (prefill == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.reportsNoPreviousFlightFound,
-          ),
-        ),
+      await showAppMessageDialog(
+        context,
+        message: AppLocalizations.of(context)!.reportsNoPreviousFlightFound,
       );
       return;
     }
@@ -765,8 +802,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     }
     final created = await showDialog<bool>(
       context: context,
-      builder: (context) =>
-          Dialog(child: SizedBox(width: 640, height: 780, child: screen)),
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 640,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: SizedBox(width: 640, child: screen),
+        ),
+      ),
     );
     if (created == true) {
       await _loadNextPage(reset: true);
@@ -787,8 +831,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     }
     final changed = await showDialog<bool>(
       context: context,
-      builder: (context) =>
-          Dialog(child: SizedBox(width: 560, height: 720, child: screen)),
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 560,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: SizedBox(width: 560, child: screen),
+        ),
+      ),
     );
     if (changed == true) {
       await _refreshEntryByTimelineId(timelineId);
@@ -809,8 +860,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     }
     final created = await showDialog<bool>(
       context: context,
-      builder: (context) =>
-          const Dialog(child: SizedBox(width: 560, height: 720, child: screen)),
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 560,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: const SizedBox(width: 560, child: screen),
+        ),
+      ),
     );
     if (created == true) {
       await _loadNextPage(reset: true);

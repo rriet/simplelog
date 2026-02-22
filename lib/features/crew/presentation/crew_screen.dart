@@ -13,6 +13,7 @@ import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 import 'crew_edit_screen.dart';
@@ -60,9 +61,7 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.confirmDeleteTitle),
-        content: Text(
-          l10n.confirmDeleteCrew(row.name),
-        ),
+        content: Text(l10n.confirmDeleteCrew(row.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -84,18 +83,11 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
   Future<void> _showValidationError(ValidationResult validation) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.validationErrorTitle),
-        content: Text(validation.message ?? l10n.validationErrorGeneric),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
-      ),
+    await showAppMessageDialog(
+      context,
+      title: l10n.validationErrorTitle,
+      message: validation.message ?? l10n.validationErrorGeneric,
+      okLabel: l10n.okAction,
     );
   }
 
@@ -134,7 +126,8 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
                       const SizedBox(height: 12),
                       if (phone.isNotEmpty)
                         InkWell(
-                          onTap: () => _showContactMenu(phone: phone, email: ''),
+                          onTap: () =>
+                              _showContactMenu(phone: phone, email: ''),
                           child: Row(
                             children: [
                               const Icon(Icons.phone, size: 18),
@@ -146,7 +139,8 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
                       if (phone.isNotEmpty) const SizedBox(height: 6),
                       if (email.isNotEmpty)
                         InkWell(
-                          onTap: () => _showContactMenu(phone: '', email: email),
+                          onTap: () =>
+                              _showContactMenu(phone: '', email: email),
                           child: Row(
                             children: [
                               const Icon(Icons.email, size: 18),
@@ -176,9 +170,7 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
                             }
                             final entries = snapshot.data ?? [];
                             if (entries.isEmpty) {
-                              return Center(
-                                child: Text(l10n.emptyResults),
-                              );
+                              return Center(child: Text(l10n.emptyResults));
                             }
                             return Column(
                               children: [
@@ -187,11 +179,12 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
                                 Expanded(
                                   child: LogbookEntriesYearList(
                                     entries: entries,
-                                    onEntryTap: (entry) => LogbookEntryDialogs.show(
-                                      context,
-                                      entry: entry,
-                                      useCases: logbookUseCases,
-                                    ),
+                                    onEntryTap: (entry) =>
+                                        LogbookEntryDialogs.show(
+                                          context,
+                                          entry: entry,
+                                          useCases: logbookUseCases,
+                                        ),
                                   ),
                                 ),
                               ],
@@ -318,10 +311,7 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
     if (isCompact) {
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => CrewEditScreen(
-            item: placeholder,
-            isCreate: true,
-          ),
+          builder: (_) => CrewEditScreen(item: placeholder, isCreate: true),
         ),
       );
       return;
@@ -329,16 +319,18 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 520,
-          height: 640,
-          child: CrewEditScreen(
-            item: placeholder,
-            isCreate: true,
+      builder: (context) {
+        final size = MediaQuery.sizeOf(context);
+        return Dialog(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: size.height * 0.9,
+            ),
+            child: CrewEditScreen(item: placeholder, isCreate: true),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -346,27 +338,26 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
 
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => CrewEditScreen(
-            item: row.crew,
-          ),
-        ),
-      );
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => CrewEditScreen(item: row.crew)));
       return;
     }
 
     await showDialog<void>(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 520,
-          height: 640,
-          child: CrewEditScreen(
-            item: row.crew,
+      builder: (context) {
+        final size = MediaQuery.sizeOf(context);
+        return Dialog(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: size.height * 0.9,
+            ),
+            child: CrewEditScreen(item: row.crew),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -397,9 +388,7 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
               onPhotoTap: _showLargePhoto,
             ),
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stackTrace) => Center(
-              child: Text(error.toString()),
-            ),
+            error: (error, stackTrace) => Center(child: Text(error.toString())),
           ),
         ),
         const SizedBox(height: 8),
@@ -421,10 +410,7 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
 }
 
 class _CrewDetailHeader extends StatelessWidget {
-  const _CrewDetailHeader({
-    required this.row,
-    required this.onPhotoTap,
-  });
+  const _CrewDetailHeader({required this.row, required this.onPhotoTap});
 
   final CrewRow row;
   final VoidCallback onPhotoTap;

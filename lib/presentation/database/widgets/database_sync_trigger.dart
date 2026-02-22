@@ -14,6 +14,7 @@ import 'package:simplelog/data/import/dashboard_rules_seed_importer.dart';
 import 'package:simplelog/data/import/simplelog_csv_importer.dart';
 import 'package:simplelog/presentation/database/widgets/import_options_preferences.dart';
 import 'package:simplelog/presentation/database/widgets/southwest_import_options_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
@@ -114,9 +115,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       if (!context.mounted) return;
       if (!outcome.isSuccess) {
         final message = _buildImportErrorMessage(outcome.failure);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+        await _showInfoDialog(context, message);
         return;
       }
       await _showImportSummary(context, outcome.data!);
@@ -162,18 +161,14 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       if (!context.mounted) return;
       if (!outcome.isSuccess) {
         final message = _buildImportErrorMessage(outcome.failure);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+        await _showInfoDialog(context, message);
         return;
       }
       await _showImportSummary(context, outcome.data!);
     } else {
       await _showOptionsDialog(context, type, file.name);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Unsupported CSV format.')));
+      await _showInfoDialog(context, 'Unsupported CSV format.');
     }
   }
 
@@ -221,9 +216,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     }
 
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('CSV exported: $path')));
+    await _showInfoDialog(context, 'CSV exported: $path');
   }
 
   String _decodeCsvBytes(Uint8List bytes) {
@@ -280,11 +273,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     BuildContext context,
     SimpleLogImportResult stats,
   ) async {
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Import Summary'),
-        content: Text(
+    await showAppMessageDialog(
+      context,
+      title: 'Import Summary',
+      message:
           'Rows: ${stats.totalRows}\n'
           'Flights: ${stats.flights}\n'
           'Positionings: ${stats.positionings}\n'
@@ -295,14 +287,6 @@ class DatabaseSyncTrigger extends ConsumerWidget {
           'Crew: ${stats.crew}\n'
           'Skipped: ${stats.skipped}\n'
           'Errors: ${stats.errors}',
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -331,9 +315,12 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     await db.clearAllData();
     await DashboardRulesSeedImporter.clearSeedFlag();
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Database cleared.')));
+    await _showInfoDialog(context, 'Database cleared.');
+  }
+
+  Future<void> _showInfoDialog(BuildContext context, String message) async {
+    if (!context.mounted) return;
+    await showAppMessageDialog(context, message: message);
   }
 
   Future<bool> _showOptionsDialog(

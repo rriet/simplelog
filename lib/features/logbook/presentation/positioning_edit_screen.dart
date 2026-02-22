@@ -12,7 +12,13 @@ import 'package:simplelog/features/airports/application/providers/airports_featu
 import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_picker_dialog.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
-import 'package:simplelog/presentation/shared/widgets/time_input_field.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/picker_with_add_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
 class PositioningEditScreen extends ConsumerStatefulWidget {
@@ -45,11 +51,11 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
   @override
   void initState() {
     super.initState();
-    _departureTimeController.text = TimeInputField.formatMinutes(
+    _departureTimeController.text = ClockTimeInputField.formatMinutesOfDay(
       _departure.hour * 60 + _departure.minute,
     );
     _arrivalTimeController.text = '';
-    _timeController.text = TimeInputField.formatMinutes(0);
+    _timeController.text = HourInputField.formatHours(0);
     _loadExisting();
   }
 
@@ -83,14 +89,16 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     _departureAirportId = loaded.positioning.departurePlaceId;
     _arrivalAirportId = loaded.positioning.arrivalPlaceId;
     _arrival = DbDateTime.dbToUtcOrNull(loaded.positioning.arrivalDateTime);
-    _departureTimeController.text = TimeInputField.formatMinutes(
+    _departureTimeController.text = ClockTimeInputField.formatMinutesOfDay(
       _departure.hour * 60 + _departure.minute,
     );
     _arrivalTimeController.text = _arrival == null
         ? ''
-        : TimeInputField.formatMinutes(_arrival!.hour * 60 + _arrival!.minute);
+        : ClockTimeInputField.formatMinutesOfDay(
+            _arrival!.hour * 60 + _arrival!.minute,
+          );
     _notesController.text = loaded.positioning.notes;
-    _timeController.text = TimeInputField.formatMinutes(
+    _timeController.text = HourInputField.formatHours(
       loaded.positioning.timeTotalMinutes,
     );
     setState(() => _loading = false);
@@ -103,7 +111,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
 
   void _updateTimeIfAuto() {
     if (_timeEdited) return;
-    _timeController.text = TimeInputField.formatMinutes(_calculatedMinutes());
+    _timeController.text = HourInputField.formatHours(_calculatedMinutes());
   }
 
   Future<void> _pickDate() async {
@@ -157,9 +165,9 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       isFavorite: false,
       isLocked: false,
     );
-    final result = await _showStandardFormDialog<dynamic>(
-      context,
-      AirportEditScreen(item: placeholder, isCreate: true),
+    final result = await showConstrainedEditDialog<dynamic>(
+      context: context,
+      child: AirportEditScreen(item: placeholder, isCreate: true),
     );
 
     if (!mounted) return;
@@ -248,7 +256,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       );
       return;
     }
-    final parsed = TimeInputField.parseMinutes(_timeController.text);
+    final parsed = HourInputField.parseHours(_timeController.text);
     if (parsed == null || parsed <= 0) {
       await _showError('Enter a valid positioning time.');
       return;
@@ -284,18 +292,11 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
   Future<void> _showError(String message) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.validationErrorTitle),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.okAction),
-          ),
-        ],
-      ),
+    await showAppMessageDialog(
+      context,
+      title: l10n.validationErrorTitle,
+      message: message,
+      okLabel: l10n.okAction,
     );
   }
 
@@ -315,144 +316,148 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isCreate ? 'New Positioning' : 'Edit Positioning'),
-        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+    final form = Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Date'),
-              subtitle: Text(_dateLabel(_departure)),
-              trailing: const Icon(Icons.calendar_today),
+            DateSelectorInputField(
+              label: 'Date',
+              valueText: _dateLabel(_departure),
               onTap: _pickDate,
             ),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: TimeInputField(
+                  child: ClockTimeInputField(
                     controller: _departureTimeController,
                     label: 'Departure Time',
-                    maxHours: 23,
                     onChangedMinutes: _onDepartureTimeChanged,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: TimeInputField(
+                  child: ClockTimeInputField(
                     controller: _arrivalTimeController,
                     label: 'Arrival Time',
-                    maxHours: 23,
                     onChangedMinutes: _onArrivalTimeChanged,
                     onCleared: _clearArrivalTime,
                     allowEmpty: true,
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Clear',
-                  onPressed: _arrival == null ? null : _clearArrivalTime,
-                  icon: const Icon(Icons.clear),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TimeInputField(
-                    controller: _timeController,
-                    label: 'Total Time',
-                    fallbackMinutes: _calculatedMinutes(),
-                    onChangedMinutes: (_) => _timeEdited = true,
-                    validator: (value) {
-                      final parsed = TimeInputField.parseMinutes(value ?? '');
-                      if (parsed == null || parsed <= 0) {
-                        return l10n.validationErrorGeneric;
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  tooltip: 'Use calculated time',
-                  onPressed: _arrival == null
-                      ? null
-                      : () {
-                          final calculated = _calculatedMinutes();
-                          setState(() {
-                            _timeController.text = TimeInputField.formatMinutes(
-                              calculated,
-                            );
-                            _timeEdited = false;
-                          });
-                        },
-                  icon: const Icon(Icons.calculate_outlined),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Departure Airport'),
-                    subtitle: Text(
-                      _airportLabelForId(_departureAirportId, airportsAsync),
+                    suffixIcon: IconButton(
+                      tooltip: 'Clear',
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 24,
+                        height: 24,
+                      ),
+                      onPressed: _arrival == null ? null : _clearArrivalTime,
+                      icon: const Icon(Icons.clear),
                     ),
-                    trailing: const Icon(Icons.search),
-                    onTap: _pickDepartureAirport,
                   ),
-                ),
-                IconButton(
-                  tooltip: 'Add airport',
-                  onPressed: () => _createAirportAndSelect(asDeparture: true),
-                  icon: const Icon(Icons.add),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Arrival Airport'),
-                    subtitle: Text(
-                      _airportLabelForId(_arrivalAirportId, airportsAsync),
-                    ),
-                    trailing: const Icon(Icons.search),
-                    onTap: _pickArrivalAirport,
-                  ),
+            HourInputField(
+              controller: _timeController,
+              label: 'Total Time',
+              fallbackMinutes: _calculatedMinutes(),
+              onChangedMinutes: (_) => _timeEdited = true,
+              suffixIcon: IconButton(
+                tooltip: 'Use calculated time',
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints.tightFor(
+                  width: 24,
+                  height: 24,
                 ),
-                IconButton(
-                  tooltip: 'Add airport',
-                  onPressed: () => _createAirportAndSelect(asDeparture: false),
-                  icon: const Icon(Icons.add),
-                ),
-              ],
+                onPressed: _arrival == null
+                    ? null
+                    : () {
+                        final calculated = _calculatedMinutes();
+                        setState(() {
+                          _timeController.text = HourInputField.formatHours(
+                            calculated,
+                          );
+                          _timeEdited = false;
+                        });
+                      },
+                icon: const Icon(Icons.calculate_outlined),
+              ),
+              validator: (value) {
+                final parsed = HourInputField.parseHours(value ?? '');
+                if (parsed == null || parsed <= 0) {
+                  return l10n.validationErrorGeneric;
+                }
+                return null;
+              },
             ),
-            const SizedBox(height: 12),
-            TextFormField(
+            const SizedBox(height: 8),
+            PickerWithAddInputField(
+              label: 'Departure Airport',
+              valueText: _airportLabelForId(_departureAirportId, airportsAsync),
+              onTap: _pickDepartureAirport,
+              onAdd: () => _createAirportAndSelect(asDeparture: true),
+              addTooltip: 'Add airport',
+            ),
+            const SizedBox(height: 8),
+            PickerWithAddInputField(
+              label: 'Arrival Airport',
+              valueText: _airportLabelForId(_arrivalAirportId, airportsAsync),
+              onTap: _pickArrivalAirport,
+              onAdd: () => _createAirportAndSelect(asDeparture: false),
+              addTooltip: 'Add airport',
+            ),
+            const SizedBox(height: 8),
+            TextInputField(
               controller: _notesController,
+              label: 'Notes',
               minLines: 3,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Notes',
-                border: OutlineInputBorder(),
-              ),
             ),
           ],
         ),
       ),
+    );
+
+    final title = widget.isCreate ? 'New Positioning' : 'Edit Positioning';
+    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
+
+    if (isInDialog) {
+      return Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              title: Text(title),
+              trailing: TextButton(
+                onPressed: _save,
+                child: Text(l10n.saveAction),
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(fit: FlexFit.loose, child: form),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
+      ),
+      body: form,
     );
   }
 
@@ -470,18 +475,5 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       return name.isEmpty ? airport.icao : '${airport.icao} - $name';
     }
     return 'ID: $airportId';
-  }
-
-  Future<T?> _showStandardFormDialog<T>(BuildContext context, Widget child) {
-    final maxHeight = MediaQuery.of(context).size.height * 0.9;
-    return showDialog<T>(
-      context: context,
-      builder: (_) => Dialog(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 520, maxHeight: maxHeight),
-          child: SizedBox(width: 520, child: child),
-        ),
-      ),
-    );
   }
 }
