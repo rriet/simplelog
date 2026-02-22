@@ -10,6 +10,7 @@ class PickerWithAddInputField extends StatelessWidget {
     required this.onTap,
     this.onAdd,
     this.addTooltip,
+    this.errorText,
   });
 
   final String label;
@@ -17,6 +18,7 @@ class PickerWithAddInputField extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onAdd;
   final String? addTooltip;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +37,7 @@ class PickerWithAddInputField extends StatelessWidget {
               decoration: InputDecoration(
                 labelText: label,
                 border: const OutlineInputBorder(),
+                errorText: errorText,
               ),
               child: Row(
                 children: [

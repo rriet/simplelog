@@ -11,6 +11,9 @@ class NumberInputField extends StatelessWidget {
     this.enabled = true,
     this.onChanged,
     this.suffixIcon,
+    this.errorText,
+    this.hintText,
+    this.floatingLabelBehavior,
   });
 
   final TextEditingController controller;
@@ -19,6 +22,9 @@ class NumberInputField extends StatelessWidget {
   final bool enabled;
   final ValueChanged<int?>? onChanged;
   final Widget? suffixIcon;
+  final String? errorText;
+  final String? hintText;
+  final FloatingLabelBehavior? floatingLabelBehavior;
 
   static int? parse(String value) {
     final trimmed = value.trim();
@@ -35,7 +41,10 @@ class NumberInputField extends StatelessWidget {
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       decoration: InputDecoration(
         labelText: label,
+        hintText: hintText,
+        floatingLabelBehavior: floatingLabelBehavior,
         border: const OutlineInputBorder(),
+        errorText: errorText,
         suffixIconConstraints: const BoxConstraints(
           minWidth: 24,
           minHeight: 24,

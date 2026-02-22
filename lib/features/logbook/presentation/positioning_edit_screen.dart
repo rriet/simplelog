@@ -13,7 +13,6 @@ import 'package:simplelog/features/airports/presentation/airport_edit_screen.dar
 import 'package:simplelog/features/airports/presentation/widgets/airport_picker_dialog.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
-import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
@@ -47,6 +46,10 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
   DateTime? _arrival;
   int? _departureAirportId;
   int? _arrivalAirportId;
+  String? _departureAirportErrorText;
+  String? _arrivalAirportErrorText;
+  String? _arrivalTimeErrorText;
+  String? _totalTimeErrorText;
 
   @override
   void initState() {
@@ -140,7 +143,10 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       title: 'Select departure airport',
     );
     if (selected == null || !mounted) return;
-    setState(() => _departureAirportId = selected.id);
+    setState(() {
+      _departureAirportId = selected.id;
+      _departureAirportErrorText = null;
+    });
   }
 
   Future<void> _pickArrivalAirport() async {
@@ -149,7 +155,10 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       title: 'Select arrival airport',
     );
     if (selected == null || !mounted) return;
-    setState(() => _arrivalAirportId = selected.id);
+    setState(() {
+      _arrivalAirportId = selected.id;
+      _arrivalAirportErrorText = null;
+    });
   }
 
   Future<void> _createAirportAndSelect({required bool asDeparture}) async {
@@ -181,8 +190,10 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     setState(() {
       if (asDeparture) {
         _departureAirportId = created.id;
+        _departureAirportErrorText = null;
       } else {
         _arrivalAirportId = created.id;
+        _arrivalAirportErrorText = null;
       }
     });
   }
@@ -198,6 +209,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
         hour,
         minute,
       );
+      _arrivalTimeErrorText = null;
       _updateTimeIfAuto();
     });
   }
@@ -221,6 +233,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
         hour,
         minute,
       );
+      _arrivalTimeErrorText = null;
       _updateTimeIfAuto();
     });
   }
@@ -229,6 +242,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     setState(() {
       _arrival = null;
       _arrivalTimeController.text = '';
+      _arrivalTimeErrorText = null;
       _updateTimeIfAuto();
     });
   }
@@ -239,26 +253,46 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
   }
 
   Future<void> _save() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final formValid = _formKey.currentState?.validate() ?? false;
+    String? departureAirportErrorText;
+    String? arrivalAirportErrorText;
+    String? arrivalTimeErrorText;
+    String? totalTimeErrorText;
+
     if (_departureAirportId == null || _arrivalAirportId == null) {
-      await _showError('Select departure and arrival airports.');
-      return;
+      departureAirportErrorText = _departureAirportId == null
+          ? 'Select departure airport.'
+          : null;
+      arrivalAirportErrorText = _arrivalAirportId == null
+          ? 'Select arrival airport.'
+          : null;
     }
     final arrival = _arrival;
     if (arrival != null && !arrival.isAfter(_departure)) {
-      await _showError('Arrival time must be after departure time.');
-      return;
+      arrivalTimeErrorText = 'Arrival time must be after departure time.';
     }
     if (arrival != null &&
         arrival.difference(_departure) > const Duration(hours: 24)) {
-      await _showError(
-        'Arrival time cannot be more than 24 hours after departure.',
-      );
-      return;
+      arrivalTimeErrorText =
+          'Arrival time cannot be more than 24 hours after departure.';
     }
     final parsed = HourInputField.parseHours(_timeController.text);
     if (parsed == null || parsed <= 0) {
-      await _showError('Enter a valid positioning time.');
+      totalTimeErrorText = 'Enter a valid positioning time.';
+    }
+
+    setState(() {
+      _departureAirportErrorText = departureAirportErrorText;
+      _arrivalAirportErrorText = arrivalAirportErrorText;
+      _arrivalTimeErrorText = arrivalTimeErrorText;
+      _totalTimeErrorText = totalTimeErrorText;
+    });
+
+    if (!formValid ||
+        departureAirportErrorText != null ||
+        arrivalAirportErrorText != null ||
+        arrivalTimeErrorText != null ||
+        totalTimeErrorText != null) {
       return;
     }
 
@@ -269,7 +303,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
         arrivalAirportId: _arrivalAirportId!,
         departureDateTime: DbDateTime.wallClockToDbUtc(_departure),
         arrivalDateTime: DbDateTime.wallClockToDbUtcOrNull(arrival),
-        totalMinutes: parsed,
+        totalMinutes: parsed!,
         notes: _notesController.text.trim(),
       );
     } else {
@@ -281,23 +315,12 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
         arrivalDateTime: DbDateTime.wallClockToDbUtcOrNull(arrival),
         departureAirportId: _departureAirportId!,
         arrivalAirportId: _arrivalAirportId!,
-        totalMinutes: parsed,
+        totalMinutes: parsed!,
         notes: _notesController.text.trim(),
       );
     }
     if (!mounted) return;
     Navigator.of(context).pop(true);
-  }
-
-  Future<void> _showError(String message) async {
-    if (!mounted) return;
-    final l10n = AppLocalizations.of(context)!;
-    await showAppMessageDialog(
-      context,
-      title: l10n.validationErrorTitle,
-      message: message,
-      okLabel: l10n.okAction,
-    );
   }
 
   @override
@@ -347,6 +370,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
                     onChangedMinutes: _onArrivalTimeChanged,
                     onCleared: _clearArrivalTime,
                     allowEmpty: true,
+                    errorText: _arrivalTimeErrorText,
                     suffixIcon: IconButton(
                       tooltip: 'Clear',
                       padding: EdgeInsets.zero,
@@ -367,7 +391,13 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
               controller: _timeController,
               label: 'Total Time',
               fallbackMinutes: _calculatedMinutes(),
-              onChangedMinutes: (_) => _timeEdited = true,
+              onChangedMinutes: (_) {
+                _timeEdited = true;
+                if (_totalTimeErrorText != null) {
+                  setState(() => _totalTimeErrorText = null);
+                }
+              },
+              errorText: _totalTimeErrorText,
               suffixIcon: IconButton(
                 tooltip: 'Use calculated time',
                 padding: EdgeInsets.zero,
@@ -404,6 +434,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
               onTap: _pickDepartureAirport,
               onAdd: () => _createAirportAndSelect(asDeparture: true),
               addTooltip: 'Add airport',
+              errorText: _departureAirportErrorText,
             ),
             const SizedBox(height: 8),
             PickerWithAddInputField(
@@ -412,6 +443,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
               onTap: _pickArrivalAirport,
               onAdd: () => _createAirportAndSelect(asDeparture: false),
               addTooltip: 'Add airport',
+              errorText: _arrivalAirportErrorText,
             ),
             const SizedBox(height: 8),
             TextInputField(

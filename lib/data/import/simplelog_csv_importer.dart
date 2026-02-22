@@ -264,6 +264,7 @@ class SimpleLogCsvImporter {
             registration: registration,
             aircraftTypeId: aircraftTypeId,
             mtow: _parseInt(get(idxAircraftMtow)),
+            typeMtow: typeMtow > 0 ? typeMtow : null,
             isSimulator: _parseBool(get(idxAircraftSim)),
             cache: aircraftCache,
             options: options,
@@ -1625,11 +1626,16 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
     required String registration,
     required int? aircraftTypeId,
     required int? mtow,
+    int? typeMtow,
     required bool isSimulator,
     required Map<String, Aircraft> cache,
     required SimpleLogImportOptions options,
   }) async {
     if (registration.isEmpty || aircraftTypeId == null) return null;
+    final normalizedMtow = _normalizeAircraftMtow(
+      aircraftMtow: mtow,
+      typeMtow: typeMtow,
+    );
     final key = _normalizeKey(registration);
     final existing = cache[key];
     if (existing != null) {
@@ -1642,9 +1648,9 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
           : aircraftTypeId;
       final mergedMtow = _mergeNullableInt(
         existing.mtow,
-        mtow,
+        normalizedMtow,
         options.overrideAircraftValues,
-        (mtow ?? 0) > 0,
+        normalizedMtow != null,
       );
       final mergedSimulator = !options.overrideAircraftValues
           ? existing.isSimulator
@@ -1682,7 +1688,7 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
           AircraftsCompanion.insert(
             aircraftTypeId: aircraftTypeId,
             registration: registration,
-            mtow: Value(mtow),
+            mtow: Value(normalizedMtow),
             isSimulator: isSimulator,
             isFavorite: false,
             isLocked: false,
@@ -1692,13 +1698,21 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       id: id,
       aircraftTypeId: aircraftTypeId,
       registration: registration,
-      mtow: mtow,
+      mtow: normalizedMtow,
       isSimulator: isSimulator,
       isFavorite: false,
       isLocked: false,
       notes: null,
     );
     return _IdResult(id: id, created: true);
+  }
+
+  int? _normalizeAircraftMtow({required int? aircraftMtow, int? typeMtow}) {
+    if (aircraftMtow == null || aircraftMtow <= 0) return null;
+    if (typeMtow != null && typeMtow > 0 && aircraftMtow == typeMtow) {
+      return null;
+    }
+    return aircraftMtow;
   }
 
   Future<_IdResult?> _getOrCreateCrew({

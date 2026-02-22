@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/presentation/shared/widgets/picker_search_bar.dart';
 
 class CrewSearchBar extends StatelessWidget {
   const CrewSearchBar({
@@ -6,25 +7,21 @@ class CrewSearchBar extends StatelessWidget {
     required this.controller,
     required this.label,
     required this.onChanged,
+    this.trailing,
   });
 
   final TextEditingController controller;
   final String label;
   final ValueChanged<String> onChanged;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: const Icon(Icons.search),
-          border: const OutlineInputBorder(),
-        ),
-        onChanged: onChanged,
-      ),
+    return PickerSearchBar(
+      controller: controller,
+      label: label,
+      onChanged: onChanged,
+      trailing: trailing,
     );
   }
 }

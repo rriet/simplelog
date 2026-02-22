@@ -15,6 +15,7 @@ class HourInputField extends StatefulWidget {
     this.validator,
     this.suffixIcon,
     this.allowEmpty = false,
+    this.errorText,
   });
 
   final TextEditingController controller;
@@ -25,6 +26,7 @@ class HourInputField extends StatefulWidget {
   final String? Function(String?)? validator;
   final Widget? suffixIcon;
   final bool allowEmpty;
+  final String? errorText;
 
   static String formatHours(int minutes) {
     if (minutes <= 0) return '0:00';
@@ -137,6 +139,7 @@ class _HourInputFieldState extends State<HourInputField> {
       decoration: InputDecoration(
         labelText: widget.label,
         border: const OutlineInputBorder(),
+        errorText: widget.errorText,
         suffixIconConstraints: const BoxConstraints(
           minWidth: 24,
           minHeight: 24,

@@ -5,6 +5,7 @@ import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
 import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
+import 'package:simplelog/data/models/aircraft_type_row.dart';
 
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
@@ -79,22 +80,26 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     return int.tryParse(trimmed);
   }
 
+  int _effectiveTypeMtow(List<AircraftTypeRow> rows) {
+    final selectedId = _aircraftTypeId;
+    if (selectedId == null) return 0;
+    for (final row in rows) {
+      if (row.id == selectedId) {
+        return row.type.mtow;
+      }
+    }
+    return 0;
+  }
+
   Future<void> _save() async {
-    if (!(_formKey.currentState?.validate() ?? false)) {
+    final formValid = _formKey.currentState?.validate() ?? false;
+    final hasAircraftType = _aircraftTypeId != null;
+    setState(() => _showAircraftTypeError = !hasAircraftType);
+    if (!formValid || !hasAircraftType) {
       return;
     }
 
     final registration = _registrationController.text.trim().toUpperCase();
-    if (_aircraftTypeId == null) {
-      setState(() => _showAircraftTypeError = true);
-      if (mounted) {
-        await showAppMessageDialog(
-          context,
-          message: AppLocalizations.of(context)!.aircraftTypeRequired,
-        );
-      }
-      return;
-    }
 
     final mtow = _parseOptionalInt(_mtowController.text);
     final notes = _notesController.text.trim();
@@ -304,6 +309,16 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
             NumberInputField(
               controller: _mtowController,
               label: l10n.fieldMtow,
+              allowEmpty: true,
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              hintText: types.maybeWhen(
+                data: (rows) {
+                  if (_mtowController.text.trim().isNotEmpty) return null;
+                  return _effectiveTypeMtow(rows).toString();
+                },
+                orElse: () => _mtowController.text.trim().isNotEmpty ? null : '0',
+              ),
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 10),
             TextInputField(

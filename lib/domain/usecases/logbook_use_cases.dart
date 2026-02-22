@@ -1,4 +1,5 @@
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/models/crew_info_item.dart';
 import 'package:simplelog/data/models/flight_edit_data.dart';
 import 'package:simplelog/data/models/flight_write_input.dart';
 import 'package:simplelog/data/models/duty_edit_data.dart';
@@ -200,8 +201,12 @@ class LogbookUseCases {
 
   Future<List<String>> fetchFlightCrewLabels(int flightId) =>
       _repository.fetchFlightCrewLabels(flightId);
+  Future<List<CrewInfoItem>> fetchFlightCrewInfo(int flightId) =>
+      _repository.fetchFlightCrewInfo(flightId);
   Future<List<String>> fetchSimulatorCrewLabels(int simulatorId) =>
       _repository.fetchSimulatorCrewLabels(simulatorId);
+  Future<List<CrewInfoItem>> fetchSimulatorCrewInfo(int simulatorId) =>
+      _repository.fetchSimulatorCrewInfo(simulatorId);
   Future<List<LogbookEntry>> fetchEntriesForAirport(int airportId) =>
       _repository.fetchEntriesForAirport(airportId);
   Future<List<LogbookEntry>> fetchEntriesForAircraft(int aircraftId) =>

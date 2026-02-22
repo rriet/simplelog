@@ -1,24 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/crew/application/providers/crew_feature_providers.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_row.dart';
-import 'package:simplelog/data/models/crew_extensions.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
-import 'package:simplelog/data/models/logbook_entry.dart';
-import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
-import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
-import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 import 'crew_edit_screen.dart';
+import 'widgets/crew_info_dialog.dart';
 import 'widgets/crew_search_bar.dart';
 import 'widgets/crew_list.dart';
+import 'widgets/crew_filters_dialog.dart';
 
 class CrewScreen extends ConsumerStatefulWidget {
   const CrewScreen({super.key});
@@ -30,6 +26,7 @@ class CrewScreen extends ConsumerStatefulWidget {
 class _CrewScreenState extends ConsumerState<CrewScreen> {
   final _searchController = TextEditingController();
   String _query = '';
+  CrewSearchBy _searchBy = CrewSearchBy.all;
 
   @override
   void dispose() {
@@ -45,6 +42,15 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
   Future<void> _toggleFavorite(CrewRow row) async {
     final controller = ref.read(crewControllerProvider.notifier);
     await controller.toggleFavorite(row.crew);
+  }
+
+  Future<void> _openFilters() async {
+    final selected = await CrewFiltersDialog.show(
+      context,
+      initialSearchBy: _searchBy,
+    );
+    if (!mounted || selected == null) return;
+    setState(() => _searchBy = selected);
   }
 
   Future<void> _confirmDelete(CrewRow row) async {
@@ -92,191 +98,10 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
   }
 
   Future<void> _showCrewDetails(CrewRow row) async {
-    final l10n = AppLocalizations.of(context)!;
-    final logbookUseCases = ref.read(logbookUseCasesProvider);
-    final phone = (row.crew.phone ?? '').trim();
-    final email = (row.crew.email ?? '').trim();
-    final entriesFuture = logbookUseCases.fetchEntriesForCrew(row.crew.id);
-
-    await showDialog<void>(
-      context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 420,
-          height: MediaQuery.of(context).size.height * 0.75,
-          child: Column(
-            children: [
-              ListTile(
-                title: const Text('Crew'),
-                trailing: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Done'),
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      _CrewDetailHeader(
-                        row: row,
-                        onPhotoTap: () => _showLargePhoto(row),
-                      ),
-                      const SizedBox(height: 12),
-                      if (phone.isNotEmpty)
-                        InkWell(
-                          onTap: () =>
-                              _showContactMenu(phone: phone, email: ''),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.phone, size: 18),
-                              const SizedBox(width: 8),
-                              Text('${l10n.fieldPhone}: $phone'),
-                            ],
-                          ),
-                        ),
-                      if (phone.isNotEmpty) const SizedBox(height: 6),
-                      if (email.isNotEmpty)
-                        InkWell(
-                          onTap: () =>
-                              _showContactMenu(phone: '', email: email),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.email, size: 18),
-                              const SizedBox(width: 8),
-                              Text('${l10n.fieldEmail}: $email'),
-                            ],
-                          ),
-                        ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          l10n.screenLogbook,
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: FutureBuilder<List<LogbookEntry>>(
-                          future: entriesFuture,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            }
-                            final entries = snapshot.data ?? [];
-                            if (entries.isEmpty) {
-                              return Center(child: Text(l10n.emptyResults));
-                            }
-                            return Column(
-                              children: [
-                                LogbookSummaryPanel(entries: entries),
-                                const SizedBox(height: 8),
-                                Expanded(
-                                  child: LogbookEntriesYearList(
-                                    entries: entries,
-                                    onEntryTap: (entry) =>
-                                        LogbookEntryDialogs.show(
-                                          context,
-                                          entry: entry,
-                                          useCases: logbookUseCases,
-                                        ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showContactMenu({
-    required String phone,
-    required String email,
-  }) async {
-    final l10n = AppLocalizations.of(context)!;
-    if (phone.isEmpty && email.isEmpty) return;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (phone.isNotEmpty) ...[
-                ListTile(
-                  leading: const Icon(Icons.phone),
-                  title: Text(l10n.callNumber),
-                  subtitle: Text(phone),
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    final uri = Uri(scheme: 'tel', path: phone);
-                    await launchUrl(uri);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.message),
-                  title: Text(l10n.textNumber),
-                  subtitle: Text(phone),
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    final uri = Uri(scheme: 'sms', path: phone);
-                    await launchUrl(uri);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.copy),
-                  title: Text(l10n.copyNumber),
-                  subtitle: Text(phone),
-                  onTap: () async {
-                    await Clipboard.setData(ClipboardData(text: phone));
-                    if (context.mounted) {
-                      Navigator.of(context).pop();
-                    }
-                  },
-                ),
-              ],
-              if (email.isNotEmpty) ...[
-                ListTile(
-                  leading: const Icon(Icons.email),
-                  title: Text(l10n.sendEmail),
-                  subtitle: Text(email),
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    final uri = Uri(scheme: 'mailto', path: email);
-                    await launchUrl(uri);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.copy),
-                  title: Text(l10n.copyEmail),
-                  subtitle: Text(email),
-                  onTap: () async {
-                    await Clipboard.setData(ClipboardData(text: email));
-                    if (context.mounted) {
-                      Navigator.of(context).pop();
-                    }
-                  },
-                ),
-              ],
-            ],
-          ),
-        );
-      },
+    await CrewInfoDialog.show(
+      context,
+      row: row,
+      useCases: ref.read(logbookUseCasesProvider),
     );
   }
 
@@ -364,7 +189,7 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final crew = ref.watch(crewProvider(_query));
+    final crew = ref.watch(crewProvider(''));
     final isCompact = MediaQuery.of(context).size.width < 600;
 
     return Column(
@@ -373,12 +198,17 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
           controller: _searchController,
           label: l10n.searchCrew,
           onChanged: (value) => setState(() => _query = value),
+          trailing: IconButton(
+            tooltip: 'Filters',
+            onPressed: _openFilters,
+            icon: const Icon(Icons.filter_list),
+          ),
         ),
         const SizedBox(height: 12),
         Expanded(
           child: crew.when(
             data: (items) => CrewList(
-              items: items,
+              items: _applySearchFilter(items, _query, _searchBy),
               isCompact: isCompact,
               onToggleFavorite: _toggleFavorite,
               onToggleLock: _toggleLock,
@@ -407,39 +237,38 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
       ],
     );
   }
-}
 
-class _CrewDetailHeader extends StatelessWidget {
-  const _CrewDetailHeader({required this.row, required this.onPhotoTap});
+  List<CrewRow> _applySearchFilter(
+    List<CrewRow> source,
+    String query,
+    CrewSearchBy searchBy,
+  ) {
+    final normalized = normalizeCrewSearch(query);
+    if (normalized.isEmpty) return source;
 
-  final CrewRow row;
-  final VoidCallback onPhotoTap;
+    bool matches(CrewRow row) {
+      final name = normalizeCrewSearch(row.crew.name);
+      final email = normalizeCrewSearch(row.crew.email ?? '');
+      final phone = normalizeCrewSearch(row.crew.phone ?? '');
+      final notes = normalizeCrewSearch(row.crew.notes ?? '');
 
-  @override
-  Widget build(BuildContext context) {
-    final bytes = row.crew.picture;
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: onPhotoTap,
-          child: CircleAvatar(
-            radius: 40,
-            backgroundImage: bytes == null ? null : MemoryImage(bytes),
-            child: bytes == null
-                ? Text(
-                    row.crew.initials,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  )
-                : null,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          row.crew.name,
-          style: Theme.of(context).textTheme.titleLarge,
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
+      switch (searchBy) {
+        case CrewSearchBy.name:
+          return name.contains(normalized);
+        case CrewSearchBy.email:
+          return email.contains(normalized);
+        case CrewSearchBy.phone:
+          return phone.contains(normalized);
+        case CrewSearchBy.notes:
+          return notes.contains(normalized);
+        case CrewSearchBy.all:
+          return name.contains(normalized) ||
+              email.contains(normalized) ||
+              phone.contains(normalized) ||
+              notes.contains(normalized);
+      }
+    }
+
+    return source.where(matches).toList(growable: false);
   }
 }

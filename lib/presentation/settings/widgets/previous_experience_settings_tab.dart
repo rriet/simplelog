@@ -161,6 +161,7 @@ class _PreviousExperienceEditDialogState
   late int? _aircraftTypeId;
   DateTime? _firstFlight;
   DateTime? _lastFlight;
+  bool _showRequiredErrors = false;
 
   final _timeControllers = <String, TextEditingController>{};
   final _intControllers = <String, TextEditingController>{};
@@ -246,8 +247,10 @@ class _PreviousExperienceEditDialogState
     setState(() {
       if (first) {
         _firstFlight = value;
+        _showRequiredErrors = false;
       } else {
         _lastFlight = value;
+        _showRequiredErrors = false;
       }
     });
   }
@@ -258,19 +261,35 @@ class _PreviousExperienceEditDialogState
   int _intValue(String key) => int.tryParse(_intControllers[key]!.text) ?? 0;
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    setState(() => _showRequiredErrors = true);
+    final formValid = _formKey.currentState!.validate();
+    if (!formValid) return;
     if (_aircraftTypeId == null) return;
     if (_firstFlight == null || _lastFlight == null) {
-      await showAppMessageDialog(
-        context,
-        message: 'First Flight and Last Flight are required.',
-      );
       return;
     }
 
     final warnings = <String>[];
+    final nowUtc = DateTime.now().toUtc();
+    if (_firstFlight!.isAfter(nowUtc) || _lastFlight!.isAfter(nowUtc)) {
+      warnings.add('First/Last Flight contains a future date/time.');
+    }
     if (!_firstFlight!.isBefore(_lastFlight!)) {
       warnings.add('First flight should be earlier than last flight.');
+    }
+
+    final repo = ref.read(previousExperienceRepositoryProvider);
+    final existing = await repo.fetchAll();
+    final currentId = widget.initial?.id;
+    final hasDuplicateType = existing.any(
+      (row) =>
+          row.aircraftTypeId == _aircraftTypeId &&
+          (currentId == null || row.id != currentId),
+    );
+    if (hasDuplicateType) {
+      warnings.add(
+        'This aircraft type already has a Previous Experience entry.',
+      );
     }
 
     final blockMinutes = _minutes('block');
@@ -345,7 +364,6 @@ class _PreviousExperienceEditDialogState
       landingsNight: Value(_intValue('landingNight')),
     );
 
-    final repo = ref.read(previousExperienceRepositoryProvider);
     if (widget.initial == null) {
       await repo.create(companion);
     } else {
@@ -442,8 +460,11 @@ class _PreviousExperienceEditDialogState
                             )
                             .toList(growable: false),
                         onChanged: (value) =>
-                            setState(() => _aircraftTypeId = value),
-                        errorText: _aircraftTypeId == null
+                            setState(() {
+                              _aircraftTypeId = value;
+                              _showRequiredErrors = false;
+                            }),
+                        errorText: _showRequiredErrors && _aircraftTypeId == null
                             ? 'Select aircraft type.'
                             : null,
                       ),
@@ -455,8 +476,14 @@ class _PreviousExperienceEditDialogState
                               label: 'First Flight',
                               value: _firstFlight,
                               onPick: () => _pickDateTime(first: true),
-                              onClear: () =>
-                                  setState(() => _firstFlight = null),
+                              onClear: () => setState(() {
+                                _firstFlight = null;
+                                _showRequiredErrors = true;
+                              }),
+                              errorText:
+                                  _showRequiredErrors && _firstFlight == null
+                                  ? 'First Flight is required.'
+                                  : null,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -465,7 +492,14 @@ class _PreviousExperienceEditDialogState
                               label: 'Last Flight',
                               value: _lastFlight,
                               onPick: () => _pickDateTime(first: false),
-                              onClear: () => setState(() => _lastFlight = null),
+                              onClear: () => setState(() {
+                                _lastFlight = null;
+                                _showRequiredErrors = true;
+                              }),
+                              errorText:
+                                  _showRequiredErrors && _lastFlight == null
+                                  ? 'Last Flight is required.'
+                                  : null,
                             ),
                           ),
                         ],
@@ -494,12 +528,14 @@ class _DateField extends StatelessWidget {
     required this.value,
     required this.onPick,
     required this.onClear,
+    this.errorText,
   });
 
   final String label;
   final DateTime? value;
   final VoidCallback onPick;
   final VoidCallback onClear;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -514,6 +550,7 @@ class _DateField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
+          errorText: errorText,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 10,

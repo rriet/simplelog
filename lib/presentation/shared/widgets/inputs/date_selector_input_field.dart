@@ -7,11 +7,13 @@ class DateSelectorInputField extends StatelessWidget {
     required this.label,
     required this.valueText,
     required this.onTap,
+    this.errorText,
   });
 
   final String label;
   final String valueText;
   final VoidCallback onTap;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +24,7 @@ class DateSelectorInputField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
+          errorText: errorText,
         ),
         child: Row(
           children: [

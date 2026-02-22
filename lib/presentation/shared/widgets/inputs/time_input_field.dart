@@ -14,6 +14,7 @@ class TimeInputField extends StatefulWidget {
     this.forceTextField = false,
     this.allowEmpty = false,
     this.maxHours,
+    this.errorText,
   });
 
   final TextEditingController controller;
@@ -26,6 +27,7 @@ class TimeInputField extends StatefulWidget {
   final bool forceTextField;
   final bool allowEmpty;
   final int? maxHours;
+  final String? errorText;
 
   @override
   State<TimeInputField> createState() => _TimeInputFieldState();
@@ -143,6 +145,7 @@ class _TimeInputFieldState extends State<TimeInputField> {
       decoration: InputDecoration(
         labelText: widget.label,
         border: const OutlineInputBorder(),
+        errorText: widget.errorText,
         suffixIconConstraints: const BoxConstraints(
           minWidth: 24,
           minHeight: 24,

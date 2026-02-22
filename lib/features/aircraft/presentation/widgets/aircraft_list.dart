@@ -34,21 +34,89 @@ class AircraftList extends StatelessWidget {
       );
     }
 
-    return ListView.separated(
-      itemCount: items.length,
-      separatorBuilder: (context, index) => const Divider(height: 1),
+    final sectionEntries = _buildSectionEntries(items);
+
+    return ListView.builder(
+      itemCount: sectionEntries.length,
       itemBuilder: (context, index) {
-        final row = items[index];
-        return AircraftListItem(
-          row: row,
-          isMobile: isCompact,
-          onToggleFavorite: () => onToggleFavorite(row),
-          onToggleLock: () => onToggleLock(row),
-          onEdit: () => onEdit(row),
-          onDelete: () => onDelete(row),
-          onOpenDetails: () => onOpenDetails(row),
+        final entry = sectionEntries[index];
+        if (entry.header != null) {
+          return _SectionHeader(title: entry.header!);
+        }
+        final row = entry.row!;
+        return Column(
+          children: [
+            AircraftListItem(
+              row: row,
+              isMobile: isCompact,
+              onToggleFavorite: () => onToggleFavorite(row),
+              onToggleLock: () => onToggleLock(row),
+              onEdit: () => onEdit(row),
+              onDelete: () => onDelete(row),
+              onOpenDetails: () => onOpenDetails(row),
+            ),
+            const Divider(height: 1),
+          ],
         );
       },
+    );
+  }
+
+  List<_SectionEntry> _buildSectionEntries(List<AircraftRow> source) {
+    final result = <_SectionEntry>[];
+    final favorites = source.where((row) => row.isFavorite).toList()
+      ..sort((a, b) => a.registration.compareTo(b.registration));
+    if (favorites.isNotEmpty) {
+      result.add(const _SectionEntry.header('Favorites'));
+      result.addAll(favorites.map(_SectionEntry.row));
+    }
+
+    final groups = <String, List<AircraftRow>>{};
+    for (final row in source) {
+      final key = _typeLabel(row);
+      groups.putIfAbsent(key, () => <AircraftRow>[]).add(row);
+    }
+    final keys = groups.keys.toList()..sort();
+    for (final key in keys) {
+      final rows = groups[key]!..sort((a, b) => a.registration.compareTo(b.registration));
+      result.add(_SectionEntry.header(key));
+      result.addAll(rows.map(_SectionEntry.row));
+    }
+    return result;
+  }
+
+  String _typeLabel(AircraftRow row) {
+    final code = row.type?.code.trim() ?? '';
+    if (code.isNotEmpty) return code;
+    final longName = row.type?.longName.trim() ?? '';
+    if (longName.isNotEmpty) return longName;
+    return 'Unknown Type';
+  }
+}
+
+class _SectionEntry {
+  const _SectionEntry.header(this.header) : row = null;
+  const _SectionEntry.row(this.row) : header = null;
+
+  final String? header;
+  final AircraftRow? row;
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.labelLarge,
+      ),
     );
   }
 }

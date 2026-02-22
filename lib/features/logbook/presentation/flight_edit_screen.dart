@@ -1520,12 +1520,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           onTap: _pickAircraft,
           onAdd: _createAircraftAndSelect,
           addTooltip: 'Add aircraft',
+          errorText: _showFirstPageRequiredErrors && _aircraftId == null
+              ? 'Aircraft is required.'
+              : null,
         ),
-        if (_showFirstPageRequiredErrors && _aircraftId == null)
-          Padding(
-            padding: const EdgeInsets.only(top: 4, left: 4),
-            child: _inlineErrorText('Aircraft is required.'),
-          ),
         const SizedBox(height: 8),
         PickerWithAddInputField(
           label: 'From Airport',
@@ -1533,12 +1531,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           onTap: () => _pickAirport(isFrom: true),
           onAdd: () => _createAirport(isFrom: true),
           addTooltip: 'Add airport',
+          errorText: _showFirstPageRequiredErrors && _fromAirportId == null
+              ? 'From Airport is required.'
+              : null,
         ),
-        if (_showFirstPageRequiredErrors && _fromAirportId == null)
-          Padding(
-            padding: const EdgeInsets.only(top: 4, left: 4),
-            child: _inlineErrorText('From Airport is required.'),
-          ),
         const SizedBox(height: 8),
         PickerWithAddInputField(
           label: 'To Airport',
@@ -1546,23 +1542,11 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           onTap: () => _pickAirport(isFrom: false),
           onAdd: () => _createAirport(isFrom: false),
           addTooltip: 'Add airport',
+          errorText: _showFirstPageRequiredErrors && _toAirportId == null
+              ? 'To Airport is required.'
+              : null,
         ),
-        if (_showFirstPageRequiredErrors && _toAirportId == null)
-          Padding(
-            padding: const EdgeInsets.only(top: 4, left: 4),
-            child: _inlineErrorText('To Airport is required.'),
-          ),
       ],
-    );
-  }
-
-  Widget _inlineErrorText(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        color: Theme.of(context).colorScheme.error,
-        fontSize: 12,
-      ),
     );
   }
 

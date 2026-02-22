@@ -14,6 +14,7 @@ class TextInputField extends StatelessWidget {
     this.onChanged,
     this.keyboardType,
     this.inputFormatters,
+    this.errorText,
   });
 
   final TextEditingController controller;
@@ -25,6 +26,7 @@ class TextInputField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +39,7 @@ class TextInputField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
+        errorText: errorText,
         suffixIconConstraints: const BoxConstraints(
           minWidth: 24,
           minHeight: 24,

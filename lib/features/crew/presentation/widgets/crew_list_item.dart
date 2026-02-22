@@ -31,7 +31,7 @@ class CrewListItem extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final item = row.crew;
     final initials = item.initials;
-    final phone = (item.phone ?? '').trim();
+    final phone = item.formattedPhone;
     final email = (item.email ?? '').trim();
     final showPhone = phone.isNotEmpty;
     final showEmail = email.isNotEmpty;

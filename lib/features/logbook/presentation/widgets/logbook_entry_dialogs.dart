@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/models/crew_info_item.dart';
+import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
+import 'package:simplelog/features/crew/presentation/widgets/crew_info_dialog.dart';
 
 class LogbookEntryDialogs {
   const LogbookEntryDialogs._();
@@ -20,7 +24,7 @@ class LogbookEntryDialogs {
         await _showSimulatorInfo(context, entry, useCases);
         return;
       case LogbookEventType.positioning:
-        await _showPositioningInfo(context, entry);
+        await _showPositioningInfo(context, entry, useCases);
         return;
       case LogbookEventType.dutyPeriod:
       case LogbookEventType.unknown:
@@ -76,6 +80,7 @@ class LogbookEntryDialogs {
   static Future<void> _showPositioningInfo(
     BuildContext context,
     LogbookEntry entry,
+    LogbookUseCases useCases,
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).toString();
@@ -227,7 +232,7 @@ class LogbookEntryDialogs {
     final locale = Localizations.localeOf(context).toString();
     final flight = entry.flight!;
 
-    final crewList = await useCases.fetchFlightCrewLabels(flight.id);
+    final crewList = await useCases.fetchFlightCrewInfo(flight.id);
 
     final date = entry.timeLine.eventDateTime;
     final dateLabel = DateFormat('dd/MMM yyyy', locale).format(date);
@@ -427,6 +432,7 @@ class LogbookEntryDialogs {
                       child: _CrewInfoList(
                         title: 'Crew',
                         crewList: crewList,
+                        onTap: (crew) => _showCrewInfo(context, crew, useCases),
                         titleStyle: theme.textTheme.labelLarge?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -469,7 +475,7 @@ class LogbookEntryDialogs {
     final locale = Localizations.localeOf(context).toString();
     final sim = entry.simulatorTraining!;
 
-    final crewList = await useCases.fetchSimulatorCrewLabels(sim.id);
+    final crewList = await useCases.fetchSimulatorCrewInfo(sim.id);
 
     final date = entry.timeLine.eventDateTime;
     final dateLabel = DateFormat('dd/MMM yyyy', locale).format(date);
@@ -569,6 +575,7 @@ class LogbookEntryDialogs {
                       child: _CrewInfoList(
                         title: 'Crew',
                         crewList: crewList,
+                        onTap: (crew) => _showCrewInfo(context, crew, useCases),
                         titleStyle: theme.textTheme.labelLarge?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -599,6 +606,31 @@ class LogbookEntryDialogs {
           ),
         );
       },
+    );
+  }
+
+  static Future<void> _showCrewInfo(
+    BuildContext context,
+    CrewInfoItem crew,
+    LogbookUseCases useCases,
+  ) async {
+    if (crew.crewId <= 0) return;
+    await CrewInfoDialog.show(
+      context,
+      row: CrewRow(
+        CrewData(
+          id: crew.crewId,
+          name: crew.name,
+          email: crew.email,
+          notes: crew.notes,
+          phone: crew.phone,
+          picture: crew.picture,
+          isSelf: false,
+          isFavorite: false,
+          isLocked: false,
+        ),
+      ),
+      useCases: useCases,
     );
   }
 }
@@ -688,11 +720,13 @@ class _CrewInfoList extends StatefulWidget {
   const _CrewInfoList({
     required this.title,
     required this.crewList,
+    required this.onTap,
     required this.titleStyle,
   });
 
   final String title;
-  final List<String> crewList;
+  final List<CrewInfoItem> crewList;
+  final ValueChanged<CrewInfoItem> onTap;
   final TextStyle? titleStyle;
 
   @override
@@ -726,7 +760,15 @@ class _CrewInfoListState extends State<_CrewInfoList> {
               itemCount: widget.crewList.length,
               itemBuilder: (context, index) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Text(widget.crewList[index]),
+                child: InkWell(
+                  onTap: () => widget.onTap(widget.crewList[index]),
+                  child: Text(
+                    '${widget.crewList[index].positionLabel}: ${widget.crewList[index].name}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -735,6 +777,7 @@ class _CrewInfoListState extends State<_CrewInfoList> {
     );
   }
 }
+
 
 String _formatMinutes(int minutes) {
   if (minutes <= 0) return '0:00';

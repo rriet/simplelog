@@ -7,11 +7,13 @@ class AircraftSearchBar extends StatelessWidget {
     required this.controller,
     required this.label,
     required this.onChanged,
+    this.trailing,
   });
 
   final TextEditingController controller;
   final String label;
   final ValueChanged<String> onChanged;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +21,7 @@ class AircraftSearchBar extends StatelessWidget {
       controller: controller,
       label: label,
       onChanged: onChanged,
+      trailing: trailing,
     );
   }
 }

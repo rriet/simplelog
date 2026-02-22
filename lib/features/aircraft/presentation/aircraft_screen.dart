@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
 
@@ -17,6 +18,7 @@ import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart
 import 'aircraft_edit_screen.dart';
 import 'widgets/aircraft_search_bar.dart';
 import 'widgets/aircraft_list.dart';
+import 'widgets/aircraft_filters_dialog.dart';
 
 class AircraftScreen extends ConsumerStatefulWidget {
   const AircraftScreen({super.key});
@@ -29,6 +31,7 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
   final _searchController = TextEditingController();
   String _query = '';
   bool _fabOpen = false;
+  AircraftSearchBy _searchBy = AircraftSearchBy.all;
 
   @override
   void dispose() {
@@ -44,6 +47,15 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
   Future<void> _toggleFavorite(AircraftRow row) async {
     final controller = ref.read(aircraftControllerProvider.notifier);
     await controller.toggleFavorite(row.aircraft);
+  }
+
+  Future<void> _openFilters() async {
+    final selected = await AircraftFiltersDialog.show(
+      context,
+      initialSearchBy: _searchBy,
+    );
+    if (!mounted || selected == null) return;
+    setState(() => _searchBy = selected);
   }
 
   Future<void> _confirmDelete(AircraftRow row) async {
@@ -291,7 +303,7 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final aircraft = ref.watch(aircraftProvider(_query));
+    final aircraft = ref.watch(aircraftProvider(''));
     final isCompact = MediaQuery.of(context).size.width < 600;
 
     return Stack(
@@ -302,12 +314,17 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
               controller: _searchController,
               label: l10n.searchAircraft,
               onChanged: (value) => setState(() => _query = value),
+              trailing: IconButton(
+                tooltip: 'Filters',
+                onPressed: _openFilters,
+                icon: const Icon(Icons.filter_list),
+              ),
             ),
             const SizedBox(height: 12),
             Expanded(
               child: aircraft.when(
                 data: (items) => AircraftList(
-                  items: items,
+                  items: _applySearchFilter(items, _query, _searchBy),
                   isCompact: isCompact,
                   onToggleFavorite: _toggleFavorite,
                   onToggleLock: _toggleLock,
@@ -351,6 +368,42 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
         ),
       ],
     );
+  }
+
+  List<AircraftRow> _applySearchFilter(
+    List<AircraftRow> source,
+    String query,
+    AircraftSearchBy searchBy,
+  ) {
+    final normalized = normalizeLooseSearch(query);
+    if (normalized.isEmpty) return source;
+
+    bool matches(AircraftRow row) {
+      final registration = normalizeLooseSearch(row.registration);
+      final typeCode = normalizeLooseSearch(row.type?.code ?? '');
+      final typeName = normalizeLooseSearch(row.type?.longName ?? '');
+      final family = normalizeLooseSearch(row.type?.family ?? '');
+      final notes = normalizeLooseSearch(row.aircraft.notes ?? '');
+
+      switch (searchBy) {
+        case AircraftSearchBy.registration:
+          return registration.contains(normalized);
+        case AircraftSearchBy.type:
+          return typeCode.contains(normalized) || typeName.contains(normalized);
+        case AircraftSearchBy.family:
+          return family.contains(normalized);
+        case AircraftSearchBy.notes:
+          return notes.contains(normalized);
+        case AircraftSearchBy.all:
+          return registration.contains(normalized) ||
+              typeCode.contains(normalized) ||
+              typeName.contains(normalized) ||
+              family.contains(normalized) ||
+              notes.contains(normalized);
+      }
+    }
+
+    return source.where(matches).toList(growable: false);
   }
 }
 

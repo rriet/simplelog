@@ -18,7 +18,6 @@ import 'package:simplelog/features/logbook/application/providers/logbook_feature
 import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
-import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
@@ -56,6 +55,10 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   int? _aircraftId;
   final List<CrewDraftSelection> _crewRows = [];
   final Map<int, String> _crewLabelCache = {};
+  String? _simulatorErrorText;
+  String? _startEndErrorText;
+  String? _sessionTimeErrorText;
+  String? _crewErrorText;
 
   @override
   void initState() {
@@ -159,7 +162,10 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       onlySimulators: true,
     );
     if (selected == null || !mounted) return;
-    setState(() => _aircraftId = selected.aircraft.id);
+    setState(() {
+      _aircraftId = selected.aircraft.id;
+      _simulatorErrorText = null;
+    });
   }
 
   Future<void> _createSimulatorAndSelect() async {
@@ -190,7 +196,10 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
               ..limit(1))
             .getSingleOrNull();
     if (!mounted || created == null) return;
-    setState(() => _aircraftId = created.id);
+    setState(() {
+      _aircraftId = created.id;
+      _simulatorErrorText = null;
+    });
   }
 
   Future<int?> _createCrewAndReturnId() async {
@@ -228,6 +237,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     final minute = minutes % 60;
     setState(() {
       _start = DateTime(_start.year, _start.month, _start.day, hour, minute);
+      _startEndErrorText = null;
       _updateTimeIfAuto();
     });
   }
@@ -241,6 +251,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     final endDate = startDate.add(Duration(days: isNextDay ? 1 : 0));
     setState(() {
       _end = DateTime(endDate.year, endDate.month, endDate.day, hour, minute);
+      _startEndErrorText = null;
       _updateTimeIfAuto();
     });
   }
@@ -249,6 +260,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     setState(() {
       _end = null;
       _endTimeController.text = '';
+      _startEndErrorText = null;
       _updateTimeIfAuto();
     });
   }
@@ -259,29 +271,42 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   }
 
   Future<void> _save() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final formValid = _formKey.currentState?.validate() ?? false;
+    String? simulatorErrorText;
+    String? startEndErrorText;
+    String? sessionTimeErrorText;
+    String? crewErrorText;
+
     if (_aircraftId == null) {
-      await _showError('Select a simulator.');
-      return;
+      simulatorErrorText = 'Select a simulator.';
     }
     final end = _end;
     if (end != null && !end.isAfter(_start)) {
-      await _showError('End time must be after start time.');
-      return;
+      startEndErrorText = 'End time must be after start time.';
     }
     if (end != null && end.difference(_start) > const Duration(hours: 24)) {
-      await _showError('End time cannot be more than 24 hours after start.');
-      return;
+      startEndErrorText = 'End time cannot be more than 24 hours after start.';
     }
     final parsed = HourInputField.parseHours(_timeController.text);
     if (parsed == null || parsed <= 0) {
-      await _showError('Enter a valid simulator session time.');
-      return;
+      sessionTimeErrorText = 'Enter a valid simulator session time.';
     }
     if (!_validateCrewRows()) {
-      await _showError(
-        'Crew rows must have crew and position, without duplicates.',
-      );
+      crewErrorText = 'Crew rows must have crew and position, without duplicates.';
+    }
+
+    setState(() {
+      _simulatorErrorText = simulatorErrorText;
+      _startEndErrorText = startEndErrorText;
+      _sessionTimeErrorText = sessionTimeErrorText;
+      _crewErrorText = crewErrorText;
+    });
+
+    if (!formValid ||
+        simulatorErrorText != null ||
+        startEndErrorText != null ||
+        sessionTimeErrorText != null ||
+        crewErrorText != null) {
       return;
     }
     final crewAssignments = _crewRows
@@ -299,7 +324,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
         aircraftId: _aircraftId!,
         startDateTime: DbDateTime.wallClockToDbUtc(_start),
         endDateTime: DbDateTime.wallClockToDbUtcOrNull(end),
-        totalMinutes: parsed,
+        totalMinutes: parsed!,
         remarks: _remarksController.text.trim(),
         notes: _notesController.text.trim(),
         crewAssignments: crewAssignments,
@@ -312,7 +337,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
         aircraftId: _aircraftId!,
         startDateTime: DbDateTime.wallClockToDbUtc(_start),
         endDateTime: DbDateTime.wallClockToDbUtcOrNull(end),
-        totalMinutes: parsed,
+        totalMinutes: parsed!,
         remarks: _remarksController.text.trim(),
         notes: _notesController.text.trim(),
         crewAssignments: crewAssignments,
@@ -320,17 +345,6 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     }
     if (!mounted) return;
     Navigator.of(context).pop(true);
-  }
-
-  Future<void> _showError(String message) async {
-    if (!mounted) return;
-    final l10n = AppLocalizations.of(context)!;
-    await showAppMessageDialog(
-      context,
-      title: l10n.validationErrorTitle,
-      message: message,
-      okLabel: l10n.okAction,
-    );
   }
 
   @override
@@ -374,6 +388,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                     onChangedMinutes: _onEndTimeChanged,
                     onCleared: _clearEndTime,
                     allowEmpty: true,
+                    errorText: _startEndErrorText,
                     suffixIcon: IconButton(
                       tooltip: 'Clear',
                       padding: EdgeInsets.zero,
@@ -394,7 +409,13 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
               controller: _timeController,
               label: 'Session Time',
               fallbackMinutes: _calculatedMinutes(),
-              onChangedMinutes: (_) => _timeEdited = true,
+              onChangedMinutes: (_) {
+                _timeEdited = true;
+                if (_sessionTimeErrorText != null) {
+                  setState(() => _sessionTimeErrorText = null);
+                }
+              },
+              errorText: _sessionTimeErrorText,
               suffixIcon: IconButton(
                 tooltip: 'Use calculated time',
                 padding: EdgeInsets.zero,
@@ -431,6 +452,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
               onTap: _pickSimulator,
               onAdd: _createSimulatorAndSelect,
               addTooltip: 'Add simulator',
+              errorText: _simulatorErrorText,
             ),
             const SizedBox(height: 8),
             _buildCrewList(crewAsync),
@@ -514,7 +536,10 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                   (row) => row.crewId == draft.crewId,
                 );
                 if (duplicate) return;
-                setState(() => _crewRows.add(draft));
+                setState(() {
+                  _crewRows.add(draft);
+                  _crewErrorText = null;
+                });
               },
               icon: const Icon(Icons.add),
               label: const Text('Add Crew'),
@@ -565,8 +590,10 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                               IconButton(
                                 tooltip: 'Remove',
                                 visualDensity: VisualDensity.compact,
-                                onPressed: () =>
-                                    setState(() => _crewRows.removeAt(index)),
+                                onPressed: () => setState(() {
+                                  _crewRows.removeAt(index);
+                                  _crewErrorText = null;
+                                }),
                                 icon: const Icon(Icons.remove_circle_outline),
                               ),
                             ],
@@ -577,6 +604,19 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                   ),
           ),
         ),
+        if (_crewErrorText != null) ...[
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              _crewErrorText!,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

@@ -6,6 +6,7 @@ import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 import '../models/duty_edit_data.dart';
+import '../models/crew_info_item.dart';
 import '../models/flight_edit_data.dart';
 import '../models/flight_write_input.dart';
 import '../models/logbook_entry.dart';
@@ -507,6 +508,28 @@ class LogbookRepository implements LogbookRepositoryContract {
     }).toList();
   }
 
+  Future<List<CrewInfoItem>> fetchFlightCrewInfo(int flightId) async {
+    final rows = await (_db.select(_db.flightCrewAssignments).join([
+      innerJoin(
+        _db.crew,
+        _db.crew.id.equalsExp(_db.flightCrewAssignments.crewId),
+      ),
+    ])..where(_db.flightCrewAssignments.flightId.equals(flightId))).get();
+    return rows.map((row) {
+      final crew = row.readTable(_db.crew);
+      final assignment = row.readTable(_db.flightCrewAssignments);
+      return CrewInfoItem(
+        crewId: crew.id,
+        name: crew.name,
+        position: assignment.position,
+        phone: crew.phone,
+        email: crew.email,
+        notes: crew.notes,
+        picture: crew.picture,
+      );
+    }).toList();
+  }
+
   Future<List<String>> fetchSimulatorCrewLabels(int simulatorId) async {
     final rows =
         await (_db.select(_db.simulatorCrewAssignments).join([
@@ -522,6 +545,29 @@ class LogbookRepository implements LogbookRepositoryContract {
       final crew = row.readTable(_db.crew);
       final assignment = row.readTable(_db.simulatorCrewAssignments);
       return '${assignment.position.name.toUpperCase()}: ${crew.name}';
+    }).toList();
+  }
+
+  Future<List<CrewInfoItem>> fetchSimulatorCrewInfo(int simulatorId) async {
+    final rows =
+        await (_db.select(_db.simulatorCrewAssignments).join([
+          innerJoin(
+            _db.crew,
+            _db.crew.id.equalsExp(_db.simulatorCrewAssignments.crewId),
+          ),
+        ])..where(_db.simulatorCrewAssignments.simulatorId.equals(simulatorId))).get();
+    return rows.map((row) {
+      final crew = row.readTable(_db.crew);
+      final assignment = row.readTable(_db.simulatorCrewAssignments);
+      return CrewInfoItem(
+        crewId: crew.id,
+        name: crew.name,
+        position: assignment.position,
+        phone: crew.phone,
+        email: crew.email,
+        notes: crew.notes,
+        picture: crew.picture,
+      );
     }).toList();
   }
 

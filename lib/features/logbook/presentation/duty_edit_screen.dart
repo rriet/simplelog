@@ -5,7 +5,6 @@ import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/data/database/app_database.dart';
-import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
@@ -42,6 +41,8 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
   DutyPeriod? _duty;
   int? _startTimelineId;
   int? _endTimelineId;
+  String? _dutyEndErrorText;
+  String? _factoredDutyErrorText;
 
   @override
   void initState() {
@@ -160,6 +161,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
       if (!_end.isAfter(_start)) {
         _end = _end.add(const Duration(days: 1));
       }
+      _dutyEndErrorText = null;
       _updateFactoredIfNeeded();
     });
   }
@@ -173,6 +175,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     final endDate = startDate.add(Duration(days: isNextDay ? 1 : 0));
     setState(() {
       _end = DateTime(endDate.year, endDate.month, endDate.day, hour, minute);
+      _dutyEndErrorText = null;
       _updateFactoredIfNeeded();
     });
   }
@@ -189,29 +192,28 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     return DateFormat('dd/MMM yyyy', locale).format(value);
   }
 
-  Future<void> _showError(String message) async {
-    if (!mounted) return;
-    final l10n = AppLocalizations.of(context)!;
-    await showAppMessageDialog(
-      context,
-      title: l10n.validationErrorTitle,
-      message: message,
-      okLabel: l10n.okAction,
-    );
-  }
-
   Future<void> _save() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final formValid = _formKey.currentState?.validate() ?? false;
+    String? dutyEndErrorText;
+    String? factoredDutyErrorText;
+
     if (!_end.isAfter(_start)) {
-      await _showError('Duty end time is before duty start.');
-      return;
+      dutyEndErrorText = 'Duty end time is before duty start.';
     }
 
     final dutyMinutes = _dutyMinutes;
     final factoredMinutes =
         HourInputField.parseHours(_factoredController.text) ?? dutyMinutes;
     if (factoredMinutes > dutyMinutes) {
-      await _showError('Factored duty time is greater than total duty time.');
+      factoredDutyErrorText = 'Factored duty time is greater than total duty time.';
+    }
+
+    setState(() {
+      _dutyEndErrorText = dutyEndErrorText;
+      _factoredDutyErrorText = factoredDutyErrorText;
+    });
+
+    if (!formValid || dutyEndErrorText != null || factoredDutyErrorText != null) {
       return;
     }
 
@@ -280,6 +282,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
                     controller: _endTimeController,
                     label: 'Duty End',
                     onChangedMinutes: _onEndTimeChanged,
+                    errorText: _dutyEndErrorText,
                   ),
                 ),
               ],
@@ -305,7 +308,13 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
                     controller: _factoredController,
                     label: 'Factored Duty Time',
                     fallbackMinutes: _dutyMinutes,
-                    onChangedMinutes: (_) => _factoredEdited = true,
+                    onChangedMinutes: (_) {
+                      _factoredEdited = true;
+                      if (_factoredDutyErrorText != null) {
+                        setState(() => _factoredDutyErrorText = null);
+                      }
+                    },
+                    errorText: _factoredDutyErrorText,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return l10n.codeRequired;

@@ -46,6 +46,7 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
             maxHeight: MediaQuery.of(context).size.height * 0.9,
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
@@ -64,69 +65,67 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
                   ],
                 ),
               ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Order by',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+              SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Order by',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<AirportOrderBy>(
+                      initialValue: _orderBy,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
                       ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<AirportOrderBy>(
-                        initialValue: _orderBy,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                        ),
-                        items: AirportOrderBy.values
-                            .map(
-                              (option) => DropdownMenuItem(
-                                value: option,
-                                child: Text(_orderByLabel(option)),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => _orderBy = value);
-                        },
+                      items: AirportOrderBy.values
+                          .map(
+                            (option) => DropdownMenuItem(
+                              value: option,
+                              child: Text(_orderByLabel(option)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => _orderBy = value);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Show only visited'),
+                      value: _showOnlyVisited,
+                      onChanged: (value) =>
+                          setState(() => _showOnlyVisited = value),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Search by',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<AirportSearchField>(
+                      initialValue: _searchField,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
                       ),
-                      const SizedBox(height: 12),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Show only visited'),
-                        value: _showOnlyVisited,
-                        onChanged: (value) =>
-                            setState(() => _showOnlyVisited = value),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Search by',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<AirportSearchField>(
-                        initialValue: _searchField,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                        ),
-                        items: AirportSearchField.values
-                            .map(
-                              (option) => DropdownMenuItem(
-                                value: option,
-                                child: Text(_searchFieldLabel(option)),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => _searchField = value);
-                        },
-                      ),
-                    ],
-                  ),
+                      items: AirportSearchField.values
+                          .map(
+                            (option) => DropdownMenuItem(
+                              value: option,
+                              child: Text(_searchFieldLabel(option)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => _searchField = value);
+                      },
+                    ),
+                  ],
                 ),
               ),
               Padding(

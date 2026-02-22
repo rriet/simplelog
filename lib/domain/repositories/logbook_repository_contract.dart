@@ -1,5 +1,6 @@
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/duty_edit_data.dart';
+import 'package:simplelog/data/models/crew_info_item.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
 import 'package:simplelog/data/models/flight_edit_data.dart';
@@ -100,7 +101,9 @@ abstract class LogbookRepositoryContract {
   });
 
   Future<List<String>> fetchFlightCrewLabels(int flightId);
+  Future<List<CrewInfoItem>> fetchFlightCrewInfo(int flightId);
   Future<List<String>> fetchSimulatorCrewLabels(int simulatorId);
+  Future<List<CrewInfoItem>> fetchSimulatorCrewInfo(int simulatorId);
   Future<List<LogbookEntry>> fetchEntriesForAirport(int airportId);
   Future<List<LogbookEntry>> fetchEntriesForAircraft(int aircraftId);
   Future<List<LogbookEntry>> fetchEntriesForAircraftType(int aircraftTypeId);
