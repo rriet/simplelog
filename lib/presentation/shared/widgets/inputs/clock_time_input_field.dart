@@ -15,6 +15,7 @@ class ClockTimeInputField extends StatefulWidget {
     this.validator,
     this.suffixIcon,
     this.allowEmpty = false,
+    this.errorText,
   });
 
   final TextEditingController controller;
@@ -25,6 +26,7 @@ class ClockTimeInputField extends StatefulWidget {
   final String? Function(String?)? validator;
   final Widget? suffixIcon;
   final bool allowEmpty;
+  final String? errorText;
 
   static String formatMinutesOfDay(int minutes) {
     final safe = minutes.clamp(0, 23 * 60 + 59);
@@ -139,6 +141,7 @@ class _ClockTimeInputFieldState extends State<ClockTimeInputField> {
       decoration: InputDecoration(
         labelText: widget.label,
         border: const OutlineInputBorder(),
+        errorText: widget.errorText,
         suffixIconConstraints: const BoxConstraints(
           minWidth: 24,
           minHeight: 24,

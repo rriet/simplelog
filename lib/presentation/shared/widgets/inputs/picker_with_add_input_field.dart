@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 
 /// Tappable picker field with a companion add button, styled like form inputs.
 class PickerWithAddInputField extends StatelessWidget {
@@ -19,13 +20,17 @@ class PickerWithAddInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controlsTheme = Theme.of(context).extension<AppFormControlsTheme>();
+    final addButtonSize = controlsTheme?.pickerAddButtonSize ?? 40;
+    final addIconSize = controlsTheme?.pickerAddIconSize ?? 20;
+    final addBorderRadius = controlsTheme?.pickerAddBorderRadius ?? 8;
     final borderColor = Theme.of(context).colorScheme.outline;
     return Row(
       children: [
         Expanded(
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(addBorderRadius),
             child: InputDecorator(
               decoration: InputDecoration(
                 labelText: label,
@@ -56,16 +61,16 @@ class PickerWithAddInputField extends StatelessWidget {
             message: addTooltip ?? 'Add',
             child: InkWell(
               onTap: onAdd,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(addBorderRadius),
               child: Container(
-                width: 40,
-                height: 40,
+                width: addButtonSize,
+                height: addButtonSize,
                 decoration: BoxDecoration(
                   border: Border.all(color: borderColor),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(addBorderRadius),
                 ),
                 alignment: Alignment.center,
-                child: const Icon(Icons.add, size: 20),
+                child: Icon(Icons.add, size: addIconSize),
               ),
             ),
           ),

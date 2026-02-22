@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 
 class AppTheme {
   static const _fontFamily = 'Inter';
@@ -39,6 +40,13 @@ class AppTheme {
       colorScheme: colorScheme,
       useMaterial3: true,
       fontFamily: _fontFamily,
+      extensions: const <ThemeExtension<dynamic>>[
+        AppFormControlsTheme(
+          pickerAddButtonSize: 33,
+          pickerAddIconSize: 20,
+          pickerAddBorderRadius: 6,
+        ),
+      ],
       inputDecorationTheme: const InputDecorationTheme(
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -86,6 +94,13 @@ class AppTheme {
       colorScheme: colorScheme,
       useMaterial3: true,
       fontFamily: _fontFamily,
+      extensions: const <ThemeExtension<dynamic>>[
+        AppFormControlsTheme(
+          pickerAddButtonSize: 40,
+          pickerAddIconSize: 20,
+          pickerAddBorderRadius: 8,
+        ),
+      ],
       inputDecorationTheme: const InputDecorationTheme(
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),

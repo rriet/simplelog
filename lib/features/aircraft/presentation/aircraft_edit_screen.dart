@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' show Value;
+import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
 import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
@@ -206,6 +207,10 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final controlsTheme = Theme.of(context).extension<AppFormControlsTheme>();
+    final addButtonSize = controlsTheme?.pickerAddButtonSize ?? 40;
+    final addIconSize = controlsTheme?.pickerAddIconSize ?? 20;
+    final addBorderRadius = controlsTheme?.pickerAddBorderRadius ?? 8;
     final types = ref.watch(aircraftTypesProvider(''));
     final form = Form(
       key: _formKey,
@@ -264,20 +269,22 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    SizedBox(
-                      height: 40,
-                      width: 40,
-                      child: Center(
-                        child: IconButton(
-                          tooltip: l10n.createAircraftTypeTitle,
-                          iconSize: 24,
-                          icon: const Icon(Icons.add_circle_outline),
-                          onPressed: _createAircraftType,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 40,
-                            minHeight: 40,
+                    Tooltip(
+                      message: l10n.createAircraftTypeTitle,
+                      child: InkWell(
+                        onTap: _createAircraftType,
+                        borderRadius: BorderRadius.circular(addBorderRadius),
+                        child: Container(
+                          width: addButtonSize,
+                          height: addButtonSize,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                            borderRadius: BorderRadius.circular(addBorderRadius),
                           ),
+                          alignment: Alignment.center,
+                          child: Icon(Icons.add, size: addIconSize),
                         ),
                       ),
                     ),

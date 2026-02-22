@@ -12,6 +12,7 @@ import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/data/models/airport_row.dart';
 import 'package:simplelog/data/models/crew_row.dart';
+import 'package:simplelog/data/models/flight_write_input.dart';
 import 'package:simplelog/data/models/simulator_crew_assignment_input.dart';
 import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
 import 'package:simplelog/features/aircraft/presentation/aircraft_edit_screen.dart';
@@ -24,6 +25,7 @@ import 'package:simplelog/features/logbook/application/providers/logbook_feature
 import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
+import 'package:simplelog/domain/validation/validation_issue.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
@@ -154,6 +156,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
 
   FlightFormTimeChecks _checks = const FlightFormTimeChecks();
   bool _logTakeoffLanding = true;
+  bool _showFirstPageRequiredErrors = false;
+  bool _showChocksOffRequiredError = false;
+  bool _showCalculateRequiredError = false;
   int _lastCalculatedNightMinutes = 0;
   int _lastCalculatedFlightMinutes = 0;
 
@@ -593,7 +598,16 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   }
 
   Future<void> _next() async {
-    if (!_validateForSave()) return;
+    if (!_syncClockTimesFromInput()) return;
+    if (!_isFirstPageReady) {
+      setState(() {
+        _showFirstPageRequiredErrors = true;
+        _showChocksOffRequiredError = false;
+        _showCalculateRequiredError = false;
+      });
+      return;
+    }
+    if (!_validateTimeSequence(requireChocksOn: false)) return;
     final calc = await _calculate();
     if (calc != null) {
       _lastCalculatedNightMinutes = calc.nightMinutes;
@@ -601,22 +615,75 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       _distanceNmController.text = '${calc.distanceNm}';
     }
     if (!mounted) return;
-    setState(() => _page = 1);
+    setState(() {
+      _showFirstPageRequiredErrors = false;
+      _showChocksOffRequiredError = false;
+      _showCalculateRequiredError = false;
+      _page = 1;
+    });
   }
 
   Future<void> _calculateAndNext() async {
-    if (!_validateForCalculate()) return;
+    final missing = _firstPageCalculationRequirements();
+    if (missing.isNotEmpty) {
+      setState(() {
+        _showFirstPageRequiredErrors = true;
+        _showChocksOffRequiredError =
+            _chocksOffTimeController.text.trim().isEmpty;
+        _showCalculateRequiredError = _chocksOn == null;
+      });
+      return;
+    }
+    if (!_syncClockTimesFromInput()) return;
+    if (!_isFirstPageReady || _chocksOn == null) {
+      setState(() {
+        _showFirstPageRequiredErrors = true;
+        _showCalculateRequiredError = _chocksOn == null;
+      });
+      return;
+    }
+    if (!_validateTimeSequence(requireChocksOn: true)) return;
     final calc = await _calculate();
     if (calc == null || !mounted) return;
     _applyCalculation(calc);
-    setState(() => _page = 1);
+    setState(() {
+      _showFirstPageRequiredErrors = false;
+      _showChocksOffRequiredError = false;
+      _showCalculateRequiredError = false;
+      _page = 1;
+    });
   }
 
   Future<void> _calculateInPlace() async {
-    if (!_validateForCalculate()) return;
+    final missing = _firstPageCalculationRequirements();
+    if (missing.isNotEmpty) {
+      setState(() {
+        _page = 0;
+        _showFirstPageRequiredErrors = true;
+        _showChocksOffRequiredError =
+            _chocksOffTimeController.text.trim().isEmpty;
+        _showCalculateRequiredError = _chocksOn == null;
+      });
+      return;
+    }
+    if (!_syncClockTimesFromInput()) return;
+    if (!_isFirstPageReady || _chocksOn == null) {
+      setState(() {
+        _page = 0;
+        _showFirstPageRequiredErrors = true;
+        _showCalculateRequiredError = _chocksOn == null;
+      });
+      return;
+    }
+    if (!_validateTimeSequence(requireChocksOn: true)) return;
     final calc = await _calculate();
     if (calc == null || !mounted) return;
-    setState(() => _applyCalculation(calc));
+    setState(() {
+      _showFirstPageRequiredErrors = false;
+      _showChocksOffRequiredError = false;
+      _showCalculateRequiredError = false;
+      _applyCalculation(calc);
+    });
   }
 
   void _applyCalculation(_FlightCalcResult calc) {
@@ -790,20 +857,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     return true;
   }
 
-  bool _validateForCalculate() {
-    if (!_syncClockTimesFromInput()) {
-      return false;
-    }
-    if (!_canCalculate) {
-      _showSnack('Select aircraft, departure/arrival airports, and Chocks On.');
-      return false;
-    }
-    if (!_validateTimeSequence(requireChocksOn: true)) {
-      return false;
-    }
-    return true;
-  }
-
   bool _validateTimeSequence({required bool requireChocksOn}) {
     final chocksOn = _resolveChocksOnDateTime();
     if (requireChocksOn && chocksOn == null) {
@@ -909,6 +962,20 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     return minutes;
   }
 
+  List<String> _firstPageCalculationRequirements() {
+    final errors = <String>[];
+    if (_chocksOffTimeController.text.trim().isEmpty) {
+      errors.add('Chocks OFF is required to calculate.');
+    }
+    if (_chocksOnTimeController.text.trim().isEmpty) {
+      errors.add('Chocks ON is required to calculate.');
+    }
+    if (!_isFirstPageReady) {
+      errors.add('Select aircraft, departure airport, and arrival airport.');
+    }
+    return errors;
+  }
+
   Future<void> _save() async {
     if (!_validateForSave()) return;
     final departure = _chocksOffMinute;
@@ -926,23 +993,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final dual = TimeInputField.parseMinutes(_dualController.text) ?? 0;
     final instructor =
         TimeInputField.parseMinutes(_instructorController.text) ?? 0;
-    final selectedPrimaryRoles = [
-      pic,
-      picus,
-      sic,
-      dual,
-      instructor,
-    ].where((value) => value > 0).length;
-    if (selectedPrimaryRoles > 1) {
-      final continueSave = await _confirmMultiplePrimaryTimes();
-      if (!continueSave) return;
-    }
-    final consistencyWarnings = <String>[];
-    if (pic + picus + sic + dual + instructor != block) {
-      consistencyWarnings.add(
-        'PIC + PICUS + SIC + Dual + Instructor must equal Block time.',
-      );
-    }
     final ifr = TimeInputField.parseMinutes(_ifrController.text) ?? 0;
     final instrument =
         TimeInputField.parseMinutes(_instrumentController.text) ?? 0;
@@ -956,15 +1006,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final custom4 = TimeInputField.parseMinutes(_custom4Controller.text) ?? 0;
     final flightTime =
         TimeInputField.parseMinutes(_flightController.text) ?? block;
-    if (night > block) {
-      consistencyWarnings.add('Night time is greater than Block time.');
-    }
-    if (cross > block) {
-      consistencyWarnings.add('Cross-country time is greater than Block time.');
-    }
-    if (ifr > block) {
-      consistencyWarnings.add('IFR time is greater than Block time.');
-    }
     final ifrApproaches = _parseCount(_ifrApproachesController.text);
     final distanceNm = _parseCount(_distanceNmController.text);
     final approachType = _approachTypeController.text.trim();
@@ -981,125 +1022,84 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     _takeoffsNight = _parseCount(_takeoffNightController.text);
     _landingsDay = _parseCount(_landingDayController.text);
     _landingsNight = _parseCount(_landingNightController.text);
-    if (consistencyWarnings.isNotEmpty) {
-      final continueSave = await _confirmRuleWarnings(consistencyWarnings);
+
+    final input = FlightWriteInput(
+      aircraftId: _aircraftId!,
+      departureAirportId: _fromAirportId!,
+      arrivalAirportId: _toAirportId!,
+      departureDateTime: DbDateTime.wallClockToDbUtc(departure),
+      takeOffDateTime: DbDateTime.wallClockToDbUtcOrNull(takeoff),
+      landingDateTime: DbDateTime.wallClockToDbUtcOrNull(landing),
+      arrivalDateTime: DbDateTime.wallClockToDbUtcOrNull(arrival),
+      pilotFunction: _pilotFunction,
+      ifrApproaches: ifrApproaches,
+      approachType: approachType,
+      takeOffsDays: _takeoffsDay,
+      takeOffsNight: _takeoffsNight,
+      landingsDay: _landingsDay,
+      landingsNight: _landingsNight,
+      timeBlockMinutes: block,
+      timeTotalBlockMinutes: totalBlock,
+      timeFlightMinutes: flightTime,
+      timePICMinutes: pic,
+      timePICUSMinutes: picus,
+      timeSICMinutes: sic,
+      timeDualMinutes: dual,
+      timeInstructorMinutes: instructor,
+      timeIFRMinutes: ifr,
+      timeInstrumentMinutes: instrument,
+      timeSimulatedInstrumentMinutes: simInstrument,
+      timeNightMinutes: night,
+      timeCrossCountryMinutes: cross,
+      timeCustom1Minutes: custom1,
+      timeCustom2Minutes: custom2,
+      timeCustom3Minutes: custom3,
+      timeCustom4Minutes: custom4,
+      distanceNM: distanceNm,
+      remarks: _remarksController.text.trim(),
+      notes: _notesController.text.trim(),
+      crewAssignments: crewAssignments,
+    );
+
+    final useCases = ref.read(logbookUseCasesProvider);
+    final validation = useCases.validateFlightWrite(input);
+    if (validation.hasErrors) {
+      _showSnack(validation.errors.first.message);
+      return;
+    }
+    if (validation.hasWarnings) {
+      final continueSave = await _confirmRuleWarnings(validation.warnings);
       if (!continueSave) return;
     }
 
-    final useCases = ref.read(logbookUseCasesProvider);
+    late final WriteResult<void> result;
     if (widget.isCreate) {
-      await useCases.createFlight(
-        aircraftId: _aircraftId!,
-        departureAirportId: _fromAirportId!,
-        arrivalAirportId: _toAirportId!,
-        departureDateTime: DbDateTime.wallClockToDbUtc(departure),
-        takeOffDateTime: DbDateTime.wallClockToDbUtcOrNull(takeoff),
-        landingDateTime: DbDateTime.wallClockToDbUtcOrNull(landing),
-        arrivalDateTime: DbDateTime.wallClockToDbUtcOrNull(arrival),
-        pilotFunction: _pilotFunction,
-        ifrApproaches: ifrApproaches,
-        approachType: approachType,
-        takeOffsDays: _takeoffsDay,
-        takeOffsNight: _takeoffsNight,
-        landingsDay: _landingsDay,
-        landingsNight: _landingsNight,
-        timeBlockMinutes: block,
-        timeTotalBlockMinutes: totalBlock,
-        timeFlightMinutes: flightTime,
-        timePICMinutes: pic,
-        timePICUSMinutes: picus,
-        timeSICMinutes: sic,
-        timeDualMinutes: dual,
-        timeInstructorMinutes: instructor,
-        timeIFRMinutes: ifr,
-        timeInstrumentMinutes: instrument,
-        timeSimulatedInstrumentMinutes: simInstrument,
-        timeNightMinutes: night,
-        timeCrossCountryMinutes: cross,
-        timeCustom1Minutes: custom1,
-        timeCustom2Minutes: custom2,
-        timeCustom3Minutes: custom3,
-        timeCustom4Minutes: custom4,
-        distanceNM: distanceNm,
-        remarks: _remarksController.text.trim(),
-        notes: _notesController.text.trim(),
-        crewAssignments: crewAssignments,
-      );
+      result = await useCases.createFlight(input: input);
     } else {
       final flight = _flight;
       if (flight == null) return;
-      await useCases.updateFlight(
-        flight: flight,
-        aircraftId: _aircraftId!,
-        departureAirportId: _fromAirportId!,
-        arrivalAirportId: _toAirportId!,
-        departureDateTime: DbDateTime.wallClockToDbUtc(departure),
-        takeOffDateTime: DbDateTime.wallClockToDbUtcOrNull(takeoff),
-        landingDateTime: DbDateTime.wallClockToDbUtcOrNull(landing),
-        arrivalDateTime: DbDateTime.wallClockToDbUtcOrNull(arrival),
-        pilotFunction: _pilotFunction,
-        ifrApproaches: ifrApproaches,
-        approachType: approachType,
-        takeOffsDays: _takeoffsDay,
-        takeOffsNight: _takeoffsNight,
-        landingsDay: _landingsDay,
-        landingsNight: _landingsNight,
-        timeBlockMinutes: block,
-        timeTotalBlockMinutes: totalBlock,
-        timeFlightMinutes: flightTime,
-        timePICMinutes: pic,
-        timePICUSMinutes: picus,
-        timeSICMinutes: sic,
-        timeDualMinutes: dual,
-        timeInstructorMinutes: instructor,
-        timeIFRMinutes: ifr,
-        timeInstrumentMinutes: instrument,
-        timeSimulatedInstrumentMinutes: simInstrument,
-        timeNightMinutes: night,
-        timeCrossCountryMinutes: cross,
-        timeCustom1Minutes: custom1,
-        timeCustom2Minutes: custom2,
-        timeCustom3Minutes: custom3,
-        timeCustom4Minutes: custom4,
-        distanceNM: distanceNm,
-        remarks: _remarksController.text.trim(),
-        notes: _notesController.text.trim(),
-        crewAssignments: crewAssignments,
-      );
+      result = await useCases.updateFlight(flight: flight, input: input);
+    }
+
+    if (!result.isSuccess) {
+      final message = result.errors.isNotEmpty
+          ? result.errors.first.message
+          : 'Unable to save flight.';
+      _showSnack(message);
+      return;
     }
     if (!mounted) return;
     Navigator.of(context).pop(true);
   }
 
-  Future<bool> _confirmMultiplePrimaryTimes() async {
-    final decision = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Check Time Entries'),
-        content: const Text(
-          'More than one of PIC, PICUS, SIC, Dual, Instructor has time greater than 0. Continue saving?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Review'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Save anyway'),
-          ),
-        ],
-      ),
-    );
-    return decision ?? false;
-  }
-
-  Future<bool> _confirmRuleWarnings(List<String> warnings) async {
+  Future<bool> _confirmRuleWarnings(List<ValidationIssue> warnings) async {
     final decision = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Check Factoring Rules'),
-        content: Text('${warnings.join('\n')}\n\nContinue saving?'),
+        content: Text(
+          '${warnings.map((warning) => warning.message).join('\n')}\n\nContinue saving?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -1202,8 +1202,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final canGoNext = _canGoNext;
-    final canCalculate = _canCalculate;
     final customTimeLabels =
         ref.watch(customTimeLabelsProvider).valueOrNull ??
         const CustomTimeLabels();
@@ -1249,17 +1247,17 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final actions = <Widget>[
       if (_page == 0) ...[
         TextButton(
-          onPressed: canCalculate ? _calculateAndNext : null,
+          onPressed: _calculateAndNext,
           child: const Text('Calculate'),
         ),
         TextButton(
-          onPressed: canGoNext ? _next : null,
+          onPressed: _next,
           child: const Text('Next'),
         ),
       ] else ...[
         if (_page == 1) ...[
           TextButton(
-            onPressed: canCalculate ? _calculateInPlace : null,
+            onPressed: _calculateInPlace,
             child: const Text('Calculate'),
           ),
           TextButton(onPressed: _save, child: Text(l10n.saveAction)),
@@ -1350,6 +1348,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         const SizedBox(height: 8),
         if (_logTakeoffLanding) ...[
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: ClockTimeInputField(
@@ -1364,6 +1363,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                     ),
                   ),
                   allowEmpty: true,
+                  errorText: _showChocksOffRequiredError &&
+                          _chocksOffTimeController.text.trim().isEmpty
+                      ? 'Chocks OFF is required to calculate.'
+                      : null,
                   suffixIcon: IconButton(
                     tooltip: 'Clear',
                     padding: EdgeInsets.zero,
@@ -1402,6 +1405,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           ),
           const SizedBox(height: 8),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: ClockTimeInputField(
@@ -1431,6 +1435,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                   onChangedMinutes: _onChocksOnTimeChanged,
                   onCleared: () => setState(() => _chocksOn = null),
                   allowEmpty: true,
+                  errorText: _showCalculateRequiredError && _chocksOn == null
+                      ? 'Chocks ON is required to calculate.'
+                      : null,
                   suffixIcon: IconButton(
                     tooltip: 'Clear',
                     padding: EdgeInsets.zero,
@@ -1448,6 +1455,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           ),
         ] else
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: ClockTimeInputField(
@@ -1462,6 +1470,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                     ),
                   ),
                   allowEmpty: true,
+                  errorText: _showChocksOffRequiredError &&
+                          _chocksOffTimeController.text.trim().isEmpty
+                      ? 'Chocks OFF is required to calculate.'
+                      : null,
                   suffixIcon: IconButton(
                     tooltip: 'Clear',
                     padding: EdgeInsets.zero,
@@ -1483,6 +1495,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                   onChangedMinutes: _onChocksOnTimeChanged,
                   onCleared: () => setState(() => _chocksOn = null),
                   allowEmpty: true,
+                  errorText: _showCalculateRequiredError && _chocksOn == null
+                      ? 'Chocks ON is required to calculate.'
+                      : null,
                   suffixIcon: IconButton(
                     tooltip: 'Clear',
                     padding: EdgeInsets.zero,
@@ -1506,6 +1521,11 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           onAdd: _createAircraftAndSelect,
           addTooltip: 'Add aircraft',
         ),
+        if (_showFirstPageRequiredErrors && _aircraftId == null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: _inlineErrorText('Aircraft is required.'),
+          ),
         const SizedBox(height: 8),
         PickerWithAddInputField(
           label: 'From Airport',
@@ -1514,6 +1534,11 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           onAdd: () => _createAirport(isFrom: true),
           addTooltip: 'Add airport',
         ),
+        if (_showFirstPageRequiredErrors && _fromAirportId == null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: _inlineErrorText('From Airport is required.'),
+          ),
         const SizedBox(height: 8),
         PickerWithAddInputField(
           label: 'To Airport',
@@ -1522,7 +1547,22 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           onAdd: () => _createAirport(isFrom: false),
           addTooltip: 'Add airport',
         ),
+        if (_showFirstPageRequiredErrors && _toAirportId == null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: _inlineErrorText('To Airport is required.'),
+          ),
       ],
+    );
+  }
+
+  Widget _inlineErrorText(String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: Theme.of(context).colorScheme.error,
+        fontSize: 12,
+      ),
     );
   }
 
@@ -2030,8 +2070,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   }
 
   bool get _canGoNext => _isFirstPageReady;
-
-  bool get _canCalculate => _canGoNext && _chocksOn != null;
 
   Widget _buildCrewList(AsyncValue<List<CrewRow>> crewAsync) {
     final crewItems = crewAsync.valueOrNull ?? const <CrewRow>[];

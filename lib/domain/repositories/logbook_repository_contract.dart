@@ -3,6 +3,7 @@ import 'package:simplelog/data/models/duty_edit_data.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
 import 'package:simplelog/data/models/flight_edit_data.dart';
+import 'package:simplelog/data/models/flight_write_input.dart';
 import 'package:simplelog/data/models/positioning_edit_data.dart';
 import 'package:simplelog/data/models/simulator_crew_assignment_input.dart';
 import 'package:simplelog/data/models/simulator_edit_data.dart';
@@ -69,80 +70,12 @@ abstract class LogbookRepositoryContract {
   });
 
   Future<void> createFlight({
-    required int aircraftId,
-    required int departureAirportId,
-    required int arrivalAirportId,
-    required DateTime departureDateTime,
-    required DateTime? takeOffDateTime,
-    required DateTime? landingDateTime,
-    required DateTime? arrivalDateTime,
-    required String pilotFunction,
-    required int ifrApproaches,
-    required String approachType,
-    required int takeOffsDays,
-    required int takeOffsNight,
-    required int landingsDay,
-    required int landingsNight,
-    required int timeBlockMinutes,
-    required int timeTotalBlockMinutes,
-    required int timeFlightMinutes,
-    required int timePICMinutes,
-    required int timePICUSMinutes,
-    required int timeSICMinutes,
-    required int timeDualMinutes,
-    required int timeInstructorMinutes,
-    required int timeIFRMinutes,
-    required int timeInstrumentMinutes,
-    required int timeSimulatedInstrumentMinutes,
-    required int timeNightMinutes,
-    required int timeCrossCountryMinutes,
-    required int timeCustom1Minutes,
-    required int timeCustom2Minutes,
-    required int timeCustom3Minutes,
-    required int timeCustom4Minutes,
-    required int distanceNM,
-    required String remarks,
-    required String notes,
-    required List<SimulatorCrewAssignmentInput> crewAssignments,
+    required FlightWriteInput input,
   });
 
   Future<void> updateFlight({
     required Flight flight,
-    required int aircraftId,
-    required int departureAirportId,
-    required int arrivalAirportId,
-    required DateTime departureDateTime,
-    required DateTime? takeOffDateTime,
-    required DateTime? landingDateTime,
-    required DateTime? arrivalDateTime,
-    required String pilotFunction,
-    required int ifrApproaches,
-    required String approachType,
-    required int takeOffsDays,
-    required int takeOffsNight,
-    required int landingsDay,
-    required int landingsNight,
-    required int timeBlockMinutes,
-    required int timeTotalBlockMinutes,
-    required int timeFlightMinutes,
-    required int timePICMinutes,
-    required int timePICUSMinutes,
-    required int timeSICMinutes,
-    required int timeDualMinutes,
-    required int timeInstructorMinutes,
-    required int timeIFRMinutes,
-    required int timeInstrumentMinutes,
-    required int timeSimulatedInstrumentMinutes,
-    required int timeNightMinutes,
-    required int timeCrossCountryMinutes,
-    required int timeCustom1Minutes,
-    required int timeCustom2Minutes,
-    required int timeCustom3Minutes,
-    required int timeCustom4Minutes,
-    required int distanceNM,
-    required String remarks,
-    required String notes,
-    required List<SimulatorCrewAssignmentInput> crewAssignments,
+    required FlightWriteInput input,
   });
 
   Future<void> createSimulatorTraining({
