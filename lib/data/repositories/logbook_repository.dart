@@ -649,6 +649,50 @@ class LogbookRepository implements LogbookRepositoryContract {
     return entries;
   }
 
+  Future<List<LogbookEntry>> fetchEntriesForAirportPage(
+    int airportId, {
+    required int limit,
+    required int offset,
+  }) async {
+    if (limit <= 0) return const <LogbookEntry>[];
+    final rows = await _db.customSelect(
+      '''
+SELECT timeline_id
+FROM (
+  SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
+  FROM flights f
+  INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
+  WHERE f.departure_airport_id = ? OR f.arrival_airport_id = ?
+  UNION ALL
+  SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
+  FROM positionings p
+  INNER JOIN time_lines tl ON tl.id = p.departure_date_time_id
+  WHERE p.departure_place_id = ? OR p.arrival_place_id = ?
+)
+ORDER BY event_ts DESC, timeline_id DESC
+LIMIT ? OFFSET ?
+''',
+      variables: [
+        Variable<int>(airportId),
+        Variable<int>(airportId),
+        Variable<int>(airportId),
+        Variable<int>(airportId),
+        Variable<int>(limit),
+        Variable<int>(offset),
+      ],
+      readsFrom: {_db.flights, _db.positionings, _db.timeLines},
+    ).get();
+
+    if (rows.isEmpty) return const <LogbookEntry>[];
+    final timelineIds = rows
+        .map((row) => row.read<int>('timeline_id'))
+        .where((id) => id > 0)
+        .toList(growable: false);
+    if (timelineIds.isEmpty) return const <LogbookEntry>[];
+
+    return _fetchEntriesByTimelineIds(timelineIds);
+  }
+
   Future<List<LogbookEntry>> fetchEntriesForAircraft(int aircraftId) async {
     final dep = _db.alias(_db.airports, 'dep');
     final arr = _db.alias(_db.airports, 'arr');
@@ -714,6 +758,48 @@ class LogbookRepository implements LogbookRepositoryContract {
       (a, b) => b.timeLine.eventDateTime.compareTo(a.timeLine.eventDateTime),
     );
     return entries;
+  }
+
+  Future<List<LogbookEntry>> fetchEntriesForAircraftPage(
+    int aircraftId, {
+    required int limit,
+    required int offset,
+  }) async {
+    if (limit <= 0) return const <LogbookEntry>[];
+    final rows = await _db.customSelect(
+      '''
+SELECT timeline_id
+FROM (
+  SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
+  FROM flights f
+  INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
+  WHERE f.aircraft_id = ?
+  UNION ALL
+  SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
+  FROM simulator_trainings st
+  INNER JOIN time_lines tl ON tl.id = st.start_time_line_id
+  WHERE st.aircraft_id = ?
+)
+ORDER BY event_ts DESC, timeline_id DESC
+LIMIT ? OFFSET ?
+''',
+      variables: [
+        Variable<int>(aircraftId),
+        Variable<int>(aircraftId),
+        Variable<int>(limit),
+        Variable<int>(offset),
+      ],
+      readsFrom: {_db.flights, _db.simulatorTrainings, _db.timeLines},
+    ).get();
+
+    if (rows.isEmpty) return const <LogbookEntry>[];
+    final timelineIds = rows
+        .map((row) => row.read<int>('timeline_id'))
+        .where((id) => id > 0)
+        .toList(growable: false);
+    if (timelineIds.isEmpty) return const <LogbookEntry>[];
+
+    return _fetchEntriesByTimelineIds(timelineIds);
   }
 
   Future<List<LogbookEntry>> fetchEntriesForAircraftType(
@@ -783,6 +869,108 @@ class LogbookRepository implements LogbookRepositoryContract {
       (a, b) => b.timeLine.eventDateTime.compareTo(a.timeLine.eventDateTime),
     );
     return entries;
+  }
+
+  Future<List<LogbookEntry>> fetchEntriesForAircraftTypePage(
+    int aircraftTypeId, {
+    required int limit,
+    required int offset,
+  }) async {
+    if (limit <= 0) return const <LogbookEntry>[];
+    final rows = await _db.customSelect(
+      '''
+SELECT timeline_id
+FROM (
+  SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
+  FROM flights f
+  INNER JOIN aircrafts a ON a.id = f.aircraft_id
+  INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
+  WHERE a.aircraft_type_id = ?
+  UNION ALL
+  SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
+  FROM simulator_trainings st
+  INNER JOIN aircrafts a ON a.id = st.aircraft_id
+  INNER JOIN time_lines tl ON tl.id = st.start_time_line_id
+  WHERE a.aircraft_type_id = ?
+)
+ORDER BY event_ts DESC, timeline_id DESC
+LIMIT ? OFFSET ?
+''',
+      variables: [
+        Variable<int>(aircraftTypeId),
+        Variable<int>(aircraftTypeId),
+        Variable<int>(limit),
+        Variable<int>(offset),
+      ],
+      readsFrom: {
+        _db.flights,
+        _db.simulatorTrainings,
+        _db.aircrafts,
+        _db.timeLines,
+      },
+    ).get();
+
+    if (rows.isEmpty) return const <LogbookEntry>[];
+    final timelineIds = rows
+        .map((row) => row.read<int>('timeline_id'))
+        .where((id) => id > 0)
+        .toList(growable: false);
+    if (timelineIds.isEmpty) return const <LogbookEntry>[];
+
+    return _fetchEntriesByTimelineIds(timelineIds);
+  }
+
+  Future<List<LogbookEntry>> fetchEntriesForAircraftTypeFamilyPage(
+    List<int> aircraftTypeIds, {
+    required int limit,
+    required int offset,
+  }) async {
+    final ids = aircraftTypeIds.where((id) => id > 0).toSet().toList();
+    if (ids.isEmpty || limit <= 0) return const <LogbookEntry>[];
+    final placeholders = List.filled(ids.length, '?').join(',');
+    final variables = <Variable<Object>>[
+      ...ids.map<Variable<Object>>((id) => Variable<int>(id)),
+      ...ids.map<Variable<Object>>((id) => Variable<int>(id)),
+      Variable<int>(limit),
+      Variable<int>(offset),
+    ];
+
+    final rows = await _db.customSelect(
+      '''
+SELECT timeline_id
+FROM (
+  SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
+  FROM flights f
+  INNER JOIN aircrafts a ON a.id = f.aircraft_id
+  INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
+  WHERE a.aircraft_type_id IN ($placeholders)
+  UNION ALL
+  SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
+  FROM simulator_trainings st
+  INNER JOIN aircrafts a ON a.id = st.aircraft_id
+  INNER JOIN time_lines tl ON tl.id = st.start_time_line_id
+  WHERE a.aircraft_type_id IN ($placeholders)
+)
+ORDER BY event_ts DESC, timeline_id DESC
+LIMIT ? OFFSET ?
+''',
+      variables: variables,
+      readsFrom: {
+        _db.flights,
+        _db.simulatorTrainings,
+        _db.aircrafts,
+        _db.timeLines,
+      },
+    ).get();
+
+    if (rows.isEmpty) return const <LogbookEntry>[];
+    final timelineIds = rows
+        .map((row) => row.read<int>('timeline_id'))
+        .where((id) => id > 0)
+        .toList(growable: false);
+    if (timelineIds.isEmpty) return const <LogbookEntry>[];
+
+    return _fetchEntriesByTimelineIds(timelineIds);
   }
 
   Future<List<LogbookEntry>> fetchEntriesForCrew(int crewId) async {
@@ -860,6 +1048,56 @@ class LogbookRepository implements LogbookRepositoryContract {
       (a, b) => b.timeLine.eventDateTime.compareTo(a.timeLine.eventDateTime),
     );
     return entries;
+  }
+
+  Future<List<LogbookEntry>> fetchEntriesForCrewPage(
+    int crewId, {
+    required int limit,
+    required int offset,
+  }) async {
+    if (limit <= 0) return const <LogbookEntry>[];
+    final rows = await _db.customSelect(
+      '''
+SELECT timeline_id
+FROM (
+  SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
+  FROM flights f
+  INNER JOIN flight_crew_assignments fca ON fca.flight_id = f.id
+  INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
+  WHERE fca.crew_id = ?
+  UNION ALL
+  SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
+  FROM simulator_trainings st
+  INNER JOIN simulator_crew_assignments sca ON sca.simulator_id = st.id
+  INNER JOIN time_lines tl ON tl.id = st.start_time_line_id
+  WHERE sca.crew_id = ?
+)
+ORDER BY event_ts DESC, timeline_id DESC
+LIMIT ? OFFSET ?
+''',
+      variables: [
+        Variable<int>(crewId),
+        Variable<int>(crewId),
+        Variable<int>(limit),
+        Variable<int>(offset),
+      ],
+      readsFrom: {
+        _db.flights,
+        _db.flightCrewAssignments,
+        _db.simulatorTrainings,
+        _db.simulatorCrewAssignments,
+        _db.timeLines,
+      },
+    ).get();
+
+    if (rows.isEmpty) return const <LogbookEntry>[];
+    final timelineIds = rows
+        .map((row) => row.read<int>('timeline_id'))
+        .where((id) => id > 0)
+        .toList(growable: false);
+    if (timelineIds.isEmpty) return const <LogbookEntry>[];
+
+    return _fetchEntriesByTimelineIds(timelineIds);
   }
 
   Future<void> deleteEntry(LogbookEntry entry) async {
@@ -1203,6 +1441,58 @@ class LogbookRepository implements LogbookRepositoryContract {
         positioningArrivalAirport: row.readTableOrNull(positioningArrival),
       );
     }).toList();
+  }
+
+  Future<List<LogbookEntry>> _fetchEntriesByTimelineIds(
+    List<int> timelineIds,
+  ) async {
+    if (timelineIds.isEmpty) return const <LogbookEntry>[];
+
+    final departureAirport = _db.alias(_db.airports, 'departure_airports');
+    final arrivalAirport = _db.alias(_db.airports, 'arrival_airports');
+    final positioningDeparture = _db.alias(
+      _db.airports,
+      'positioning_departure',
+    );
+    final positioningArrival = _db.alias(_db.airports, 'positioning_arrival');
+    final dutyStart = _db.alias(_db.dutyPeriods, 'duty_start');
+    final dutyEnd = _db.alias(_db.dutyPeriods, 'duty_end');
+    final simAircraft = _db.alias(_db.aircrafts, 'sim_aircrafts');
+    final simAircraftType = _db.alias(_db.aircraftTypes, 'sim_aircraft_types');
+
+    final query = _buildBaseQuery(
+      departureAirport: departureAirport,
+      arrivalAirport: arrivalAirport,
+      positioningDeparture: positioningDeparture,
+      positioningArrival: positioningArrival,
+      dutyStart: dutyStart,
+      dutyEnd: dutyEnd,
+      simAircraft: simAircraft,
+      simAircraftType: simAircraftType,
+    )..where(_db.timeLines.id.isIn(timelineIds));
+
+    final rows = await query.get();
+    final mapped = _mapRows(
+      rows,
+      departureAirport: departureAirport,
+      arrivalAirport: arrivalAirport,
+      positioningDeparture: positioningDeparture,
+      positioningArrival: positioningArrival,
+      dutyStart: dutyStart,
+      dutyEnd: dutyEnd,
+      simAircraft: simAircraft,
+      simAircraftType: simAircraftType,
+    );
+
+    final orderIndex = <int, int>{
+      for (var i = 0; i < timelineIds.length; i++) timelineIds[i]: i,
+    };
+    mapped.sort((a, b) {
+      final ai = orderIndex[a.timeLine.id] ?? 1 << 30;
+      final bi = orderIndex[b.timeLine.id] ?? 1 << 30;
+      return ai.compareTo(bi);
+    });
+    return mapped;
   }
 
   Expression<bool> _typesPredicate(

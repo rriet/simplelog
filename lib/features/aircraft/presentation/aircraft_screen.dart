@@ -8,13 +8,11 @@ import 'package:simplelog/features/aircraft/application/providers/aircraft_featu
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
-import 'package:simplelog/data/models/logbook_entry.dart';
-import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_lazy_panel.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 import 'package:simplelog/presentation/shared/widgets/delete_confirmation_dialog.dart';
-import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart';
 import 'aircraft_edit_screen.dart';
 import 'widgets/aircraft_search_bar.dart';
 import 'widgets/aircraft_list.dart';
@@ -95,8 +93,6 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
   Future<void> _showAircraftDetails(AircraftRow row) async {
     final l10n = AppLocalizations.of(context)!;
     final logbookUseCases = ref.read(logbookUseCasesProvider);
-    final entriesFuture =
-        logbookUseCases.fetchEntriesForAircraft(row.aircraft.id);
 
     await showDialog<void>(
       context: context,
@@ -130,37 +126,18 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
                       ),
                       const SizedBox(height: 8),
                       Expanded(
-                        child: FutureBuilder<List<LogbookEntry>>(
-                          future: entriesFuture,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            }
-                            final entries = snapshot.data ?? [];
-                            if (entries.isEmpty) {
-                              return Center(
-                                child: Text(l10n.emptyResults),
-                              );
-                            }
-                            return Column(
-                              children: [
-                                LogbookSummaryPanel(entries: entries),
-                                const SizedBox(height: 8),
-                                Expanded(
-                                  child: LogbookEntriesYearList(
-                                    entries: entries,
-                                    onEntryTap: (entry) => LogbookEntryDialogs.show(
-                                      context,
-                                      entry: entry,
-                                      useCases: logbookUseCases,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
+                        child: LogbookEntriesLazyPanel(
+                          pageLoader: (limit, offset) =>
+                              logbookUseCases.fetchEntriesForAircraftPage(
+                            row.aircraft.id,
+                            limit: limit,
+                            offset: offset,
+                          ),
+                          onEntryTap: (entry) => LogbookEntryDialogs.show(
+                            context,
+                            entry: entry,
+                            useCases: logbookUseCases,
+                          ),
                         ),
                       ),
                     ],

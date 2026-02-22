@@ -3,11 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/crew_extensions.dart';
 import 'package:simplelog/data/models/crew_row.dart';
-import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
-import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_lazy_panel.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
-import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CrewInfoDialog {
@@ -23,7 +21,6 @@ class CrewInfoDialog {
     final phoneDisplay = row.crew.formattedPhone;
     final email = (row.crew.email ?? '').trim();
     final notes = (row.crew.notes ?? '').trim();
-    final entriesFuture = useCases.fetchEntriesForCrew(row.crew.id);
 
     await showDialog<void>(
       context: context,
@@ -94,37 +91,18 @@ class CrewInfoDialog {
                       ),
                       const SizedBox(height: 8),
                       Expanded(
-                        child: FutureBuilder<List<LogbookEntry>>(
-                          future: entriesFuture,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            }
-                            final entries = snapshot.data ?? [];
-                            if (entries.isEmpty) {
-                              return Center(child: Text(l10n.emptyResults));
-                            }
-                            return Column(
-                              children: [
-                                LogbookSummaryPanel(entries: entries),
-                                const SizedBox(height: 8),
-                                Expanded(
-                                  child: LogbookEntriesYearList(
-                                    entries: entries,
-                                    onEntryTap: (entry) =>
-                                        LogbookEntryDialogs.show(
-                                      context,
-                                      entry: entry,
-                                      useCases: useCases,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
+                        child: LogbookEntriesLazyPanel(
+                          pageLoader: (limit, offset) =>
+                              useCases.fetchEntriesForCrewPage(
+                            row.crew.id,
+                            limit: limit,
+                            offset: offset,
+                          ),
+                          onEntryTap: (entry) => LogbookEntryDialogs.show(
+                            context,
+                            entry: entry,
+                            useCases: useCases,
+                          ),
                         ),
                       ),
                     ],

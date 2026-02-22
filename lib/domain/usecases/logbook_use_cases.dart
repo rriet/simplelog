@@ -209,12 +209,57 @@ class LogbookUseCases {
       _repository.fetchSimulatorCrewInfo(simulatorId);
   Future<List<LogbookEntry>> fetchEntriesForAirport(int airportId) =>
       _repository.fetchEntriesForAirport(airportId);
+  Future<List<LogbookEntry>> fetchEntriesForAirportPage(
+    int airportId, {
+    required int limit,
+    required int offset,
+  }) => _repository.fetchEntriesForAirportPage(
+    airportId,
+    limit: limit,
+    offset: offset,
+  );
   Future<List<LogbookEntry>> fetchEntriesForAircraft(int aircraftId) =>
       _repository.fetchEntriesForAircraft(aircraftId);
+  Future<List<LogbookEntry>> fetchEntriesForAircraftPage(
+    int aircraftId, {
+    required int limit,
+    required int offset,
+  }) => _repository.fetchEntriesForAircraftPage(
+    aircraftId,
+    limit: limit,
+    offset: offset,
+  );
   Future<List<LogbookEntry>> fetchEntriesForAircraftType(int aircraftTypeId) =>
       _repository.fetchEntriesForAircraftType(aircraftTypeId);
+  Future<List<LogbookEntry>> fetchEntriesForAircraftTypePage(
+    int aircraftTypeId, {
+    required int limit,
+    required int offset,
+  }) => _repository.fetchEntriesForAircraftTypePage(
+    aircraftTypeId,
+    limit: limit,
+    offset: offset,
+  );
+  Future<List<LogbookEntry>> fetchEntriesForAircraftTypeFamilyPage(
+    List<int> aircraftTypeIds, {
+    required int limit,
+    required int offset,
+  }) => _repository.fetchEntriesForAircraftTypeFamilyPage(
+    aircraftTypeIds,
+    limit: limit,
+    offset: offset,
+  );
   Future<List<LogbookEntry>> fetchEntriesForCrew(int crewId) =>
       _repository.fetchEntriesForCrew(crewId);
+  Future<List<LogbookEntry>> fetchEntriesForCrewPage(
+    int crewId, {
+    required int limit,
+    required int offset,
+  }) => _repository.fetchEntriesForCrewPage(
+    crewId,
+    limit: limit,
+    offset: offset,
+  );
 
   Future<void> deleteEntry(LogbookEntry entry) =>
       _repository.deleteEntry(entry);
