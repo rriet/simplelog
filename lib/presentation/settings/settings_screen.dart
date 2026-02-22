@@ -4,7 +4,6 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 
 import 'widgets/theme_mode_selector.dart';
-import 'widgets/seed_data_button.dart';
 import 'widgets/simulator_default_position_selector.dart';
 import 'widgets/flight_factoring_settings_card.dart';
 import 'widgets/time_fields_settings_tab.dart';
@@ -19,7 +18,7 @@ class SettingsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return DefaultTabController(
-      length: 5,
+      length: 4,
       child: Column(
         children: [
           const TabBar(
@@ -31,7 +30,6 @@ class SettingsScreen extends ConsumerWidget {
               Tab(text: 'Database'),
               Tab(text: 'Experience'),
               Tab(text: 'Time Fields'),
-              Tab(text: 'Developer'),
             ],
           ),
           Expanded(
@@ -55,17 +53,6 @@ class SettingsScreen extends ConsumerWidget {
                 const DatabaseScreen(),
                 const PreviousExperienceSettingsTab(),
                 const TimeFieldsSettingsTab(),
-                ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Text(
-                      l10n.settingsDeveloper,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    const SeedDataButton(),
-                  ],
-                ),
               ],
             ),
           ),

@@ -71,7 +71,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   _AnalysisGroupBy _analysisGroupBy = _AnalysisGroupBy.aircraft;
   _AnalysisOrderBy _analysisOrderBy = _AnalysisOrderBy.hours;
   late final TabController _tabController;
-  ReportPdfPageSize _selectedPageSize = ReportPdfPageSize.letter;
   List<_XslTemplateOption> _xslTemplateOptions = const [];
   _XslTemplateOption? _selectedTemplate;
   bool _showPathOnMap = true;
@@ -134,8 +133,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     setState(() {
       _xslTemplateOptions = options;
       _selectedTemplate ??= options.first;
-      _selectedPageSize =
-          (_selectedTemplate ?? options.first).template.defaultPageSize;
     });
   }
 
@@ -586,7 +583,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       final bytes = await pdfService.generateFromTemplate(
         template: templateConfig,
         entries: _entries,
-        selectedPageSize: _selectedPageSize,
         startingTotals: startingTotals,
       );
 
@@ -1237,34 +1233,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               SizedBox(
-                width: compact ? 180 : 150,
-                child: DropdownButtonFormField<ReportPdfPageSize>(
-                  initialValue: _selectedPageSize,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: l10n.reportsPageSizeLabel,
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  items: ReportPdfPageSize.values
-                      .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: _overflowText(value.label),
-                        ),
-                      )
-                      .toList(growable: false),
-                  selectedItemBuilder: (context) => ReportPdfPageSize.values
-                      .map((value) => _dropdownSelectedItem(value.label))
-                      .toList(growable: false),
-                  onChanged: (value) {
-                    if (_isGeneratingPdf) return;
-                    if (value == null) return;
-                    setState(() => _selectedPageSize = value);
-                  },
-                ),
-              ),
-              SizedBox(
                 width: compact ? 260 : 330,
                 child: DropdownButtonFormField<_XslTemplateOption>(
                   key: ValueKey(
@@ -1296,7 +1264,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                     if (value == null) return;
                     setState(() {
                       _selectedTemplate = value;
-                      _selectedPageSize = value.template.defaultPageSize;
                     });
                   },
                 ),

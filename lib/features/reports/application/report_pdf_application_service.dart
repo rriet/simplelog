@@ -136,10 +136,9 @@ class ReportPdfApplicationService {
   Future<Uint8List> generateFromTemplate({
     required ReportPdfTemplate template,
     required List<LogbookEntry> entries,
-    required ReportPdfPageSize selectedPageSize,
     required ReportTemplateTotals startingTotals,
   }) async {
-    final pageFormat = _resolvePageFormat(template, selectedPageSize);
+    final pageFormat = _resolvePageFormat(template);
     final rows = buildRows(entries);
     return _generatePdf(
       template: template,
@@ -428,9 +427,8 @@ class ReportPdfApplicationService {
 
   PdfPageFormat _resolvePageFormat(
     ReportPdfTemplate template,
-    ReportPdfPageSize selectedPageSize,
   ) {
-    final base = _pageFormatFor(selectedPageSize);
+    final base = _pageFormatFor(template.defaultPageSize);
     return template.forceLandscape ? base.landscape : base;
   }
 
