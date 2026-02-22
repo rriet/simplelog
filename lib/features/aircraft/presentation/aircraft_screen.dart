@@ -56,6 +56,21 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
     setState(() => _searchBy = selected);
   }
 
+  String _searchLabel(AppLocalizations l10n) {
+    switch (_searchBy) {
+      case AircraftSearchBy.all:
+        return l10n.searchAircraft;
+      case AircraftSearchBy.registration:
+        return 'Search Registration';
+      case AircraftSearchBy.type:
+        return 'Search Type';
+      case AircraftSearchBy.family:
+        return 'Search Family';
+      case AircraftSearchBy.notes:
+        return 'Search Notes';
+    }
+  }
+
   Future<void> _confirmDelete(AircraftRow row) async {
     final dataController = ref.read(aircraftDataControllerProvider.notifier);
     final validation = await dataController.validateDelete(row.aircraft);
@@ -289,7 +304,7 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
           children: [
             AircraftSearchBar(
               controller: _searchController,
-              label: l10n.searchAircraft,
+              label: _searchLabel(l10n),
               onChanged: (value) => setState(() => _query = value),
               trailing: IconButton(
                 tooltip: 'Filters',

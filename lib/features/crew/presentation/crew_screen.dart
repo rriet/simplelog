@@ -53,6 +53,21 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
     setState(() => _searchBy = selected);
   }
 
+  String _searchLabel(AppLocalizations l10n) {
+    switch (_searchBy) {
+      case CrewSearchBy.all:
+        return l10n.searchCrew;
+      case CrewSearchBy.name:
+        return 'Search Name';
+      case CrewSearchBy.email:
+        return 'Search Email';
+      case CrewSearchBy.phone:
+        return 'Search Phone';
+      case CrewSearchBy.notes:
+        return 'Search Notes';
+    }
+  }
+
   Future<void> _confirmDelete(CrewRow row) async {
     final dataController = ref.read(crewDataControllerProvider.notifier);
     final validation = await dataController.validateDelete(row.crew);
@@ -196,7 +211,7 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
       children: [
         CrewSearchBar(
           controller: _searchController,
-          label: l10n.searchCrew,
+          label: _searchLabel(l10n),
           onChanged: (value) => setState(() => _query = value),
           trailing: IconButton(
             tooltip: 'Filters',
