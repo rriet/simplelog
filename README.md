@@ -38,7 +38,7 @@ SimpleLog focuses on a practical cockpit-to-logbook workflow:
 - Automatic flight and duty calculations
 - Local-first storage with full user ownership
 - No server required for your logbook data
-- Database transfer between devices, even offline
+- **Direct database transfer between devices on your local network (LAN)**
 - Share one database across machines via your cloud folder
 - PDF report generation (EASA and Standard/Jeppesen formats)
 - Fast totals and analysis

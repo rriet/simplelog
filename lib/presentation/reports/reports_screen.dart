@@ -34,14 +34,19 @@ import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 enum ReportsPanelSection {
   /// Public API documentation.
   overview,
+
   /// Public API documentation.
   flights,
+
   /// Public API documentation.
   analizes,
+
   /// Public API documentation.
   reports,
+
   /// Public API documentation.
   filters,
+
   /// Public API documentation.
   totals,
 }
@@ -53,11 +58,13 @@ class _XslTemplateOption {
     required this.numberOfLines,
     required this.template,
   });
-/// Public API documentation.
+
+  /// Public API documentation.
 
   /// Public API documentation.
   final String fileName;
   final String description;
+
   /// Public API documentation.
   final int numberOfLines;
   final ReportPdfTemplate template;
@@ -122,15 +129,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       ..addAll(runtimeQuery.filters);
     _tabController = TabController(length: 3, vsync: this);
     unawaited(_loadTemplateOptions());
-    unawaited(_loadOverviewData());
-    if (widget.section == ReportsPanelSection.flights ||
-        widget.section == ReportsPanelSection.analizes ||
-        widget.section == ReportsPanelSection.reports) {
+    if (_shouldPreloadOverview(widget.section)) {
+      unawaited(_loadOverviewData());
+    }
+    if (_shouldPreloadDetails(widget.section)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final includeEntries =
-            widget.section == ReportsPanelSection.flights ||
-            widget.section == ReportsPanelSection.reports;
+        final includeEntries = widget.section == ReportsPanelSection.flights;
         unawaited(
           _ensureDetailsLoaded(
             includeEntries: includeEntries,
@@ -170,12 +175,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.section != widget.section &&
         widget.section != null &&
-        (widget.section == ReportsPanelSection.flights ||
-            widget.section == ReportsPanelSection.analizes ||
-            widget.section == ReportsPanelSection.reports)) {
-      final includeEntries =
-          widget.section == ReportsPanelSection.flights ||
-          widget.section == ReportsPanelSection.reports;
+        _shouldPreloadDetails(widget.section)) {
+      final includeEntries = widget.section == ReportsPanelSection.flights;
       unawaited(
         _ensureDetailsLoaded(
           includeEntries: includeEntries,
@@ -183,6 +184,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         ),
       );
     }
+  }
+
+  bool _shouldPreloadOverview(ReportsPanelSection? section) {
+    return section != ReportsPanelSection.reports;
+  }
+
+  bool _shouldPreloadDetails(ReportsPanelSection? section) {
+    return section == ReportsPanelSection.flights ||
+        section == ReportsPanelSection.analizes;
   }
 
   @override
@@ -894,10 +904,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       }
     }
 
-    final builtGroups = groups.entries
-        .map((entry) => _AnalysisGroup(title: entry.key, totals: entry.value))
-        .toList(growable: false)
-      ..sort(_analysisSortCompare);
+    final builtGroups =
+        groups.entries
+            .map(
+              (entry) => _AnalysisGroup(title: entry.key, totals: entry.value),
+            )
+            .toList(growable: false)
+          ..sort(_analysisSortCompare);
 
     if (!mounted || token != _analysisBuildToken) return;
     setState(() {

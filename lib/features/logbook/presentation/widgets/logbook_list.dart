@@ -12,7 +12,8 @@ abstract class LogbookListItemModel {
 
   /// Public API documentation.
   DateTime get sortDate;
-/// Public API documentation.
+
+  /// Public API documentation.
 }
 
 /// Public API documentation.
@@ -22,7 +23,8 @@ class LogbookEntryItem extends LogbookListItemModel {
 
   /// Public API documentation.
   final LogbookEntry entry;
-/// Public API documentation.
+
+  /// Public API documentation.
 
   @override
   DateTime get sortDate => entry.timeLine.eventDateTime;
@@ -33,36 +35,50 @@ class LogbookDutyGroupItem extends LogbookListItemModel {
   /// Public API documentation.
   const LogbookDutyGroupItem({
     required this.dutyId,
+
     /// Public API documentation.
     required this.start,
+
     /// Public API documentation.
     required this.end,
+
     /// Public API documentation.
     required this.entries,
+
     /// Public API documentation.
     required this.isLocked,
+
     /// Public API documentation.
     required this.dutyMinutes,
+
     /// Public API documentation.
     required this.factoredMinutes,
-  /// Public API documentation.
+
+    /// Public API documentation.
   });
 
   /// Public API documentation.
   final int dutyId;
+
   /// Public API documentation.
   final DateTime start;
+
   /// Public API documentation.
   final DateTime end;
+
   /// Public API documentation.
   final List<LogbookEntry> entries;
+
   /// Public API documentation.
   final bool isLocked;
+
   /// Public API documentation.
   final int dutyMinutes;
+
   /// Public API documentation.
   final int factoredMinutes;
-/// Public API documentation.
+
+  /// Public API documentation.
 
   /// Public API documentation.
   @override
@@ -81,8 +97,10 @@ class LogbookYearHeaderItem extends LogbookListItemModel {
   @override
   /// Public API documentation.
   DateTime get sortDate => _date;
-/// Public API documentation.
+
+  /// Public API documentation.
 }
+
 /// Public API documentation.
 
 /// Public API documentation.
@@ -91,8 +109,10 @@ class LogbookList extends StatefulWidget {
   const LogbookList({
     /// Public API documentation.
     required this.onOpenEntry,
+
     /// Public API documentation.
     required this.items,
+
     /// Public API documentation.
     required this.onEditEntry,
     required this.onDeleteEntry,
@@ -107,22 +127,31 @@ class LogbookList extends StatefulWidget {
 
   /// Public API documentation.
   final List<LogbookListItemModel> items;
+
   /// Public API documentation.
   final ValueChanged<LogbookEntry> onOpenEntry;
+
   /// Public API documentation.
   final ValueChanged<LogbookEntry> onEditEntry;
+
   /// Public API documentation.
   final ValueChanged<LogbookEntry> onDeleteEntry;
+
   /// Public API documentation.
   final ValueChanged<LogbookEntry> onToggleLockEntry;
+
   /// Public API documentation.
   final ValueChanged<LogbookDutyGroupItem> onEditDuty;
+
   /// Public API documentation.
   final ValueChanged<LogbookDutyGroupItem> onDeleteDuty;
+
   /// Public API documentation.
   final ValueChanged<LogbookDutyGroupItem> onToggleLockDuty;
+
   /// Public API documentation.
   final ValueChanged<int?> onYearChange;
+
   /// Public API documentation.
   final ScrollController? controller;
 
@@ -133,7 +162,9 @@ class LogbookList extends StatefulWidget {
 class _LogbookListState extends State<LogbookList> {
   final ScrollController _internalController = ScrollController();
   final Map<int, GlobalKey> _yearKeys = {};
+  final Map<int, GlobalKey> _itemKeys = {};
   final Map<int, double> _yearOffsets = {};
+  List<LogbookListItemModel> _displayItems = const [];
   int? _currentYear;
   static const double _stickyHeight = 40;
   bool _ownsController = true;
@@ -162,6 +193,7 @@ class _LogbookListState extends State<LogbookList> {
     }
     if (oldWidget.items != widget.items) {
       _yearOffsets.clear();
+      _itemKeys.clear();
       WidgetsBinding.instance.addPostFrameCallback((_) => _updateCurrentYear());
     }
   }
@@ -184,6 +216,17 @@ class _LogbookListState extends State<LogbookList> {
     if (!_controller.hasClients) return;
     final listBox = context.findRenderObject() as RenderBox?;
     if (listBox == null) return;
+
+    final visibleYear = _visibleYearFromBuiltItems(listBox);
+    if (visibleYear != null) {
+      if (visibleYear != _currentYear) {
+        _currentYear = visibleYear;
+        widget.onYearChange(visibleYear);
+        setState(() {});
+      }
+      return;
+    }
+
     final target = _controller.offset + _stickyHeight;
 
     _measureHeaders(listBox);
@@ -208,6 +251,39 @@ class _LogbookListState extends State<LogbookList> {
     }
   }
 
+  int? _visibleYearFromBuiltItems(RenderBox listBox) {
+    if (_displayItems.isEmpty) return null;
+
+    int? belowYear;
+    double? bestBelowDy;
+    int? aboveYear;
+    double? bestAboveDy;
+
+    for (final entry in _itemKeys.entries) {
+      final index = entry.key;
+      if (index < 0 || index >= _displayItems.length) continue;
+      final box = entry.value.currentContext?.findRenderObject() as RenderBox?;
+      if (box == null) continue;
+
+      final dy = box.localToGlobal(Offset.zero, ancestor: listBox).dy;
+      final year = _displayItems[index].sortDate.year;
+
+      if (dy >= _stickyHeight) {
+        if (bestBelowDy == null || dy < bestBelowDy) {
+          bestBelowDy = dy;
+          belowYear = year;
+        }
+      } else {
+        if (bestAboveDy == null || dy > bestAboveDy) {
+          bestAboveDy = dy;
+          aboveYear = year;
+        }
+      }
+    }
+
+    return belowYear ?? aboveYear;
+  }
+
   void _measureHeaders(RenderBox listBox) {
     _yearOffsets.clear();
     for (final entry in _yearKeys.entries) {
@@ -228,7 +304,9 @@ class _LogbookListState extends State<LogbookList> {
 
     final isCompact = MediaQuery.of(context).size.width < 600;
     final displayItems = _withYearHeaders(widget.items);
+    _displayItems = displayItems;
     _syncYearKeys(displayItems);
+    _syncItemKeys(displayItems.length);
 
     return Stack(
       children: [
@@ -237,29 +315,36 @@ class _LogbookListState extends State<LogbookList> {
           itemCount: displayItems.length,
           itemBuilder: (context, index) {
             final item = displayItems[index];
+            final itemKey = _itemKeys.putIfAbsent(index, GlobalKey.new);
             if (item is LogbookYearHeaderItem) {
               final key = _yearKeys.putIfAbsent(item.year, GlobalKey.new);
-              return _YearHeader(key: key, year: item.year);
+              return KeyedSubtree(
+                key: itemKey,
+                child: _YearHeader(key: key, year: item.year),
+              );
             }
-            return Column(
-              children: [
-                Divider(
-                  height: 1,
-                  thickness: 1.2,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.outlineVariant.withValues(alpha: 0.6),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(
-                    left: 12,
-                    right: 12,
-                    top: 6,
-                    bottom: 6,
+            return KeyedSubtree(
+              key: itemKey,
+              child: Column(
+                children: [
+                  Divider(
+                    height: 1,
+                    thickness: 1.2,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withValues(alpha: 0.6),
                   ),
-                  child: _buildItem(item, isCompact),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 12,
+                      right: 12,
+                      top: 6,
+                      bottom: 6,
+                    ),
+                    child: _buildItem(item, isCompact),
+                  ),
+                ],
+              ),
             );
           },
         ),
@@ -330,6 +415,10 @@ class _LogbookListState extends State<LogbookList> {
     if (_currentYear != null && !years.contains(_currentYear)) {
       _currentYear = null;
     }
+  }
+
+  void _syncItemKeys(int itemCount) {
+    _itemKeys.removeWhere((index, _) => index >= itemCount);
   }
 }
 

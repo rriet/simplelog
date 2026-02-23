@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:drift/drift.dart';
@@ -10,6 +11,7 @@ class DashboardRepository {
   DashboardRepository(this._db);
 
   final AppDatabase _db;
+
   /// Public API documentation.
   String? _cachedFlightsIfrColumnName;
 
@@ -17,7 +19,8 @@ class DashboardRepository {
   Stream<List<LimitRule>> watchRules() {
     return (_db.select(
       _db.limitRules,
-    /// Public API documentation.
+
+      /// Public API documentation.
     )..orderBy([(t) => OrderingTerm.asc(t.ruleName)])).watch();
   }
 
@@ -89,6 +92,7 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
         flightMinutes: _readInteger(flightsTotalsRow, 'flight_minutes'),
         nightMinutes: _readInteger(flightsTotalsRow, 'night_minutes'),
         ifrMinutes: _readInteger(flightsTotalsRow, 'ifr_minutes'),
+
         /// Public API documentation.
         instrumentMinutes: _readInteger(flightsTotalsRow, 'instrument_minutes'),
         dutyMinutes: _readInteger(dutyTotalsRow, 'duty_minutes'),
@@ -99,7 +103,7 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
 
   /// Public API documentation.
   Stream<List<DashboardRuleCard>> watchDashboardCards() {
-    return _db
+    final invalidations = _db
         .customSelect(
           'SELECT 1',
           readsFrom: {
@@ -109,8 +113,39 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
             _db.timeLines,
           },
         )
-        .watch()
-        .asyncMap((_) => _computeCards());
+        .watch();
+
+    return Stream.multi((controller) {
+      late final StreamSubscription<List<QueryRow>> subscription;
+      var isComputing = false;
+      var hasPendingRecompute = false;
+
+      Future<void> recompute() async {
+        if (isComputing) {
+          hasPendingRecompute = true;
+          return;
+        }
+
+        isComputing = true;
+        do {
+          hasPendingRecompute = false;
+          final cards = await _computeCards();
+          if (controller.isClosed) return;
+          controller.add(cards);
+        } while (hasPendingRecompute);
+        isComputing = false;
+      }
+
+      subscription = invalidations.listen(
+        (_) => unawaited(recompute()),
+        onError: controller.addError,
+        onDone: () => unawaited(controller.close()),
+      );
+
+      controller.onCancel = () async {
+        await subscription.cancel();
+      };
+    });
   }
 
   Future<List<DashboardRuleCard>> _computeCards() async {
