@@ -29,6 +29,7 @@ import 'package:simplelog/presentation/reports/providers/reports_repository_prov
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/time_input_field.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Public API documentation.
 enum ReportsPanelSection {
@@ -110,6 +111,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   bool _analysisLoading = false;
   int _analysisBuildToken = 0;
   List<_AnalysisGroup> _analysisGroups = const [];
+  ProviderSubscription<String?>? _selectedTemplateSubscription;
 
   ReportsData _data = const ReportsData(
     totals: ReportsTotals.zero(),
@@ -127,6 +129,20 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     _filters
       ..clear()
       ..addAll(runtimeQuery.filters);
+    _selectedTemplateSubscription = ref.listenManual<String?>(
+      selectedReportTemplateFileNameProvider,
+      (_, next) {
+        if (!mounted || next == null || next.isEmpty) return;
+        if (_xslTemplateOptions.isEmpty) return;
+        final matched = _xslTemplateOptions.where(
+          (option) => option.fileName == next,
+        );
+        if (matched.isEmpty) return;
+        final template = matched.first;
+        if (_selectedTemplate?.fileName == template.fileName) return;
+        setState(() => _selectedTemplate = template);
+      },
+    );
     _tabController = TabController(length: 3, vsync: this);
     unawaited(_loadTemplateOptions());
     if (_shouldPreloadOverview(widget.section)) {
@@ -164,9 +180,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (options.isEmpty) {
       return;
     }
+    final preferredTemplateFileName = ref.read(
+      selectedReportTemplateFileNameProvider,
+    );
+    final preferred = options.where((option) {
+      return option.fileName == preferredTemplateFileName;
+    });
     setState(() {
       _xslTemplateOptions = options;
-      _selectedTemplate ??= options.first;
+      _selectedTemplate = preferred.isNotEmpty
+          ? preferred.first
+          : (_selectedTemplate ?? options.first);
     });
   }
 
@@ -197,6 +221,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   @override
   void dispose() {
+    _selectedTemplateSubscription?.close();
     _tabController.dispose();
     super.dispose();
   }
@@ -755,20 +780,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       );
 
       await _setPdfGenerationProgress(l10n.reportsPdfSaving, progress: 0.85);
-      final timestamp = DateTime.now()
-          .toUtc()
-          .toIso8601String()
-          .replaceAll(':', '')
-          .replaceAll('-', '')
-          .split('.')
-          .first;
       final path = await _savePdfBytes(
         bytes: bytes,
-        fileName: 'simplelog_report_$timestamp.pdf',
+        fileName: _buildPdfFileName(selectedTemplate),
       );
       if (!mounted) return;
+      if (path == null) return;
       await _setPdfGenerationProgress(l10n.reportsPdfDone, progress: 1);
-      await _showInfoDialog(l10n.reportsPdfExported(path));
+      final openPdfAfterSaving = ref.read(openPdfAfterSavingProvider);
+      if (openPdfAfterSaving) {
+        await _openExportedFile(path);
+      } else {
+        _showPdfExportToast(path);
+      }
     } on Object catch (error, stackTrace) {
       debugPrint('PDF generation failed: $error');
       debugPrintStack(stackTrace: stackTrace);
@@ -802,6 +826,51 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   Future<void> _showInfoDialog(String message) async {
     if (!mounted) return;
     await showAppMessageDialog(context, message: message);
+  }
+
+  void _showPdfExportToast(String path) {
+    final fileName = _fileNameFromPath(path);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: GestureDetector(
+            onTap: messenger.hideCurrentSnackBar,
+            behavior: HitTestBehavior.opaque,
+            child: Text('Report exported: $fileName'),
+          ),
+        ),
+      );
+  }
+
+  String _fileNameFromPath(String path) {
+    final separator = Platform.pathSeparator;
+    final index = path.lastIndexOf(separator);
+    if (index < 0 || index + 1 >= path.length) return path;
+    return path.substring(index + 1);
+  }
+
+  Future<void> _openExportedFile(String path) async {
+    try {
+      if (Platform.isMacOS) {
+        await Process.run('open', [path]);
+        return;
+      }
+      if (Platform.isWindows) {
+        await Process.run('explorer', [path]);
+        return;
+      }
+      if (Platform.isLinux) {
+        await Process.run('xdg-open', [path]);
+        return;
+      }
+      final uri = Uri.file(path);
+      await launchUrl(uri);
+    } on Object {
+      // Best effort only.
+    }
   }
 
   Future<ReportTemplateTotals> _loadStandardStartingTotals(
@@ -838,13 +907,36 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     return service.sumTotals(rows);
   }
 
-  Future<String> _savePdfBytes({
+  String _buildPdfFileName(_XslTemplateOption selectedTemplate) {
+    final rawDescription = selectedTemplate.description.trim();
+    final lower = rawDescription.toLowerCase();
+    final reportTitle = switch (lower) {
+      final value when value.contains('easa') => 'EASA',
+      final value
+          when value.contains('standard') || value.contains('jeppesen') =>
+        'Standard',
+      _ => rawDescription.isEmpty ? 'Report' : rawDescription,
+    };
+    var safeTitle = reportTitle
+        .replaceAll(RegExp('[^a-zA-Z0-9]+'), '-')
+        .replaceAll(RegExp('-+'), '-');
+    while (safeTitle.startsWith('-')) {
+      safeTitle = safeTitle.substring(1);
+    }
+    while (safeTitle.endsWith('-')) {
+      safeTitle = safeTitle.substring(0, safeTitle.length - 1);
+    }
+    final datePart = DateFormat('yyyy-MM-dd').format(DateTime.now().toUtc());
+    return 'SimpleLog-$safeTitle $datePart.pdf';
+  }
+
+  Future<String?> _savePdfBytes({
     required Uint8List bytes,
     required String fileName,
   }) async {
     final l10n = AppLocalizations.of(context)!;
     String? path;
-    if (Platform.isIOS || Platform.isAndroid) {
+    try {
       path = await FilePicker.platform.saveFile(
         dialogTitle: l10n.reportsSavePdfDialogTitle,
         fileName: fileName,
@@ -852,19 +944,24 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         allowedExtensions: const ['pdf'],
         bytes: bytes,
       );
-      if (path == null || path.isEmpty) {
-        return l10n.reportsCancelled;
+    } on Object {
+      // On some desktop providers saveFile may not be implemented.
+      if (Platform.isIOS || Platform.isAndroid) {
+        return null;
       }
-      return path;
+      final directory = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: l10n.reportsSavePdfDialogTitle,
+      );
+      if (directory == null || directory.isEmpty) {
+        return null;
+      }
+      path = '$directory${Platform.pathSeparator}$fileName';
     }
 
-    final directory = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: l10n.reportsChooseExportFolderTitle,
-    );
-    if (directory == null || directory.isEmpty) {
-      return l10n.reportsCancelled;
+    if (path == null || path.isEmpty) {
+      return null;
     }
-    path = '$directory${Platform.pathSeparator}$fileName';
+
     try {
       await File(path).writeAsBytes(bytes, flush: true);
     } on FileSystemException {
@@ -1365,6 +1462,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   Widget _buildReportsControls({required bool compact}) {
     final l10n = AppLocalizations.of(context)!;
     final includeHoursBefore = ref.watch(includeHoursBeforeProvider);
+    final openPdfAfterSaving = ref.watch(openPdfAfterSavingProvider);
     return Align(
       alignment: Alignment.centerLeft,
       child: Column(
@@ -1468,6 +1566,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                     setState(() {
                       _selectedTemplate = value;
                     });
+                    unawaited(
+                      ref
+                          .read(selectedReportTemplateFileNameProvider.notifier)
+                          .setValue(value: value.fileName),
+                    );
                   },
                 ),
               ),
@@ -1485,6 +1588,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                       ? l10n.reportsGeneratingShort
                       : l10n.reportsGeneratePdf,
                 ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Open PDF after saving'),
+                  const SizedBox(width: 6),
+                  Switch(
+                    value: openPdfAfterSaving,
+                    onChanged: _isGeneratingPdf
+                        ? null
+                        : (value) => ref
+                              .read(openPdfAfterSavingProvider.notifier)
+                              .setValue(value: value),
+                  ),
+                ],
               ),
             ],
           ),

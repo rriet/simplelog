@@ -9,19 +9,35 @@ import 'package:simplelog/data/models/reports_models.dart';
 const _reportsPreferencesFileName = 'reports_preferences.json';
 const _savedReportsQueriesFileName = 'saved_reports_queries.json';
 const _reportsEventTypesFileName = 'reports_event_types.json';
+const _selectedReportTemplateFileNameKey = 'selectedReportTemplateFileName';
+const _openPdfAfterSavingKey = 'openPdfAfterSaving';
 
 /// Public API documentation.
 final includePreviousExperienceProvider =
     NotifierProvider<IncludePreviousExperienceNotifier, bool>(
       IncludePreviousExperienceNotifier.new,
     );
+
 /// Public API documentation.
 
 /// Public API documentation.
 final includeHoursBeforeProvider =
     NotifierProvider<IncludeHoursBeforeNotifier, bool>(
       IncludeHoursBeforeNotifier.new,
-    /// Public API documentation.
+
+      /// Public API documentation.
+    );
+
+/// Public API documentation.
+final selectedReportTemplateFileNameProvider =
+    NotifierProvider<SelectedReportTemplateFileNameNotifier, String?>(
+      SelectedReportTemplateFileNameNotifier.new,
+    );
+
+/// Public API documentation.
+final openPdfAfterSavingProvider =
+    NotifierProvider<OpenPdfAfterSavingNotifier, bool>(
+      OpenPdfAfterSavingNotifier.new,
     );
 
 /// Public API documentation.
@@ -29,6 +45,7 @@ class IncludePreviousExperienceNotifier extends Notifier<bool> {
   @override
   bool build() {
     unawaited(_load());
+
     /// Public API documentation.
     return true;
   }
@@ -81,6 +98,7 @@ class IncludePreviousExperienceNotifier extends Notifier<bool> {
 
   Future<File> _file() async {
     final dir = await getApplicationDocumentsDirectory();
+
     /// Public API documentation.
     return File('${dir.path}/$_reportsPreferencesFileName');
   }
@@ -147,7 +165,136 @@ class IncludeHoursBeforeNotifier extends Notifier<bool> {
     return File('${dir.path}/$_reportsPreferencesFileName');
   }
 }
+
 /// Public API documentation.
+
+/// Public API documentation.
+class SelectedReportTemplateFileNameNotifier extends Notifier<String?> {
+  @override
+  String? build() {
+    unawaited(_load());
+    return null;
+  }
+
+  /// Public API documentation.
+  Future<void> setValue({required String? value}) async {
+    state = value;
+    await _save(value);
+  }
+
+  Future<void> _load() async {
+    try {
+      final file = await _file();
+      if (!file.existsSync()) return;
+      final raw = file.readAsStringSync();
+      final data = jsonDecode(raw) as Map<String, dynamic>;
+      final value = data[_selectedReportTemplateFileNameKey];
+      if (value is String && value.trim().isNotEmpty) {
+        state = value.trim();
+      }
+    } on Object catch (_) {
+      // Keep default value.
+    }
+  }
+
+  Future<void> _save(String? value) async {
+    try {
+      final file = await _file();
+      var current = <String, dynamic>{};
+      if (file.existsSync()) {
+        try {
+          final raw = file.readAsStringSync();
+          final decoded = jsonDecode(raw);
+          if (decoded is Map<String, dynamic>) {
+            current = decoded;
+          } else if (decoded is Map) {
+            current = Map<String, dynamic>.from(decoded);
+          }
+        } on Object catch (_) {
+          current = <String, dynamic>{};
+        }
+      }
+      if (value == null || value.trim().isEmpty) {
+        current.remove(_selectedReportTemplateFileNameKey);
+      } else {
+        current[_selectedReportTemplateFileNameKey] = value.trim();
+      }
+      await file.writeAsString(
+        jsonEncode(current),
+        flush: true,
+      );
+    } on Object catch (_) {
+      // Best effort persistence.
+    }
+  }
+
+  Future<File> _file() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File('${dir.path}/$_reportsPreferencesFileName');
+  }
+}
+
+/// Public API documentation.
+class OpenPdfAfterSavingNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    unawaited(_load());
+    return true;
+  }
+
+  /// Public API documentation.
+  Future<void> setValue({required bool value}) async {
+    state = value;
+    await _save(value);
+  }
+
+  Future<void> _load() async {
+    try {
+      final file = await _file();
+      if (!file.existsSync()) return;
+      final raw = file.readAsStringSync();
+      final data = jsonDecode(raw) as Map<String, dynamic>;
+      final value = data[_openPdfAfterSavingKey];
+      if (value is bool) {
+        state = value;
+      }
+    } on Object catch (_) {
+      // Keep default value.
+    }
+  }
+
+  Future<void> _save(bool value) async {
+    try {
+      final file = await _file();
+      var current = <String, dynamic>{};
+      if (file.existsSync()) {
+        try {
+          final raw = file.readAsStringSync();
+          final decoded = jsonDecode(raw);
+          if (decoded is Map<String, dynamic>) {
+            current = decoded;
+          } else if (decoded is Map) {
+            current = Map<String, dynamic>.from(decoded);
+          }
+        } on Object catch (_) {
+          current = <String, dynamic>{};
+        }
+      }
+      current[_openPdfAfterSavingKey] = value;
+      await file.writeAsString(
+        jsonEncode(current),
+        flush: true,
+      );
+    } on Object catch (_) {
+      // Best effort persistence.
+    }
+  }
+
+  Future<File> _file() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File('${dir.path}/$_reportsPreferencesFileName');
+  }
+}
 
 /// Public API documentation.
 final savedReportsQueriesProvider =
@@ -167,6 +314,7 @@ class SavedReportsQueriesNotifier extends Notifier<List<SavedReportsQuery>> {
   Future<void> addQuery(SavedReportsQuery query) async {
     final current = [...state];
     final index = current.indexWhere((item) => item.id == query.id);
+
     /// Public API documentation.
     if (index >= 0) {
       current[index] = query;
@@ -242,13 +390,17 @@ class ReportsEventTypesSelection {
   /// Public API documentation.
   const ReportsEventTypesSelection({
     this.flights = true,
+
     /// Public API documentation.
     this.simulator = true,
+
     /// Public API documentation.
     this.duty = true,
+
     /// Public API documentation.
     this.positioning = false,
-  /// Public API documentation.
+
+    /// Public API documentation.
   });
 
   /// Public API documentation.
@@ -263,10 +415,13 @@ class ReportsEventTypesSelection {
 
   /// Public API documentation.
   final bool flights;
+
   /// Public API documentation.
   final bool simulator;
+
   /// Public API documentation.
   final bool duty;
+
   /// Public API documentation.
   final bool positioning;
 
@@ -275,6 +430,7 @@ class ReportsEventTypesSelection {
     bool? flights,
     bool? simulator,
     bool? duty,
+
     /// Public API documentation.
     bool? positioning,
   }) {
@@ -283,7 +439,8 @@ class ReportsEventTypesSelection {
       simulator: simulator ?? this.simulator,
       duty: duty ?? this.duty,
       positioning: positioning ?? this.positioning,
-    /// Public API documentation.
+
+      /// Public API documentation.
     );
   }
 
@@ -322,7 +479,8 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
       state = ReportsEventTypesSelection.fromJson(
         Map<String, dynamic>.from(decoded),
       );
-    /// Public API documentation.
+
+      /// Public API documentation.
     } on Object catch (_) {
       /// Public API documentation.
       // Keep defaults.
@@ -332,17 +490,20 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
   Future<void> _save(ReportsEventTypesSelection value) async {
     try {
       final file = await _file();
+
       /// Public API documentation.
       await file.writeAsString(
         /// Public API documentation.
         jsonEncode(value.toJson()),
+
         /// Public API documentation.
         flush: true,
-      /// Public API documentation.
+
+        /// Public API documentation.
       );
     } on Object catch (_) {
       // Best effort persistence.
-    /// Public API documentation.
+      /// Public API documentation.
     }
   }
 
@@ -360,19 +521,25 @@ class ReportsRuntimeQueryState {
     required this.to,
     required this.matchMode,
     required this.filters,
-  /// Public API documentation.
+
+    /// Public API documentation.
   });
-/// Public API documentation.
+
+  /// Public API documentation.
 
   /// Public API documentation.
   final DateTime from;
+
   /// Public API documentation.
   final DateTime to;
+
   /// Public API documentation.
   final ReportsFilterMatchMode matchMode;
+
   /// Public API documentation.
   final List<ReportsFilterCondition> filters;
 }
+
 /// Public API documentation.
 
 /// Public API documentation.
@@ -403,20 +570,27 @@ class SavedReportsQuery {
   const SavedReportsQuery({
     /// Public API documentation.
     required this.id,
+
     /// Public API documentation.
     required this.name,
+
     /// Public API documentation.
     required this.from,
+
     /// Public API documentation.
     required this.to,
+
     /// Public API documentation.
     required this.includePreviousExperience,
+
     /// Public API documentation.
     required this.filterMatchMode,
+
     /// Public API documentation.
     required this.filters,
   });
-/// Public API documentation.
+
+  /// Public API documentation.
 
   /// Public API documentation.
   factory SavedReportsQuery.fromJson(Map<String, dynamic> json) {
@@ -445,16 +619,22 @@ class SavedReportsQuery {
 
   /// Public API documentation.
   final String id;
+
   /// Public API documentation.
   final String name;
+
   /// Public API documentation.
   final DateTime from;
+
   /// Public API documentation.
   final DateTime to;
+
   /// Public API documentation.
   final bool includePreviousExperience;
+
   /// Public API documentation.
   final ReportsFilterMatchMode filterMatchMode;
+
   /// Public API documentation.
   final List<ReportsFilterCondition> filters;
 

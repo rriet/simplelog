@@ -32,8 +32,12 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final menuBackground = Theme.of(
+      context,
+    ).colorScheme.surfaceContainerHighest;
 
     return Drawer(
+      backgroundColor: menuBackground,
       shape: const RoundedRectangleBorder(),
       child: SafeArea(
         child: ListView(

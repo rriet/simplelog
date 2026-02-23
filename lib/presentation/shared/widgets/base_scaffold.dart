@@ -23,10 +23,23 @@ class BaseScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final drawerTitleStyle = theme.textTheme.titleLarge;
+    final menuBackground = theme.colorScheme.surfaceContainerHighest;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.homeTitle),
+        backgroundColor: menuBackground,
+        surfaceTintColor: menuBackground,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(
+          l10n.homeTitle,
+          style: drawerTitleStyle?.copyWith(
+            fontSize: 18,
+            color: drawerTitleStyle.color,
+          ),
+        ),
         actions: const [
           LanguageMenu(),
         ],
