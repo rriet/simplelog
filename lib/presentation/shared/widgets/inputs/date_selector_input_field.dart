@@ -33,22 +33,17 @@ class DateSelectorInputField extends StatelessWidget {
           labelText: label,
           border: const OutlineInputBorder(),
           errorText: errorText,
+          contentPadding: const EdgeInsetsDirectional.fromSTEB(
+            12,
+            10,
+            6,
+            10,
+          ),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                valueText,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Icon(
-              Icons.calendar_today,
-              size: 18,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ],
+        child: Text(
+          valueText,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );

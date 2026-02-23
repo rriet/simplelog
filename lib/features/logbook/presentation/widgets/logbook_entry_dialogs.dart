@@ -6,6 +6,7 @@ import 'package:simplelog/data/models/crew_info_item.dart';
 import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
+import 'package:simplelog/features/airports/presentation/widgets/airport_details_dialog.dart';
 import 'package:simplelog/features/crew/presentation/widgets/crew_info_dialog.dart';
 
 /// Public API documentation.
@@ -247,8 +248,10 @@ class LogbookEntryDialogs {
     final typeName =
         entry.aircraftType?.longName ?? entry.aircraftType?.code ?? '-';
     final tail = entry.aircraft?.registration ?? '-';
-    final dep = entry.departureAirport?.icao ?? '-';
-    final arr = entry.arrivalAirport?.icao ?? '-';
+    final depAirport = entry.departureAirport;
+    final arrAirport = entry.arrivalAirport;
+    final dep = depAirport?.icao ?? '-';
+    final arr = arrAirport?.icao ?? '-';
     final blockTime = '${_formatMinutes(flight.timeBlockMinutes)}h';
     final remarks = flight.remarks.trim();
     final notes = flight.notes.trim();
@@ -357,6 +360,13 @@ class LogbookEntryDialogs {
                               child: _PositioningInfoValue(
                                 label: 'From',
                                 value: dep,
+                                onTap: depAirport == null
+                                    ? null
+                                    : () => _showAirportInfo(
+                                          dialogContext,
+                                          depAirport,
+                                          useCases,
+                                        ),
                               ),
                             ),
                             Expanded(
@@ -374,6 +384,13 @@ class LogbookEntryDialogs {
                                 label: 'To',
                                 value: arr,
                                 alignEnd: true,
+                                onTap: arrAirport == null
+                                    ? null
+                                    : () => _showAirportInfo(
+                                          dialogContext,
+                                          arrAirport,
+                                          useCases,
+                                        ),
                               ),
                             ),
                           ],
@@ -702,6 +719,18 @@ class LogbookEntryDialogs {
       useCases: useCases,
     );
   }
+
+  static Future<void> _showAirportInfo(
+    BuildContext context,
+    Airport airport,
+    LogbookUseCases useCases,
+  ) async {
+    await showAirportDetailsDialog(
+      context,
+      airport: airport,
+      logbookUseCases: useCases,
+    );
+  }
 }
 
 class _PositioningInfoCard extends StatelessWidget {
@@ -728,16 +757,18 @@ class _PositioningInfoValue extends StatelessWidget {
     required this.label,
     required this.value,
     this.alignEnd = false,
+    this.onTap,
   });
 
   final String label;
   final String value;
   final bool alignEnd;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
+    final content = Column(
       crossAxisAlignment: alignEnd
           ? CrossAxisAlignment.end
           : CrossAxisAlignment.start,
@@ -752,9 +783,18 @@ class _PositioningInfoValue extends StatelessWidget {
         Text(
           value,
           textAlign: alignEnd ? TextAlign.end : TextAlign.start,
-          style: theme.textTheme.titleMedium,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: onTap == null ? null : theme.colorScheme.primary,
+          ),
         ),
       ],
+    );
+    if (onTap == null) {
+      return content;
+    }
+    return InkWell(
+      onTap: onTap,
+      child: content,
     );
   }
 }

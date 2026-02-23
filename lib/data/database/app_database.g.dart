@@ -379,19 +379,46 @@ class $AircraftTypesTable extends AircraftTypes
 }
 
 class AircraftType extends DataClass implements Insertable<AircraftType> {
+  /// Public API documentation.
   final int id;
+
+  /// Public API documentation.
   final String code;
+
+  /// Public API documentation.
   final String family;
+
+  /// Public API documentation.
   final String longName;
+
+  /// Public API documentation.
   final String? manufacturer;
+
+  /// Public API documentation.
   final AircraftCategory category;
+
+  /// Public API documentation.
   final EngineType engineType;
+
+  /// Public API documentation.
   final int mtow;
+
+  /// Public API documentation.
   final int engineCount;
+
+  /// Public API documentation.
   final bool multiPilot;
+
+  /// Public API documentation.
   final bool complex;
+
+  /// Public API documentation.
   final bool efis;
+
+  /// Public API documentation.
   final bool highPerformance;
+
+  /// Public API documentation.
   final bool isLocked;
   const AircraftType({
     required this.id,
@@ -1063,13 +1090,28 @@ class $AircraftsTable extends Aircrafts
 }
 
 class Aircraft extends DataClass implements Insertable<Aircraft> {
+  /// Public API documentation.
   final int id;
+
+  /// Public API documentation.
   final int aircraftTypeId;
+
+  /// Public API documentation.
   final String registration;
+
+  /// Public API documentation.
   final int? mtow;
+
+  /// Public API documentation.
   final bool isSimulator;
+
+  /// Public API documentation.
   final bool isFavorite;
+
+  /// Public API documentation.
   final bool isLocked;
+
+  /// Public API documentation.
   final String? notes;
   const Aircraft({
     required this.id,
@@ -1614,15 +1656,34 @@ class $AirportsTable extends Airports with TableInfo<$AirportsTable, Airport> {
 }
 
 class Airport extends DataClass implements Insertable<Airport> {
+  /// Public API documentation.
   final int id;
+
+  /// Public API documentation.
   final String icao;
+
+  /// Public API documentation.
   final String? iata;
+
+  /// Public API documentation.
   final String? name;
+
+  /// Public API documentation.
   final String? city;
+
+  /// Public API documentation.
   final String? country;
+
+  /// Public API documentation.
   final double latitude;
+
+  /// Public API documentation.
   final double longitude;
+
+  /// Public API documentation.
   final bool isFavorite;
+
+  /// Public API documentation.
   final bool isLocked;
   const Airport({
     required this.id,
@@ -2029,7 +2090,10 @@ class $TimeLinesTable extends TimeLines
 }
 
 class TimeLine extends DataClass implements Insertable<TimeLine> {
+  /// Public API documentation.
   final int id;
+
+  /// Public API documentation.
   final DateTime eventDateTime;
   const TimeLine({required this.id, required this.eventDateTime});
   @override
@@ -3169,42 +3233,115 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
 }
 
 class Flight extends DataClass implements Insertable<Flight> {
+  /// Public API documentation.
   final int id;
+
+  /// Public API documentation.
   final int aircraftId;
+
+  /// Public API documentation.
   final int departureAirportId;
+
+  /// Public API documentation.
   final int arrivalAirportId;
+
+  /// Public API documentation.
   final int departureDateTimeId;
+
+  /// Public API documentation.
   final DateTime? takeOffDateTime;
+
+  /// Public API documentation.
   final DateTime? landingDateTime;
+
+  /// Public API documentation.
   final DateTime? arrivalDateTime;
+
+  /// Public API documentation.
   final int timePICMinutes;
+
+  /// Public API documentation.
   final int timePICUSMinutes;
+
+  /// Public API documentation.
   final int timeSICMinutes;
+
+  /// Public API documentation.
   final int timeDualMinutes;
+
+  /// Public API documentation.
   final int timeInstructorMinutes;
+
+  /// Public API documentation.
   final int timeIFRMinutes;
+
+  /// Public API documentation.
   final int timeInstrumentMinutes;
+
+  /// Public API documentation.
   final int timeSimulatedInstrumentMinutes;
+
+  /// Public API documentation.
   final int timeNightMinutes;
+
+  /// Public API documentation.
   final int timeCrossCountryMinutes;
+
+  /// Public API documentation.
   final int timeCustom1Minutes;
+
+  /// Public API documentation.
   final int timeCustom2Minutes;
+
+  /// Public API documentation.
   final int timeCustom3Minutes;
+
+  /// Public API documentation.
   final int timeCustom4Minutes;
+
+  /// Public API documentation.
   final int timeFlightMinutes;
+
+  /// Public API documentation.
   final int timeBlockMinutes;
+
+  /// Public API documentation.
   final int timeTotalBlockMinutes;
+
+  /// Public API documentation.
   final int distanceNM;
+
+  /// Public API documentation.
   final int ifrApproaches;
+
+  /// Public API documentation.
   final int takeOffsDays;
+
+  /// Public API documentation.
   final int takeOffsNight;
+
+  /// Public API documentation.
   final int landingsDay;
+
+  /// Public API documentation.
   final int landingsNight;
+
+  /// Public API documentation.
   final String pilotFunction;
+
+  /// Public API documentation.
   final String approachType;
+
+  /// Public API documentation.
   final String remarks;
+
+  /// Public API documentation.
   final String notes;
+
+  /// Public API documentation.
   final bool isLocked;
+
+  /// Public API documentation.
   final Uint8List? signatureImage;
   const Flight({
     required this.id,
@@ -4655,19 +4792,46 @@ class $LimitRulesTable extends LimitRules
 }
 
 class LimitRule extends DataClass implements Insertable<LimitRule> {
+  /// Public API documentation.
   final int ruleId;
+
+  /// Public API documentation.
   final String ruleName;
+
+  /// Public API documentation.
   final String metric;
+
+  /// Public API documentation.
   final String ruleType;
+
+  /// Public API documentation.
   final String windowType;
+
+  /// Public API documentation.
   final int windowValue;
+
+  /// Public API documentation.
   final double limitValue;
+
+  /// Public API documentation.
   final String limitUnit;
+
+  /// Public API documentation.
   final double warnYellowBefore;
+
+  /// Public API documentation.
   final double warnRedBefore;
+
+  /// Public API documentation.
   final String warnYellowColor;
+
+  /// Public API documentation.
   final String warnRedColor;
+
+  /// Public API documentation.
   final bool active;
+
+  /// Public API documentation.
   final String? notes;
   const LimitRule({
     required this.ruleId,
@@ -5247,10 +5411,19 @@ class $RuleSnapshotsTable extends RuleSnapshots
 }
 
 class RuleSnapshot extends DataClass implements Insertable<RuleSnapshot> {
+  /// Public API documentation.
   final int snapshotId;
+
+  /// Public API documentation.
   final int ruleId;
+
+  /// Public API documentation.
   final DateTime computedAt;
+
+  /// Public API documentation.
   final double currentValue;
+
+  /// Public API documentation.
   final String status;
   const RuleSnapshot({
     required this.snapshotId,
@@ -5699,13 +5872,28 @@ class $PositioningsTable extends Positionings
 }
 
 class Positioning extends DataClass implements Insertable<Positioning> {
+  /// Public API documentation.
   final int id;
+
+  /// Public API documentation.
   final int departurePlaceId;
+
+  /// Public API documentation.
   final int arrivalPlaceId;
+
+  /// Public API documentation.
   final int departureDateTimeId;
+
+  /// Public API documentation.
   final DateTime? arrivalDateTime;
+
+  /// Public API documentation.
   final int timeTotalMinutes;
+
+  /// Public API documentation.
   final String notes;
+
+  /// Public API documentation.
   final bool isLocked;
   const Positioning({
     required this.id,
@@ -6235,6 +6423,18 @@ class $PreviousExperiencesTable extends PreviousExperiences
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _flightCountMeta = const VerificationMeta(
+    'flightCount',
+  );
+  @override
+  late final GeneratedColumn<int> flightCount = GeneratedColumn<int>(
+    'flight_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _ifrApproachesMeta = const VerificationMeta(
     'ifrApproaches',
   );
@@ -6314,6 +6514,7 @@ class $PreviousExperiencesTable extends PreviousExperiences
     timeBlockMinutes,
     timeSimulatorMinutes,
     distanceNM,
+    flightCount,
     ifrApproaches,
     takeOffsDays,
     takeOffsNight,
@@ -6562,6 +6763,15 @@ class $PreviousExperiencesTable extends PreviousExperiences
     } else if (isInserting) {
       context.missing(_distanceNMMeta);
     }
+    if (data.containsKey('flight_count')) {
+      context.handle(
+        _flightCountMeta,
+        flightCount.isAcceptableOrUnknown(
+          data['flight_count']!,
+          _flightCountMeta,
+        ),
+      );
+    }
     if (data.containsKey('ifr_approaches')) {
       context.handle(
         _ifrApproachesMeta,
@@ -6714,6 +6924,10 @@ class $PreviousExperiencesTable extends PreviousExperiences
         DriftSqlType.int,
         data['${effectivePrefix}distance_n_m'],
       )!,
+      flightCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}flight_count'],
+      )!,
       ifrApproaches: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}ifr_approaches'],
@@ -6745,32 +6959,88 @@ class $PreviousExperiencesTable extends PreviousExperiences
 
 class PreviousExperience extends DataClass
     implements Insertable<PreviousExperience> {
+  /// Public API documentation.
   final int id;
+
+  /// Public API documentation.
   final int aircraftTypeId;
+
+  /// Public API documentation.
   final DateTime? dateTimeFirstFlight;
+
+  /// Public API documentation.
   final DateTime? dateTimeLastFlight;
+
+  /// Public API documentation.
   final int timePICMinutes;
+
+  /// Public API documentation.
   final int timePICUSMinutes;
+
+  /// Public API documentation.
   final int timeSICMinutes;
+
+  /// Public API documentation.
   final int timeDualMinutes;
+
+  /// Public API documentation.
   final int timeInstructorMinutes;
+
+  /// Public API documentation.
   final int timeIFRMinutes;
+
+  /// Public API documentation.
   final int timeInstrumentMinutes;
+
+  /// Public API documentation.
   final int timeSimulatedInstrumentMinutes;
+
+  /// Public API documentation.
   final int timeNightMinutes;
+
+  /// Public API documentation.
   final int timeCrossCountryMinutes;
+
+  /// Public API documentation.
   final int timeCustom1Minutes;
+
+  /// Public API documentation.
   final int timeCustom2Minutes;
+
+  /// Public API documentation.
   final int timeCustom3Minutes;
+
+  /// Public API documentation.
   final int timeCustom4Minutes;
+
+  /// Public API documentation.
   final int timeFlightMinutes;
+
+  /// Public API documentation.
   final int timeBlockMinutes;
+
+  /// Public API documentation.
   final int timeSimulatorMinutes;
+
+  /// Public API documentation.
   final int distanceNM;
+
+  /// Public API documentation.
+  final int flightCount;
+
+  /// Public API documentation.
   final int ifrApproaches;
+
+  /// Public API documentation.
   final int takeOffsDays;
+
+  /// Public API documentation.
   final int takeOffsNight;
+
+  /// Public API documentation.
   final int landingsDay;
+
+  /// Public API documentation.
   final int landingsNight;
   const PreviousExperience({
     required this.id,
@@ -6795,6 +7065,7 @@ class PreviousExperience extends DataClass
     required this.timeBlockMinutes,
     required this.timeSimulatorMinutes,
     required this.distanceNM,
+    required this.flightCount,
     required this.ifrApproaches,
     required this.takeOffsDays,
     required this.takeOffsNight,
@@ -6832,6 +7103,7 @@ class PreviousExperience extends DataClass
     map['time_block_minutes'] = Variable<int>(timeBlockMinutes);
     map['time_simulator_minutes'] = Variable<int>(timeSimulatorMinutes);
     map['distance_n_m'] = Variable<int>(distanceNM);
+    map['flight_count'] = Variable<int>(flightCount);
     map['ifr_approaches'] = Variable<int>(ifrApproaches);
     map['take_offs_days'] = Variable<int>(takeOffsDays);
     map['take_offs_night'] = Variable<int>(takeOffsNight);
@@ -6868,6 +7140,7 @@ class PreviousExperience extends DataClass
       timeBlockMinutes: Value(timeBlockMinutes),
       timeSimulatorMinutes: Value(timeSimulatorMinutes),
       distanceNM: Value(distanceNM),
+      flightCount: Value(flightCount),
       ifrApproaches: Value(ifrApproaches),
       takeOffsDays: Value(takeOffsDays),
       takeOffsNight: Value(takeOffsNight),
@@ -6918,6 +7191,7 @@ class PreviousExperience extends DataClass
         json['timeSimulatorMinutes'],
       ),
       distanceNM: serializer.fromJson<int>(json['distanceNM']),
+      flightCount: serializer.fromJson<int>(json['flightCount']),
       ifrApproaches: serializer.fromJson<int>(json['ifrApproaches']),
       takeOffsDays: serializer.fromJson<int>(json['takeOffsDays']),
       takeOffsNight: serializer.fromJson<int>(json['takeOffsNight']),
@@ -6955,6 +7229,7 @@ class PreviousExperience extends DataClass
       'timeBlockMinutes': serializer.toJson<int>(timeBlockMinutes),
       'timeSimulatorMinutes': serializer.toJson<int>(timeSimulatorMinutes),
       'distanceNM': serializer.toJson<int>(distanceNM),
+      'flightCount': serializer.toJson<int>(flightCount),
       'ifrApproaches': serializer.toJson<int>(ifrApproaches),
       'takeOffsDays': serializer.toJson<int>(takeOffsDays),
       'takeOffsNight': serializer.toJson<int>(takeOffsNight),
@@ -6986,6 +7261,7 @@ class PreviousExperience extends DataClass
     int? timeBlockMinutes,
     int? timeSimulatorMinutes,
     int? distanceNM,
+    int? flightCount,
     int? ifrApproaches,
     int? takeOffsDays,
     int? takeOffsNight,
@@ -7020,6 +7296,7 @@ class PreviousExperience extends DataClass
     timeBlockMinutes: timeBlockMinutes ?? this.timeBlockMinutes,
     timeSimulatorMinutes: timeSimulatorMinutes ?? this.timeSimulatorMinutes,
     distanceNM: distanceNM ?? this.distanceNM,
+    flightCount: flightCount ?? this.flightCount,
     ifrApproaches: ifrApproaches ?? this.ifrApproaches,
     takeOffsDays: takeOffsDays ?? this.takeOffsDays,
     takeOffsNight: takeOffsNight ?? this.takeOffsNight,
@@ -7093,6 +7370,9 @@ class PreviousExperience extends DataClass
       distanceNM: data.distanceNM.present
           ? data.distanceNM.value
           : this.distanceNM,
+      flightCount: data.flightCount.present
+          ? data.flightCount.value
+          : this.flightCount,
       ifrApproaches: data.ifrApproaches.present
           ? data.ifrApproaches.value
           : this.ifrApproaches,
@@ -7138,6 +7418,7 @@ class PreviousExperience extends DataClass
           ..write('timeBlockMinutes: $timeBlockMinutes, ')
           ..write('timeSimulatorMinutes: $timeSimulatorMinutes, ')
           ..write('distanceNM: $distanceNM, ')
+          ..write('flightCount: $flightCount, ')
           ..write('ifrApproaches: $ifrApproaches, ')
           ..write('takeOffsDays: $takeOffsDays, ')
           ..write('takeOffsNight: $takeOffsNight, ')
@@ -7171,6 +7452,7 @@ class PreviousExperience extends DataClass
     timeBlockMinutes,
     timeSimulatorMinutes,
     distanceNM,
+    flightCount,
     ifrApproaches,
     takeOffsDays,
     takeOffsNight,
@@ -7204,6 +7486,7 @@ class PreviousExperience extends DataClass
           other.timeBlockMinutes == this.timeBlockMinutes &&
           other.timeSimulatorMinutes == this.timeSimulatorMinutes &&
           other.distanceNM == this.distanceNM &&
+          other.flightCount == this.flightCount &&
           other.ifrApproaches == this.ifrApproaches &&
           other.takeOffsDays == this.takeOffsDays &&
           other.takeOffsNight == this.takeOffsNight &&
@@ -7234,6 +7517,7 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
   final Value<int> timeBlockMinutes;
   final Value<int> timeSimulatorMinutes;
   final Value<int> distanceNM;
+  final Value<int> flightCount;
   final Value<int> ifrApproaches;
   final Value<int> takeOffsDays;
   final Value<int> takeOffsNight;
@@ -7262,6 +7546,7 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
     this.timeBlockMinutes = const Value.absent(),
     this.timeSimulatorMinutes = const Value.absent(),
     this.distanceNM = const Value.absent(),
+    this.flightCount = const Value.absent(),
     this.ifrApproaches = const Value.absent(),
     this.takeOffsDays = const Value.absent(),
     this.takeOffsNight = const Value.absent(),
@@ -7291,6 +7576,7 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
     required int timeBlockMinutes,
     required int timeSimulatorMinutes,
     required int distanceNM,
+    this.flightCount = const Value.absent(),
     required int ifrApproaches,
     required int takeOffsDays,
     required int takeOffsNight,
@@ -7343,6 +7629,7 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
     Expression<int>? timeBlockMinutes,
     Expression<int>? timeSimulatorMinutes,
     Expression<int>? distanceNM,
+    Expression<int>? flightCount,
     Expression<int>? ifrApproaches,
     Expression<int>? takeOffsDays,
     Expression<int>? takeOffsNight,
@@ -7383,6 +7670,7 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
       if (timeSimulatorMinutes != null)
         'time_simulator_minutes': timeSimulatorMinutes,
       if (distanceNM != null) 'distance_n_m': distanceNM,
+      if (flightCount != null) 'flight_count': flightCount,
       if (ifrApproaches != null) 'ifr_approaches': ifrApproaches,
       if (takeOffsDays != null) 'take_offs_days': takeOffsDays,
       if (takeOffsNight != null) 'take_offs_night': takeOffsNight,
@@ -7414,6 +7702,7 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
     Value<int>? timeBlockMinutes,
     Value<int>? timeSimulatorMinutes,
     Value<int>? distanceNM,
+    Value<int>? flightCount,
     Value<int>? ifrApproaches,
     Value<int>? takeOffsDays,
     Value<int>? takeOffsNight,
@@ -7447,6 +7736,7 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
       timeBlockMinutes: timeBlockMinutes ?? this.timeBlockMinutes,
       timeSimulatorMinutes: timeSimulatorMinutes ?? this.timeSimulatorMinutes,
       distanceNM: distanceNM ?? this.distanceNM,
+      flightCount: flightCount ?? this.flightCount,
       ifrApproaches: ifrApproaches ?? this.ifrApproaches,
       takeOffsDays: takeOffsDays ?? this.takeOffsDays,
       takeOffsNight: takeOffsNight ?? this.takeOffsNight,
@@ -7536,6 +7826,9 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
     if (distanceNM.present) {
       map['distance_n_m'] = Variable<int>(distanceNM.value);
     }
+    if (flightCount.present) {
+      map['flight_count'] = Variable<int>(flightCount.value);
+    }
     if (ifrApproaches.present) {
       map['ifr_approaches'] = Variable<int>(ifrApproaches.value);
     }
@@ -7581,6 +7874,7 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
           ..write('timeBlockMinutes: $timeBlockMinutes, ')
           ..write('timeSimulatorMinutes: $timeSimulatorMinutes, ')
           ..write('distanceNM: $distanceNM, ')
+          ..write('flightCount: $flightCount, ')
           ..write('ifrApproaches: $ifrApproaches, ')
           ..write('takeOffsDays: $takeOffsDays, ')
           ..write('takeOffsNight: $takeOffsNight, ')
@@ -7818,12 +8112,25 @@ class $DutyPeriodsTable extends DutyPeriods
 }
 
 class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
+  /// Public API documentation.
   final int id;
+
+  /// Public API documentation.
   final int dutyStartTimeLineId;
+
+  /// Public API documentation.
   final int dutyEndTimeLineId;
+
+  /// Public API documentation.
   final int timeDutyMinutes;
+
+  /// Public API documentation.
   final int restBeforeMinutes;
+
+  /// Public API documentation.
   final int timeFactoredDutyMinutes;
+
+  /// Public API documentation.
   final bool isLocked;
   const DutyPeriod({
     required this.id,
@@ -8331,14 +8638,31 @@ class $CrewTable extends Crew with TableInfo<$CrewTable, CrewData> {
 }
 
 class CrewData extends DataClass implements Insertable<CrewData> {
+  /// Public API documentation.
   final int id;
+
+  /// Public API documentation.
   final String name;
+
+  /// Public API documentation.
   final String? email;
+
+  /// Public API documentation.
   final String? notes;
+
+  /// Public API documentation.
   final String? phone;
+
+  /// Public API documentation.
   final Uint8List? picture;
+
+  /// Public API documentation.
   final bool isSelf;
+
+  /// Public API documentation.
   final bool isFavorite;
+
+  /// Public API documentation.
   final bool isLocked;
   const CrewData({
     required this.id,
@@ -8772,9 +9096,16 @@ class $FlightCrewAssignmentsTable extends FlightCrewAssignments
 
 class FlightCrewAssignment extends DataClass
     implements Insertable<FlightCrewAssignment> {
+  /// Public API documentation.
   final int id;
+
+  /// Public API documentation.
   final int flightId;
+
+  /// Public API documentation.
   final int crewId;
+
+  /// Public API documentation.
   final CrewPosition position;
   const FlightCrewAssignment({
     required this.id,
@@ -9218,14 +9549,31 @@ class $SimulatorTrainingsTable extends SimulatorTrainings
 
 class SimulatorTraining extends DataClass
     implements Insertable<SimulatorTraining> {
+  /// Public API documentation.
   final int id;
+
+  /// Public API documentation.
   final int aircraftId;
+
+  /// Public API documentation.
   final int startTimeLineId;
+
+  /// Public API documentation.
   final DateTime? endDateTime;
+
+  /// Public API documentation.
   final int timeTotal;
+
+  /// Public API documentation.
   final String remarks;
+
+  /// Public API documentation.
   final String notes;
+
+  /// Public API documentation.
   final bool isLocked;
+
+  /// Public API documentation.
   final Uint8List? signatureImage;
   const SimulatorTraining({
     required this.id,
@@ -9667,9 +10015,16 @@ class $SimulatorCrewAssignmentsTable extends SimulatorCrewAssignments
 
 class SimulatorCrewAssignment extends DataClass
     implements Insertable<SimulatorCrewAssignment> {
+  /// Public API documentation.
   final int id;
+
+  /// Public API documentation.
   final int simulatorId;
+
+  /// Public API documentation.
   final int crewId;
+
+  /// Public API documentation.
   final CrewPosition position;
   const SimulatorCrewAssignment({
     required this.id,
@@ -14566,6 +14921,7 @@ typedef $$PreviousExperiencesTableCreateCompanionBuilder =
       required int timeBlockMinutes,
       required int timeSimulatorMinutes,
       required int distanceNM,
+      Value<int> flightCount,
       required int ifrApproaches,
       required int takeOffsDays,
       required int takeOffsNight,
@@ -14596,6 +14952,7 @@ typedef $$PreviousExperiencesTableUpdateCompanionBuilder =
       Value<int> timeBlockMinutes,
       Value<int> timeSimulatorMinutes,
       Value<int> distanceNM,
+      Value<int> flightCount,
       Value<int> ifrApproaches,
       Value<int> takeOffsDays,
       Value<int> takeOffsNight,
@@ -14750,6 +15107,11 @@ class $$PreviousExperiencesTableFilterComposer
 
   ColumnFilters<int> get distanceNM => $composableBuilder(
     column: $table.distanceNM,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get flightCount => $composableBuilder(
+    column: $table.flightCount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14916,6 +15278,11 @@ class $$PreviousExperiencesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get flightCount => $composableBuilder(
+    column: $table.flightCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get ifrApproaches => $composableBuilder(
     column: $table.ifrApproaches,
     builder: (column) => ColumnOrderings(column),
@@ -15077,6 +15444,11 @@ class $$PreviousExperiencesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get flightCount => $composableBuilder(
+    column: $table.flightCount,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get ifrApproaches => $composableBuilder(
     column: $table.ifrApproaches,
     builder: (column) => column,
@@ -15185,6 +15557,7 @@ class $$PreviousExperiencesTableTableManager
                 Value<int> timeBlockMinutes = const Value.absent(),
                 Value<int> timeSimulatorMinutes = const Value.absent(),
                 Value<int> distanceNM = const Value.absent(),
+                Value<int> flightCount = const Value.absent(),
                 Value<int> ifrApproaches = const Value.absent(),
                 Value<int> takeOffsDays = const Value.absent(),
                 Value<int> takeOffsNight = const Value.absent(),
@@ -15213,6 +15586,7 @@ class $$PreviousExperiencesTableTableManager
                 timeBlockMinutes: timeBlockMinutes,
                 timeSimulatorMinutes: timeSimulatorMinutes,
                 distanceNM: distanceNM,
+                flightCount: flightCount,
                 ifrApproaches: ifrApproaches,
                 takeOffsDays: takeOffsDays,
                 takeOffsNight: takeOffsNight,
@@ -15243,6 +15617,7 @@ class $$PreviousExperiencesTableTableManager
                 required int timeBlockMinutes,
                 required int timeSimulatorMinutes,
                 required int distanceNM,
+                Value<int> flightCount = const Value.absent(),
                 required int ifrApproaches,
                 required int takeOffsDays,
                 required int takeOffsNight,
@@ -15271,6 +15646,7 @@ class $$PreviousExperiencesTableTableManager
                 timeBlockMinutes: timeBlockMinutes,
                 timeSimulatorMinutes: timeSimulatorMinutes,
                 distanceNM: distanceNM,
+                flightCount: flightCount,
                 ifrApproaches: ifrApproaches,
                 takeOffsDays: takeOffsDays,
                 takeOffsNight: takeOffsNight,

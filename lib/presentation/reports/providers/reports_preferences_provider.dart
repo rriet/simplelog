@@ -519,6 +519,7 @@ class ReportsRuntimeQueryState {
   const ReportsRuntimeQueryState({
     required this.from,
     required this.to,
+    required this.selectedPreset,
     required this.matchMode,
     required this.filters,
 
@@ -532,6 +533,9 @@ class ReportsRuntimeQueryState {
 
   /// Public API documentation.
   final DateTime to;
+
+  /// Public API documentation.
+  final String selectedPreset;
 
   /// Public API documentation.
   final ReportsFilterMatchMode matchMode;
@@ -549,6 +553,7 @@ class ReportsRuntimeQueryNotifier extends Notifier<ReportsRuntimeQueryState> {
     return ReportsRuntimeQueryState(
       from: DateTime.utc(1990),
       to: DateTime.now().toUtc(),
+      selectedPreset: 'sinceBeginning',
       matchMode: ReportsFilterMatchMode.all,
       filters: const <ReportsFilterCondition>[],
     );

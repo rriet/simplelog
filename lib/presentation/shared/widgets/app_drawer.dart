@@ -43,13 +43,6 @@ class AppDrawer extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            ListTile(
-              title: Text(
-                l10n.homeTitle,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
-            const Divider(height: 1),
             for (final screen in _screens)
               _DrawerItem(
                 label: _screenLabel(l10n, screen),

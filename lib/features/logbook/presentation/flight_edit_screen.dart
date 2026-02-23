@@ -994,10 +994,15 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final takeoff = _logTakeoffLanding ? _resolveTakeOffDateTime() : null;
     final landing = _logTakeoffLanding ? _resolveLandingDateTime() : null;
 
-    final block = TimeInputField.parseMinutes(_blockController.text) ?? 0;
+    final block =
+        HourInputField.parseHours(_blockController.text) ??
+        TimeInputField.parseMinutes(_blockController.text) ??
+        0;
     final totalBlock = arrival == null
         ? (_timeTotalBlockMinutes > 0 ? _timeTotalBlockMinutes : block)
-        : arrival.difference(departure).inMinutes.clamp(0, 24 * 60);
+        : (arrival.difference(departure).inMinutes < 0
+              ? 0
+              : arrival.difference(departure).inMinutes);
     final pic = TimeInputField.parseMinutes(_picController.text) ?? 0;
     final picus = TimeInputField.parseMinutes(_picusController.text) ?? 0;
     final sic = TimeInputField.parseMinutes(_sicController.text) ?? 0;
@@ -1016,7 +1021,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final custom3 = TimeInputField.parseMinutes(_custom3Controller.text) ?? 0;
     final custom4 = TimeInputField.parseMinutes(_custom4Controller.text) ?? 0;
     final flightTime =
-        TimeInputField.parseMinutes(_flightController.text) ?? block;
+        HourInputField.parseHours(_flightController.text) ??
+        TimeInputField.parseMinutes(_flightController.text) ??
+        block;
     final ifrApproaches = _parseCount(_ifrApproachesController.text);
     final distanceNm = _parseCount(_distanceNmController.text);
     final approachType = _approachTypeController.text.trim();

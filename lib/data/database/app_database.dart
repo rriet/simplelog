@@ -47,7 +47,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'simplelog'));
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -619,8 +619,15 @@ class AppDatabase extends _$AppDatabase {
           'RENAME TO simulator_crew_assignments;',
         );
       }
+      if (from < 15) {
+        await migrator.addColumn(
+          previousExperiences,
+          previousExperiences.flightCount,
+        );
+      }
     },
-  /// Public API documentation.
+
+    /// Public API documentation.
   );
 
   /// Public API documentation.
@@ -640,7 +647,8 @@ class AppDatabase extends _$AppDatabase {
       await delete(aircraftTypes).go();
       await delete(airports).go();
       await delete(crew).go();
-    /// Public API documentation.
+
+      /// Public API documentation.
     });
   }
 

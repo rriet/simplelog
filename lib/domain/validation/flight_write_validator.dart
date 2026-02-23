@@ -42,24 +42,41 @@ class FlightWriteValidator {
       );
     }
 
-    if (input.timeBlockMinutes < 0 || input.timeBlockMinutes > 24 * 60) {
+    if (input.timeBlockMinutes < 0) {
       errors.add(
         const ValidationIssue(
           code: 'flight.block.invalid',
           field: 'timeBlockMinutes',
-          message: 'Block time must be between 0:00 and 24:00.',
+          message: 'Block time must be 0:00 or greater.',
           severity: ValidationSeverity.error,
         ),
       );
+    } else if (input.timeBlockMinutes > 24 * 60) {
+      warnings.add(
+        const ValidationIssue(
+          code: 'flight.block.over24h',
+          field: 'timeBlockMinutes',
+          message: 'Block time is greater than 24:00.',
+          severity: ValidationSeverity.warning,
+        ),
+      );
     }
-    if (input.timeTotalBlockMinutes < 0 ||
-        input.timeTotalBlockMinutes > 24 * 60) {
+    if (input.timeTotalBlockMinutes < 0) {
       errors.add(
         const ValidationIssue(
           code: 'flight.totalBlock.invalid',
           field: 'timeTotalBlockMinutes',
-          message: 'Total block time must be between 0:00 and 24:00.',
+          message: 'Total block time must be 0:00 or greater.',
           severity: ValidationSeverity.error,
+        ),
+      );
+    } else if (input.timeTotalBlockMinutes > 24 * 60) {
+      warnings.add(
+        const ValidationIssue(
+          code: 'flight.totalBlock.over24h',
+          field: 'timeTotalBlockMinutes',
+          message: 'Total block time is greater than 24:00.',
+          severity: ValidationSeverity.warning,
         ),
       );
     }

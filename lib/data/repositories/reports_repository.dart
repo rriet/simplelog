@@ -26,8 +26,10 @@ class ReportsRepository {
     final ifrApproachesExpr = _db.flights.ifrApproaches.sum();
     final distanceExpr = _db.flights.distanceNM.sum();
     final totalExpr = _db.flights.timeBlockMinutes.sum();
+    final flightExpr = _db.flights.timeFlightMinutes.sum();
     final nightExpr = _db.flights.timeNightMinutes.sum();
     final ifrExpr = _db.flights.timeIFRMinutes.sum();
+    final instrumentExpr = _db.flights.timeInstrumentMinutes.sum();
     final simInstExpr = _db.flights.timeSimulatedInstrumentMinutes.sum();
     final picExpr = _db.flights.timePICMinutes.sum();
     final picusExpr = _db.flights.timePICUSMinutes.sum();
@@ -67,8 +69,10 @@ class ReportsRepository {
             ifrApproachesExpr,
             distanceExpr,
             totalExpr,
+            flightExpr,
             nightExpr,
             ifrExpr,
+            instrumentExpr,
             simInstExpr,
             picExpr,
             picusExpr,
@@ -92,8 +96,10 @@ class ReportsRepository {
       ifrApproaches: row.read(ifrApproachesExpr) ?? 0,
       distanceNM: row.read(distanceExpr) ?? 0,
       totalMinutes: row.read(totalExpr) ?? 0,
+      flightMinutes: row.read(flightExpr) ?? 0,
       nightMinutes: row.read(nightExpr) ?? 0,
       ifrMinutes: row.read(ifrExpr) ?? 0,
+      instrumentMinutes: row.read(instrumentExpr) ?? 0,
       simulatedInstrumentMinutes: row.read(simInstExpr) ?? 0,
       picMinutes: row.read(picExpr) ?? 0,
       picusMinutes: row.read(picusExpr) ?? 0,
@@ -129,8 +135,69 @@ class ReportsRepository {
             ),
           );
     }
+
     /// Public API documentation.
     return totals;
+  }
+
+  /// Loads first and last flight dates within the requested range.
+  Future<(DateTime?, DateTime?)> loadFlightDateRange({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final depTimeLines = _db.alias(_db.timeLines, 'range_dep_tl');
+    final minExpr = depTimeLines.eventDateTime.min();
+    final maxExpr = depTimeLines.eventDateTime.max();
+
+    final query =
+        _db.selectOnly(_db.flights).join([
+            innerJoin(
+              depTimeLines,
+              depTimeLines.id.equalsExp(_db.flights.departureDateTimeId),
+            ),
+            innerJoin(
+              _db.aircrafts,
+              _db.aircrafts.id.equalsExp(_db.flights.aircraftId),
+            ),
+          ])
+          ..where(depTimeLines.eventDateTime.isBiggerOrEqualValue(from))
+          ..where(depTimeLines.eventDateTime.isSmallerOrEqualValue(to))
+          ..where(_db.aircrafts.isSimulator.equals(false))
+          ..addColumns([minExpr, maxExpr]);
+
+    final row = await query.getSingle();
+    return (row.read(minExpr), row.read(maxExpr));
+  }
+
+  /// Loads first/last dates from Previous Experience that are fully included
+  /// by the requested range.
+  Future<(DateTime?, DateTime?)> loadPreviousExperienceDateRange({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final rows = await _db.select(_db.previousExperiences).get();
+    DateTime? first;
+    DateTime? last;
+    for (final exp in rows) {
+      final includesStart =
+          exp.dateTimeFirstFlight == null ||
+          _isBeforeOrEqual(from, exp.dateTimeFirstFlight!);
+      final includesEnd =
+          exp.dateTimeLastFlight == null ||
+          _isAfterOrEqual(to, exp.dateTimeLastFlight!);
+      if (!includesStart || !includesEnd) {
+        continue;
+      }
+      final expFirst = exp.dateTimeFirstFlight;
+      final expLast = exp.dateTimeLastFlight;
+      if (expFirst != null) {
+        first = first == null || expFirst.isBefore(first) ? expFirst : first;
+      }
+      if (expLast != null) {
+        last = last == null || expLast.isAfter(last) ? expLast : last;
+      }
+    }
+    return (first, last);
   }
 
   /// Public API documentation.
@@ -350,6 +417,54 @@ class ReportsRepository {
         .toList(growable: false);
   }
 
+  /// Loads previous experience rows shaped for analysis grouping.
+  Future<List<ReportsPreviousExperienceRow>> loadPreviousExperienceForAnalysis({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final rows = await _db.select(_db.previousExperiences).join([
+      innerJoin(
+        _db.aircraftTypes,
+        _db.aircraftTypes.id.equalsExp(_db.previousExperiences.aircraftTypeId),
+      ),
+    ]).get();
+
+    return rows
+        .map((row) {
+          final exp = row.readTable(_db.previousExperiences);
+          final type = row.readTable(_db.aircraftTypes);
+          final includesStart =
+              exp.dateTimeFirstFlight == null ||
+              _isBeforeOrEqual(from, exp.dateTimeFirstFlight!);
+          final includesEnd =
+              exp.dateTimeLastFlight == null ||
+              _isAfterOrEqual(to, exp.dateTimeLastFlight!);
+          if (!includesStart || !includesEnd) {
+            return null;
+          }
+          return ReportsPreviousExperienceRow(
+            modelCode: type.code,
+            modelFamily: type.family,
+            totalMinutes: exp.timeBlockMinutes,
+            picMinutes: exp.timePICMinutes,
+            picusMinutes: exp.timePICUSMinutes,
+            sicMinutes: exp.timeSICMinutes,
+            dualMinutes: exp.timeDualMinutes,
+            ifrMinutes: exp.timeIFRMinutes,
+            instrumentMinutes:
+                exp.timeInstrumentMinutes + exp.timeSimulatedInstrumentMinutes,
+            nightMinutes: exp.timeNightMinutes,
+            takeoffs: exp.takeOffsDays + exp.takeOffsNight,
+            landings: exp.landingsDay + exp.landingsNight,
+            operations: exp.flightCount,
+            firstFlightUtc: exp.dateTimeFirstFlight,
+            lastFlightUtc: exp.dateTimeLastFlight,
+          );
+        })
+        .whereType<ReportsPreviousExperienceRow>()
+        .toList(growable: false);
+  }
+
   ReportsTotals _sumFlightData(List<_ReportFlightData> rows) {
     var totals = const ReportsTotals.zero();
     for (final row in rows) {
@@ -366,8 +481,10 @@ class ReportsRepository {
               ifrApproaches: 0,
               distanceNM: 0,
               totalMinutes: 0,
+              flightMinutes: 0,
               nightMinutes: 0,
               ifrMinutes: 0,
+              instrumentMinutes: 0,
               simulatedInstrumentMinutes: 0,
               picMinutes: 0,
               picusMinutes: 0,
@@ -396,8 +513,10 @@ class ReportsRepository {
             ifrApproaches: flight.ifrApproaches,
             distanceNM: flight.distanceNM,
             totalMinutes: flight.timeBlockMinutes,
+            flightMinutes: flight.timeFlightMinutes,
             nightMinutes: flight.timeNightMinutes,
             ifrMinutes: flight.timeIFRMinutes,
+            instrumentMinutes: flight.timeInstrumentMinutes,
             simulatedInstrumentMinutes: flight.timeSimulatedInstrumentMinutes,
             picMinutes: flight.timePICMinutes,
             picusMinutes: flight.timePICUSMinutes,
@@ -814,7 +933,7 @@ class ReportsRepository {
       totals =
           totals +
           ReportsTotals(
-            sectors: 0,
+            sectors: exp.flightCount,
             takeoffsDay: exp.takeOffsDays,
             takeoffsNight: exp.takeOffsNight,
             landingsDay: exp.landingsDay,
@@ -822,8 +941,10 @@ class ReportsRepository {
             ifrApproaches: exp.ifrApproaches,
             distanceNM: exp.distanceNM,
             totalMinutes: exp.timeBlockMinutes,
+            flightMinutes: exp.timeFlightMinutes,
             nightMinutes: exp.timeNightMinutes,
             ifrMinutes: exp.timeIFRMinutes,
+            instrumentMinutes: exp.timeInstrumentMinutes,
             simulatedInstrumentMinutes: exp.timeSimulatedInstrumentMinutes,
             picMinutes: exp.timePICMinutes,
             picusMinutes: exp.timePICUSMinutes,
@@ -965,8 +1086,10 @@ extension on ReportsTotals {
       ifrApproaches: ifrApproaches,
       distanceNM: distanceNM,
       totalMinutes: totalMinutes,
+      flightMinutes: flightMinutes,
       nightMinutes: nightMinutes,
       ifrMinutes: ifrMinutes,
+      instrumentMinutes: instrumentMinutes,
       simulatedInstrumentMinutes: simulatedInstrumentMinutes,
       picMinutes: picMinutes,
       picusMinutes: picusMinutes,

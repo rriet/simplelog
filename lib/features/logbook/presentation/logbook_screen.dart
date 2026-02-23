@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/data/database/app_database.dart';
@@ -21,6 +22,9 @@ import 'package:simplelog/presentation/reports/providers/reports_preferences_pro
 import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
 import 'package:simplelog/presentation/reports/reports_screen.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/event_type_toggle_button.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/square_outline_button.dart';
 
 /// Public API documentation.
 class LogbookScreen extends ConsumerStatefulWidget {
@@ -43,16 +47,19 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   int _loadedCount = 0;
   bool _isLoading = false;
   bool _hasMore = false;
+  bool _filtersDialogOpen = false;
+  bool _pendingReloadFromFiltersDialog = false;
+  int _reportsPanelVersion = 0;
   static const int _pageSize = 200;
   late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    final persistedTab = ref.read(logbookTopTabIndexProvider).clamp(0, 4);
+    final persistedTab = ref.read(logbookTopTabIndexProvider).clamp(0, 3);
     _selectedTabIndex = persistedTab;
     _tabController = TabController(
-      length: 5,
+      length: 4,
       vsync: this,
       initialIndex: persistedTab,
     )..addListener(_handleTabChanged);
@@ -222,6 +229,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
             filterMatchMode: query.matchMode,
             filters: query.filters,
           ),
+          includePilotNames: false,
         );
         final flights = eventTypes.flights
             ? result.flights
@@ -286,12 +294,21 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final runtimeQuery = ref.watch(reportsRuntimeQueryProvider);
+    final eventTypes = ref.watch(reportsEventTypesProvider);
     ref
       ..listen<ReportsRuntimeQueryState>(reportsRuntimeQueryProvider, (
         prev,
         next,
       ) {
         if (prev == next) return;
+        if (_filtersDialogOpen) {
+          _pendingReloadFromFiltersDialog = true;
+          return;
+        }
+        if (_selectedTabIndex != 0 && mounted) {
+          setState(() => _reportsPanelVersion++);
+        }
         unawaited(_reloadFromReportsQuery(next));
       })
       ..listen<ReportsEventTypesSelection>(reportsEventTypesProvider, (
@@ -299,10 +316,21 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
         next,
       ) {
         if (prev == next) return;
+        if (_filtersDialogOpen) {
+          _pendingReloadFromFiltersDialog = true;
+          return;
+        }
+        if (_selectedTabIndex != 0 && mounted) {
+          setState(() => _reportsPanelVersion++);
+        }
         unawaited(_loadNextPage(reset: true));
       })
       ..listen<LogbookFilters>(logbookFiltersProvider, (prev, next) {
         if (prev == next) return;
+        if (_filtersDialogOpen) {
+          _pendingReloadFromFiltersDialog = true;
+          return;
+        }
         unawaited(
           _reload(next),
         ); // keeps compatibility with existing providers/listeners
@@ -310,33 +338,57 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
 
     return Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TabBar(
-                controller: _tabController,
-                isScrollable: AppTabBarStyles.isScrollable,
-                tabAlignment: AppTabBarStyles.tabAlignment,
-                labelPadding: AppTabBarStyles.labelPadding,
-                tabs: [
-                  Tab(text: l10n.reportsTabFlights),
-                  Tab(text: l10n.reportsTabTotals),
-                  Tab(text: l10n.reportsTabAnalyses),
-                  Tab(text: l10n.reportsTabReports),
-                  Tab(text: l10n.reportsTabFilters),
-                ],
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _GlobalFilterBar(
+              fromDateLabel: _dateOnlyLabel(runtimeQuery.from),
+              toDateLabel: _dateOnlyLabel(runtimeQuery.to),
+              selectedTypes: eventTypes,
+              onSelectFromDate: () => _pickRuntimeDate(isFrom: true),
+              onSelectToDate: () => _pickRuntimeDate(isFrom: false),
+              onToggleFlights: () => _toggleEventType(
+                flights: !eventTypes.flights,
               ),
-              const SizedBox(height: 8),
-              Expanded(child: _buildSelectedTab()),
-              if (_isLoading && _entries.isNotEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(top: 12),
-                  child: Center(child: CircularProgressIndicator()),
+              onToggleSimulator: () => _toggleEventType(
+                simulator: !eventTypes.simulator,
+              ),
+              onToggleDuty: () => _toggleEventType(duty: !eventTypes.duty),
+              onTogglePositioning: () => _toggleEventType(
+                positioning: !eventTypes.positioning,
+              ),
+              filtersCount: runtimeQuery.filters.length,
+              onMoreFilters: _openMoreFilters,
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TabBar(
+                      controller: _tabController,
+                      isScrollable: AppTabBarStyles.isScrollable,
+                      tabAlignment: AppTabBarStyles.tabAlignment,
+                      labelPadding: AppTabBarStyles.labelPadding,
+                      tabs: [
+                        Tab(text: l10n.reportsTabFlights),
+                        Tab(text: l10n.reportsTabTotals),
+                        Tab(text: l10n.reportsTabAnalyses),
+                        Tab(text: l10n.reportsTabReports),
+                      ],
+                    ),
+                    if (_isLoading) ...[
+                      const SizedBox(height: 8),
+                      const LinearProgressIndicator(),
+                    ],
+                    const SizedBox(height: 8),
+                    Expanded(child: _buildSelectedTab()),
+                  ],
                 ),
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
         if (_selectedTabIndex == 0 && _fabOpen)
           Positioned.fill(
@@ -364,37 +416,155 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
 
   Widget _buildSelectedTab() {
     if (_selectedTabIndex == 0) {
-      return _isLoading && _entries.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : LogbookList(
-              controller: _scrollController,
-              items: _buildDisplayItems(_entries),
-              onOpenEntry: _openEntry,
-              onEditEntry: _editEntry,
-              onDeleteEntry: _deleteEntry,
-              onToggleLockEntry: _toggleEntryLock,
-              onEditDuty: _editDuty,
-              onDeleteDuty: _deleteDuty,
-              onToggleLockDuty: _toggleDutyLock,
-              onYearChange: (year) {
-                if (!mounted || _currentYear == year) return;
-                setState(() => _currentYear = year);
-              },
-            );
+      return LogbookList(
+        controller: _scrollController,
+        items: _buildDisplayItems(_entries),
+        onOpenEntry: _openEntry,
+        onEditEntry: _editEntry,
+        onDeleteEntry: _deleteEntry,
+        onToggleLockEntry: _toggleEntryLock,
+        onEditDuty: _editDuty,
+        onDeleteDuty: _deleteDuty,
+        onToggleLockDuty: _toggleDutyLock,
+        onYearChange: (year) {
+          if (!mounted || _currentYear == year) return;
+          setState(() => _currentYear = year);
+        },
+      );
     }
 
     final section = switch (_selectedTabIndex) {
       1 => ReportsPanelSection.totals,
       2 => ReportsPanelSection.analizes,
       3 => ReportsPanelSection.reports,
-      4 => ReportsPanelSection.filters,
       _ => ReportsPanelSection.overview,
     };
 
     return ReportsScreen(
-      key: const ValueKey('logbook_reports_panel'),
+      key: ValueKey('logbook_reports_panel_$_reportsPanelVersion'),
       section: section,
     );
+  }
+
+  String _dateOnlyLabel(DateTime value) {
+    return DateFormat('yyyy-MM-dd').format(value.toUtc());
+  }
+
+  Future<void> _pickRuntimeDate({required bool isFrom}) async {
+    final current = ref.read(reportsRuntimeQueryProvider);
+    final currentDate = isFrom ? current.from : current.to;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: currentDate.toUtc(),
+      firstDate: DateTime.utc(1990),
+      lastDate: DateTime.utc(2100),
+    );
+    if (picked == null) return;
+
+    final pickedUtcStart = DateTime.utc(picked.year, picked.month, picked.day);
+    final pickedUtcEnd = DateTime.utc(
+      picked.year,
+      picked.month,
+      picked.day,
+      23,
+      59,
+    );
+
+    var nextFrom = current.from;
+    var nextTo = current.to;
+    if (isFrom) {
+      nextFrom = pickedUtcStart;
+      if (nextTo.isBefore(nextFrom)) {
+        nextTo = pickedUtcEnd;
+      }
+    } else {
+      nextTo = pickedUtcEnd;
+      if (nextTo.isBefore(nextFrom)) {
+        nextFrom = pickedUtcStart;
+      }
+    }
+
+    ref
+        .read(reportsRuntimeQueryProvider.notifier)
+        .value = ReportsRuntimeQueryState(
+      from: nextFrom,
+      to: nextTo,
+      selectedPreset: 'custom',
+      matchMode: current.matchMode,
+      filters: current.filters,
+    );
+  }
+
+  Future<void> _toggleEventType({
+    bool? flights,
+    bool? simulator,
+    bool? duty,
+    bool? positioning,
+  }) async {
+    final current = ref.read(reportsEventTypesProvider);
+    final next = current.copyWith(
+      flights: flights,
+      simulator: simulator,
+      duty: duty,
+      positioning: positioning,
+    );
+    await ref.read(reportsEventTypesProvider.notifier).setValue(next);
+  }
+
+  Future<void> _openMoreFilters() async {
+    final l10n = AppLocalizations.of(context)!;
+    _filtersDialogOpen = true;
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        final size = MediaQuery.of(context).size;
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: SizedBox(
+            width: size.width > 980 ? 900 : size.width - 40,
+            height: size.height > 900 ? 860 : size.height - 48,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.reportsTabFilters,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(l10n.reportsDone),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                const Expanded(
+                  child: ReportsScreen(section: ReportsPanelSection.filters),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    _filtersDialogOpen = false;
+    if (_pendingReloadFromFiltersDialog) {
+      _pendingReloadFromFiltersDialog = false;
+      if (_selectedTabIndex == 0) {
+        await _loadNextPage(reset: true);
+      } else if (mounted) {
+        setState(() => _reportsPanelVersion++);
+      }
+    }
   }
 
   Future<void> _editEntry(LogbookEntry entry) async {
@@ -985,6 +1155,155 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     return type == LogbookEventType.flight ||
         type == LogbookEventType.positioning ||
         type == LogbookEventType.simulatorTraining;
+  }
+}
+
+class _GlobalFilterBar extends StatelessWidget {
+  const _GlobalFilterBar({
+    required this.fromDateLabel,
+    required this.toDateLabel,
+    required this.onSelectFromDate,
+    required this.onSelectToDate,
+    required this.selectedTypes,
+    required this.onToggleFlights,
+    required this.onToggleSimulator,
+    required this.onToggleDuty,
+    required this.onTogglePositioning,
+    required this.filtersCount,
+    required this.onMoreFilters,
+  });
+
+  final String fromDateLabel;
+  final String toDateLabel;
+  final VoidCallback onSelectFromDate;
+  final VoidCallback onSelectToDate;
+  final ReportsEventTypesSelection selectedTypes;
+  final VoidCallback onToggleFlights;
+  final VoidCallback onToggleSimulator;
+  final VoidCallback onToggleDuty;
+  final VoidCallback onTogglePositioning;
+  final int filtersCount;
+  final VoidCallback onMoreFilters;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final showTypeChips = constraints.maxWidth >= 1020;
+        return Material(
+          color: colorScheme.surfaceContainerHighest,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+            child: showTypeChips
+                ? Row(
+                    children: [
+                      SizedBox(
+                        width: 150,
+                        child: DateSelectorInputField(
+                          label: 'From',
+                          valueText: fromDateLabel,
+                          onTap: onSelectFromDate,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 150,
+                        child: DateSelectorInputField(
+                          label: 'To',
+                          valueText: toDateLabel,
+                          onTap: onSelectToDate,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: EventTypeToggleButton(
+                                key: const ValueKey('main_filter_flight'),
+                                label: l10n.logbookEventFlight,
+                                selected: selectedTypes.flights,
+                                onTap: onToggleFlights,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: EventTypeToggleButton(
+                                key: const ValueKey('main_filter_simulator'),
+                                label: l10n.fieldIsSimulator,
+                                selected: selectedTypes.simulator,
+                                onTap: onToggleSimulator,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: EventTypeToggleButton(
+                                key: const ValueKey('main_filter_duty'),
+                                label: l10n.reportsMetricDuty,
+                                selected: selectedTypes.duty,
+                                onTap: onToggleDuty,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: EventTypeToggleButton(
+                                key: const ValueKey('main_filter_positioning'),
+                                label: l10n.logbookEventPositioning,
+                                selected: selectedTypes.positioning,
+                                onTap: onTogglePositioning,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SquareOutlineButton(
+                        onPressed: onMoreFilters,
+                        icon: Icons.filter_list,
+                        label: filtersCount > 0
+                            ? '${l10n.reportsTabFilters} ($filtersCount)'
+                            : l10n.reportsTabFilters,
+                      ),
+                    ],
+                  )
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 150,
+                          child: DateSelectorInputField(
+                            label: 'From',
+                            valueText: fromDateLabel,
+                            onTap: onSelectFromDate,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 150,
+                          child: DateSelectorInputField(
+                            label: 'To',
+                            valueText: toDateLabel,
+                            onTap: onSelectToDate,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SquareOutlineButton(
+                          onPressed: onMoreFilters,
+                          icon: Icons.filter_list,
+                          label: filtersCount > 0
+                              ? '${l10n.reportsTabFilters} ($filtersCount)'
+                              : l10n.reportsTabFilters,
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+        );
+      },
+    );
   }
 }
 

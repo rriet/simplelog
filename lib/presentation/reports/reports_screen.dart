@@ -27,6 +27,9 @@ import 'package:simplelog/presentation/reports/providers/report_pdf_application_
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/event_type_toggle_button.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/time_input_field.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -51,6 +54,14 @@ enum ReportsPanelSection {
   /// Public API documentation.
   totals,
 }
+
+const _pilotFilterFields = <ReportsFilterField>{
+  ReportsFilterField.pilotName,
+  ReportsFilterField.pilotOnBoard,
+  ReportsFilterField.pilotPic,
+  ReportsFilterField.pilotSic,
+  ReportsFilterField.pilotTrainee,
+};
 
 class _XslTemplateOption {
   const _XslTemplateOption({
@@ -112,12 +123,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   int _analysisBuildToken = 0;
   List<_AnalysisGroup> _analysisGroups = const [];
   ProviderSubscription<String?>? _selectedTemplateSubscription;
+  final _fromTimeController = TextEditingController();
+  final _toTimeController = TextEditingController();
 
   ReportsData _data = const ReportsData(
     totals: ReportsTotals.zero(),
     flights: [],
   );
   List<LogbookEntry> _entries = const [];
+  DateTime? _firstFlightDate;
+  DateTime? _lastFlightDate;
 
   @override
   void initState() {
@@ -125,6 +140,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final runtimeQuery = ref.read(reportsRuntimeQueryProvider);
     _from = runtimeQuery.from;
     _to = runtimeQuery.to;
+    _preset = _presetFromName(runtimeQuery.selectedPreset);
+    _syncRangeTimeControllers();
     _filterMatchMode = runtimeQuery.matchMode;
     _filters
       ..clear()
@@ -211,7 +228,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   bool _shouldPreloadOverview(ReportsPanelSection? section) {
-    return section != ReportsPanelSection.reports;
+    return section != ReportsPanelSection.reports &&
+        section != ReportsPanelSection.filters;
   }
 
   bool _shouldPreloadDetails(ReportsPanelSection? section) {
@@ -219,8 +237,28 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         section == ReportsPanelSection.analizes;
   }
 
+  bool get _isFiltersOnlySection {
+    return widget.section == ReportsPanelSection.filters;
+  }
+
+  bool get _isAnalysesVisible {
+    if (widget.section == ReportsPanelSection.analizes) {
+      return true;
+    }
+    return widget.section == null && _tabController.index == 2;
+  }
+
+  bool get _isFlightsVisible {
+    if (widget.section == ReportsPanelSection.flights) {
+      return true;
+    }
+    return widget.section == null && _tabController.index == 1;
+  }
+
   @override
   void dispose() {
+    _fromTimeController.dispose();
+    _toTimeController.dispose();
     _selectedTemplateSubscription?.close();
     _tabController.dispose();
     super.dispose();
@@ -251,6 +289,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           to: _to,
           includePreviousExperience: includePreviousExperience,
         );
+        final flightRange = await repo.loadFlightDateRange(
+          from: _from,
+          to: _to,
+        );
+        final range = await _resolveDisplayedDateRange(
+          baseRange: flightRange,
+          includePreviousExperience: includePreviousExperience,
+        );
         if (!mounted) return;
         setState(() {
           _data = ReportsData(
@@ -263,6 +309,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _pilotNamesLoaded = false;
           _analysisGroups = const [];
           _analysisLoading = false;
+          _firstFlightDate = range.$1;
+          _lastFlightDate = range.$2;
         });
       } else {
         final includePilotNames = _needsPilotNamesForFilters();
@@ -280,6 +328,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             ? result.flights
             : const <ReportsFlightRow>[];
         if (!mounted) return;
+        final baseRange = _flightRangeFromRows(flights);
+        final range = await _resolveDisplayedDateRange(
+          baseRange: baseRange,
+          includePreviousExperience: includePreviousExperience,
+        );
         setState(() {
           _data = ReportsData(
             totals: _applyTypeSelectionToTotals(result.totals, eventTypes),
@@ -289,6 +342,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _detailsLoaded = true;
           _entriesLoaded = false;
           _pilotNamesLoaded = includePilotNames;
+          _firstFlightDate = range.$1;
+          _lastFlightDate = range.$2;
         });
         unawaited(_refreshAnalysisGroups());
       }
@@ -321,69 +376,32 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         .value = ReportsRuntimeQueryState(
       from: _from,
       to: _to,
+      selectedPreset: _preset.name,
       matchMode: _filterMatchMode,
       filters: List<ReportsFilterCondition>.from(_filters),
     );
   }
 
-  bool _isPilotFilterField(ReportsFilterField field) {
-    switch (field) {
-      case ReportsFilterField.pilotName:
-      case ReportsFilterField.pilotOnBoard:
-      case ReportsFilterField.pilotPic:
-      case ReportsFilterField.pilotSic:
-      case ReportsFilterField.pilotTrainee:
-        return true;
-      case ReportsFilterField.departureIcao:
-      case ReportsFilterField.departureIata:
-      case ReportsFilterField.departureName:
-      case ReportsFilterField.departureCity:
-      case ReportsFilterField.departureCountry:
-      case ReportsFilterField.arrivalIcao:
-      case ReportsFilterField.arrivalIata:
-      case ReportsFilterField.arrivalName:
-      case ReportsFilterField.arrivalCity:
-      case ReportsFilterField.arrivalCountry:
-      case ReportsFilterField.aircraftTail:
-      case ReportsFilterField.aircraftTypeCode:
-      case ReportsFilterField.aircraftTypeFamily:
-      case ReportsFilterField.aircraftTypeName:
-      case ReportsFilterField.approachType:
-      case ReportsFilterField.remarks:
-      case ReportsFilterField.notes:
-      case ReportsFilterField.blockTime:
-      case ReportsFilterField.flightTime:
-      case ReportsFilterField.totalTime:
-      case ReportsFilterField.nightTime:
-      case ReportsFilterField.ifrTime:
-      case ReportsFilterField.instrumentTime:
-      case ReportsFilterField.simulatedInstrumentTime:
-      case ReportsFilterField.picTime:
-      case ReportsFilterField.picusTime:
-      case ReportsFilterField.sicTime:
-      case ReportsFilterField.dualTime:
-      case ReportsFilterField.instructorTime:
-      case ReportsFilterField.crossCountryTime:
-      case ReportsFilterField.custom1Time:
-      case ReportsFilterField.custom2Time:
-      case ReportsFilterField.custom3Time:
-      case ReportsFilterField.custom4Time:
-      case ReportsFilterField.distanceNm:
-      case ReportsFilterField.takeoffs:
-      case ReportsFilterField.takeoffsDay:
-      case ReportsFilterField.takeoffsNight:
-      case ReportsFilterField.landings:
-      case ReportsFilterField.landingsDay:
-      case ReportsFilterField.landingsNight:
-      case ReportsFilterField.ifrApproaches:
-      case ReportsFilterField.isMultiPilot:
-      case ReportsFilterField.isSimulator:
-        return false;
+  void _syncRangeTimeControllers() {
+    _fromTimeController.text = ClockTimeInputField.formatMinutesOfDay(
+      _from.hour * 60 + _from.minute,
+    );
+    _toTimeController.text = ClockTimeInputField.formatMinutesOfDay(
+      _to.hour * 60 + _to.minute,
+    );
+  }
+
+  _ReportDateRangePreset _presetFromName(String value) {
+    for (final preset in _ReportDateRangePreset.values) {
+      if (preset.name == value) {
+        return preset;
+      }
     }
+    return _ReportDateRangePreset.sinceBeginning;
   }
 
   bool _needsPilotNamesForFilters() {
-    return _filters.any((filter) => _isPilotFilterField(filter.field));
+    return false;
   }
 
   Future<void> _loadDetailed({
@@ -416,6 +434,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 includePilotNames: includePilotNames,
               )
             : const <ReportsFlightRow>[];
+        final flightRange = await repo.loadFlightDateRange(
+          from: _from,
+          to: _to,
+        );
+        final range = await _resolveDisplayedDateRange(
+          baseRange: flightRange,
+          includePreviousExperience: includePreviousExperience,
+        );
         if (!mounted) return;
         setState(() {
           _data = ReportsData(totals: _data.totals, flights: flights);
@@ -423,6 +449,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _detailsLoaded = true;
           _entriesLoaded = false;
           _pilotNamesLoaded = includePilotNames;
+          _firstFlightDate = range.$1;
+          _lastFlightDate = range.$2;
         });
         unawaited(_refreshAnalysisGroups());
       } else {
@@ -442,6 +470,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         final entries = includeEntries
             ? await _fetchEntriesForFlights(flights, eventTypes)
             : const <LogbookEntry>[];
+        final baseRange = _flightRangeFromRows(flights);
+        final range = await _resolveDisplayedDateRange(
+          baseRange: baseRange,
+          includePreviousExperience: includePreviousExperience,
+        );
         if (!mounted) return;
         setState(() {
           _data = ReportsData(
@@ -452,6 +485,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _detailsLoaded = true;
           _entriesLoaded = includeEntries;
           _pilotNamesLoaded = includePilotNames;
+          _firstFlightDate = range.$1;
+          _lastFlightDate = range.$2;
         });
         unawaited(_refreshAnalysisGroups());
       }
@@ -475,6 +510,40 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       from: _from,
       to: _to,
     );
+  }
+
+  Future<(DateTime?, DateTime?)> _resolveDisplayedDateRange({
+    required (DateTime?, DateTime?) baseRange,
+    required bool includePreviousExperience,
+  }) async {
+    if (!includePreviousExperience) {
+      return baseRange;
+    }
+    final previousExperienceRange = await ref
+        .read(reportsRepositoryProvider)
+        .loadPreviousExperienceDateRange(from: _from, to: _to);
+    return _mergeDateRanges(baseRange, previousExperienceRange);
+  }
+
+  (DateTime?, DateTime?) _mergeDateRanges(
+    (DateTime?, DateTime?) left,
+    (DateTime?, DateTime?) right,
+  ) {
+    final first = _minDate(left.$1, right.$1);
+    final last = _maxDate(left.$2, right.$2);
+    return (first, last);
+  }
+
+  DateTime? _minDate(DateTime? left, DateTime? right) {
+    if (left == null) return right;
+    if (right == null) return left;
+    return left.isBefore(right) ? left : right;
+  }
+
+  DateTime? _maxDate(DateTime? left, DateTime? right) {
+    if (left == null) return right;
+    if (right == null) return left;
+    return left.isAfter(right) ? left : right;
   }
 
   Future<List<LogbookEntry>> _fetchEntriesForRange({
@@ -554,7 +623,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     }
   }
 
-  Future<void> _pickDateTime({required bool isStart}) async {
+  Future<void> _pickDate({required bool isStart}) async {
     final current = isStart ? _from : _to;
     final pickedDate = await showDatePicker(
       context: context,
@@ -564,18 +633,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
     if (pickedDate == null || !mounted) return;
 
-    final pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: current.hour, minute: current.minute),
-    );
-    if (pickedTime == null || !mounted) return;
-
     final selectedUtc = DateTime.utc(
       pickedDate.year,
       pickedDate.month,
       pickedDate.day,
-      pickedTime.hour,
-      pickedTime.minute,
+      current.hour,
+      current.minute,
     );
     setState(() {
       if (isStart) {
@@ -585,15 +648,38 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       }
       _preset = _ReportDateRangePreset.custom;
     });
+    _syncRangeTimeControllers();
     _persistRuntimeQuery();
-    await _loadOverviewData();
+    if (!_isFiltersOnlySection) {
+      await _loadOverviewData();
+    }
+  }
+
+  Future<void> _onRangeTimeChanged({
+    required bool isStart,
+    required int minutesOfDay,
+  }) async {
+    final hour = (minutesOfDay ~/ 60) % 24;
+    final minute = minutesOfDay % 60;
+    setState(() {
+      if (isStart) {
+        _from = DateTime.utc(_from.year, _from.month, _from.day, hour, minute);
+      } else {
+        _to = DateTime.utc(_to.year, _to.month, _to.day, hour, minute);
+      }
+      _preset = _ReportDateRangePreset.custom;
+    });
+    _persistRuntimeQuery();
+    if (!_isFiltersOnlySection) {
+      await _loadOverviewData();
+    }
   }
 
   Future<void> _applyPreset(_ReportDateRangePreset preset) async {
     if (preset == _ReportDateRangePreset.custom) {
-      await _pickDateTime(isStart: true);
+      await _pickDate(isStart: true);
       if (!mounted) return;
-      await _pickDateTime(isStart: false);
+      await _pickDate(isStart: false);
       return;
     }
 
@@ -642,8 +728,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       _from = start;
       _to = end;
     });
+    _syncRangeTimeControllers();
     _persistRuntimeQuery();
-    await _loadOverviewData();
+    if (!_isFiltersOnlySection) {
+      await _loadOverviewData();
+    }
   }
 
   Future<void> _addFilter() async {
@@ -654,21 +743,27 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (added == null || !mounted) return;
     setState(() => _filters.add(added));
     _persistRuntimeQuery();
-    await _loadOverviewData();
+    if (!_isFiltersOnlySection) {
+      await _loadOverviewData();
+    }
   }
 
   Future<void> _removeFilter(int index) async {
     if (index < 0 || index >= _filters.length) return;
     setState(() => _filters.removeAt(index));
     _persistRuntimeQuery();
-    await _loadOverviewData();
+    if (!_isFiltersOnlySection) {
+      await _loadOverviewData();
+    }
   }
 
   Future<void> _setMatchMode(ReportsFilterMatchMode mode) async {
     if (_filterMatchMode == mode) return;
     setState(() => _filterMatchMode = mode);
     _persistRuntimeQuery();
-    await _loadOverviewData();
+    if (!_isFiltersOnlySection) {
+      await _loadOverviewData();
+    }
   }
 
   Future<void> _setIncludePreviousExperience(bool value) async {
@@ -676,13 +771,29 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         .read(includePreviousExperienceProvider.notifier)
         .setValue(value: value);
     if (!mounted) return;
-    await _loadOverviewData();
+    if (!_isFiltersOnlySection) {
+      await _loadOverviewData();
+      if (!mounted) return;
+      if (_isAnalysesVisible) {
+        await _ensureDetailsLoaded(
+          includeEntries: false,
+          includePilotNames: _needsPilotNamesForFilters(),
+        );
+      } else if (_isFlightsVisible) {
+        await _ensureDetailsLoaded(
+          includeEntries: true,
+          includePilotNames: _needsPilotNamesForFilters(),
+        );
+      }
+    }
   }
 
   Future<void> _setEventTypes(ReportsEventTypesSelection value) async {
     await ref.read(reportsEventTypesProvider.notifier).setValue(value);
     if (!mounted) return;
-    await _loadOverviewData();
+    if (!_isFiltersOnlySection) {
+      await _loadOverviewData();
+    }
   }
 
   Future<void> _saveCurrentQuery() async {
@@ -696,7 +807,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       name: name.trim(),
       from: _from,
       to: _to,
-      includePreviousExperience: ref.read(includePreviousExperienceProvider),
+      includePreviousExperience: false,
       filterMatchMode: _filterMatchMode,
       filters: List<ReportsFilterCondition>.from(_filters),
     );
@@ -717,12 +828,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         ..clear()
         ..addAll(query.filters);
     });
+    _syncRangeTimeControllers();
     _persistRuntimeQuery();
-    await ref
-        .read(includePreviousExperienceProvider.notifier)
-        .setValue(value: query.includePreviousExperience);
     if (!mounted) return;
-    await _loadOverviewData();
+    if (!_isFiltersOnlySection) {
+      await _loadOverviewData();
+    }
   }
 
   Future<void> _deleteSavedQuery(String id) async {
@@ -821,6 +932,18 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       _pdfGenerationProgress = progress.clamp(0, 1);
     });
     await Future<void>.delayed(const Duration(milliseconds: 16));
+  }
+
+  (DateTime?, DateTime?) _flightRangeFromRows(List<ReportsFlightRow> rows) {
+    if (rows.isEmpty) return (null, null);
+    var first = rows.first.departureDateTime;
+    var last = rows.first.departureDateTime;
+    for (final row in rows) {
+      final value = row.departureDateTime;
+      if (value.isBefore(first)) first = value;
+      if (value.isAfter(last)) last = value;
+    }
+    return (first, last);
   }
 
   Future<void> _showInfoDialog(String message) async {
@@ -979,6 +1102,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     setState(() => _analysisLoading = true);
 
     final groups = <String, _AnalysisGroupAccumulator>{};
+    final includePreviousExperience = ref.read(
+      includePreviousExperienceProvider,
+    );
+
     for (var i = 0; i < _data.flights.length; i++) {
       final flight = _data.flights[i];
       final keys = _analysisGroupKeysForFlight(flight, l10n);
@@ -998,6 +1125,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       if (i % 250 == 0) {
         await Future<void>.delayed(Duration.zero);
         if (!mounted || token != _analysisBuildToken) return;
+      }
+    }
+
+    if (includePreviousExperience) {
+      final previousRows = await ref
+          .read(reportsRepositoryProvider)
+          .loadPreviousExperienceForAnalysis(from: _from, to: _to);
+      if (!mounted || token != _analysisBuildToken) return;
+      for (final row in previousRows) {
+        final keys = _analysisGroupKeysForPreviousExperience(row, l10n);
+        for (final key in keys) {
+          groups
+              .putIfAbsent(key, _AnalysisGroupAccumulator.new)
+              .addPreviousExperience(row);
+        }
       }
     }
 
@@ -1047,6 +1189,30 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     ];
   }
 
+  List<String> _analysisGroupKeysForPreviousExperience(
+    ReportsPreviousExperienceRow row,
+    AppLocalizations l10n,
+  ) {
+    switch (_analysisGroupBy) {
+      case _AnalysisGroupBy.aircraft:
+        return const <String>[];
+      case _AnalysisGroupBy.type:
+        final code = row.modelCode.trim();
+        return <String>[
+          if (code.isEmpty) l10n.reportsUnknownType else code,
+        ];
+      case _AnalysisGroupBy.family:
+        final family = row.modelFamily.trim();
+        return <String>[
+          if (family.isEmpty) l10n.reportsUnknownFamily else family,
+        ];
+      case _AnalysisGroupBy.airport:
+      case _AnalysisGroupBy.year:
+      case _AnalysisGroupBy.month:
+        return const <String>[];
+    }
+  }
+
   ReportsTotals _applyTypeSelectionToTotals(
     ReportsTotals totals,
     ReportsEventTypesSelection selection,
@@ -1060,8 +1226,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       ifrApproaches: selection.flights ? totals.ifrApproaches : 0,
       distanceNM: selection.flights ? totals.distanceNM : 0,
       totalMinutes: selection.flights ? totals.totalMinutes : 0,
+      flightMinutes: selection.flights ? totals.flightMinutes : 0,
       nightMinutes: selection.flights ? totals.nightMinutes : 0,
       ifrMinutes: selection.flights ? totals.ifrMinutes : 0,
+      instrumentMinutes: selection.flights ? totals.instrumentMinutes : 0,
       simulatedInstrumentMinutes: selection.flights
           ? totals.simulatedInstrumentMinutes
           : 0,
@@ -1230,7 +1398,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                             customTimeLabels: customTimeLabels,
                           ),
                           _buildFlightsSection(logbookUseCases),
-                          _buildAnalizesSection(compact: compact),
+                          _buildAnalizesSection(
+                            compact: compact,
+                            includePreviousExperience:
+                                includePreviousExperience,
+                          ),
                         ],
                       )
                     : _buildPanelSection(
@@ -1262,7 +1434,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     switch (section) {
       case ReportsPanelSection.filters:
         return _buildFiltersSection(
-          includePreviousExperience: includePreviousExperience,
           eventTypes: eventTypes,
           savedQueries: savedQueries,
         );
@@ -1270,9 +1441,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         return _TotalsCard(
           totals: _data.totals,
           customTimeLabels: customTimeLabels,
+          firstFlightDate: _firstFlightDate,
+          lastFlightDate: _lastFlightDate,
+          includePreviousExperience: includePreviousExperience,
+          onToggleIncludePreviousExperience: () =>
+              _setIncludePreviousExperience(!includePreviousExperience),
         );
       case ReportsPanelSection.analizes:
-        return _buildAnalizesSection(compact: compact);
+        return _buildAnalizesSection(
+          compact: compact,
+          includePreviousExperience: includePreviousExperience,
+        );
       case ReportsPanelSection.reports:
         return _buildReportsSection(compact: compact);
       case ReportsPanelSection.flights:
@@ -1299,7 +1478,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     return Column(
       children: [
         _buildFiltersSection(
-          includePreviousExperience: includePreviousExperience,
           eventTypes: eventTypes,
           savedQueries: savedQueries,
         ),
@@ -1308,6 +1486,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           child: _TotalsCard(
             totals: _data.totals,
             customTimeLabels: customTimeLabels,
+            firstFlightDate: _firstFlightDate,
+            lastFlightDate: _lastFlightDate,
+            includePreviousExperience: includePreviousExperience,
+            onToggleIncludePreviousExperience: () =>
+                _setIncludePreviousExperience(!includePreviousExperience),
           ),
         ),
         const SizedBox(height: 10),
@@ -1317,23 +1500,26 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Widget _buildFiltersSection({
-    required bool includePreviousExperience,
     required ReportsEventTypesSelection eventTypes,
     required List<SavedReportsQuery> savedQueries,
   }) {
     return _FiltersCard(
       from: _from,
       to: _to,
+      fromTimeController: _fromTimeController,
+      toTimeController: _toTimeController,
       preset: _preset,
-      includePreviousExperience: includePreviousExperience,
       eventTypes: eventTypes,
       savedQueries: savedQueries,
       filters: _filters,
       matchMode: _filterMatchMode,
       onPresetChanged: _applyPreset,
-      onPickStart: () => _pickDateTime(isStart: true),
-      onPickEnd: () => _pickDateTime(isStart: false),
-      onIncludePreviousExperienceChanged: _setIncludePreviousExperience,
+      onPickStart: () => _pickDate(isStart: true),
+      onPickEnd: () => _pickDate(isStart: false),
+      onFromTimeChanged: (minutes) =>
+          _onRangeTimeChanged(isStart: true, minutesOfDay: minutes),
+      onToTimeChanged: (minutes) =>
+          _onRangeTimeChanged(isStart: false, minutesOfDay: minutes),
       onEventTypesChanged: _setEventTypes,
       onMatchModeChanged: _setMatchMode,
       onAddFilter: _addFilter,
@@ -1359,8 +1545,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
   }
 
-  Widget _buildAnalizesSection({required bool compact}) {
+  Widget _buildAnalizesSection({
+    required bool compact,
+    required bool includePreviousExperience,
+  }) {
     final l10n = AppLocalizations.of(context)!;
+    final inlinePreviousExperienceButton =
+        MediaQuery.sizeOf(context).width >= 760;
     return Column(
       children: [
         Row(
@@ -1443,13 +1634,42 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 },
               ),
             ),
+            if (inlinePreviousExperienceButton) ...[
+              const SizedBox(width: 8),
+              _previousExperienceToggle(
+                includePreviousExperience: includePreviousExperience,
+                onToggle: () {
+                  if (_loading) return;
+                  unawaited(
+                    _setIncludePreviousExperience(!includePreviousExperience),
+                  );
+                },
+              ),
+            ],
           ],
         ),
+        if (!inlinePreviousExperienceButton) ...[
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _previousExperienceToggle(
+              includePreviousExperience: includePreviousExperience,
+              onToggle: () {
+                if (_loading) return;
+                unawaited(
+                  _setIncludePreviousExperience(!includePreviousExperience),
+                );
+              },
+            ),
+          ),
+        ],
         const SizedBox(height: 10),
+        if (_analysisLoading) ...[
+          const LinearProgressIndicator(),
+          const SizedBox(height: 10),
+        ],
         Expanded(
-          child: _analysisLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _AnalysisList(groups: _analysisGroups),
+          child: _AnalysisList(groups: _analysisGroups),
         ),
       ],
     );
@@ -1459,8 +1679,27 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     return Column(children: [_buildReportsControls(compact: compact)]);
   }
 
+  Widget _previousExperienceToggle({
+    required bool includePreviousExperience,
+    required VoidCallback onToggle,
+    double width = 190,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    return SizedBox(
+      width: width,
+      child: EventTypeToggleButton(
+        label: l10n.reportsPreviousExperienceLabel,
+        selected: includePreviousExperience,
+        onTap: onToggle,
+      ),
+    );
+  }
+
   Widget _buildReportsControls({required bool compact}) {
     final l10n = AppLocalizations.of(context)!;
+    final includePreviousExperience = ref.watch(
+      includePreviousExperienceProvider,
+    );
     final includeHoursBefore = ref.watch(includeHoursBeforeProvider);
     final openPdfAfterSaving = ref.watch(openPdfAfterSavingProvider);
     return Align(
@@ -1477,6 +1716,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 onPressed: _isGeneratingPdf ? null : _openMapDialog,
                 icon: const Icon(Icons.map_outlined),
                 label: Text(l10n.reportsShowMap),
+              ),
+              _previousExperienceToggle(
+                includePreviousExperience: includePreviousExperience,
+                onToggle: () {
+                  if (_isGeneratingPdf) return;
+                  unawaited(
+                    _setIncludePreviousExperience(!includePreviousExperience),
+                  );
+                },
               ),
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1900,6 +2148,30 @@ class _AnalysisGroupAccumulator {
       lastFlightUtc = row.departureDateTime;
     }
   }
+
+  void addPreviousExperience(ReportsPreviousExperienceRow row) {
+    totalMinutes += row.totalMinutes;
+    picMinutes += row.picMinutes;
+    picusMinutes += row.picusMinutes;
+    sicMinutes += row.sicMinutes;
+    dualMinutes += row.dualMinutes;
+    ifrMinutes += row.ifrMinutes;
+    instrumentMinutes += row.instrumentMinutes;
+    nightMinutes += row.nightMinutes;
+    takeoffs += row.takeoffs;
+    landings += row.landings;
+    operations += row.operations;
+    final first = row.firstFlightUtc;
+    final last = row.lastFlightUtc;
+    if (first != null &&
+        (firstFlightUtc == null || first.isBefore(firstFlightUtc!))) {
+      firstFlightUtc = first;
+    }
+    if (last != null &&
+        (lastFlightUtc == null || last.isAfter(lastFlightUtc!))) {
+      lastFlightUtc = last;
+    }
+  }
 }
 
 class _AnalysisGroup {
@@ -1913,8 +2185,9 @@ class _FiltersCard extends StatelessWidget {
   const _FiltersCard({
     required this.from,
     required this.to,
+    required this.fromTimeController,
+    required this.toTimeController,
     required this.preset,
-    required this.includePreviousExperience,
     required this.eventTypes,
     required this.savedQueries,
     required this.filters,
@@ -1922,7 +2195,8 @@ class _FiltersCard extends StatelessWidget {
     required this.onPresetChanged,
     required this.onPickStart,
     required this.onPickEnd,
-    required this.onIncludePreviousExperienceChanged,
+    required this.onFromTimeChanged,
+    required this.onToTimeChanged,
     required this.onEventTypesChanged,
     required this.onMatchModeChanged,
     required this.onAddFilter,
@@ -1934,8 +2208,9 @@ class _FiltersCard extends StatelessWidget {
 
   final DateTime from;
   final DateTime to;
+  final TextEditingController fromTimeController;
+  final TextEditingController toTimeController;
   final _ReportDateRangePreset preset;
-  final bool includePreviousExperience;
   final ReportsEventTypesSelection eventTypes;
   final List<SavedReportsQuery> savedQueries;
   final List<ReportsFilterCondition> filters;
@@ -1943,7 +2218,8 @@ class _FiltersCard extends StatelessWidget {
   final Future<void> Function(_ReportDateRangePreset preset) onPresetChanged;
   final VoidCallback onPickStart;
   final VoidCallback onPickEnd;
-  final ValueChanged<bool> onIncludePreviousExperienceChanged;
+  final ValueChanged<int> onFromTimeChanged;
+  final ValueChanged<int> onToTimeChanged;
   final Future<void> Function(ReportsEventTypesSelection) onEventTypesChanged;
   final Future<void> Function(ReportsFilterMatchMode mode) onMatchModeChanged;
   final Future<void> Function() onAddFilter;
@@ -1959,269 +2235,75 @@ class _FiltersCard extends StatelessWidget {
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 760;
         final maxFieldWidth = compact ? constraints.maxWidth - 40 : 250.0;
+        final topControlsHeight = compact ? 57.0 : 61.0;
+        const sectionSpacingHeight = 21.0;
+        final availableScrollableHeight = constraints.maxHeight.isFinite
+            ? math
+                  .max(
+                    120,
+                    constraints.maxHeight -
+                        topControlsHeight -
+                        sectionSpacingHeight,
+                  )
+                  .toDouble()
+            : (compact ? 460.0 : 520.0);
+        final locale = Localizations.localeOf(context).toString();
         return Card(
-          child: ExpansionTile(
-            initiallyExpanded: true,
-            title: Text(l10n.logbookFilterTitle),
-            subtitle: Text(
-              l10n.reportsFiltersSummary(
-                filters.length,
-                DateFormat('dd/MM/yyyy HH:mm').format(from),
-                DateFormat('dd/MM/yyyy HH:mm').format(to),
-              ),
-            ),
-            childrenPadding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
-            children: [
-              ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: compact ? 460 : 520),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          FilterChip(
-                            label: Text(l10n.logbookEventFlight),
-                            selected: eventTypes.flights,
-                            onSelected: (value) => onEventTypesChanged(
-                              eventTypes.copyWith(flights: value),
-                            ),
-                          ),
-                          FilterChip(
-                            label: Text(l10n.reportsEventSimShort),
-                            selected: eventTypes.simulator,
-                            onSelected: (value) => onEventTypesChanged(
-                              eventTypes.copyWith(simulator: value),
-                            ),
-                          ),
-                          FilterChip(
-                            label: Text(l10n.logbookEventDuty),
-                            selected: eventTypes.duty,
-                            onSelected: (value) => onEventTypesChanged(
-                              eventTypes.copyWith(duty: value),
-                            ),
-                          ),
-                          FilterChip(
-                            label: Text(l10n.logbookEventPositioning),
-                            selected: eventTypes.positioning,
-                            onSelected: (value) => onEventTypesChanged(
-                              eventTypes.copyWith(positioning: value),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          SizedBox(
-                            width: maxFieldWidth,
-                            child:
-                                DropdownButtonFormField<_ReportDateRangePreset>(
-                                  initialValue: preset,
-                                  isExpanded: true,
-                                  decoration: InputDecoration(
-                                    labelText: l10n.logbookFilterRange,
-                                    border: const OutlineInputBorder(),
-                                    isDense: true,
-                                  ),
-                                  items: _ReportDateRangePreset.values
-                                      .map(
-                                        (value) => DropdownMenuItem(
-                                          value: value,
-                                          child: _overflowText(
-                                            _reportDateRangePresetLabel(
-                                              l10n,
-                                              value,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                      .toList(growable: false),
-                                  selectedItemBuilder: (context) =>
-                                      _ReportDateRangePreset.values
-                                          .map(
-                                            (value) => _dropdownSelectedItem(
-                                              _reportDateRangePresetLabel(
-                                                l10n,
-                                                value,
-                                              ),
-                                            ),
-                                          )
-                                          .toList(growable: false),
-                                  onChanged: (value) {
-                                    if (value != null) {
-                                      unawaited(onPresetChanged(value));
-                                    }
-                                  },
-                                ),
-                          ),
-                          _DateTimeButton(
-                            label: l10n.logbookFilterFromDate,
-                            value: from,
-                            onTap: onPickStart,
-                            width: maxFieldWidth,
-                          ),
-                          _DateTimeButton(
-                            label: l10n.logbookFilterToDate,
-                            value: to,
-                            onTap: onPickEnd,
-                            width: maxFieldWidth,
-                          ),
-                          SizedBox(
-                            width: compact ? maxFieldWidth : 200,
-                            child: DropdownButtonFormField<bool>(
-                              initialValue: includePreviousExperience,
-                              isExpanded: true,
-                              decoration: InputDecoration(
-                                labelText: l10n.reportsPreviousExperienceLabel,
-                                border: const OutlineInputBorder(),
-                                isDense: true,
-                              ),
-                              items: [
-                                DropdownMenuItem(
-                                  value: true,
-                                  child: _overflowText(l10n.reportsInclude),
-                                ),
-                                DropdownMenuItem(
-                                  value: false,
-                                  child: _overflowText(l10n.reportsExclude),
-                                ),
-                              ],
-                              selectedItemBuilder: (context) => [
-                                _dropdownSelectedItem(l10n.reportsInclude),
-                                _dropdownSelectedItem(l10n.reportsExclude),
-                              ],
-                              onChanged: (value) {
-                                if (value != null) {
-                                  onIncludePreviousExperienceChanged(value);
-                                }
-                              },
-                            ),
-                          ),
-                          SizedBox(
-                            width: compact ? maxFieldWidth : 150,
-                            child:
-                                DropdownButtonFormField<ReportsFilterMatchMode>(
-                                  initialValue: matchMode,
-                                  isExpanded: true,
-                                  decoration: InputDecoration(
-                                    labelText: l10n.reportsMatchModeLabel,
-                                    border: const OutlineInputBorder(),
-                                    isDense: true,
-                                  ),
-                                  items: [
-                                    DropdownMenuItem(
-                                      value: ReportsFilterMatchMode.all,
-                                      child: _overflowText(
-                                        l10n.reportsMatchAll,
-                                      ),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: ReportsFilterMatchMode.any,
-                                      child: _overflowText(
-                                        l10n.reportsMatchAny,
-                                      ),
-                                    ),
-                                  ],
-                                  selectedItemBuilder: (context) => [
-                                    _dropdownSelectedItem(l10n.reportsMatchAll),
-                                    _dropdownSelectedItem(l10n.reportsMatchAny),
-                                  ],
-                                  onChanged: (value) {
-                                    if (value != null) {
-                                      unawaited(onMatchModeChanged(value));
-                                    }
-                                  },
-                                ),
-                          ),
-                          SizedBox(
-                            height: 40,
-                            child: FilledButton.icon(
-                              onPressed: onAddFilter,
-                              icon: const Icon(Icons.add),
-                              label: Text(l10n.reportsAddFilter),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (filters.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: [
-                            for (var index = 0; index < filters.length; index++)
-                              InputChip(
-                                visualDensity: VisualDensity.compact,
-                                label: Text(
-                                  l10n.reportsFilterChipLabel(
-                                    _reportFilterFieldLabel(
-                                      l10n,
-                                      filters[index].field,
-                                    ),
-                                    _reportFilterOperatorLabel(
-                                      l10n,
-                                      filters[index].operator,
-                                    ),
-                                    filters[index].displayValue,
-                                  ),
-                                ),
-                                onDeleted: () => onRemoveFilter(index),
-                              ),
-                          ],
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          labelText: l10n.reportsSavedQueriesLabel,
+                          border: const OutlineInputBorder(),
+                          isDense: true,
                         ),
-                      ],
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          SizedBox(
-                            width: compact ? maxFieldWidth : 260,
-                            child: DropdownButtonFormField<String>(
-                              isExpanded: true,
-                              decoration: InputDecoration(
-                                labelText: l10n.reportsSavedQueriesLabel,
-                                border: const OutlineInputBorder(),
-                                isDense: true,
+                        items: savedQueries
+                            .map(
+                              (query) => DropdownMenuItem(
+                                value: query.id,
+                                child: _overflowText(query.name),
                               ),
-                              items: savedQueries
-                                  .map(
-                                    (query) => DropdownMenuItem(
-                                      value: query.id,
-                                      child: _overflowText(query.name),
-                                    ),
-                                  )
-                                  .toList(growable: false),
-                              selectedItemBuilder: (context) => savedQueries
-                                  .map(
-                                    (query) =>
-                                        _dropdownSelectedItem(query.name),
-                                  )
-                                  .toList(growable: false),
-                              onChanged: (value) {
-                                if (value == null) return;
-                                final query = savedQueries.firstWhere(
-                                  (item) => item.id == value,
-                                );
-                                unawaited(onApplySavedQuery(query));
-                              },
-                            ),
+                            )
+                            .toList(growable: false),
+                        selectedItemBuilder: (context) => savedQueries
+                            .map((query) => _dropdownSelectedItem(query.name))
+                            .toList(growable: false),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          final query = savedQueries.firstWhere(
+                            (item) => item.id == value,
+                          );
+                          unawaited(onApplySavedQuery(query));
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: compact ? 36 : 40,
+                      child: FilledButton(
+                        onPressed: onSaveQuery,
+                        style: FilledButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: compact ? 8 : 10,
                           ),
-                          SizedBox(
-                            height: 40,
-                            child: OutlinedButton.icon(
-                              onPressed: onSaveQuery,
-                              icon: const Icon(Icons.save_outlined),
-                              label: Text(l10n.reportsSaveQuery),
-                            ),
-                          ),
-                          if (savedQueries.isNotEmpty)
-                            PopupMenuButton<String>(
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        child: Text(l10n.saveAction),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: compact ? 36 : 40,
+                      child: savedQueries.isNotEmpty
+                          ? PopupMenuButton<String>(
                               onSelected: onDeleteSavedQuery,
                               itemBuilder: (context) => savedQueries
                                   .map(
@@ -2236,33 +2318,300 @@ class _FiltersCard extends StatelessWidget {
                                   )
                                   .toList(growable: false),
                               child: Container(
-                                height: 40,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
+                                height: compact ? 36 : 40,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: compact ? 8 : 12,
                                 ),
+                                alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: Theme.of(context).dividerColor,
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.delete_outline, size: 18),
-                                    const SizedBox(width: 6),
-                                    Text(l10n.reportsDeleteSavedLabel),
-                                  ],
+                                child: Text(l10n.deleteAction),
+                              ),
+                            )
+                          : OutlinedButton(
+                              onPressed: null,
+                              style: OutlinedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: compact ? 8 : 10,
+                                ),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              child: Text(l10n.deleteAction),
+                            ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Divider(height: 1),
+                const SizedBox(height: 10),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: math.min(
+                      availableScrollableHeight,
+                      compact ? 460 : 520,
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: EventTypeToggleButton(
+                                    label: l10n.logbookEventFlight,
+                                    selected: eventTypes.flights,
+                                    onTap: () => onEventTypesChanged(
+                                      eventTypes.copyWith(
+                                        flights: !eventTypes.flights,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: EventTypeToggleButton(
+                                    label: l10n.fieldIsSimulator,
+                                    selected: eventTypes.simulator,
+                                    onTap: () => onEventTypesChanged(
+                                      eventTypes.copyWith(
+                                        simulator: !eventTypes.simulator,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: EventTypeToggleButton(
+                                    label: l10n.reportsMetricDuty,
+                                    selected: eventTypes.duty,
+                                    onTap: () => onEventTypesChanged(
+                                      eventTypes.copyWith(
+                                        duty: !eventTypes.duty,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: EventTypeToggleButton(
+                                    label: l10n.logbookEventPositioning,
+                                    selected: eventTypes.positioning,
+                                    onTap: () => onEventTypesChanged(
+                                      eventTypes.copyWith(
+                                        positioning: !eventTypes.positioning,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            SizedBox(
+                              width: maxFieldWidth,
+                              child:
+                                  DropdownButtonFormField<
+                                    _ReportDateRangePreset
+                                  >(
+                                    initialValue: preset,
+                                    isExpanded: true,
+                                    decoration: InputDecoration(
+                                      labelText: l10n.logbookFilterRange,
+                                      border: const OutlineInputBorder(),
+                                      isDense: true,
+                                    ),
+                                    items: _ReportDateRangePreset.values
+                                        .map(
+                                          (value) => DropdownMenuItem(
+                                            value: value,
+                                            child: _overflowText(
+                                              _reportDateRangePresetLabel(
+                                                l10n,
+                                                value,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                        .toList(growable: false),
+                                    selectedItemBuilder: (context) =>
+                                        _ReportDateRangePreset.values
+                                            .map(
+                                              (value) => _dropdownSelectedItem(
+                                                _reportDateRangePresetLabel(
+                                                  l10n,
+                                                  value,
+                                                ),
+                                              ),
+                                            )
+                                            .toList(growable: false),
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        unawaited(onPresetChanged(value));
+                                      }
+                                    },
+                                  ),
+                            ),
+                            SizedBox(
+                              width: maxFieldWidth * 2 + 8,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: DateSelectorInputField(
+                                      label: l10n.logbookFilterFromDate,
+                                      valueText: DateFormat(
+                                        'dd/MMM yyyy',
+                                        locale,
+                                      ).format(from),
+                                      onTap: onPickStart,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: ClockTimeInputField(
+                                      controller: fromTimeController,
+                                      label: 'Hour',
+                                      onChangedMinutes: onFromTimeChanged,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              width: maxFieldWidth * 2 + 8,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: DateSelectorInputField(
+                                      label: l10n.logbookFilterToDate,
+                                      valueText: DateFormat(
+                                        'dd/MMM yyyy',
+                                        locale,
+                                      ).format(to),
+                                      onTap: onPickEnd,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: ClockTimeInputField(
+                                      controller: toTimeController,
+                                      label: 'Hour',
+                                      onChangedMinutes: onToTimeChanged,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              width: compact ? maxFieldWidth : 150,
+                              child:
+                                  DropdownButtonFormField<
+                                    ReportsFilterMatchMode
+                                  >(
+                                    initialValue: matchMode,
+                                    isExpanded: true,
+                                    decoration: InputDecoration(
+                                      labelText: l10n.reportsMatchModeLabel,
+                                      border: const OutlineInputBorder(),
+                                      isDense: true,
+                                    ),
+                                    items: [
+                                      DropdownMenuItem(
+                                        value: ReportsFilterMatchMode.all,
+                                        child: _overflowText(
+                                          l10n.reportsMatchAll,
+                                        ),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: ReportsFilterMatchMode.any,
+                                        child: _overflowText(
+                                          l10n.reportsMatchAny,
+                                        ),
+                                      ),
+                                    ],
+                                    selectedItemBuilder: (context) => [
+                                      _dropdownSelectedItem(
+                                        l10n.reportsMatchAll,
+                                      ),
+                                      _dropdownSelectedItem(
+                                        l10n.reportsMatchAny,
+                                      ),
+                                    ],
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        unawaited(onMatchModeChanged(value));
+                                      }
+                                    },
+                                  ),
+                            ),
+                            SizedBox(
+                              height: compact ? 36 : 40,
+                              child: FilledButton.icon(
+                                onPressed: onAddFilter,
+                                icon: const Icon(Icons.add),
+                                label: Text(
+                                  compact
+                                      ? l10n.addAction
+                                      : l10n.reportsAddFilter,
+                                ),
+                                style: FilledButton.styleFrom(
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
                                 ),
                               ),
                             ),
+                          ],
+                        ),
+                        if (filters.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              for (
+                                var index = 0;
+                                index < filters.length;
+                                index++
+                              )
+                                InputChip(
+                                  visualDensity: VisualDensity.compact,
+                                  label: Text(
+                                    l10n.reportsFilterChipLabel(
+                                      _reportFilterFieldLabel(
+                                        l10n,
+                                        filters[index].field,
+                                      ),
+                                      _reportFilterOperatorLabel(
+                                        l10n,
+                                        filters[index].operator,
+                                      ),
+                                      filters[index].displayValue,
+                                    ),
+                                  ),
+                                  onDeleted: () => onRemoveFilter(index),
+                                ),
+                            ],
+                          ),
                         ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -2270,54 +2619,28 @@ class _FiltersCard extends StatelessWidget {
   }
 }
 
-class _DateTimeButton extends StatelessWidget {
-  const _DateTimeButton({
-    required this.label,
-    required this.value,
-    required this.onTap,
-    this.width = 190,
-  });
-
-  final String label;
-  final DateTime value;
-  final VoidCallback onTap;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 11)),
-            const SizedBox(height: 2),
-            Text(
-              DateFormat('dd/MM/yyyy HH:mm').format(value),
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _TotalsCard extends StatelessWidget {
-  const _TotalsCard({required this.totals, required this.customTimeLabels});
+  const _TotalsCard({
+    required this.totals,
+    required this.customTimeLabels,
+    required this.includePreviousExperience,
+    required this.onToggleIncludePreviousExperience,
+    this.firstFlightDate,
+    this.lastFlightDate,
+  });
 
   final ReportsTotals totals;
   final CustomTimeLabels customTimeLabels;
+  final bool includePreviousExperience;
+  final VoidCallback onToggleIncludePreviousExperience;
+  final DateTime? firstFlightDate;
+  final DateTime? lastFlightDate;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final operations = <(String, String)>[
+      (l10n.reportsMetricDistanceNm, _formatCount(totals.distanceNM)),
       (l10n.reportsMetricIfrApproaches, _formatCount(totals.ifrApproaches)),
       (l10n.reportsMetricTakeoffDay, _formatCount(totals.takeoffsDay)),
       (l10n.reportsMetricTakeoffNight, _formatCount(totals.takeoffsNight)),
@@ -2325,64 +2648,143 @@ class _TotalsCard extends StatelessWidget {
       (l10n.reportsMetricLandingNight, _formatCount(totals.landingsNight)),
     ];
     final times = <(String, String)>[
-      (l10n.reportsMetricTotalBlock, _formatMinutes(totals.totalMinutes)),
       (l10n.reportsMetricPic, _formatMinutes(totals.picMinutes)),
       (l10n.reportsMetricPicus, _formatMinutes(totals.picusMinutes)),
       (l10n.reportsMetricSic, _formatMinutes(totals.sicMinutes)),
       (l10n.reportsMetricDual, _formatMinutes(totals.dualMinutes)),
       (l10n.reportsMetricInstructor, _formatMinutes(totals.instructorMinutes)),
-      (l10n.reportsMetricNight, _formatMinutes(totals.nightMinutes)),
       (l10n.reportsMetricIfr, _formatMinutes(totals.ifrMinutes)),
+      (l10n.reportsMetricInstrument, _formatMinutes(totals.instrumentMinutes)),
       (
-        l10n.reportsMetricInstrument,
-        _formatMinutes(totals.simulatedInstrumentMinutes + totals.ifrMinutes),
+        l10n.reportsFilterFieldSimInstrumentTime,
+        _formatMinutes(totals.simulatedInstrumentMinutes),
       ),
+      (l10n.reportsMetricNight, _formatMinutes(totals.nightMinutes)),
       (
         l10n.reportsMetricCrossCountry,
         _formatMinutes(totals.crossCountryMinutes),
       ),
-      (l10n.reportsMetricSimulator, _formatMinutes(totals.simulatorMinutes)),
-      (l10n.reportsMetricDuty, _formatMinutes(totals.dutyMinutes)),
-      (l10n.reportsMetricDistanceNm, _formatCount(totals.distanceNM)),
       (customTimeLabels.custom1, _formatMinutes(totals.custom1Minutes)),
       (customTimeLabels.custom2, _formatMinutes(totals.custom2Minutes)),
       (customTimeLabels.custom3, _formatMinutes(totals.custom3Minutes)),
       (customTimeLabels.custom4, _formatMinutes(totals.custom4Minutes)),
+      (
+        l10n.reportsFilterFieldFlightTime,
+        _formatMinutes(totals.flightMinutes),
+      ),
+      (l10n.reportsMetricTotalBlock, _formatMinutes(totals.totalMinutes)),
+      (l10n.reportsMetricSimulator, _formatMinutes(totals.simulatorMinutes)),
+      (l10n.reportsMetricDuty, _formatMinutes(totals.dutyMinutes)),
     ];
+    final dateFormatter = DateFormat('yyyy-MM-dd');
+    final firstDateLabel = firstFlightDate == null
+        ? '-'
+        : dateFormatter.format(firstFlightDate!.toUtc());
+    final lastDateLabel = lastFlightDate == null
+        ? '-'
+        : dateFormatter.format(lastFlightDate!.toUtc());
+    final dateRangeLabel =
+        'First Flight: $firstDateLabel | Last Flight: $lastDateLabel';
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: SelectionArea(
-          child: Column(
-            children: [
-              Row(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compactHeader = constraints.maxWidth < 560;
+              return Column(
                 children: [
-                  Text(
-                    l10n.reportsFlightCount(_formatCount(totals.sectors)),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+                  if (compactHeader)
+                    Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                l10n.reportsFlightCount(
+                                  _formatCount(totals.sectors),
+                                ),
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 190,
+                              child: EventTypeToggleButton(
+                                label: l10n.reportsPreviousExperienceLabel,
+                                selected: includePreviousExperience,
+                                onTap: onToggleIncludePreviousExperience,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            dateRangeLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.end,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Row(
+                      children: [
+                        Text(
+                          l10n.reportsFlightCount(_formatCount(totals.sectors)),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            dateRangeLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.end,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 190,
+                          child: EventTypeToggleButton(
+                            label: l10n.reportsPreviousExperienceLabel,
+                            selected: includePreviousExperience,
+                            onTap: onToggleIncludePreviousExperience,
+                          ),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 8),
+                  const Divider(height: 1),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _MetricWrap(metrics: operations),
+                          const SizedBox(height: 10),
+                          const Divider(height: 1),
+                          const SizedBox(height: 10),
+                          _MetricWrap(metrics: times),
+                        ],
+                      ),
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 8),
-              const Divider(height: 1),
-              const SizedBox(height: 10),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      _MetricWrap(metrics: operations),
-                      const SizedBox(height: 10),
-                      const Divider(height: 1),
-                      const SizedBox(height: 10),
-                      _MetricWrap(metrics: times),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
@@ -2403,8 +2805,8 @@ class _MetricWrap extends StatelessWidget {
         final spacing = isPhoneMiniWidth ? 6.0 : 8.0;
         final columns = isPhoneMiniWidth
             ? 2
-            : constraints.maxWidth >= 700
-            ? 5
+            : constraints.maxWidth >= 900
+            ? 6
             : (constraints.maxWidth / 170.0).floor().clamp(1, 4);
         final tileWidth =
             (constraints.maxWidth - (columns - 1) * spacing) / columns;
@@ -2438,7 +2840,7 @@ class _MetricWrap extends StatelessWidget {
                           fontSize: labelFontSize,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                       Text(
                         metric.$2,
                         style: TextStyle(
@@ -2689,6 +3091,12 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
     });
   }
 
+  List<ReportsFilterField> _availableFields() {
+    return ReportsFilterField.values
+        .where((field) => !_pilotFilterFields.contains(field))
+        .toList(growable: false);
+  }
+
   List<ReportsFilterOperator> _operatorsForField(ReportsFilterField field) {
     if (field == ReportsFilterField.pilotName ||
         field == ReportsFilterField.pilotOnBoard ||
@@ -2732,6 +3140,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final operators = _operatorsForField(_field);
+    final fields = _availableFields();
     return Dialog(
       child: SizedBox(
         width: 520,
@@ -2766,7 +3175,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
                   labelText: l10n.reportsFieldNameLabel,
                   border: const OutlineInputBorder(),
                 ),
-                items: ReportsFilterField.values
+                items: fields
                     .map(
                       (field) => DropdownMenuItem(
                         value: field,
@@ -2776,7 +3185,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
                       ),
                     )
                     .toList(growable: false),
-                selectedItemBuilder: (context) => ReportsFilterField.values
+                selectedItemBuilder: (context) => fields
                     .map(
                       (field) => _dropdownSelectedItem(
                         _reportFilterFieldLabel(l10n, field),

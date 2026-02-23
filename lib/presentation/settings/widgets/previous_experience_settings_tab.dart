@@ -40,47 +40,51 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
         const SizedBox(height: 12),
         rowsAsync.when(
           data: (rows) {
-            if (rows.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text('No previous experience entries yet.'),
-              );
-            }
+            final totalFlightCount = rows.fold<int>(
+              0,
+              (sum, row) => sum + row.previousExperience.flightCount,
+            );
             return Column(
-              children: rows
-                  .map<Widget>(
-                    (row) {
-                      final block = _formatMinutes(
-                        row.previousExperience.timeBlockMinutes,
-                      );
-                      final pic = _formatMinutes(
-                        row.previousExperience.timePICMinutes,
-                      );
-                      final sim = _formatMinutes(
-                        row.previousExperience.timeSimulatorMinutes,
-                      );
-                      return Card(
-                        child: ListTile(
-                          title: Text(
-                            '${row.aircraftType.code} • '
-                            '${row.aircraftType.longName}',
-                          ),
-                          subtitle: Text('Block $block  PIC $pic  SIM $sim'),
-                          onTap: () => _openEditor(
-                            context,
-                            ref,
-                            initial: row.previousExperience,
-                          ),
-                          trailing: IconButton(
-                            tooltip: 'Delete',
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: () => _deleteEntry(context, ref, row),
-                          ),
-                        ),
-                      );
-                    },
-                  )
-                  .toList(growable: false),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Flight count: $totalFlightCount',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                if (rows.isEmpty)
+                  const Text('No previous experience entries yet.'),
+                ...rows.map<Widget>((row) {
+                  final block = _formatMinutes(
+                    row.previousExperience.timeBlockMinutes,
+                  );
+                  final pic = _formatMinutes(
+                    row.previousExperience.timePICMinutes,
+                  );
+                  final sim = _formatMinutes(
+                    row.previousExperience.timeSimulatorMinutes,
+                  );
+                  return Card(
+                    child: ListTile(
+                      title: Text(
+                        '${row.aircraftType.code} • '
+                        '${row.aircraftType.longName}',
+                      ),
+                      subtitle: Text('Block $block  PIC $pic  SIM $sim'),
+                      onTap: () => _openEditor(
+                        context,
+                        ref,
+                        initial: row.previousExperience,
+                      ),
+                      trailing: IconButton(
+                        tooltip: 'Delete',
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () => _deleteEntry(context, ref, row),
+                      ),
+                    ),
+                  );
+                }),
+              ],
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -203,6 +207,7 @@ class _PreviousExperienceEditDialogState
     _setTime('sim', initial?.timeSimulatorMinutes ?? 0);
 
     _setInt('distance', initial?.distanceNM ?? 0);
+    _setInt('flightCount', initial?.flightCount ?? 0);
     _setInt('ifrApproaches', initial?.ifrApproaches ?? 0);
     _setInt('takeoffDay', initial?.takeOffsDays ?? 0);
     _setInt('takeoffNight', initial?.takeOffsNight ?? 0);
@@ -368,6 +373,7 @@ class _PreviousExperienceEditDialogState
       timeBlockMinutes: Value(_minutes('block')),
       timeSimulatorMinutes: Value(_minutes('sim')),
       distanceNM: Value(_intValue('distance')),
+      flightCount: Value(_intValue('flightCount')),
       ifrApproaches: Value(_intValue('ifrApproaches')),
       takeOffsDays: Value(_intValue('takeoffDay')),
       takeOffsNight: Value(_intValue('takeoffNight')),
@@ -401,6 +407,7 @@ class _PreviousExperienceEditDialogState
           timeBlockMinutes: _minutes('block'),
           timeSimulatorMinutes: _minutes('sim'),
           distanceNM: _intValue('distance'),
+          flightCount: _intValue('flightCount'),
           ifrApproaches: _intValue('ifrApproaches'),
           takeOffsDays: _intValue('takeoffDay'),
           takeOffsNight: _intValue('takeoffNight'),
@@ -656,6 +663,7 @@ class _IntGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final fields = <(String, String)>[
       ('Distance NM', 'distance'),
+      ('Flight count', 'flightCount'),
       ('IFR Approaches', 'ifrApproaches'),
       ('Takeoffs Day', 'takeoffDay'),
       ('Takeoffs Night', 'takeoffNight'),
