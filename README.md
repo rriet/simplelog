@@ -6,6 +6,8 @@ Designed by an airline pilot, it is built to reduce typing, speed up entries,
 and keep your records accurate.
 
 Enter the essentials, press **Calculate**, review, and save.
+SimpleLog is free and open source, and community donations help keep the
+project alive and actively maintained.
 
 ## Why SimpleLog
 
@@ -58,10 +60,12 @@ SimpleLog follows a **your-data-is-yours** model:
 
 ## Getting Started
 
-```bash
-flutter pub get
-flutter run
-```
+Distribution will be available via downloadable binaries and app stores.
+
+This section will be updated with direct install links.
+
+If SimpleLog helps you, please consider supporting the project with a donation.
+A donation link will be added soon.
 
 ## Contribution
 
