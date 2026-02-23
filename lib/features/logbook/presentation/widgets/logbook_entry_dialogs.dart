@@ -8,9 +8,12 @@ import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
 import 'package:simplelog/features/crew/presentation/widgets/crew_info_dialog.dart';
 
+/// Public API documentation.
 class LogbookEntryDialogs {
   const LogbookEntryDialogs._();
+/// Public API documentation.
 
+  /// Public API documentation.
   static Future<void> show(
     BuildContext context, {
     required LogbookEntry entry,
@@ -57,13 +60,13 @@ class LogbookEntryDialogs {
                   children: [
                     Expanded(
                       child: Text(
-                        'Event Info',
+                        l10n.eventInfoTitle,
                         style: Theme.of(dialogContext).textTheme.titleSmall,
                       ),
                     ),
                     TextButton(
                       onPressed: () => Navigator.of(dialogContext).pop(),
-                      child: const Text('Done'),
+                      child: Text(l10n.okAction),
                     ),
                   ],
                 ),
@@ -133,7 +136,7 @@ class LogbookEntryDialogs {
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(),
-                        child: const Text('Done'),
+                        child: Text(l10n.okAction),
                       ),
                     ],
                   ),
@@ -239,9 +242,8 @@ class LogbookEntryDialogs {
     final depTime = _formatTime(entry.flight?.takeOffDateTime, date);
     final arrTime = _formatTime(entry.flight?.arrivalDateTime, null);
 
-    final typeName = entry.aircraftType?.longName ??
-        entry.aircraftType?.code ??
-        '-';
+    final typeName =
+        entry.aircraftType?.longName ?? entry.aircraftType?.code ?? '-';
     final tail = entry.aircraft?.registration ?? '-';
     final dep = entry.departureAirport?.icao ?? '-';
     final arr = entry.arrivalAirport?.icao ?? '-';
@@ -302,7 +304,7 @@ class LogbookEntryDialogs {
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(),
-                        child: const Text('Done'),
+                        child: Text(l10n.okAction),
                       ),
                     ],
                   ),
@@ -339,7 +341,9 @@ class LogbookEntryDialogs {
                             Expanded(
                               child: _PositioningInfoValue(
                                 label: 'Block',
-                                value: '${_formatMinutes(flight.timeBlockMinutes)}h',
+                                value:
+                                    '${_formatMinutes(flight.timeBlockMinutes)}'
+                                    'h',
                                 alignEnd: true,
                               ),
                             ),
@@ -479,9 +483,8 @@ class LogbookEntryDialogs {
 
     final date = entry.timeLine.eventDateTime;
     final dateLabel = DateFormat('dd/MMM yyyy', locale).format(date);
-    final typeName = entry.aircraftType?.longName ??
-        entry.aircraftType?.code ??
-        '-';
+    final typeName =
+        entry.aircraftType?.longName ?? entry.aircraftType?.code ?? '-';
     final tail = entry.aircraft?.registration ?? '-';
     final remarks = sim.remarks.trim();
     final notes = sim.notes.trim();
@@ -525,7 +528,7 @@ class LogbookEntryDialogs {
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(),
-                        child: const Text('Done'),
+                        child: Text(l10n.okAction),
                       ),
                     ],
                   ),
@@ -669,8 +672,9 @@ class _PositioningInfoValue extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Column(
-      crossAxisAlignment:
-          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: alignEnd
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -763,7 +767,8 @@ class _CrewInfoListState extends State<_CrewInfoList> {
                 child: InkWell(
                   onTap: () => widget.onTap(widget.crewList[index]),
                   child: Text(
-                    '${widget.crewList[index].positionLabel}: ${widget.crewList[index].name}',
+                    '${widget.crewList[index].positionLabel}: '
+                    '${widget.crewList[index].name}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.primary,
                     ),
@@ -777,7 +782,6 @@ class _CrewInfoListState extends State<_CrewInfoList> {
     );
   }
 }
-
 
 String _formatMinutes(int minutes) {
   if (minutes <= 0) return '0:00';

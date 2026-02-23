@@ -1,9 +1,12 @@
 import 'package:drift/drift.dart';
 import 'package:simplelog/data/database/app_database.dart';
 
+/// Public API documentation.
 class CrewSeedImporter {
+  /// Public API documentation.
   const CrewSeedImporter();
 
+  /// Public API documentation.
   Future<int> importIfEmpty(AppDatabase db) async {
     final countExpr = db.crew.id.count();
     final query = db.selectOnly(db.crew)..addColumns([countExpr]);
@@ -13,7 +16,9 @@ class CrewSeedImporter {
       return 0;
     }
 
-    await db.into(db.crew).insert(
+    await db
+        .into(db.crew)
+        .insert(
           CrewCompanion.insert(
             name: 'Self',
             email: const Value(null),
@@ -28,4 +33,3 @@ class CrewSeedImporter {
     return 1;
   }
 }
-

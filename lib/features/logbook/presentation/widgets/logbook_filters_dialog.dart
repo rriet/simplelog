@@ -1,35 +1,54 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
 
+/// Public API documentation.
 enum LogbookDatePreset {
+  /// Public API documentation.
   custom,
+  /// Public API documentation.
   sinceFirstFlight,
+  /// Public API documentation.
   last7Days,
+  /// Public API documentation.
   last14Days,
+  /// Public API documentation.
   last21Days,
+  /// Public API documentation.
   last28Days,
+  /// Public API documentation.
   last365Days,
+  /// Public API documentation.
   lastMonth,
+  /// Public API documentation.
   lastYear,
+  /// Public API documentation.
   currentMonth,
+  /// Public API documentation.
   currentYear,
 }
 
+/// Public API documentation.
 class LogbookFiltersDialog extends StatefulWidget {
+  /// Public API documentation.
   const LogbookFiltersDialog({
-    super.key,
     required this.initial,
     required this.loadFirstEventDate,
+    super.key,
   });
 
+  /// Public API documentation.
   final LogbookFilters initial;
+  /// Public API documentation.
   final Future<DateTime?> Function() loadFirstEventDate;
 
   @override
   State<LogbookFiltersDialog> createState() => _LogbookFiltersDialogState();
 
+  /// Public API documentation.
   static Future<LogbookFilters?> show(
     BuildContext context, {
     required LogbookFilters initial,
@@ -108,23 +127,23 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
         _setRangeDays(now, 365);
         return;
       case LogbookDatePreset.lastMonth:
-        final lastMonth = DateTime.utc(now.year, now.month - 1, 1);
-        _fromDate = DateTime.utc(lastMonth.year, lastMonth.month, 1);
+        final lastMonth = DateTime.utc(now.year, now.month - 1);
+        _fromDate = DateTime.utc(lastMonth.year, lastMonth.month);
         _toDate = _endOfDay(DateTime.utc(now.year, now.month, 0));
         setState(() {});
         return;
       case LogbookDatePreset.lastYear:
-        _fromDate = DateTime.utc(now.year - 1, 1, 1);
+        _fromDate = DateTime.utc(now.year - 1);
         _toDate = _endOfDay(DateTime.utc(now.year - 1, 12, 31));
         setState(() {});
         return;
       case LogbookDatePreset.currentMonth:
-        _fromDate = DateTime.utc(now.year, now.month, 1);
+        _fromDate = DateTime.utc(now.year, now.month);
         _toDate = _endOfDay(DateTime.utc(now.year, now.month + 1, 0));
         setState(() {});
         return;
       case LogbookDatePreset.currentYear:
-        _fromDate = DateTime.utc(now.year, 1, 1);
+        _fromDate = DateTime.utc(now.year);
         _toDate = _endOfDay(DateTime.utc(now.year, 12, 31));
         setState(() {});
         return;
@@ -230,7 +249,7 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
                             ? null
                             : (value) {
                                 if (value != null) {
-                                  _selectPreset(value);
+                                  unawaited(_selectPreset(value));
                                 }
                               },
                       ),

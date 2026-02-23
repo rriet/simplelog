@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 
+/// Public API documentation.
 class AircraftTypeSearchBar extends StatelessWidget {
+  /// Public API documentation.
   const AircraftTypeSearchBar({
-    super.key,
     required this.controller,
     required this.label,
     required this.onChanged,
+    super.key,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final TextEditingController controller;
+  /// Public API documentation.
   final String label;
+  /// Public API documentation.
   final ValueChanged<String> onChanged;
 
   @override

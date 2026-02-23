@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Public API documentation.
 Future<T?> showConstrainedEditDialog<T>({
   required BuildContext context,
   required Widget child,

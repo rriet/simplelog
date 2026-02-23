@@ -1,12 +1,17 @@
 import 'package:drift/drift.dart';
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/models/reports_models.dart';
 
+/// Public API documentation.
 class ReportsRepository {
+  /// Public API documentation.
   ReportsRepository(this._db);
 
+  /// Public API documentation.
   final AppDatabase _db;
 
+  /// Public API documentation.
   Future<ReportsTotals> loadQuickTotals({
     required DateTime from,
     required DateTime to,
@@ -124,9 +129,11 @@ class ReportsRepository {
             ),
           );
     }
+    /// Public API documentation.
     return totals;
   }
 
+  /// Public API documentation.
   Future<ReportsData> load(ReportsQuery query) async {
     final depTimeLines = _db.alias(_db.timeLines, 'report_dep_tl');
     final depAirports = _db.alias(_db.airports, 'report_dep_airports');
@@ -179,7 +186,8 @@ class ReportsRepository {
               modelFamily: type?.family ?? '',
               fromIcao: depAirport?.icao ?? '',
               toIcao: arrAirport?.icao ?? '',
-              pilotNames: pilotNamesByFlight[flight.id] ?? '',
+              pilotNames:
+                  pilotNamesByFlight[flight.id]?.allOnBoardNamesLower ?? '',
               fromLatitude: depAirport?.latitude,
               fromLongitude: depAirport?.longitude,
               toLatitude: arrAirport?.latitude,
@@ -214,7 +222,12 @@ class ReportsRepository {
             aircraftTypeCode: type?.code ?? '',
             aircraftTypeFamily: type?.family ?? '',
             aircraftTypeName: type?.longName ?? '',
-            pilotNames: pilotNamesByFlight[flight.id] ?? '',
+            pilotNames:
+                pilotNamesByFlight[flight.id]?.allOnBoardNamesLower ?? '',
+            pilotPicNames: pilotNamesByFlight[flight.id]?.picNamesLower ?? '',
+            pilotSicNames: pilotNamesByFlight[flight.id]?.sicNamesLower ?? '',
+            pilotTraineeNames:
+                pilotNamesByFlight[flight.id]?.traineeNamesLower ?? '',
             approachType: flight.approachType,
             remarks: flight.remarks,
             notes: flight.notes,
@@ -315,7 +328,9 @@ class ReportsRepository {
     return totals;
   }
 
-  Future<Map<int, String>> _fetchPilotNamesByFlight(List<int> flightIds) async {
+  Future<Map<int, _PilotNamesByRole>> _fetchPilotNamesByFlight(
+    List<int> flightIds,
+  ) async {
     if (flightIds.isEmpty) {
       return const {};
     }
@@ -326,14 +341,16 @@ class ReportsRepository {
       ),
     ])..where(_db.flightCrewAssignments.flightId.isIn(flightIds))).get();
 
-    final map = <int, List<String>>{};
+    final map = <int, _PilotNamesAccumulator>{};
     for (final row in rows) {
       final assignment = row.readTable(_db.flightCrewAssignments);
       final crew = row.readTable(_db.crew);
-      map.putIfAbsent(assignment.flightId, () => <String>[]).add(crew.name);
+      map
+          .putIfAbsent(assignment.flightId, _PilotNamesAccumulator.new)
+          .add(assignment.position, crew.name);
     }
     return map.map(
-      (key, value) => MapEntry(key, value.join(' ').toLowerCase()),
+      (key, value) => MapEntry(key, value.toResult()),
     );
   }
 
@@ -360,9 +377,12 @@ class ReportsRepository {
         final target = _textFieldValue(row, filter.field).toLowerCase();
         final value = (filter.textValue ?? '').trim().toLowerCase();
         if (value.isEmpty) return true;
+        final isPilotRoleField = _isPilotRoleField(filter.field);
         switch (filter.operator) {
           case ReportsFilterOperator.contains:
             return target.contains(value);
+          case ReportsFilterOperator.doesNotContain:
+            return !target.contains(value);
           case ReportsFilterOperator.startsWith:
             return target.startsWith(value);
           case ReportsFilterOperator.doesNotStartWith:
@@ -372,10 +392,14 @@ class ReportsRepository {
           case ReportsFilterOperator.doesNotEndWith:
             return !target.endsWith(value);
           case ReportsFilterOperator.isExactly:
-            return target == value;
+            return isPilotRoleField ? target.contains(value) : target == value;
           case ReportsFilterOperator.isNot:
-            return target != value;
-          default:
+            return isPilotRoleField ? !target.contains(value) : target != value;
+          case ReportsFilterOperator.greaterThan:
+          case ReportsFilterOperator.lessThan:
+          case ReportsFilterOperator.equals:
+          case ReportsFilterOperator.isTrue:
+          case ReportsFilterOperator.isFalse:
             return false;
         }
       case ReportsFilterValueType.number:
@@ -390,17 +414,36 @@ class ReportsRepository {
             return target < value;
           case ReportsFilterOperator.equals:
             return target == value;
-          default:
+          case ReportsFilterOperator.contains:
+          case ReportsFilterOperator.doesNotContain:
+          case ReportsFilterOperator.startsWith:
+          case ReportsFilterOperator.doesNotStartWith:
+          case ReportsFilterOperator.endsWith:
+          case ReportsFilterOperator.doesNotEndWith:
+          case ReportsFilterOperator.isExactly:
+          case ReportsFilterOperator.isNot:
+          case ReportsFilterOperator.isTrue:
+          case ReportsFilterOperator.isFalse:
             return false;
         }
       case ReportsFilterValueType.boolean:
         final target = _boolFieldValue(row, filter.field);
         switch (filter.operator) {
           case ReportsFilterOperator.isTrue:
-            return target == true;
+            return target;
           case ReportsFilterOperator.isFalse:
-            return target == false;
-          default:
+            return !target;
+          case ReportsFilterOperator.contains:
+          case ReportsFilterOperator.doesNotContain:
+          case ReportsFilterOperator.startsWith:
+          case ReportsFilterOperator.doesNotStartWith:
+          case ReportsFilterOperator.endsWith:
+          case ReportsFilterOperator.doesNotEndWith:
+          case ReportsFilterOperator.isExactly:
+          case ReportsFilterOperator.isNot:
+          case ReportsFilterOperator.greaterThan:
+          case ReportsFilterOperator.lessThan:
+          case ReportsFilterOperator.equals:
             return false;
         }
     }
@@ -437,14 +480,47 @@ class ReportsRepository {
       case ReportsFilterField.aircraftTypeName:
         return row.aircraftTypeName;
       case ReportsFilterField.pilotName:
+      case ReportsFilterField.pilotOnBoard:
         return row.pilotNames;
+      case ReportsFilterField.pilotPic:
+        return row.pilotPicNames;
+      case ReportsFilterField.pilotSic:
+        return row.pilotSicNames;
+      case ReportsFilterField.pilotTrainee:
+        return row.pilotTraineeNames;
       case ReportsFilterField.approachType:
         return row.approachType;
       case ReportsFilterField.remarks:
         return row.remarks;
       case ReportsFilterField.notes:
         return row.notes;
-      default:
+      case ReportsFilterField.blockTime:
+      case ReportsFilterField.flightTime:
+      case ReportsFilterField.totalTime:
+      case ReportsFilterField.nightTime:
+      case ReportsFilterField.ifrTime:
+      case ReportsFilterField.instrumentTime:
+      case ReportsFilterField.simulatedInstrumentTime:
+      case ReportsFilterField.picTime:
+      case ReportsFilterField.picusTime:
+      case ReportsFilterField.sicTime:
+      case ReportsFilterField.dualTime:
+      case ReportsFilterField.instructorTime:
+      case ReportsFilterField.crossCountryTime:
+      case ReportsFilterField.custom1Time:
+      case ReportsFilterField.custom2Time:
+      case ReportsFilterField.custom3Time:
+      case ReportsFilterField.custom4Time:
+      case ReportsFilterField.distanceNm:
+      case ReportsFilterField.takeoffs:
+      case ReportsFilterField.takeoffsDay:
+      case ReportsFilterField.takeoffsNight:
+      case ReportsFilterField.landings:
+      case ReportsFilterField.landingsDay:
+      case ReportsFilterField.landingsNight:
+      case ReportsFilterField.ifrApproaches:
+      case ReportsFilterField.isMultiPilot:
+      case ReportsFilterField.isSimulator:
         return '';
     }
   }
@@ -500,7 +576,30 @@ class ReportsRepository {
         return row.flight.landingsNight;
       case ReportsFilterField.ifrApproaches:
         return row.flight.ifrApproaches;
-      default:
+      case ReportsFilterField.departureIcao:
+      case ReportsFilterField.departureIata:
+      case ReportsFilterField.departureName:
+      case ReportsFilterField.departureCity:
+      case ReportsFilterField.departureCountry:
+      case ReportsFilterField.arrivalIcao:
+      case ReportsFilterField.arrivalIata:
+      case ReportsFilterField.arrivalName:
+      case ReportsFilterField.arrivalCity:
+      case ReportsFilterField.arrivalCountry:
+      case ReportsFilterField.aircraftTail:
+      case ReportsFilterField.aircraftTypeCode:
+      case ReportsFilterField.aircraftTypeFamily:
+      case ReportsFilterField.aircraftTypeName:
+      case ReportsFilterField.pilotName:
+      case ReportsFilterField.pilotOnBoard:
+      case ReportsFilterField.pilotPic:
+      case ReportsFilterField.pilotSic:
+      case ReportsFilterField.pilotTrainee:
+      case ReportsFilterField.approachType:
+      case ReportsFilterField.remarks:
+      case ReportsFilterField.notes:
+      case ReportsFilterField.isMultiPilot:
+      case ReportsFilterField.isSimulator:
         return 0;
     }
   }
@@ -511,9 +610,63 @@ class ReportsRepository {
         return row.isMultiPilot;
       case ReportsFilterField.isSimulator:
         return row.isSimulator;
-      default:
+      case ReportsFilterField.departureIcao:
+      case ReportsFilterField.departureIata:
+      case ReportsFilterField.departureName:
+      case ReportsFilterField.departureCity:
+      case ReportsFilterField.departureCountry:
+      case ReportsFilterField.arrivalIcao:
+      case ReportsFilterField.arrivalIata:
+      case ReportsFilterField.arrivalName:
+      case ReportsFilterField.arrivalCity:
+      case ReportsFilterField.arrivalCountry:
+      case ReportsFilterField.aircraftTail:
+      case ReportsFilterField.aircraftTypeCode:
+      case ReportsFilterField.aircraftTypeFamily:
+      case ReportsFilterField.aircraftTypeName:
+      case ReportsFilterField.pilotName:
+      case ReportsFilterField.pilotOnBoard:
+      case ReportsFilterField.pilotPic:
+      case ReportsFilterField.pilotSic:
+      case ReportsFilterField.pilotTrainee:
+      case ReportsFilterField.approachType:
+      case ReportsFilterField.remarks:
+      case ReportsFilterField.notes:
+      case ReportsFilterField.blockTime:
+      case ReportsFilterField.flightTime:
+      case ReportsFilterField.totalTime:
+      case ReportsFilterField.nightTime:
+      case ReportsFilterField.ifrTime:
+      case ReportsFilterField.instrumentTime:
+      case ReportsFilterField.simulatedInstrumentTime:
+      case ReportsFilterField.picTime:
+      case ReportsFilterField.picusTime:
+      case ReportsFilterField.sicTime:
+      case ReportsFilterField.dualTime:
+      case ReportsFilterField.instructorTime:
+      case ReportsFilterField.crossCountryTime:
+      case ReportsFilterField.custom1Time:
+      case ReportsFilterField.custom2Time:
+      case ReportsFilterField.custom3Time:
+      case ReportsFilterField.custom4Time:
+      case ReportsFilterField.distanceNm:
+      case ReportsFilterField.takeoffs:
+      case ReportsFilterField.takeoffsDay:
+      case ReportsFilterField.takeoffsNight:
+      case ReportsFilterField.landings:
+      case ReportsFilterField.landingsDay:
+      case ReportsFilterField.landingsNight:
+      case ReportsFilterField.ifrApproaches:
         return false;
     }
+  }
+
+  bool _isPilotRoleField(ReportsFilterField field) {
+    return field == ReportsFilterField.pilotName ||
+        field == ReportsFilterField.pilotOnBoard ||
+        field == ReportsFilterField.pilotPic ||
+        field == ReportsFilterField.pilotSic ||
+        field == ReportsFilterField.pilotTrainee;
   }
 
   Future<int> _sumSimulatorMinutes({DateTime? from, DateTime? to}) async {
@@ -558,12 +711,12 @@ class ReportsRepository {
     final rows = await _db.select(_db.previousExperiences).get();
     var totals = const ReportsTotals.zero();
     for (final exp in rows) {
-      final includesStart = exp.dateTimeFirstFlight == null
-          ? true
-          : _isBeforeOrEqual(query.from, exp.dateTimeFirstFlight!);
-      final includesEnd = exp.dateTimeLastFlight == null
-          ? true
-          : _isAfterOrEqual(query.to, exp.dateTimeLastFlight!);
+      final includesStart =
+          exp.dateTimeFirstFlight == null ||
+          _isBeforeOrEqual(query.from, exp.dateTimeFirstFlight!);
+      final includesEnd =
+          exp.dateTimeLastFlight == null ||
+          _isAfterOrEqual(query.to, exp.dateTimeLastFlight!);
       if (!includesStart || !includesEnd) {
         continue;
       }
@@ -629,6 +782,9 @@ class _ReportFlightData {
     required this.aircraftTypeFamily,
     required this.aircraftTypeName,
     required this.pilotNames,
+    required this.pilotPicNames,
+    required this.pilotSicNames,
+    required this.pilotTraineeNames,
     required this.approachType,
     required this.remarks,
     required this.notes,
@@ -653,9 +809,55 @@ class _ReportFlightData {
   final String aircraftTypeFamily;
   final String aircraftTypeName;
   final String pilotNames;
+  final String pilotPicNames;
+  final String pilotSicNames;
+  final String pilotTraineeNames;
   final String approachType;
   final String remarks;
   final String notes;
+}
+
+class _PilotNamesAccumulator {
+  final Set<String> allOnBoard = <String>{};
+  final Set<String> pic = <String>{};
+  final Set<String> sic = <String>{};
+  final Set<String> trainee = <String>{};
+
+  void add(CrewPosition position, String name) {
+    final normalized = name.trim().toLowerCase();
+    if (normalized.isEmpty) return;
+    allOnBoard.add(normalized);
+    if (position == CrewPosition.pic || position == CrewPosition.picus) {
+      pic.add(normalized);
+    } else if (position == CrewPosition.sic) {
+      sic.add(normalized);
+    } else if (position == CrewPosition.trainee) {
+      trainee.add(normalized);
+    }
+  }
+
+  _PilotNamesByRole toResult() {
+    return _PilotNamesByRole(
+      allOnBoardNamesLower: allOnBoard.join(' '),
+      picNamesLower: pic.join(' '),
+      sicNamesLower: sic.join(' '),
+      traineeNamesLower: trainee.join(' '),
+    );
+  }
+}
+
+class _PilotNamesByRole {
+  const _PilotNamesByRole({
+    required this.allOnBoardNamesLower,
+    required this.picNamesLower,
+    required this.sicNamesLower,
+    required this.traineeNamesLower,
+  });
+
+  final String allOnBoardNamesLower;
+  final String picNamesLower;
+  final String sicNamesLower;
+  final String traineeNamesLower;
 }
 
 extension on ReportsTotals {

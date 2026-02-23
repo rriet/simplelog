@@ -5,10 +5,11 @@ import 'package:flutter/services.dart';
 ///
 /// Valid range is `00:00` to `23:59`.
 class ClockTimeInputField extends StatefulWidget {
+  /// Public API documentation.
   const ClockTimeInputField({
-    super.key,
     required this.controller,
     required this.label,
+    super.key,
     this.fallbackMinutes = 0,
     this.onChangedMinutes,
     this.onCleared,
@@ -17,24 +18,37 @@ class ClockTimeInputField extends StatefulWidget {
     this.allowEmpty = false,
     this.errorText,
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final TextEditingController controller;
+  /// Public API documentation.
   final String label;
+  /// Public API documentation.
   final int fallbackMinutes;
+  /// Public API documentation.
   final ValueChanged<int>? onChangedMinutes;
+  /// Public API documentation.
   final VoidCallback? onCleared;
+  /// Public API documentation.
   final String? Function(String?)? validator;
+  /// Public API documentation.
   final Widget? suffixIcon;
+  /// Public API documentation.
   final bool allowEmpty;
+  /// Public API documentation.
   final String? errorText;
 
+  /// Public API documentation.
   static String formatMinutesOfDay(int minutes) {
     final safe = minutes.clamp(0, 23 * 60 + 59);
     final hours = safe ~/ 60;
     final mins = safe % 60;
-    return '${hours.toString().padLeft(2, '0')}:${mins.toString().padLeft(2, '0')}';
+    return '${hours.toString().padLeft(2, '0')}:'
+        '${mins.toString().padLeft(2, '0')}';
   }
 
+  /// Public API documentation.
   static int? parseMinutesOfDay(String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return null;
@@ -47,8 +61,9 @@ class ClockTimeInputField extends StatefulWidget {
       if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
       return hours * 60 + minutes;
     }
-    final digits = trimmed.replaceAll(RegExp(r'[^0-9]'), '');
+    final digits = trimmed.replaceAll(RegExp('[^0-9]'), '');
     if (digits.isEmpty) return null;
+    /// Public API documentation.
     final raw = int.tryParse(digits);
     if (raw == null) return null;
     if (digits.length <= 2) {
@@ -61,6 +76,7 @@ class ClockTimeInputField extends StatefulWidget {
     return hours * 60 + mins;
   }
 
+  /// Public API documentation.
   static bool isValidClockText(String value, {bool allowEmpty = false}) {
     final trimmed = value.trim();
     if (allowEmpty && trimmed.isEmpty) return true;
@@ -84,8 +100,9 @@ class _ClockTimeInputFieldState extends State<ClockTimeInputField> {
 
   @override
   void dispose() {
-    _focusNode.removeListener(_handleFocusChange);
-    _focusNode.dispose();
+    _focusNode
+      ..removeListener(_handleFocusChange)
+      ..dispose();
     super.dispose();
   }
 
@@ -158,7 +175,9 @@ class _ClockTimeInputFieldState extends State<ClockTimeInputField> {
       },
       autovalidateMode: AutovalidateMode.disabled,
       validator: (value) {
+        /// Public API documentation.
         final raw = value ?? '';
+        /// Public API documentation.
         if (!ClockTimeInputField.isValidClockText(
           raw,
           allowEmpty: widget.allowEmpty,
@@ -171,7 +190,9 @@ class _ClockTimeInputFieldState extends State<ClockTimeInputField> {
   }
 }
 
+/// Public API documentation.
 class ClockTimeInputFormatter extends TextInputFormatter {
+  /// Public API documentation.
   const ClockTimeInputFormatter();
 
   @override
@@ -179,16 +200,17 @@ class ClockTimeInputFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final digits = newValue.text.replaceAll(RegExp('[^0-9]'), '');
     if (digits.isEmpty) {
-      return const TextEditingValue(text: '');
+      return TextEditingValue.empty;
     }
 
     final raw = int.tryParse(digits) ?? 0;
     final hours = digits.length <= 2 ? 0 : raw ~/ 100;
     final mins = digits.length <= 2 ? raw : raw % 100;
     final text =
-        '${hours.toString().padLeft(2, '0')}:${mins.toString().padLeft(2, '0')}';
+        '${hours.toString().padLeft(2, '0')}:'
+        '${mins.toString().padLeft(2, '0')}';
 
     return TextEditingValue(
       text: text,

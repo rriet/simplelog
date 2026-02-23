@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
 
+/// Public API documentation.
 class DeleteConfirmationDialog extends StatelessWidget {
+  /// Public API documentation.
   const DeleteConfirmationDialog({
-    super.key,
     required this.title,
     required this.content,
     required this.cancelLabel,
     required this.deleteLabel,
+    super.key,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final String title;
+  /// Public API documentation.
   final String content;
+  /// Public API documentation.
   final String cancelLabel;
+  /// Public API documentation.
   final String deleteLabel;
 
   @override
@@ -26,12 +34,14 @@ class DeleteConfirmationDialog extends StatelessWidget {
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
+          /// Public API documentation.
           child: Text(deleteLabel),
         ),
       ],
     );
   }
 
+  /// Public API documentation.
   static Future<bool> show(
     BuildContext context, {
     required String title,

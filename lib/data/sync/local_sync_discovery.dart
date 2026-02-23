@@ -4,43 +4,62 @@ import 'dart:io';
 import 'package:bonsoir/bonsoir.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
+/// Public API documentation.
 const String kSyncServiceType = '_simplelog._tcp';
+/// Public API documentation.
 
+/// Public API documentation.
 class DiscoveredDevice {
+  /// Public API documentation.
   DiscoveredDevice({
     required this.name,
     required this.host,
+    /// Public API documentation.
     required this.port,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final String name;
+  /// Public API documentation.
   final String host;
+  /// Public API documentation.
   final int port;
 }
 
+/// Public API documentation.
 class LocalSyncDiscovery {
+  /// Public API documentation.
   LocalSyncDiscovery({required int port}) : _port = port;
 
+  /// Public API documentation.
   final int _port;
+  /// Public API documentation.
   BonsoirDiscovery? _discovery;
   BonsoirBroadcast? _broadcast;
   StreamSubscription<BonsoirDiscoveryEvent>? _subscription;
   final _controller = StreamController<List<DiscoveredDevice>>.broadcast();
   final Map<String, DiscoveredDevice> _devices = {};
+  /// Public API documentation.
   String? _cachedName;
 
+  /// Public API documentation.
   Stream<List<DiscoveredDevice>> get devices => _controller.stream;
+  /// Public API documentation.
   Future<String> get localDeviceName async {
     _cachedName ??= await _deviceName();
     return _cachedName!;
   }
 
+  /// Public API documentation.
   Future<void> start() async {
     final serviceName = _sanitizeServiceName(await localDeviceName);
     final service = BonsoirService(
       name: serviceName,
       type: kSyncServiceType,
       port: _port,
+    /// Public API documentation.
     );
     _broadcast = BonsoirBroadcast(service: service);
     await _broadcast!.initialize();
@@ -52,6 +71,7 @@ class LocalSyncDiscovery {
     await _discovery!.start();
   }
 
+  /// Public API documentation.
   Future<void> stop() async {
     await _subscription?.cancel();
     await _discovery?.stop();
@@ -63,13 +83,14 @@ class LocalSyncDiscovery {
     if (event is BonsoirDiscoveryServiceLostEvent) {
       final lostName = event.service.name;
       _devices.removeWhere((_, value) => value.name == lostName);
-      _controller.add(_devices.values.toList()
-        ..sort((a, b) => a.name.compareTo(b.name)));
+      _controller.add(
+        _devices.values.toList()..sort((a, b) => a.name.compareTo(b.name)),
+      );
       return;
     }
 
     if (event is BonsoirDiscoveryServiceFoundEvent) {
-      _discovery?.serviceResolver.resolveService(event.service);
+      unawaited(_discovery?.serviceResolver.resolveService(event.service));
       return;
     }
 
@@ -94,8 +115,9 @@ class LocalSyncDiscovery {
       host: host,
       port: service.port,
     );
-    _controller.add(_devices.values.toList()
-      ..sort((a, b) => a.name.compareTo(b.name)));
+    _controller.add(
+      _devices.values.toList()..sort((a, b) => a.name.compareTo(b.name)),
+    );
   }
 
   Future<String> _deviceName() async {

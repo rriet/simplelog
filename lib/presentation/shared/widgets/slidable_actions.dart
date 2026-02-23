@@ -1,30 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
+/// Wraps list content with compact swipe actions or inline desktop actions.
 class SlidableActions extends StatelessWidget {
+  /// Creates the slidable/inline actions wrapper.
   const SlidableActions({
-    super.key,
     required this.child,
     required this.isCompact,
+    required this.lockLabel,
+    required this.editLabel,
+    required this.deleteLabel,
+    super.key,
     this.isLocked = false,
     this.onToggleLock,
     this.onEdit,
     this.onDelete,
-    required this.lockLabel,
-    required this.editLabel,
-    required this.deleteLabel,
     this.inlineActions,
   });
 
+  /// Row content.
   final Widget child;
+
+  /// Enables compact swipe actions when `true`.
   final bool isCompact;
+
+  /// Current locked state.
   final bool isLocked;
+
+  /// Called to toggle lock state.
   final VoidCallback? onToggleLock;
+
+  /// Called to edit item.
   final VoidCallback? onEdit;
+
+  /// Called to delete item.
   final VoidCallback? onDelete;
+
+  /// Localized lock action label.
   final String lockLabel;
+
+  /// Localized edit action label.
   final String editLabel;
+
+  /// Localized delete action label.
   final String deleteLabel;
+
+  /// Optional inline actions widget for non-compact layouts.
   final Widget? inlineActions;
 
   @override

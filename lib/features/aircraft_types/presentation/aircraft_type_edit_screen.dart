@@ -3,25 +3,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
-
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
+import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/uppercase_text_formatter.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
+/// Public API documentation.
 class AircraftTypeEditScreen extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const AircraftTypeEditScreen({
-    super.key,
     required this.item,
+    super.key,
     this.isCreate = false,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final AircraftType item;
+  /// Public API documentation.
   final bool isCreate;
 
   @override
@@ -68,10 +73,10 @@ class _AircraftTypeEditScreenState
     _category = widget.isCreate ? AircraftCategory.landplane : item.category;
     _engineType = widget.isCreate ? EngineType.piston : item.engineType;
     _engineCount = widget.isCreate ? 1 : item.engineCount;
-    _multiPilot = widget.isCreate ? false : item.multiPilot;
-    _complex = widget.isCreate ? false : item.complex;
-    _efis = widget.isCreate ? false : item.efis;
-    _highPerformance = widget.isCreate ? false : item.highPerformance;
+    _multiPilot = !widget.isCreate && item.multiPilot;
+    _complex = !widget.isCreate && item.complex;
+    _efis = !widget.isCreate && item.efis;
+    _highPerformance = !widget.isCreate && item.highPerformance;
   }
 
   @override
@@ -364,7 +369,7 @@ class _AircraftTypeEditScreenState
               ),
             ),
             const Divider(height: 1),
-            Flexible(fit: FlexFit.loose, child: form),
+            Flexible(child: form),
           ],
         ),
       );

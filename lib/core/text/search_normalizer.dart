@@ -1,3 +1,4 @@
+/// Public API documentation.
 String stripDiacritics(String input) {
   const diacriticsMap = {
     'á': 'a',
@@ -164,14 +165,18 @@ String stripDiacritics(String input) {
   }
   return buffer.toString();
 }
+/// Public API documentation.
 
+/// Public API documentation.
 String normalizeLooseSearch(String value) {
   final cleaned = stripDiacritics(value).toLowerCase();
-  return cleaned.replaceAll(RegExp(r'[^a-z0-9]'), '');
+  return cleaned.replaceAll(RegExp('[^a-z0-9]'), '');
+/// Public API documentation.
 }
 
+/// Public API documentation.
 String normalizeCrewSearch(String value) {
   final cleaned = stripDiacritics(value).toLowerCase();
-  final textOnly = cleaned.replaceAll(RegExp(r'[^a-z0-9 ]'), '');
+  final textOnly = cleaned.replaceAll(RegExp('[^a-z0-9 ]'), '');
   return textOnly.replaceAll(RegExp(r'\s+'), ' ').trim();
 }

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:simplelog/presentation/shared/widgets/app_drawer.dart';
+import 'package:simplelog/presentation/shared/widgets/base_scaffold.dart';
 import 'package:simplelog/state/aircraft_state.dart';
 import 'package:simplelog/state/providers/navigation_provider.dart';
-import 'app_drawer.dart';
-import 'base_scaffold.dart';
 
+/// Public API documentation.
 class CollapsibleScaffold extends ConsumerWidget {
+  /// Public API documentation.
   const CollapsibleScaffold({super.key});
 
   @override

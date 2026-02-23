@@ -1,16 +1,17 @@
-// ignore_for_file: annotate_overrides
-
 import 'package:drift/drift.dart';
 import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/domain/repositories/crew_repository_contract.dart';
 
+/// Public API documentation.
 class CrewRepository implements CrewRepositoryContract {
+  /// Public API documentation.
   CrewRepository(this._db);
 
   final AppDatabase _db;
 
+  @override
   Stream<List<CrewRow>> watchCrew(String query) {
     final request = _db.select(_db.crew)
       ..orderBy([
@@ -37,26 +38,36 @@ class CrewRepository implements CrewRepositoryContract {
     });
   }
 
+  @override
   Future<void> toggleLock(CrewData item) async {
-    await _db.update(_db.crew).replace(
+    await _db
+        .update(_db.crew)
+        .replace(
           item.copyWith(isLocked: !item.isLocked),
         );
   }
 
+  @override
   Future<void> toggleFavorite(CrewData item) async {
-    await _db.update(_db.crew).replace(
+    await _db
+        .update(_db.crew)
+        .replace(
           item.copyWith(isFavorite: !item.isFavorite),
         );
   }
 
+  @override
   Future<void> delete(CrewData item) async {
     await _db.delete(_db.crew).delete(item);
   }
 
+  @override
   Future<void> create(CrewCompanion companion, {required bool setSelf}) async {
     await _db.transaction(() async {
       if (setSelf) {
-        await _db.update(_db.crew).write(
+        await _db
+            .update(_db.crew)
+            .write(
               const CrewCompanion(isSelf: Value(false)),
             );
       }
@@ -64,10 +75,13 @@ class CrewRepository implements CrewRepositoryContract {
     });
   }
 
+  @override
   Future<void> update(CrewData item, {required bool setSelf}) async {
     await _db.transaction(() async {
       if (setSelf) {
-        await _db.update(_db.crew).write(
+        await _db
+            .update(_db.crew)
+            .write(
               const CrewCompanion(isSelf: Value(false)),
             );
       }
@@ -75,6 +89,7 @@ class CrewRepository implements CrewRepositoryContract {
     });
   }
 
+  @override
   Future<int> countDuplicateName(String name, int currentId) async {
     final countExpr = _db.crew.id.count();
     final query = _db.selectOnly(_db.crew)

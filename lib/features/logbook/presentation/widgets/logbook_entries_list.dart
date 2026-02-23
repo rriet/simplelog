@@ -2,18 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 
-import 'logbook_list_item.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_list_item.dart';
 
+/// Public API documentation.
 class LogbookEntriesList extends StatelessWidget {
+  /// Public API documentation.
   const LogbookEntriesList({
-    super.key,
     required this.entries,
+    super.key,
     this.isCompact = true,
     this.onEntryTap,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final List<LogbookEntry> entries;
+  /// Public API documentation.
   final bool isCompact;
+  /// Public API documentation.
   final ValueChanged<LogbookEntry>? onEntryTap;
 
   @override

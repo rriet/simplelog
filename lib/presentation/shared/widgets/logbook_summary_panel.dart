@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:simplelog/data/models/logbook_entry.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/data/models/logbook_flight_summary.dart';
 
+/// Summary card showing first/last flight and key time totals.
 class LogbookSummaryPanel extends StatelessWidget {
+  /// Creates the summary panel.
   const LogbookSummaryPanel({
+    required this.summary,
     super.key,
-    required this.entries,
   });
 
-  final List<LogbookEntry> entries;
+  /// Source summary data displayed in the panel.
+  final LogbookFlightSummary summary;
 
   @override
   Widget build(BuildContext context) {
-    final summary = _LogbookSummary.fromEntries(entries);
+    final l10n = AppLocalizations.of(context)!;
     final dateFormat = DateFormat('dd MMM yyyy');
 
     return Card(
@@ -27,17 +31,17 @@ class LogbookSummaryPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _SummaryItem(
-                    label: 'First Flight',
+                    label: l10n.summaryFirstFlight,
                     value: summary.firstFlight == null
-                        ? '-'
+                        ? l10n.notAvailableShort
                         : dateFormat.format(summary.firstFlight!),
                     alignRight: false,
                   ),
                   const SizedBox(height: 6),
                   _SummaryItem(
-                    label: 'Last Flight',
+                    label: l10n.summaryLastFlight,
                     value: summary.lastFlight == null
-                        ? '-'
+                        ? l10n.notAvailableShort
                         : dateFormat.format(summary.lastFlight!),
                     alignRight: false,
                   ),
@@ -50,13 +54,13 @@ class LogbookSummaryPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   _SummaryItem(
-                    label: 'Total Time',
+                    label: l10n.summaryTotalTime,
                     value: _formatMinutes(summary.totalBlockMinutes),
                     alignRight: true,
                   ),
                   const SizedBox(height: 6),
                   _SummaryItem(
-                    label: 'Total PIC',
+                    label: l10n.summaryTotalPic,
                     value: _formatMinutes(summary.totalPicMinutes),
                     alignRight: true,
                   ),
@@ -91,8 +95,9 @@ class _SummaryItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment:
-          alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: alignRight
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -103,50 +108,6 @@ class _SummaryItem extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
-    );
-  }
-}
-
-class _LogbookSummary {
-  const _LogbookSummary({
-    required this.totalBlockMinutes,
-    required this.totalPicMinutes,
-    required this.firstFlight,
-    required this.lastFlight,
-  });
-
-  final int totalBlockMinutes;
-  final int totalPicMinutes;
-  final DateTime? firstFlight;
-  final DateTime? lastFlight;
-
-  factory _LogbookSummary.fromEntries(List<LogbookEntry> entries) {
-    final flights = entries.where((entry) => entry.flight != null).toList();
-    if (flights.isEmpty) {
-      return const _LogbookSummary(
-        totalBlockMinutes: 0,
-        totalPicMinutes: 0,
-        firstFlight: null,
-        lastFlight: null,
-      );
-    }
-
-    final totalBlock = flights.fold<int>(
-      0,
-      (sum, entry) => sum + (entry.flight?.timeBlockMinutes ?? 0),
-    );
-    final totalPic = flights.fold<int>(
-      0,
-      (sum, entry) => sum + (entry.flight?.timePICMinutes ?? 0),
-    );
-    final sorted = [...flights]
-      ..sort((a, b) => a.timeLine.eventDateTime.compareTo(b.timeLine.eventDateTime));
-
-    return _LogbookSummary(
-      totalBlockMinutes: totalBlock,
-      totalPicMinutes: totalPic,
-      firstFlight: sorted.first.timeLine.eventDateTime,
-      lastFlight: sorted.last.timeLine.eventDateTime,
     );
   }
 }

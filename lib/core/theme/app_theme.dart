@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 
+/// Public API documentation.
 class AppTheme {
   static const _fontFamily = 'Inter';
 
@@ -8,12 +9,13 @@ class AppTheme {
   static const _navy = Color(0xFF0B2D5C);
   static const _red = Color(0xFFE31837);
   static const _yellow = Color(0xFFF9C80E);
+/// Public API documentation.
 
+  /// Public API documentation.
   static ThemeData light() {
     final colorScheme =
         ColorScheme.fromSeed(
           seedColor: _navy,
-          brightness: Brightness.light,
         ).copyWith(
           primary: _navy,
           onPrimary: Colors.white,
@@ -61,8 +63,10 @@ class AppTheme {
         foregroundColor: colorScheme.onPrimary,
       ),
     );
+  /// Public API documentation.
   }
 
+  /// Public API documentation.
   static ThemeData dark() {
     final colorScheme =
         ColorScheme.fromSeed(

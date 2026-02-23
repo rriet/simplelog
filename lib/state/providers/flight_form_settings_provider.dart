@@ -6,7 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _logTkLdKey = 'flight_form_log_takeoff_landing';
 const _timeChecksKey = 'flight_form_time_checks';
 
+/// Default checked states for time allocation checkboxes in flight forms.
 class FlightFormTimeChecks {
+  /// Creates checkbox defaults.
   const FlightFormTimeChecks({
     this.pic = false,
     this.picus = false,
@@ -25,22 +27,76 @@ class FlightFormTimeChecks {
     this.flight = false,
   });
 
+  /// Builds checkbox state from persisted JSON.
+  factory FlightFormTimeChecks.fromJson(String? raw) {
+    if (raw == null || raw.isEmpty) return const FlightFormTimeChecks();
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) return const FlightFormTimeChecks();
+    return FlightFormTimeChecks(
+      pic: decoded['pic'] == true,
+      picus: decoded['picus'] == true,
+      sic: decoded['sic'] == true,
+      dual: decoded['dual'] == true,
+      instructor: decoded['instructor'] == true,
+      ifr: decoded['ifr'] == true,
+      instrument: decoded['instrument'] == true,
+      simInstrument: decoded['simInstrument'] == true,
+      night: decoded['night'] == true,
+      crossCountry: decoded['crossCountry'] == true,
+      custom1: decoded['custom1'] == true,
+      custom2: decoded['custom2'] == true,
+      custom3: decoded['custom3'] == true,
+      custom4: decoded['custom4'] == true,
+      flight: decoded['flight'] == true,
+    );
+  }
+
+  /// Default checked state for PIC time.
   final bool pic;
+
+  /// Default checked state for PICUS time.
   final bool picus;
+
+  /// Default checked state for SIC time.
   final bool sic;
+
+  /// Default checked state for Dual time.
   final bool dual;
+
+  /// Default checked state for Instructor time.
   final bool instructor;
+
+  /// Default checked state for IFR time.
   final bool ifr;
+
+  /// Default checked state for Instrument time.
   final bool instrument;
+
+  /// Default checked state for Sim Instrument time.
   final bool simInstrument;
+
+  /// Default checked state for Night time.
   final bool night;
+
+  /// Default checked state for Cross-Country time.
   final bool crossCountry;
+
+  /// Default checked state for Custom 1.
   final bool custom1;
+
+  /// Default checked state for Custom 2.
   final bool custom2;
+
+  /// Default checked state for Custom 3.
   final bool custom3;
+
+  /// Default checked state for Custom 4.
   final bool custom4;
+
+  /// Default checked state for Flight time.
   final bool flight;
 
+  /// Returns a copy with selected values changed.
   FlightFormTimeChecks copyWith({
     bool? pic,
     bool? picus,
@@ -77,6 +133,7 @@ class FlightFormTimeChecks {
     );
   }
 
+  /// Serializes checkbox state for persistence.
   Map<String, dynamic> toJson() {
     return {
       'pic': pic,
@@ -96,31 +153,9 @@ class FlightFormTimeChecks {
       'flight': flight,
     };
   }
-
-  static FlightFormTimeChecks fromJson(String? raw) {
-    if (raw == null || raw.isEmpty) return const FlightFormTimeChecks();
-    final decoded = jsonDecode(raw);
-    if (decoded is! Map<String, dynamic>) return const FlightFormTimeChecks();
-    return FlightFormTimeChecks(
-      pic: decoded['pic'] == true,
-      picus: decoded['picus'] == true,
-      sic: decoded['sic'] == true,
-      dual: decoded['dual'] == true,
-      instructor: decoded['instructor'] == true,
-      ifr: decoded['ifr'] == true,
-      instrument: decoded['instrument'] == true,
-      simInstrument: decoded['simInstrument'] == true,
-      night: decoded['night'] == true,
-      crossCountry: decoded['crossCountry'] == true,
-      custom1: decoded['custom1'] == true,
-      custom2: decoded['custom2'] == true,
-      custom3: decoded['custom3'] == true,
-      custom4: decoded['custom4'] == true,
-      flight: decoded['flight'] == true,
-    );
-  }
 }
 
+/// Persists and exposes takeoff/landing logging preference.
 class FlightFormTakeoffLandingLogNotifier extends AsyncNotifier<bool> {
   @override
   Future<bool> build() async {
@@ -128,13 +163,15 @@ class FlightFormTakeoffLandingLogNotifier extends AsyncNotifier<bool> {
     return prefs.getBool(_logTkLdKey) ?? true;
   }
 
-  Future<void> setValue(bool enabled) async {
+  /// Saves the takeoff/landing logging flag.
+  Future<void> setValue({required bool enabled}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_logTkLdKey, enabled);
     state = AsyncData(enabled);
   }
 }
 
+/// Persists and exposes default checkbox selections.
 class FlightFormTimeChecksNotifier extends AsyncNotifier<FlightFormTimeChecks> {
   @override
   Future<FlightFormTimeChecks> build() async {
@@ -142,6 +179,7 @@ class FlightFormTimeChecksNotifier extends AsyncNotifier<FlightFormTimeChecks> {
     return FlightFormTimeChecks.fromJson(prefs.getString(_timeChecksKey));
   }
 
+  /// Saves checkbox defaults and updates state.
   Future<void> setValue(FlightFormTimeChecks value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_timeChecksKey, jsonEncode(value.toJson()));
@@ -149,12 +187,14 @@ class FlightFormTimeChecksNotifier extends AsyncNotifier<FlightFormTimeChecks> {
   }
 }
 
+/// Provider for takeoff/landing logging preference.
 final flightFormTakeoffLandingLogProvider =
     AsyncNotifierProvider<FlightFormTakeoffLandingLogNotifier, bool>(
-  FlightFormTakeoffLandingLogNotifier.new,
-);
+      FlightFormTakeoffLandingLogNotifier.new,
+    );
 
+/// Provider for default flight form checkbox states.
 final flightFormTimeChecksProvider =
     AsyncNotifierProvider<FlightFormTimeChecksNotifier, FlightFormTimeChecks>(
-  FlightFormTimeChecksNotifier.new,
-);
+      FlightFormTimeChecksNotifier.new,
+    );

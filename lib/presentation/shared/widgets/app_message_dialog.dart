@@ -8,7 +8,8 @@ Future<void> showAppMessageDialog(
   String? okLabel,
   bool useRootNavigator = true,
 }) async {
-  final effectiveOkLabel = okLabel ?? MaterialLocalizations.of(context).okButtonLabel;
+  final effectiveOkLabel =
+      okLabel ?? MaterialLocalizations.of(context).okButtonLabel;
 
   await showDialog<void>(
     context: context,

@@ -1,26 +1,25 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-
-import 'enums/aircraft_category.dart';
-import 'enums/crew_position.dart';
-import 'enums/engine_type.dart';
-import 'converters/aircraft_category_converter.dart';
-import 'converters/crew_position_converter.dart';
-import 'converters/engine_type_converter.dart';
-import 'tables/aircrafts_table.dart';
-import 'tables/aircraft_types_table.dart';
-import 'tables/airports_table.dart';
-import 'tables/crew_table.dart';
-import 'tables/duty_periods_table.dart';
-import 'tables/flight_crew_assignments_table.dart';
-import 'tables/flights_table.dart';
-import 'tables/limit_rules_table.dart';
-import 'tables/positionings_table.dart';
-import 'tables/previous_experiences_table.dart';
-import 'tables/rule_snapshots_table.dart';
-import 'tables/simulator_crew_assignments_table.dart';
-import 'tables/simulator_trainings_table.dart';
-import 'tables/timeline_table.dart';
+import 'package:simplelog/data/database/converters/aircraft_category_converter.dart';
+import 'package:simplelog/data/database/converters/crew_position_converter.dart';
+import 'package:simplelog/data/database/converters/engine_type_converter.dart';
+import 'package:simplelog/data/database/enums/aircraft_category.dart';
+import 'package:simplelog/data/database/enums/crew_position.dart';
+import 'package:simplelog/data/database/enums/engine_type.dart';
+import 'package:simplelog/data/database/tables/aircraft_types_table.dart';
+import 'package:simplelog/data/database/tables/aircrafts_table.dart';
+import 'package:simplelog/data/database/tables/airports_table.dart';
+import 'package:simplelog/data/database/tables/crew_table.dart';
+import 'package:simplelog/data/database/tables/duty_periods_table.dart';
+import 'package:simplelog/data/database/tables/flight_crew_assignments_table.dart';
+import 'package:simplelog/data/database/tables/flights_table.dart';
+import 'package:simplelog/data/database/tables/limit_rules_table.dart';
+import 'package:simplelog/data/database/tables/positionings_table.dart';
+import 'package:simplelog/data/database/tables/previous_experiences_table.dart';
+import 'package:simplelog/data/database/tables/rule_snapshots_table.dart';
+import 'package:simplelog/data/database/tables/simulator_crew_assignments_table.dart';
+import 'package:simplelog/data/database/tables/simulator_trainings_table.dart';
+import 'package:simplelog/data/database/tables/timeline_table.dart';
 
 part 'app_database.g.dart';
 
@@ -42,11 +41,13 @@ part 'app_database.g.dart';
     TimeLines,
   ],
 )
+/// Public API documentation.
 class AppDatabase extends _$AppDatabase {
+  /// Public API documentation.
   AppDatabase() : super(driftDatabase(name: 'simplelog'));
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -531,7 +532,8 @@ class AppDatabase extends _$AppDatabase {
           'DROP TABLE previous_experiences;',
         );
         await migrator.database.customStatement(
-          'ALTER TABLE previous_experiences_new RENAME TO previous_experiences;',
+          'ALTER TABLE previous_experiences_new '
+          'RENAME TO previous_experiences;',
         );
       }
       if (from < 13) {
@@ -554,9 +556,74 @@ class AppDatabase extends _$AppDatabase {
                 END;
             ''');
       }
+      if (from < 14) {
+        await migrator.database.customStatement('''
+              CREATE TABLE flight_crew_assignments_new (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                flight_id INTEGER NOT NULL REFERENCES flights(id),
+                crew_id INTEGER NOT NULL REFERENCES crew(id),
+                position TEXT NOT NULL,
+                CHECK(position IN ('pic','picus','sic','trainee','instructor','observer','relief','relief_captain','relief_first_officer','cabin_senior','cabin_crew','other'))
+              );
+            ''');
+        await migrator.database.customStatement('''
+              INSERT INTO flight_crew_assignments_new (
+                id,
+                flight_id,
+                crew_id,
+                position
+              )
+              SELECT
+                id,
+                flight_id,
+                crew_id,
+                position
+              FROM flight_crew_assignments;
+            ''');
+        await migrator.database.customStatement(
+          'DROP TABLE flight_crew_assignments;',
+        );
+        await migrator.database.customStatement(
+          'ALTER TABLE flight_crew_assignments_new '
+          'RENAME TO flight_crew_assignments;',
+        );
+
+        await migrator.database.customStatement('''
+              CREATE TABLE simulator_crew_assignments_new (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                simulator_id INTEGER NOT NULL REFERENCES simulator_trainings(id),
+                crew_id INTEGER NOT NULL REFERENCES crew(id),
+                position TEXT NOT NULL,
+                CHECK(position IN ('pic','picus','sic','trainee','instructor','observer','relief','relief_captain','relief_first_officer','cabin_senior','cabin_crew','other'))
+              );
+            ''');
+        await migrator.database.customStatement('''
+              INSERT INTO simulator_crew_assignments_new (
+                id,
+                simulator_id,
+                crew_id,
+                position
+              )
+              SELECT
+                id,
+                simulator_id,
+                crew_id,
+                position
+              FROM simulator_crew_assignments;
+            ''');
+        await migrator.database.customStatement(
+          'DROP TABLE simulator_crew_assignments;',
+        );
+        await migrator.database.customStatement(
+          'ALTER TABLE simulator_crew_assignments_new '
+          'RENAME TO simulator_crew_assignments;',
+        );
+      }
     },
+  /// Public API documentation.
   );
 
+  /// Public API documentation.
   Future<void> clearAllData() async {
     await transaction(() async {
       await delete(flightCrewAssignments).go();
@@ -573,9 +640,11 @@ class AppDatabase extends _$AppDatabase {
       await delete(aircraftTypes).go();
       await delete(airports).go();
       await delete(crew).go();
+    /// Public API documentation.
     });
   }
 
+  /// Public API documentation.
   Future<void> assertTimelineUniqueness(int timeLineId) async {
     final results = await Future.wait([
       _countByTimelineId(flights, flights.departureDateTimeId, timeLineId),
@@ -630,8 +699,9 @@ class AppDatabase extends _$AppDatabase {
     int timeLineId,
   ) async {
     final countExpression = column.count();
-    final query = selectOnly(table)..addColumns([countExpression]);
-    query.where(column.equals(timeLineId));
+    final query = selectOnly(table)
+      ..addColumns([countExpression])
+      ..where(column.equals(timeLineId));
     final row = await query.getSingle();
     return row.read(countExpression) ?? 0;
   }

@@ -2,6 +2,7 @@ import 'dart:math';
 
 /// Optimized FlightCalculations class with performance improvements
 class FlightCalculations {
+  /// Public API documentation.
   FlightCalculations({
     required this.latDep,
     required this.longDep,
@@ -23,29 +24,48 @@ class FlightCalculations {
 
     nightTimeMinutes = _calculatePreciseNightTime();
   }
+/// Public API documentation.
 
+  /// Public API documentation.
   final double latDep;
+  /// Public API documentation.
   final double longDep;
+  /// Public API documentation.
   final double latArr;
+  /// Public API documentation.
   final double longArr;
+  /// Public API documentation.
   final int depTimeEpochSeconds;
+  /// Public API documentation.
   final int arrTimeEpochSeconds;
+/// Public API documentation.
 
+  /// Public API documentation.
   late final int sunriseDep;
+  /// Public API documentation.
   late final int sunsetDep;
+  /// Public API documentation.
   late final int sunriseArr;
+  /// Public API documentation.
   late final int sunsetArr;
+  /// Public API documentation.
   late final int flightTimeMinutes;
+  /// Public API documentation.
   late final double flightDistanceNm;
+  /// Public API documentation.
   late final bool dayTakeOff;
+  /// Public API documentation.
   late final bool dayLanding;
+  /// Public API documentation.
   late final int nightTimeMinutes;
 
   // Cached constants for performance
   static const double _sunsetAngleDeg = 90.833;
   static final double _cosSunsetAngle = cos(_sunsetAngleDeg * pi / 180.0);
 
+  /// Public API documentation.
   String get sunriseTime => _formatMinutes(sunriseDep);
+  /// Public API documentation.
   String get sunsetTime => _formatMinutes(sunsetDep);
 
   String _formatMinutes(int minutes) {
@@ -72,15 +92,14 @@ class FlightCalculations {
     if (sunrise == 0 && sunset == 0) {
       const arcticCircle = 66.4;
       const antarcticCircle = -66.4;
-      
+
       // Arctic summer (24hr daylight): ~Mar 21 to ~Sep 23
-      final isArcticSummer = latitude > arcticCircle && 
-                             doy > 79 && doy < 267;
-      
+      final isArcticSummer = latitude > arcticCircle && doy > 79 && doy < 267;
+
       // Antarctic summer: ~Sep 23 to ~Mar 21 (spans new year)
-      final isAntarcticSummer = latitude < antarcticCircle && 
-                                (doy < 83 || doy > 263);
-      
+      final isAntarcticSummer =
+          latitude < antarcticCircle && (doy < 83 || doy > 263);
+
       return isArcticSummer || isAntarcticSummer;
     }
 
@@ -107,7 +126,8 @@ class FlightCalculations {
   ) {
     final dLat = _degToRad(latArr - latDep);
     final dLon = _degToRad(longArr - longDep);
-    final a = sin(dLat / 2) * sin(dLat / 2) +
+    final a =
+        sin(dLat / 2) * sin(dLat / 2) +
         cos(_degToRad(latDep)) *
             cos(_degToRad(latArr)) *
             sin(dLon / 2) *
@@ -127,11 +147,12 @@ class FlightCalculations {
     final longDepR = _degToRad(longDep);
     final latArrR = _degToRad(latArr);
     final longArrR = _degToRad(longArr);
-    
+
     final y = sin(longArrR - longDepR) * cos(latArrR);
-    final x = cos(latDepR) * sin(latArrR) -
+    final x =
+        cos(latDepR) * sin(latArrR) -
         sin(latDepR) * cos(latArrR) * cos(longArrR - longDepR);
-    
+
     var bearing = _radToDeg(atan2(y, x));
     if (bearing < 0) {
       bearing = 360 + bearing;
@@ -151,18 +172,19 @@ class FlightCalculations {
     final bearingR = _degToRad(bearing);
 
     const radius = 3443.89849; // Earth radius in nautical miles
-    
+
     var latNext = asin(
       sin(latDepR) * cos(distance / radius) +
           cos(latDepR) * sin(distance / radius) * cos(bearingR),
     );
-    
-    var longNext = longDepR +
+
+    var longNext =
+        longDepR +
         atan2(
           sin(bearingR) * sin(distance / radius) * cos(latDepR),
           cos(distance / radius) - sin(latDepR) * sin(latNext),
         );
-    
+
     latNext = _radToDeg(latNext);
     longNext = _radToDeg(longNext);
 
@@ -233,7 +255,7 @@ class FlightCalculations {
     );
     var jd = calcJD(date.year, date.month, date.day);
     var time = calcSunriseUTC(epochSeconds, latitude, longitude).toDouble();
-    
+
     while (time <= 0) {
       date = date.subtract(const Duration(days: 1));
       jd = calcJD(date.year, date.month, date.day);
@@ -243,7 +265,7 @@ class FlightCalculations {
         longitude,
       ).toDouble();
     }
-    
+
     return (julianDay: jd, time: time);
   }
 
@@ -252,8 +274,8 @@ class FlightCalculations {
     if (!latitude.isFinite || !longitude.isFinite) return 0;
     // Negate longitude because the NOAA algorithm expects
     // positive = WEST (opposite of standard convention where positive = EAST)
-    longitude = longitude * -1;
-    
+    final adjustedLongitude = longitude * -1;
+
     final date = DateTime.fromMillisecondsSinceEpoch(
       epochSeconds * 1000,
       isUtc: true,
@@ -261,7 +283,7 @@ class FlightCalculations {
     final jd = calcJD(date.year, date.month, date.day);
     final t = calcTimeJulianCent(jd);
 
-    final noonmin = calcSolNoonUTC(t, longitude);
+    final noonmin = calcSolNoonUTC(t, adjustedLongitude);
     final tnoon = calcTimeJulianCent(jd + noonmin / 1440.0);
 
     // First pass approximation
@@ -269,7 +291,7 @@ class FlightCalculations {
     var solarDec = calcSunDeclination(tnoon);
     var hourAngle = calcHourAngleSunrise(latitude, solarDec);
 
-    var delta = longitude - _radToDeg(hourAngle);
+    var delta = adjustedLongitude - _radToDeg(hourAngle);
     var timeDiff = 4 * delta;
     var timeUTC = 720 + timeDiff - eqTime;
 
@@ -280,14 +302,14 @@ class FlightCalculations {
     eqTime = calcEquationOfTime(newt);
     solarDec = calcSunDeclination(newt);
     hourAngle = calcHourAngleSunrise(latitude, solarDec);
-    delta = longitude - _radToDeg(hourAngle);
+    delta = adjustedLongitude - _radToDeg(hourAngle);
     timeDiff = 4 * delta;
     timeUTC = 720 + timeDiff - eqTime;
 
     // Normalize to [0, 1440) range
     if (timeUTC >= 1440) timeUTC -= 1440;
     if (timeUTC < 0) timeUTC += 1440;
-    
+
     if (!timeUTC.isFinite) return 0;
     return timeUTC.round();
   }
@@ -297,8 +319,8 @@ class FlightCalculations {
     if (!latitude.isFinite || !longitude.isFinite) return 0;
     // Negate longitude because the NOAA algorithm expects
     // positive = WEST (opposite of standard convention where positive = EAST)
-    longitude = longitude * -1;
-    
+    final adjustedLongitude = longitude * -1;
+
     final date = DateTime.fromMillisecondsSinceEpoch(
       epochSeconds * 1000,
       isUtc: true,
@@ -306,7 +328,7 @@ class FlightCalculations {
     final jd = calcJD(date.year, date.month, date.day);
     final t = calcTimeJulianCent(jd);
 
-    final noonmin = calcSolNoonUTC(t, longitude);
+    final noonmin = calcSolNoonUTC(t, adjustedLongitude);
     final tnoon = calcTimeJulianCent(jd + noonmin / 1440.0);
 
     // First pass approximation
@@ -314,7 +336,7 @@ class FlightCalculations {
     var solarDec = calcSunDeclination(tnoon);
     var hourAngle = calcHourAngleSunset(latitude, solarDec);
 
-    var delta = longitude - _radToDeg(hourAngle);
+    var delta = adjustedLongitude - _radToDeg(hourAngle);
     var timeDiff = 4 * delta;
     var timeUTC = 720 + timeDiff - eqTime;
 
@@ -325,14 +347,14 @@ class FlightCalculations {
     eqTime = calcEquationOfTime(newt);
     solarDec = calcSunDeclination(newt);
     hourAngle = calcHourAngleSunset(latitude, solarDec);
-    delta = longitude - _radToDeg(hourAngle);
+    delta = adjustedLongitude - _radToDeg(hourAngle);
     timeDiff = 4 * delta;
     timeUTC = 720 + timeDiff - eqTime;
 
     // Normalize to [0, 1440) range
     if (timeUTC >= 1440) timeUTC -= 1440;
     if (timeUTC < 0) timeUTC += 1440;
-    
+
     if (!timeUTC.isFinite) return 0;
     return timeUTC.round();
   }
@@ -395,15 +417,19 @@ class FlightCalculations {
 
   /// Convert calendar date to Julian Day
   double calcJD(int year, int month, int day) {
-    if (month <= 2) {
-      year -= 1;
-      month += 12;
+    var adjustedYear = year;
+    var adjustedMonth = month;
+    if (adjustedMonth <= 2) {
+      adjustedYear -= 1;
+      adjustedMonth += 12;
     }
-    final a = (year / 100).floorToDouble();
+    final a = (adjustedYear / 100).floorToDouble();
     final b = 2 - a + (a / 4).floorToDouble();
-    return (365.25 * (year + 4716)).floorToDouble() +
-        (30.6001 * (month + 1)).floorToDouble() +
-        day + b - 1524.5;
+    return (365.25 * (adjustedYear + 4716)).floorToDouble() +
+        (30.6001 * (adjustedMonth + 1)).floorToDouble() +
+        day +
+        b -
+        1524.5;
   }
 
   /// Convert Julian Day to Julian centuries since J2000.0
@@ -443,8 +469,7 @@ class FlightCalculations {
 
   /// Calculate eccentricity of Earth's orbit
   double calcEccentricityEarthOrbit(double jCenturies) {
-    return 0.016708634 -
-        jCenturies * (0.000042037 + 0.0000001267 * jCenturies);
+    return 0.016708634 - jCenturies * (0.000042037 + 0.0000001267 * jCenturies);
   }
 
   /// Calculate geometric mean anomaly of the sun
@@ -468,7 +493,8 @@ class FlightCalculations {
     final sin4l0 = sin(4.0 * _degToRad(l0));
     final sin2m = sin(2.0 * _degToRad(m));
 
-    final etime = y * sin2l0 -
+    final etime =
+        y * sin2l0 -
         2.0 * e * sinm +
         4.0 * e * y * sinm * cos2l0 -
         0.5 * y * y * sin4l0 -
@@ -483,14 +509,13 @@ class FlightCalculations {
       calcJDFromJulianCent(jCenturies) + longitude / 360.0,
     );
     var eqTime = calcEquationOfTime(tnoon);
-    var solNoonUTC = 720 + (longitude * 4) - eqTime;
+    final solNoonUTC = 720 + (longitude * 4) - eqTime;
 
     final newt = calcTimeJulianCent(
       calcJDFromJulianCent(jCenturies) - 0.5 + solNoonUTC / 1440.0,
     );
     eqTime = calcEquationOfTime(newt);
-    solNoonUTC = 720 + (longitude * 4) - eqTime;
-    return solNoonUTC;
+    return 720 + (longitude * 4) - eqTime;
   }
 
   // Helper methods
@@ -498,7 +523,7 @@ class FlightCalculations {
   double _radToDeg(double angleRad) => angleRad * 180.0 / pi;
 
   int _dayOfYear(DateTime date) {
-    final start = DateTime.utc(date.year, 1, 1);
+    final start = DateTime.utc(date.year);
     return date.difference(start).inDays + 1;
   }
 }

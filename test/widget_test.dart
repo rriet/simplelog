@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:flutter_test/flutter_test.dart';
 import 'package:simplelog/app/my_app.dart';
 
 void main() {
-  testWidgets('App boots inside ProviderScope', (WidgetTester tester) async {
+  testWidgets('App boots inside ProviderScope', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MyApp(),

@@ -27,13 +27,9 @@ void main() {
       final useCases = AirportUseCases(
         _FakeAirportRepository(flightCount: 2, positioningCount: 1),
       );
-      final item = Airport(
+      const item = Airport(
         id: 1,
         icao: 'KJFK',
-        iata: null,
-        name: null,
-        city: null,
-        country: null,
         latitude: 0,
         longitude: 0,
         isFavorite: false,
@@ -43,7 +39,10 @@ void main() {
       final result = await useCases.validateDelete(item);
 
       expect(result.isValid, isFalse);
-      expect(result.message, 'Cannot delete. Airport used in 3 logbook entries.');
+      expect(
+        result.message,
+        'Cannot delete. Airport used in 3 logbook entries.',
+      );
     });
   });
 }
@@ -58,8 +57,7 @@ class _FakeAirportRepository implements AirportRepositoryContract {
   final int positioningCount;
 
   @override
-  Future<int> countDuplicateIcao(String icao, int currentId) async =>
-      0;
+  Future<int> countDuplicateIcao(String icao, int currentId) async => 0;
 
   @override
   Future<int> countFlightsUsingAirport(int airportId) async => flightCount;

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/data/models/crew_extensions.dart';
+import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
+/// Public API documentation.
 class CrewListItem extends StatelessWidget {
+  /// Public API documentation.
   const CrewListItem({
-    super.key,
     required this.row,
     required this.isCompact,
     required this.onToggleFavorite,
@@ -15,15 +16,26 @@ class CrewListItem extends StatelessWidget {
     required this.onDelete,
     required this.onOpenDetails,
     required this.onPhotoTap,
+    super.key,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final CrewRow row;
+  /// Public API documentation.
   final bool isCompact;
+  /// Public API documentation.
   final VoidCallback onToggleFavorite;
+  /// Public API documentation.
   final VoidCallback onToggleLock;
+  /// Public API documentation.
   final VoidCallback onEdit;
+  /// Public API documentation.
   final VoidCallback onDelete;
+  /// Public API documentation.
   final VoidCallback onOpenDetails;
+  /// Public API documentation.
   final VoidCallback onPhotoTap;
 
   @override
@@ -57,8 +69,9 @@ class CrewListItem extends StatelessWidget {
               onTap: onPhotoTap,
               child: CircleAvatar(
                 radius: 27,
-                backgroundImage:
-                    item.picture == null ? null : MemoryImage(item.picture!),
+                backgroundImage: item.picture == null
+                    ? null
+                    : MemoryImage(item.picture!),
                 child: item.picture == null
                     ? Text(
                         initials,
@@ -139,7 +152,6 @@ class CrewListItem extends StatelessWidget {
       child: tile,
     );
   }
-
 }
 
 class _InfoLine extends StatelessWidget {

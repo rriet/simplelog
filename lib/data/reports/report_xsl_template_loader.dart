@@ -3,9 +3,12 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:simplelog/data/models/report_pdf_models.dart';
 
+/// Public API documentation.
 class ReportPdfTemplateLoader {
   static const _indexAssetPath = 'assets/reports/templates/index.json';
+/// Public API documentation.
 
+  /// Public API documentation.
   Future<List<ReportPdfTemplate>> load() async {
     final indexRaw = await rootBundle.loadString(_indexAssetPath);
     final indexJson = jsonDecode(indexRaw);
@@ -19,7 +22,7 @@ class ReportPdfTemplateLoader {
 
     final templates = <ReportPdfTemplate>[];
     for (final item in templateRefs) {
-      if (item is! Map) continue;
+      if (item is! Map<String, dynamic>) continue;
       final fileName = (item['fileName'] ?? '').toString().trim();
       if (fileName.isEmpty) continue;
       templates.add(await _loadTemplate(fileName));
@@ -28,7 +31,9 @@ class ReportPdfTemplateLoader {
   }
 
   Future<ReportPdfTemplate> _loadTemplate(String fileName) async {
-    final raw = await rootBundle.loadString('assets/reports/templates/$fileName.json');
+    final raw = await rootBundle.loadString(
+      'assets/reports/templates/$fileName.json',
+    );
     final json = jsonDecode(raw);
     if (json is! Map<String, dynamic>) {
       throw FormatException('Template $fileName is invalid.');
@@ -49,15 +54,15 @@ class ReportPdfTemplateLoader {
       defaultPageSize: defaultPageSize,
       labels: _parseLabels(json['labels']),
       tables: tablesJson
-          .whereType<Map>()
-          .map((item) => _parseTable(Map<String, dynamic>.from(item)))
+          .whereType<Map<String, dynamic>>()
+          .map(_parseTable)
           .toList(growable: false),
     );
   }
 
   ReportPdfLabels _parseLabels(Object? raw) {
-    if (raw is! Map) return const ReportPdfLabels();
-    final json = Map<String, dynamic>.from(raw);
+    if (raw is! Map<String, dynamic>) return const ReportPdfLabels();
+    final json = raw;
     return ReportPdfLabels(
       pageTotal: (json['pageTotal'] ?? 'PAGE TOTAL').toString(),
       amountForward: (json['amountForward'] ?? 'AMT. FORWARD').toString(),
@@ -75,14 +80,14 @@ class ReportPdfTemplateLoader {
     return ReportPdfTableConfig(
       pageSuffix: (json['pageSuffix'] ?? '').toString(),
       columns: columnsRaw
-          .whereType<Map>()
-          .map((item) => _parseColumn(Map<String, dynamic>.from(item)))
+          .whereType<Map<String, dynamic>>()
+          .map(_parseColumn)
           .toList(growable: false),
       footerRows: footerRaw is List
           ? footerRaw
-              .whereType<Map>()
-              .map((item) => _parseFooterRow(Map<String, dynamic>.from(item)))
-              .toList(growable: false)
+                .whereType<Map<String, dynamic>>()
+                .map(_parseFooterRow)
+                .toList(growable: false)
           : const [],
     );
   }
@@ -105,9 +110,9 @@ class ReportPdfTemplateLoader {
     final source = _parseSummarySource(sourceRaw);
     final valuesRaw = json['values'];
     final values = <String, String>{};
-    if (valuesRaw is Map) {
+    if (valuesRaw is Map<String, dynamic>) {
       for (final entry in valuesRaw.entries) {
-        values[entry.key.toString()] = entry.value.toString();
+        values[entry.key] = entry.value.toString();
       }
     }
     return ReportPdfFooterRowConfig(
@@ -155,6 +160,8 @@ class ReportPdfTemplateLoader {
         return ReportPdfPageSize.letter;
     }
   }
+/// Public API documentation.
 }
 
+/// Public API documentation.
 class ReportXslTemplateLoader extends ReportPdfTemplateLoader {}

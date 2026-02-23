@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/text/search_normalizer.dart';
-import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
-import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
-
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
-import 'package:simplelog/core/constants/app_constants.dart';
+import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
+import 'package:simplelog/features/aircraft/presentation/aircraft_edit_screen.dart';
+import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_filters_dialog.dart';
+import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_list.dart';
+import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_search_bar.dart';
+import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_lazy_panel.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
-import 'package:simplelog/state/controllers/validation_result.dart';
 import 'package:simplelog/presentation/shared/widgets/delete_confirmation_dialog.dart';
-import 'aircraft_edit_screen.dart';
-import 'widgets/aircraft_search_bar.dart';
-import 'widgets/aircraft_list.dart';
-import 'widgets/aircraft_filters_dialog.dart';
+import 'package:simplelog/state/controllers/validation_result.dart';
 
+/// Public API documentation.
 class AircraftScreen extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const AircraftScreen({super.key});
 
   @override
@@ -61,13 +62,13 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
       case AircraftSearchBy.all:
         return l10n.searchAircraft;
       case AircraftSearchBy.registration:
-        return 'Search Registration';
+        return l10n.searchRegistration;
       case AircraftSearchBy.type:
-        return 'Search Type';
+        return l10n.searchType;
       case AircraftSearchBy.family:
-        return 'Search Family';
+        return l10n.searchFamily;
       case AircraftSearchBy.notes:
-        return 'Search Notes';
+        return l10n.searchNotes;
     }
   }
 
@@ -118,10 +119,10 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
           child: Column(
             children: [
               ListTile(
-                title: const Text('Aircraft'),
+                title: Text(l10n.screenAircraft),
                 trailing: TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Done'),
+                  child: Text(l10n.okAction),
                 ),
               ),
               const Divider(height: 1),
@@ -144,10 +145,14 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
                         child: LogbookEntriesLazyPanel(
                           pageLoader: (limit, offset) =>
                               logbookUseCases.fetchEntriesForAircraftPage(
-                            row.aircraft.id,
-                            limit: limit,
-                            offset: offset,
-                          ),
+                                row.aircraft.id,
+                                limit: limit,
+                                offset: offset,
+                              ),
+                          summaryLoader: () =>
+                              logbookUseCases.fetchFlightSummaryForAircraft(
+                                row.aircraft.id,
+                              ),
                           onEntryTap: (entry) => LogbookEntryDialogs.show(
                             context,
                             entry: entry,
@@ -168,11 +173,10 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
 
   Future<void> _createAircraft() async {
     final isCompact = MediaQuery.of(context).size.width < 600;
-    final placeholder = Aircraft(
+    const placeholder = Aircraft(
       id: kPlaceholderId,
       aircraftTypeId: 0,
       registration: '',
-      mtow: null,
       isSimulator: false,
       isFavorite: false,
       isLocked: false,
@@ -180,8 +184,8 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
 
     if (isCompact) {
       await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => AircraftEditScreen(
+        MaterialPageRoute<void>(
+          builder: (_) => const AircraftEditScreen(
             item: placeholder,
             isCreate: true,
             initialIsSimulator: false,
@@ -199,7 +203,7 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
             maxWidth: 520,
             maxHeight: MediaQuery.of(context).size.height * 0.9,
           ),
-          child: SizedBox(
+          child: const SizedBox(
             width: 520,
             child: AircraftEditScreen(
               item: placeholder,
@@ -214,21 +218,19 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
 
   Future<void> _createSimulator() async {
     final isCompact = MediaQuery.of(context).size.width < 600;
-    final placeholder = Aircraft(
+    const placeholder = Aircraft(
       id: kPlaceholderId,
       aircraftTypeId: 0,
       registration: '',
-      mtow: null,
       isSimulator: true,
       isFavorite: false,
       isLocked: false,
-      notes: null,
     );
 
     if (isCompact) {
       await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => AircraftEditScreen(
+        MaterialPageRoute<void>(
+          builder: (_) => const AircraftEditScreen(
             item: placeholder,
             isCreate: true,
             initialIsSimulator: true,
@@ -246,7 +248,7 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
             maxWidth: 520,
             maxHeight: MediaQuery.of(context).size.height * 0.9,
           ),
-          child: SizedBox(
+          child: const SizedBox(
             width: 520,
             child: AircraftEditScreen(
               item: placeholder,
@@ -264,7 +266,7 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
 
     if (isCompact) {
       await Navigator.of(context).push(
-        MaterialPageRoute(
+        MaterialPageRoute<void>(
           builder: (_) => AircraftEditScreen(
             item: row.aircraft,
           ),
@@ -307,7 +309,7 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
               label: _searchLabel(l10n),
               onChanged: (value) => setState(() => _query = value),
               trailing: IconButton(
-                tooltip: 'Filters',
+                tooltip: l10n.logbookFilterAction,
                 onPressed: _openFilters,
                 icon: const Icon(Icons.filter_list),
               ),
@@ -414,7 +416,8 @@ class _AircraftHeader extends StatelessWidget {
     ].join(' • ');
     final subtitle = [
       if (typeLabel.isNotEmpty) typeLabel,
-      if (row.aircraft.isSimulator) 'Simulator',
+      if (row.aircraft.isSimulator)
+        AppLocalizations.of(context)!.fieldIsSimulator,
     ].join(' • ');
 
     return Column(
@@ -494,13 +497,13 @@ class _AircraftFabMenu extends StatelessWidget {
               children: [
                 _AircraftFabAction(
                   icon: Icons.airplanemode_active_outlined,
-                  label: 'New Aircraft',
+                  label: AppLocalizations.of(context)!.createAircraftTitle,
                   onTap: onCreateAircraft,
                 ),
                 const SizedBox(height: 10),
                 _AircraftFabAction(
                   icon: Icons.videogame_asset_outlined,
-                  label: 'New Simulator',
+                  label: AppLocalizations.of(context)!.createSimulatorTitle,
                   onTap: onCreateSimulator,
                 ),
               ],

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
+import 'package:simplelog/features/aircraft_types/presentation/widgets/aircraft_type_row.dart';
+import 'package:simplelog/features/aircraft_types/presentation/widgets/family_group.dart';
 
-import 'family_group.dart';
-import 'aircraft_type_row.dart';
-
+/// Public API documentation.
 class FamilySection extends StatelessWidget {
+  /// Public API documentation.
   const FamilySection({
-    super.key,
     required this.group,
     required this.isCompact,
     required this.onToggleLock,
@@ -14,14 +14,24 @@ class FamilySection extends StatelessWidget {
     required this.onDelete,
     required this.onOpenDetails,
     required this.onOpenFamilyDetails,
+    super.key,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final FamilyGroup group;
+  /// Public API documentation.
   final bool isCompact;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onToggleLock;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onEdit;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onDelete;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onOpenDetails;
+  /// Public API documentation.
   final ValueChanged<FamilyGroup> onOpenFamilyDetails;
 
   @override
@@ -36,16 +46,17 @@ class FamilySection extends StatelessWidget {
             child: Text(
               'Family: ${group.family}',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         ),
         Card(
           elevation: 2,
-          shadowColor:
-              Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
+          shadowColor: Theme.of(
+            context,
+          ).colorScheme.shadow.withValues(alpha: 0.15),
           color: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

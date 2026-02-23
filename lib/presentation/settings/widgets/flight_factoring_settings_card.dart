@@ -5,7 +5,9 @@ import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.da
 import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 
+/// Public API documentation.
 class FlightFactoringSettingsCard extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const FlightFactoringSettingsCard({super.key});
 
   @override
@@ -160,7 +162,7 @@ class _FlightFactoringSettingsCardState
   Widget _compactFieldRow({required List<_CompactFieldSpec> fields}) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final spacing = 8.0;
+        const spacing = 8.0;
         final count = fields.length;
         final totalSpacing = (count - 1) * spacing;
         final eachWidth = count == 0

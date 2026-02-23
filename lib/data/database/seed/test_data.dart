@@ -2,12 +2,14 @@ import 'dart:math';
 
 import 'package:drift/drift.dart';
 
-import '../app_database.dart';
-import '../enums/aircraft_category.dart';
-import '../enums/crew_position.dart';
-import '../enums/engine_type.dart';
+import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/database/enums/aircraft_category.dart';
+import 'package:simplelog/data/database/enums/crew_position.dart';
+import 'package:simplelog/data/database/enums/engine_type.dart';
 
+/// Public API documentation.
 extension TestDataSeeder on AppDatabase {
+  /// Public API documentation.
   Future<void> seedTestData({
     int aircraftTypesCount = 5,
     int aircraftCount = 5,
@@ -22,13 +24,11 @@ extension TestDataSeeder on AppDatabase {
   }) async {
     final random = Random();
 
-    int randomInt(int min, int max) =>
-        min + random.nextInt(max - min + 1);
+    int randomInt(int min, int max) => min + random.nextInt(max - min + 1);
 
     bool randomBool() => random.nextBool();
 
-    T randomFrom<T>(List<T> values) =>
-        values[random.nextInt(values.length)];
+    T randomFrom<T>(List<T> values) => values[random.nextInt(values.length)];
 
     final engineTypes = EngineType.values
         .where((value) => value != EngineType.unknown)
@@ -82,7 +82,11 @@ extension TestDataSeeder on AppDatabase {
       for (var i = 0; i < airportsCount; i += 1) {
         final id = await into(airports).insert(
           AirportsCompanion.insert(
-            icao: 'K${String.fromCharCode(65 + i)}${String.fromCharCode(65 + i)}${String.fromCharCode(65 + i)}',
+            icao:
+                'K'
+                '${String.fromCharCode(65 + i)}'
+                '${String.fromCharCode(65 + i)}'
+                '${String.fromCharCode(65 + i)}',
             iata: Value('A${String.fromCharCode(65 + i)}'),
             name: Value('Airport ${i + 1}'),
             city: Value('City ${i + 1}'),
@@ -249,7 +253,7 @@ extension TestDataSeeder on AppDatabase {
         );
       }
 
-      final todayMorning = DateTime(now.year, now.month, now.day, 10, 0);
+      final todayMorning = DateTime(now.year, now.month, now.day, 10);
       final midLastYear = DateTime(now.year - 1, 6, 18, 8, 15);
       final earlyTwoYearsAgo = DateTime(now.year - 2, 1, 5, 9, 30);
 
@@ -261,7 +265,7 @@ extension TestDataSeeder on AppDatabase {
         final aircraftId = aircraftIds.first;
         final depId = airportIds.first;
         final arrId = airportIds.last;
-        final lastYearDate = DateTime(now.year - 1, 12, 20, 14, 0);
+        final lastYearDate = DateTime(now.year - 1, 12, 20, 14);
         final twoYearsAgoDate = DateTime(now.year - 2, 11, 11, 7, 40);
 
         await insertFlight(
@@ -353,8 +357,7 @@ extension TestDataSeeder on AppDatabase {
 
       for (var i = 0; i < dutyPeriodsCount; i += 1) {
         final startTime = now.subtract(Duration(hours: randomInt(1, 500)));
-        final endTime =
-            startTime.add(Duration(minutes: randomInt(120, 480)));
+        final endTime = startTime.add(Duration(minutes: randomInt(120, 480)));
         final startTimelineId = await insertTimeline(startTime);
         final endTimelineId = await insertTimeline(endTime);
 

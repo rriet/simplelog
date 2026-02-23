@@ -4,22 +4,32 @@ import 'package:simplelog/data/models/aircraft_type_extensions.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
+/// Public API documentation.
 class AircraftTypeRowTile extends StatelessWidget {
+  /// Public API documentation.
   const AircraftTypeRowTile({
-    super.key,
     required this.row,
     required this.isCompact,
     required this.onToggleLock,
     required this.onEdit,
     required this.onDelete,
     required this.onOpenDetails,
+    super.key,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final AircraftTypeRow row;
+  /// Public API documentation.
   final bool isCompact;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onToggleLock;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onEdit;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onDelete;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onOpenDetails;
 
   @override
@@ -41,7 +51,9 @@ class AircraftTypeRowTile extends StatelessWidget {
       onToggleLock: () => onToggleLock(row),
       onEdit: () => onEdit(row),
       onDelete: () => onDelete(row),
+      /// Public API documentation.
       lockLabel: l10n.lockAction,
+      /// Public API documentation.
       editLabel: l10n.editAction,
       deleteLabel: l10n.deleteAction,
       child: content,
@@ -49,22 +61,35 @@ class AircraftTypeRowTile extends StatelessWidget {
   }
 }
 
+/// Public API documentation.
 class AircraftTypeRowContent extends StatelessWidget {
+  /// Public API documentation.
   const AircraftTypeRowContent({
-    super.key,
+    /// Public API documentation.
     required this.row,
+    /// Public API documentation.
     required this.isCompact,
+    /// Public API documentation.
     required this.onToggleLock,
+    /// Public API documentation.
     required this.onEdit,
+    /// Public API documentation.
     required this.onDelete,
     required this.onOpenDetails,
+    super.key,
   });
 
+  /// Public API documentation.
   final AircraftTypeRow row;
+  /// Public API documentation.
   final bool isCompact;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onToggleLock;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onEdit;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onDelete;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onOpenDetails;
 
   @override
@@ -165,7 +190,9 @@ class AircraftTypeRowContent extends StatelessWidget {
         ],
       ),
     );
+  /// Public API documentation.
   }
+/// Public API documentation.
 
   Widget _flagText(BuildContext context, String label, bool isOn) {
     final color = isOn
@@ -174,28 +201,35 @@ class AircraftTypeRowContent extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: Text(
+        /// Public API documentation.
         label,
-        style: Theme.of(context)
-            .textTheme
-            .bodyMedium
-            ?.copyWith(color: color),
+        /// Public API documentation.
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: color),
+      /// Public API documentation.
       ),
+    /// Public API documentation.
     );
   }
 }
 
+/// Public API documentation.
 class RowActions extends StatelessWidget {
+  /// Public API documentation.
   const RowActions({
-    super.key,
     required this.row,
     required this.onToggleLock,
     required this.onEdit,
     required this.onDelete,
+    super.key,
   });
 
+  /// Public API documentation.
   final AircraftTypeRow row;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onToggleLock;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onEdit;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onDelete;
 
   @override

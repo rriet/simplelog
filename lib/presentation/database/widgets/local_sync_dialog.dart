@@ -15,9 +15,13 @@ import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/database_sync_controller_provider.dart';
 
+/// Public API documentation.
 const int syncPort = 54742;
+/// Public API documentation.
 
+/// Public API documentation.
 class LocalSyncDialog extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const LocalSyncDialog({super.key});
 
   @override
@@ -46,17 +50,17 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   @override
   void initState() {
     super.initState();
-    _startSync();
-    _loadLocalInfo();
+    unawaited(_startSync());
+    unawaited(_loadLocalInfo());
   }
 
   @override
   void dispose() {
-    _devicesSub?.cancel();
+    unawaited(_devicesSub?.cancel());
     _scanTimer?.cancel();
     _disconnectTimer?.cancel();
-    _discovery?.stop();
-    _server?.stop();
+    unawaited(_discovery?.stop());
+    unawaited(_server?.stop());
     super.dispose();
   }
 
@@ -78,7 +82,8 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
           if (!mounted) return;
           final key = '$host:$port';
           final device = _devices[key];
-          final candidate = _selected ??
+          final candidate =
+              _selected ??
               device ??
               DiscoveredDevice(
                 name: host,
@@ -101,7 +106,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
       _discovery = LocalSyncDiscovery(port: syncPort);
       await _discovery!.start();
       final localName = await _discovery!.localDeviceName;
-      _server!.setDeviceName(localName);
+      _server!.deviceName = localName;
       if (mounted) {
         setState(() {
           _localDeviceName = localName;
@@ -115,8 +120,8 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
         setState(() {});
       });
 
-      _startFallbackScan();
-    } catch (error) {
+      await _startFallbackScan();
+    } on Object catch (error) {
       setState(() => _status = error.toString());
     } finally {
       if (mounted) {
@@ -134,7 +139,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
       for (var i = 1; i <= 254; i++) {
         final host = '$prefix$i';
         if (_devices.containsKey('$host:$syncPort')) continue;
-        _probeHost(host);
+        unawaited(_probeHost(host));
       }
     });
   }
@@ -158,7 +163,6 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     }
     final interfaces = await NetworkInterface.list(
       type: InternetAddressType.IPv4,
-      includeLoopback: false,
     );
     for (final interface in interfaces) {
       for (final address in interface.addresses) {
@@ -169,8 +173,9 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   }
 
   Future<String> _resolveHost(String host) async {
-    final trimmed =
-        host.endsWith('.') ? host.substring(0, host.length - 1) : host;
+    final trimmed = host.endsWith('.')
+        ? host.substring(0, host.length - 1)
+        : host;
     final literalAddress = InternetAddress.tryParse(trimmed);
     if (literalAddress != null) {
       return literalAddress.address;
@@ -182,7 +187,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
         orElse: () => addresses.first,
       );
       return ipv4.address;
-    } catch (_) {
+    } on Object catch (_) {
       return trimmed;
     }
   }
@@ -190,8 +195,9 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   Future<void> _probeHost(String host) async {
     final uri = Uri.parse('http://$host:$syncPort/info');
     try {
-      final response =
-          await http.get(uri).timeout(const Duration(milliseconds: 500));
+      final response = await http
+          .get(uri)
+          .timeout(const Duration(milliseconds: 500));
       if (response.statusCode == HttpStatus.ok && mounted) {
         final payload = jsonDecode(response.body) as Map<String, dynamic>?;
         final name = payload?['name']?.toString() ?? host;
@@ -203,7 +209,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
           );
         });
       }
-    } catch (_) {
+    } on Object catch (_) {
       // ignore
     }
   }
@@ -219,7 +225,6 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     }
     final interfaces = await NetworkInterface.list(
       type: InternetAddressType.IPv4,
-      includeLoopback: false,
     );
     for (final interface in interfaces) {
       for (final address in interface.addresses) {
@@ -246,7 +251,8 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     if (!mounted) return;
     if (!reachable) {
       setState(() {
-        _status = 'Device ${target.name} is no longer reachable. '
+        _status =
+            'Device ${target.name} is no longer reachable. '
             'Reopen Local Sync on that device and reconnect.';
         _isWaiting = false;
         _connectedDevice = null;
@@ -283,7 +289,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
         setState(() => _status = null);
         await _showSyncComplete(l10n);
       }
-    } catch (error) {
+    } on Object catch (error) {
       if (mounted) {
         setState(() => _status = _friendlySyncError(error));
       }
@@ -304,7 +310,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'host': selfHost, 'port': syncPort}),
       );
-    } catch (_) {
+    } on Object catch (_) {
       // ignore
     }
   }
@@ -318,7 +324,8 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     if (!mounted) return;
     if (!reachable) {
       setState(() {
-        _status = 'Cannot verify ${device.host}:${device.port} yet. '
+        _status =
+            'Cannot verify ${device.host}:${device.port} yet. '
             'You can still try Pull/Send. Keep Local Sync open on the other '
             'device and use the same Wi-Fi.';
       });
@@ -337,7 +344,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     try {
       final response = await _getFromDevice(device, '/info');
       return response.statusCode == HttpStatus.ok;
-    } catch (_) {
+    } on Object catch (_) {
       return false;
     }
   }
@@ -348,7 +355,6 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     if (ip != null && ip.isNotEmpty) return ip;
     final interfaces = await NetworkInterface.list(
       type: InternetAddressType.IPv4,
-      includeLoopback: false,
     );
     for (final interface in interfaces) {
       for (final address in interface.addresses) {
@@ -369,7 +375,8 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     if (!mounted) return;
     if (!reachable) {
       setState(() {
-        _status = 'Device ${target.name} is no longer reachable. '
+        _status =
+            'Device ${target.name} is no longer reachable. '
             'Reopen Local Sync on that device and reconnect.';
         _isWaiting = false;
         _connectedDevice = null;
@@ -407,7 +414,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
         setState(() => _status = null);
         await _showSyncComplete(l10n);
       }
-    } catch (error) {
+    } on Object catch (error) {
       if (mounted) {
         setState(() => _status = _friendlySyncError(error));
       }
@@ -482,7 +489,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
         return value.toInt();
       }
       return null;
-    } catch (_) {
+    } on Object catch (_) {
       return null;
     }
   }
@@ -513,7 +520,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
           timeout: const Duration(seconds: 2),
         );
         _disconnectFailures = 0;
-      } catch (_) {
+      } on Object catch (_) {
         _disconnectFailures += 1;
         if (mounted && _connectedDevice == device && _disconnectFailures >= 3) {
           _handleDisconnected();
@@ -530,7 +537,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     _connectedDevice = null;
     _connectedName = null;
     _isWaiting = false;
-    _showDisconnectedDialog();
+    unawaited(_showDisconnectedDialog());
   }
 
   Future<void> _showDisconnectedDialog() async {
@@ -550,7 +557,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   Future<void> _notifyTransferComplete(DiscoveredDevice device) async {
     try {
       await _postToDevice(device, '/complete');
-    } catch (_) {
+    } on Object catch (_) {
       // ignore
     }
   }
@@ -566,7 +573,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
       for (var attempt = 0; attempt < 3; attempt++) {
         try {
           return await http.get(uri).timeout(timeout);
-        } catch (error) {
+        } on Object catch (error) {
           lastError = error;
         }
       }
@@ -589,7 +596,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
           return await http
               .post(uri, body: body, headers: headers)
               .timeout(timeout);
-        } catch (error) {
+        } on Object catch (error) {
           lastError = error;
         }
       }
@@ -623,7 +630,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   void _handleTransferComplete() {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    _showSyncComplete(l10n);
+    unawaited(_showSyncComplete(l10n));
   }
 
   Future<Uint8List> _readDatabaseBytes() async {
@@ -649,18 +656,15 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final devices = _devices.values
-        .where((device) {
-          final trimmedHost = device.host.endsWith('.')
-              ? device.host.substring(0, device.host.length - 1)
-              : device.host;
-          final isSelfByName = _localDeviceName != null &&
-              device.name == _localDeviceName;
-          final isSelfByIp = _localIps.contains(trimmedHost);
-          return !isSelfByName && !isSelfByIp;
-        })
-        .toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
+    final devices = _devices.values.where((device) {
+      final trimmedHost = device.host.endsWith('.')
+          ? device.host.substring(0, device.host.length - 1)
+          : device.host;
+      final isSelfByName =
+          _localDeviceName != null && device.name == _localDeviceName;
+      final isSelfByIp = _localIps.contains(trimmedHost);
+      return !isSelfByName && !isSelfByIp;
+    }).toList()..sort((a, b) => a.name.compareTo(b.name));
 
     return Dialog(
       child: LayoutBuilder(

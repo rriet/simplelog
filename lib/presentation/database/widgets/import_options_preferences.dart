@@ -6,10 +6,13 @@ import 'package:simplelog/data/import/simplelog_import_options.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 
+/// Public API documentation.
 class ImportOptionsPreferences {
   static const _simplePrefix = 'import.simplelog.';
   static const _swPrefix = 'import.southwest.';
+/// Public API documentation.
 
+  /// Public API documentation.
   static Future<SimpleLogImportOptions> loadSimpleLog() async {
     final prefs = await SharedPreferences.getInstance();
     final factoringSettings = FlightFactoringSettings.fromJson(
@@ -49,8 +52,10 @@ class ImportOptionsPreferences {
           prefs.getBool('${_simplePrefix}overrideAircraftTypeValues') ??
           (prefs.getBool('${_simplePrefix}overrideExistingValues') ?? false),
     );
+  /// Public API documentation.
   }
 
+  /// Public API documentation.
   static Future<void> saveSimpleLog(SimpleLogImportOptions value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(
@@ -106,9 +111,11 @@ class ImportOptionsPreferences {
     await prefs.setString(
       flightFactoringSettingsKey,
       jsonEncode(factoringSettings.toJson()),
+    /// Public API documentation.
     );
   }
 
+  /// Public API documentation.
   static Future<SouthwestImportOptions> loadSouthwest({
     CrewPosition fallbackPosition = CrewPosition.sic,
   }) async {
@@ -136,10 +143,12 @@ class ImportOptionsPreferences {
       addCopilotStaffNumberToNotes:
           prefs.getBool('${_swPrefix}addCopilotStaffNumberToNotes') ?? true,
       addFlightNumberToNotes:
+          /// Public API documentation.
           prefs.getBool('${_swPrefix}addFlightNumberToNotes') ?? true,
     );
   }
 
+  /// Public API documentation.
   static Future<void> saveSouthwest(SouthwestImportOptions value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(

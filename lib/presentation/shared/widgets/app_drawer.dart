@@ -3,14 +3,16 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 
 import 'package:simplelog/state/aircraft_state.dart';
 
+/// Public API documentation.
 class AppDrawer extends StatelessWidget {
+  /// Public API documentation.
   const AppDrawer({
-    super.key,
     required this.selected,
     required this.onSelected,
+    super.key,
   });
 
-  static const _screens = [
+  static const List<AppScreen> _screens = [
     AppScreen.logbook,
     AppScreen.aircraft,
     AppScreen.aircraftTypes,
@@ -18,9 +20,13 @@ class AppDrawer extends StatelessWidget {
     AppScreen.crew,
     AppScreen.dashboard,
     AppScreen.settings,
+  /// Public API documentation.
   ];
+/// Public API documentation.
 
+  /// Public API documentation.
   final AppScreen selected;
+  /// Public API documentation.
   final ValueChanged<AppScreen> onSelected;
 
   @override
@@ -28,9 +34,7 @@ class AppDrawer extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Drawer(
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.zero,
-      ),
+      shape: const RoundedRectangleBorder(),
       child: SafeArea(
         child: ListView(
           padding: EdgeInsets.zero,

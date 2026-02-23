@@ -3,24 +3,35 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
+/// Public API documentation.
 class AircraftListItem extends StatelessWidget {
+  /// Public API documentation.
   const AircraftListItem({
-    super.key,
     required this.row,
     required this.onToggleFavorite,
     required this.onToggleLock,
     required this.onEdit,
     required this.onDelete,
     required this.onOpenDetails,
+    super.key,
     this.isMobile = false,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final AircraftRow row;
+  /// Public API documentation.
   final VoidCallback onToggleFavorite;
+  /// Public API documentation.
   final VoidCallback onToggleLock;
+  /// Public API documentation.
   final VoidCallback onEdit;
+  /// Public API documentation.
   final VoidCallback onDelete;
+  /// Public API documentation.
   final VoidCallback onOpenDetails;
+  /// Public API documentation.
   final bool isMobile;
 
   @override
@@ -103,5 +114,4 @@ class AircraftListItem extends StatelessWidget {
       ],
     );
   }
-
 }

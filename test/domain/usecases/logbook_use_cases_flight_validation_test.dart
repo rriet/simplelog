@@ -8,7 +8,7 @@ void main() {
     test('does not write when validator returns errors', () async {
       final repository = _FakeLogbookRepository();
       final useCases = LogbookUseCases(repository);
-      final departure = DateTime.utc(2026, 1, 1, 10, 0);
+      final departure = DateTime.utc(2026, 1, 1, 10);
       final input = _baseInput(
         departureDateTime: departure,
         arrivalDateTime: departure.subtract(const Duration(minutes: 1)),
@@ -48,7 +48,7 @@ class _FakeLogbookRepository implements LogbookRepositoryContract {
   }
 
   @override
-  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 FlightWriteInput _baseInput({
@@ -62,7 +62,7 @@ FlightWriteInput _baseInput({
     aircraftId: 1,
     departureAirportId: 1,
     arrivalAirportId: 2,
-    departureDateTime: departureDateTime ?? DateTime.utc(2026, 1, 1, 10, 0),
+    departureDateTime: departureDateTime ?? DateTime.utc(2026, 1, 1, 10),
     takeOffDateTime: null,
     landingDateTime: null,
     arrivalDateTime: arrivalDateTime,

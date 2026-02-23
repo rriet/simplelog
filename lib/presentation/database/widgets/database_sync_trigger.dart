@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -9,19 +10,20 @@ import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/export/simplelog_csv_exporter.dart';
-import 'package:simplelog/data/import/import_operation_result.dart';
 import 'package:simplelog/data/import/dashboard_rules_seed_importer.dart';
+import 'package:simplelog/data/import/import_operation_result.dart';
 import 'package:simplelog/data/import/simplelog_csv_importer.dart';
 import 'package:simplelog/presentation/database/widgets/import_options_preferences.dart';
+import 'package:simplelog/presentation/database/widgets/local_sync_dialog.dart';
+import 'package:simplelog/presentation/database/widgets/simplelog_import_options_dialog.dart';
 import 'package:simplelog/presentation/database/widgets/southwest_import_options_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
-import 'local_sync_dialog.dart';
-import 'simplelog_import_options_dialog.dart';
-
+/// Public API documentation.
 class DatabaseSyncTrigger extends ConsumerWidget {
+  /// Public API documentation.
   const DatabaseSyncTrigger({super.key});
 
   @override
@@ -178,9 +180,14 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     final csv = await exporter.exportFlightsAndSimulatorsCsv();
     if (!context.mounted) return;
 
-    final fileName =
-        'simplelog_export_'
-        '${DateTime.now().toUtc().toIso8601String().replaceAll(':', '').replaceAll('-', '').split('.').first}.csv';
+    final timestamp = DateTime.now()
+        .toUtc()
+        .toIso8601String()
+        .replaceAll(':', '')
+        .replaceAll('-', '')
+        .split('.')
+        .first;
+    final fileName = 'simplelog_export_$timestamp.csv';
     final bytes = Uint8List.fromList(<int>[
       0xEF,
       0xBB,
@@ -241,29 +248,31 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     BuildContext context,
     ValueNotifier<_ImportProgress> progress,
   ) {
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Importing'),
-        content: ValueListenableBuilder<_ImportProgress>(
-          valueListenable: progress,
-          builder: (context, value, _) {
-            final total = value.total;
-            final processed = value.processed;
-            final percent = total > 0 ? processed / total : null;
-            final label = total > 0
-                ? 'Processed $processed of $total'
-                : 'Preparing...';
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LinearProgressIndicator(value: percent),
-                const SizedBox(height: 12),
-                Align(alignment: Alignment.centerLeft, child: Text(label)),
-              ],
-            );
-          },
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('Importing'),
+          content: ValueListenableBuilder<_ImportProgress>(
+            valueListenable: progress,
+            builder: (context, value, _) {
+              final total = value.total;
+              final processed = value.processed;
+              final percent = total > 0 ? processed / total : null;
+              final label = total > 0
+                  ? 'Processed $processed of $total'
+                  : 'Preparing...';
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  LinearProgressIndicator(value: percent),
+                  const SizedBox(height: 12),
+                  Align(alignment: Alignment.centerLeft, child: Text(label)),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -291,21 +300,22 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   }
 
   Future<void> _clearDatabase(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear Database'),
-        content: const Text(
-          'This will delete all data and recreate empty tables.',
+        title: Text(l10n.clearDatabaseTitle),
+        content: Text(
+          l10n.clearDatabaseMessage,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancelAction),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Clear'),
+            child: Text(l10n.clearAction),
           ),
         ],
       ),

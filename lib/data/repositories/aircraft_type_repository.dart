@@ -1,16 +1,17 @@
-// ignore_for_file: annotate_overrides
-
 import 'package:drift/drift.dart';
 import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/domain/repositories/aircraft_type_repository_contract.dart';
 
+/// Public API documentation.
 class AircraftTypeRepository implements AircraftTypeRepositoryContract {
+  /// Public API documentation.
   AircraftTypeRepository(this._db);
 
   final AppDatabase _db;
 
+  @override
   Stream<List<AircraftTypeRow>> watchAircraftTypes(String query) {
     final request = _db.select(_db.aircraftTypes)
       ..orderBy([
@@ -21,33 +22,37 @@ class AircraftTypeRepository implements AircraftTypeRepositoryContract {
     final normalizedQuery = normalizeLooseSearch(query);
 
     return request.watch().map(
-          (rows) {
-            final mapped = rows.map(AircraftTypeRow.new);
-            if (normalizedQuery.isEmpty) {
-              return mapped.toList();
-            }
-            return mapped.where((row) {
-              final code = normalizeLooseSearch(row.type.code);
-              final family = normalizeLooseSearch(row.type.family);
-              final longName = normalizeLooseSearch(row.type.longName);
-              final manufacturer = normalizeLooseSearch(
-                row.type.manufacturer ?? '',
-              );
-              return code.contains(normalizedQuery) ||
-                  family.contains(normalizedQuery) ||
-                  longName.contains(normalizedQuery) ||
-                  manufacturer.contains(normalizedQuery);
-            }).toList();
-          },
-        );
+      (rows) {
+        final mapped = rows.map(AircraftTypeRow.new);
+        if (normalizedQuery.isEmpty) {
+          return mapped.toList();
+        }
+        return mapped.where((row) {
+          final code = normalizeLooseSearch(row.type.code);
+          final family = normalizeLooseSearch(row.type.family);
+          final longName = normalizeLooseSearch(row.type.longName);
+          final manufacturer = normalizeLooseSearch(
+            row.type.manufacturer ?? '',
+          );
+          return code.contains(normalizedQuery) ||
+              family.contains(normalizedQuery) ||
+              longName.contains(normalizedQuery) ||
+              manufacturer.contains(normalizedQuery);
+        }).toList();
+      },
+    );
   }
 
+  @override
   Future<void> toggleLock(AircraftType item) async {
-    await _db.update(_db.aircraftTypes).replace(
+    await _db
+        .update(_db.aircraftTypes)
+        .replace(
           item.copyWith(isLocked: !item.isLocked),
         );
   }
 
+  @override
   Future<int> countAircraftForType(int typeId) async {
     final countExpr = _db.aircrafts.id.count();
     final query = _db.selectOnly(_db.aircrafts)
@@ -57,18 +62,22 @@ class AircraftTypeRepository implements AircraftTypeRepositoryContract {
     return row.read(countExpr) ?? 0;
   }
 
+  @override
   Future<void> delete(AircraftType item) async {
     await _db.delete(_db.aircraftTypes).delete(item);
   }
 
+  @override
   Future<int> create(AircraftTypesCompanion companion) {
     return _db.into(_db.aircraftTypes).insert(companion);
   }
 
+  @override
   Future<void> update(AircraftType item) async {
     await _db.update(_db.aircraftTypes).replace(item);
   }
 
+  @override
   Future<int> countDuplicateCodes(String code, int currentId) async {
     final countExpr = _db.aircraftTypes.id.count();
     final query = _db.selectOnly(_db.aircraftTypes)
@@ -81,6 +90,7 @@ class AircraftTypeRepository implements AircraftTypeRepositoryContract {
     return row.read(countExpr) ?? 0;
   }
 
+  @override
   Stream<List<String>> watchFamilies() {
     final familyColumn = _db.aircraftTypes.family;
     final query = _db.selectOnly(_db.aircraftTypes)
@@ -89,11 +99,11 @@ class AircraftTypeRepository implements AircraftTypeRepositoryContract {
       ..orderBy([OrderingTerm.asc(familyColumn)]);
 
     return query.watch().map(
-          (rows) => rows
-              .map((row) => row.read(familyColumn))
-              .where((value) => value != null && value.trim().isNotEmpty)
-              .cast<String>()
-              .toList(),
-        );
+      (rows) => rows
+          .map((row) => row.read(familyColumn))
+          .where((value) => value != null && value.trim().isNotEmpty)
+          .cast<String>()
+          .toList(),
+    );
   }
 }

@@ -8,9 +8,12 @@ import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// Public API documentation.
 class CrewInfoDialog {
   const CrewInfoDialog._();
+/// Public API documentation.
 
+  /// Public API documentation.
   static Future<void> show(
     BuildContext context, {
     required CrewRow row,
@@ -50,17 +53,17 @@ class CrewInfoDialog {
                         onPhoneTap: phone.isEmpty
                             ? null
                             : () => _showContactMenu(
-                                  dialogContext,
-                                  phone: phone,
-                                  email: '',
-                                ),
+                                dialogContext,
+                                phone: phone,
+                                email: '',
+                              ),
                         onEmailTap: email.isEmpty
                             ? null
                             : () => _showContactMenu(
-                                  dialogContext,
-                                  phone: '',
-                                  email: email,
-                                ),
+                                dialogContext,
+                                phone: '',
+                                email: email,
+                              ),
                         onPhotoTap: () => _showLargePhoto(dialogContext, row),
                       ),
                       const SizedBox(height: 12),
@@ -94,10 +97,12 @@ class CrewInfoDialog {
                         child: LogbookEntriesLazyPanel(
                           pageLoader: (limit, offset) =>
                               useCases.fetchEntriesForCrewPage(
-                            row.crew.id,
-                            limit: limit,
-                            offset: offset,
-                          ),
+                                row.crew.id,
+                                limit: limit,
+                                offset: offset,
+                              ),
+                          summaryLoader: () =>
+                              useCases.fetchFlightSummaryForCrew(row.crew.id),
                           onEntryTap: (entry) => LogbookEntryDialogs.show(
                             context,
                             entry: entry,
@@ -260,7 +265,8 @@ class _CrewDetailHeader extends StatelessWidget {
                       Expanded(
                         child: Text(
                           phoneDisplay,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
                               ),
                           overflow: TextOverflow.ellipsis,
@@ -282,7 +288,8 @@ class _CrewDetailHeader extends StatelessWidget {
                       Expanded(
                         child: Text(
                           email,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
                               ),
                           overflow: TextOverflow.ellipsis,

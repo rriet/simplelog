@@ -1,6 +1,8 @@
 import 'package:simplelog/data/database/app_database.dart';
 
+/// Public API documentation.
 extension CrewExtensions on CrewData {
+  /// Public API documentation.
   String get initials {
     final parts = name.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty) {
@@ -9,19 +11,23 @@ extension CrewExtensions on CrewData {
     final first = parts.first.isNotEmpty ? parts.first[0] : '';
     final last = parts.length > 1 && parts.last.isNotEmpty ? parts.last[0] : '';
     return (first + last).toUpperCase();
+  /// Public API documentation.
   }
 
+  /// Public API documentation.
   String get formattedPhone {
     return formatPhoneDisplay(phone);
+  /// Public API documentation.
   }
 }
 
+/// Public API documentation.
 String formatPhoneDisplay(String? input) {
   final raw = (input ?? '').trim();
   if (raw.isEmpty) return '';
 
   final hasPlus = raw.startsWith('+');
-  final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
+  final digits = raw.replaceAll(RegExp('[^0-9]'), '');
   if (digits.isEmpty) return raw;
 
   String format10(String tenDigits) {

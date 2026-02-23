@@ -1,27 +1,28 @@
-// ignore_for_file: annotate_overrides
-
 import 'package:drift/drift.dart';
 import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/domain/repositories/aircraft_repository_contract.dart';
 
+/// Public API documentation.
 class AircraftRepository implements AircraftRepositoryContract {
+  /// Public API documentation.
   AircraftRepository(this._db);
 
   final AppDatabase _db;
 
+  @override
   Stream<List<AircraftRow>> watchAircraft(String query) {
-    final request = _db.select(_db.aircrafts).join([
-      leftOuterJoin(
-        _db.aircraftTypes,
-        _db.aircraftTypes.id.equalsExp(_db.aircrafts.aircraftTypeId),
-      ),
-    ])
-      ..orderBy([
-        OrderingTerm.desc(_db.aircrafts.isFavorite),
-        OrderingTerm.asc(_db.aircrafts.registration),
-      ]);
+    final request =
+        _db.select(_db.aircrafts).join([
+          leftOuterJoin(
+            _db.aircraftTypes,
+            _db.aircraftTypes.id.equalsExp(_db.aircrafts.aircraftTypeId),
+          ),
+        ])..orderBy([
+          OrderingTerm.desc(_db.aircrafts.isFavorite),
+          OrderingTerm.asc(_db.aircrafts.registration),
+        ]);
 
     final normalizedQuery = normalizeLooseSearch(query);
 
@@ -41,18 +42,20 @@ class AircraftRepository implements AircraftRepositoryContract {
     });
   }
 
+  @override
   Future<List<AircraftRow>> fetchAircraftByType(int aircraftTypeId) async {
-    final query = _db.select(_db.aircrafts).join([
-      leftOuterJoin(
-        _db.aircraftTypes,
-        _db.aircraftTypes.id.equalsExp(_db.aircrafts.aircraftTypeId),
-      ),
-    ])
-      ..where(_db.aircrafts.aircraftTypeId.equals(aircraftTypeId))
-      ..orderBy([
-        OrderingTerm.desc(_db.aircrafts.isFavorite),
-        OrderingTerm.asc(_db.aircrafts.registration),
-      ]);
+    final query =
+        _db.select(_db.aircrafts).join([
+            leftOuterJoin(
+              _db.aircraftTypes,
+              _db.aircraftTypes.id.equalsExp(_db.aircrafts.aircraftTypeId),
+            ),
+          ])
+          ..where(_db.aircrafts.aircraftTypeId.equals(aircraftTypeId))
+          ..orderBy([
+            OrderingTerm.desc(_db.aircrafts.isFavorite),
+            OrderingTerm.asc(_db.aircrafts.registration),
+          ]);
 
     final rows = await query.get();
     return rows
@@ -65,30 +68,40 @@ class AircraftRepository implements AircraftRepositoryContract {
         .toList();
   }
 
+  @override
   Future<void> toggleLock(Aircraft item) async {
-    await _db.update(_db.aircrafts).replace(
+    await _db
+        .update(_db.aircrafts)
+        .replace(
           item.copyWith(isLocked: !item.isLocked),
         );
   }
 
+  @override
   Future<void> toggleFavorite(Aircraft item) async {
-    await _db.update(_db.aircrafts).replace(
+    await _db
+        .update(_db.aircrafts)
+        .replace(
           item.copyWith(isFavorite: !item.isFavorite),
         );
   }
 
+  @override
   Future<void> delete(Aircraft item) async {
     await _db.delete(_db.aircrafts).delete(item);
   }
 
+  @override
   Future<int> create(AircraftsCompanion companion) {
     return _db.into(_db.aircrafts).insert(companion);
   }
 
+  @override
   Future<void> update(Aircraft item) async {
     await _db.update(_db.aircrafts).replace(item);
   }
 
+  @override
   Future<int> countDuplicateRegistration(
     String registration,
     int currentId,

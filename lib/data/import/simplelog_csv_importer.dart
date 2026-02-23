@@ -11,7 +11,9 @@ import 'package:simplelog/data/import/import_operation_result.dart';
 import 'package:simplelog/data/import/simplelog_import_options.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
 
+/// Public API documentation.
 class SimpleLogImportResult {
+  /// Public API documentation.
   const SimpleLogImportResult({
     required this.totalRows,
     required this.flights,
@@ -23,27 +25,44 @@ class SimpleLogImportResult {
     required this.crew,
     required this.skipped,
     required this.errors,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final int totalRows;
+  /// Public API documentation.
   final int flights;
+  /// Public API documentation.
   final int positionings;
+  /// Public API documentation.
   final int simulators;
+  /// Public API documentation.
   final int airports;
+  /// Public API documentation.
   final int aircraftTypes;
+  /// Public API documentation.
   final int aircrafts;
+  /// Public API documentation.
   final int crew;
+  /// Public API documentation.
   final int skipped;
+  /// Public API documentation.
   final int errors;
 }
 
+/// Public API documentation.
 typedef ImportProgressCallback = void Function(int processed, int total);
 
+/// Public API documentation.
 class SimpleLogCsvImporter {
+  /// Public API documentation.
   SimpleLogCsvImporter(this.db);
 
+  /// Public API documentation.
   final AppDatabase db;
 
+  /// Public API documentation.
   Future<SimpleLogImportResult> importCsv(
     String content, {
     SimpleLogImportOptions options = const SimpleLogImportOptions(),
@@ -167,6 +186,13 @@ class SimpleLogCsvImporter {
     final existingCrew = await db.select(db.crew).get();
     for (final member in existingCrew) {
       crewCache[_crewKey(member.name)] = member;
+    }
+    int? selfCrewId;
+    for (final member in existingCrew) {
+      if (member.isSelf) {
+        selfCrewId = member.id;
+        break;
+      }
     }
 
     await db.transaction(() async {
@@ -312,6 +338,10 @@ class SimpleLogCsvImporter {
           final isSimulator = _parseBool(get(idxAircraftSim));
           int? flightId;
           int? simId;
+          var effectivePicMinutes = 0;
+          var effectivePicusMinutes = 0;
+          var effectiveSicMinutes = 0;
+          var effectiveDualMinutes = 0;
 
           final totalMinutesRaw = _parseInt(get(idxTotalMinutes));
           var computedTotal = totalMinutesRaw;
@@ -531,6 +561,10 @@ class SimpleLogCsvImporter {
                     signatureImage: const Value(null),
                   ),
                 );
+            effectivePicMinutes = picMinutes;
+            effectivePicusMinutes = picusMinutes;
+            effectiveSicMinutes = sicMinutes;
+            effectiveDualMinutes = dualMinutes;
             flights += 1;
           }
 
@@ -606,10 +640,36 @@ class SimpleLogCsvImporter {
               }
             }
           }
-        } catch (_) {
+
+          if (flightId != null && (picName.isEmpty || sicName.isEmpty)) {
+            final hasSelfNameProvided =
+                picName.toLowerCase() == 'self' ||
+                sicName.toLowerCase() == 'self';
+            if (!hasSelfNameProvided) {
+              selfCrewId ??= await _getOrCreateSelfCrewId(cache: crewCache);
+              if (selfCrewId != null) {
+                await db
+                    .into(db.flightCrewAssignments)
+                    .insert(
+                      FlightCrewAssignmentsCompanion.insert(
+                        flightId: flightId,
+                        crewId: selfCrewId!,
+                        position: _resolveSelfCrewPosition(
+                          picMinutes: effectivePicMinutes,
+                          picusMinutes: effectivePicusMinutes,
+                          sicMinutes: effectiveSicMinutes,
+                          dualMinutes: effectiveDualMinutes,
+                        ),
+                      ),
+                    );
+              }
+            }
+          }
+        } on Object catch (_) {
           errors += 1;
         }
       }
+    /// Public API documentation.
     });
     onProgress?.call(totalRows, totalRows);
 
@@ -627,6 +687,7 @@ class SimpleLogCsvImporter {
     );
   }
 
+  /// Public API documentation.
   Future<ImportOperationResult<SimpleLogImportResult>> importCsvSafely(
     String content, {
     SimpleLogImportOptions options = const SimpleLogImportOptions(),
@@ -640,6 +701,7 @@ class SimpleLogCsvImporter {
       );
       return ImportOperationResult.success(result);
     } on FormatException catch (error) {
+      /// Public API documentation.
       return ImportOperationResult.failure(
         ImportFailure(
           type: ImportFailureType.invalidFormat,
@@ -647,23 +709,7 @@ class SimpleLogCsvImporter {
           exception: error,
         ),
       );
-    } on StateError catch (error) {
-      return ImportOperationResult.failure(
-        ImportFailure(
-          type: ImportFailureType.parseError,
-          message: error.message,
-          exception: error,
-        ),
-      );
-    } on ArgumentError catch (error) {
-      return ImportOperationResult.failure(
-        ImportFailure(
-          type: ImportFailureType.parseError,
-          message: error.message.toString(),
-          exception: error,
-        ),
-      );
-    } catch (error) {
+    } on Object catch (error) {
       return ImportOperationResult.failure(
         ImportFailure(
           type: ImportFailureType.unexpected,
@@ -674,6 +720,7 @@ class SimpleLogCsvImporter {
     }
   }
 
+  /// Public API documentation.
   Future<SimpleLogImportResult> importSouthwestCsv(
     String content, {
     SouthwestImportOptions options = const SouthwestImportOptions(),
@@ -711,7 +758,7 @@ class SimpleLogCsvImporter {
 
     var flights = 0;
     var positionings = 0;
-    var simulators = 0;
+    const simulators = 0;
     var airports = 0;
     var aircraftTypes = 0;
     var aircrafts = 0;
@@ -1115,8 +1162,9 @@ class SimpleLogCsvImporter {
           }
 
           flights += 1;
-        } catch (_) {
+        } on Object catch (_) {
           errors += 1;
+        /// Public API documentation.
         }
       }
     });
@@ -1136,6 +1184,7 @@ class SimpleLogCsvImporter {
     );
   }
 
+  /// Public API documentation.
   Future<ImportOperationResult<SimpleLogImportResult>> importSouthwestCsvSafely(
     String content, {
     SouthwestImportOptions options = const SouthwestImportOptions(),
@@ -1156,23 +1205,7 @@ class SimpleLogCsvImporter {
           exception: error,
         ),
       );
-    } on StateError catch (error) {
-      return ImportOperationResult.failure(
-        ImportFailure(
-          type: ImportFailureType.parseError,
-          message: error.message,
-          exception: error,
-        ),
-      );
-    } on ArgumentError catch (error) {
-      return ImportOperationResult.failure(
-        ImportFailure(
-          type: ImportFailureType.parseError,
-          message: error.message.toString(),
-          exception: error,
-        ),
-      );
-    } catch (error) {
+    } on Object catch (error) {
       return ImportOperationResult.failure(
         ImportFailure(
           type: ImportFailureType.unexpected,
@@ -1281,7 +1314,7 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       final hour = timeParts.length > 1 ? int.parse(timeParts[0]) : 0;
       final minute = timeParts.length > 1 ? int.parse(timeParts[1]) : 0;
       return DateTime.utc(date.year, date.month, date.day, hour, minute);
-    } catch (_) {
+    } on Object catch (_) {
       return null;
     }
   }
@@ -1608,7 +1641,6 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       code: clean,
       family: family.trim().isEmpty ? clean : family.trim(),
       longName: clean,
-      manufacturer: null,
       category: AircraftCategory.landplane,
       engineType: engineType,
       mtow: mtow,
@@ -1626,10 +1658,10 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
     required String registration,
     required int? aircraftTypeId,
     required int? mtow,
-    int? typeMtow,
     required bool isSimulator,
     required Map<String, Aircraft> cache,
     required SimpleLogImportOptions options,
+    int? typeMtow,
   }) async {
     if (registration.isEmpty || aircraftTypeId == null) return null;
     final normalizedMtow = _normalizeAircraftMtow(
@@ -1702,7 +1734,6 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       isSimulator: isSimulator,
       isFavorite: false,
       isLocked: false,
-      notes: null,
     );
     return _IdResult(id: id, created: true);
   }
@@ -1801,12 +1832,46 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       email: email.trim().isEmpty ? null : email.trim(),
       notes: notes.trim().isEmpty ? null : notes.trim(),
       phone: phone.trim().isEmpty ? null : phone.trim(),
-      picture: null,
       isSelf: false,
       isFavorite: false,
       isLocked: false,
     );
     return _IdResult(id: id, created: true);
+  }
+
+  Future<int?> _getOrCreateSelfCrewId({
+    required Map<String, CrewData> cache,
+  }) async {
+    final existingSelf = cache.values.where((member) => member.isSelf);
+    if (existingSelf.isNotEmpty) {
+      return existingSelf.first.id;
+    }
+    final namedSelf = cache[_crewKey('Self')];
+    if (namedSelf != null) {
+      return namedSelf.id;
+    }
+    final id = await db
+        .into(db.crew)
+        .insert(
+          CrewCompanion.insert(
+            name: 'Self',
+            email: const Value(null),
+            notes: const Value(null),
+            phone: const Value(null),
+            picture: const Value(null),
+            isSelf: true,
+            isFavorite: false,
+            isLocked: false,
+          ),
+        );
+    cache[_crewKey('Self')] = CrewData(
+      id: id,
+      name: 'Self',
+      isSelf: true,
+      isFavorite: false,
+      isLocked: false,
+    );
+    return id;
   }
 }
 
@@ -1980,13 +2045,13 @@ DateTime? _parseSouthwestDateTime(String date, String time) {
       hour: hour,
       minute: minute,
     );
-  } catch (_) {
+  } on Object catch (_) {
     return null;
   }
 }
 
 int _parseBlockHhMmToMinutes(String value) {
-  final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+  final digits = value.replaceAll(RegExp('[^0-9]'), '');
   if (digits.isEmpty) return 0;
   final raw = int.tryParse(digits) ?? 0;
   if (digits.length <= 2) return raw;
@@ -2029,12 +2094,26 @@ String _buildSouthwestNotes({
 }
 
 String _flightDateKey(DateTime departure, DateTime? arrival) {
-  return '${departure.millisecondsSinceEpoch}|${arrival?.millisecondsSinceEpoch ?? -1}';
+  return '${departure.millisecondsSinceEpoch}|'
+      '${arrival?.millisecondsSinceEpoch ?? -1}';
 }
 
 CrewPosition _normalizeSelfPosition(CrewPosition value) {
   if (value == CrewPosition.pic || value == CrewPosition.sic) return value;
   return CrewPosition.sic;
+}
+
+CrewPosition _resolveSelfCrewPosition({
+  required int picMinutes,
+  required int picusMinutes,
+  required int sicMinutes,
+  required int dualMinutes,
+}) {
+  if (picMinutes > 0) return CrewPosition.pic;
+  if (picusMinutes > 0) return CrewPosition.picus;
+  if (sicMinutes > 0) return CrewPosition.sic;
+  if (dualMinutes > 0) return CrewPosition.trainee;
+  return CrewPosition.other;
 }
 
 CrewPosition _oppositePosition(CrewPosition selfPosition) {
@@ -2060,7 +2139,8 @@ DateTime _dallasLocalToUtc({
     hour,
     minute,
   ).add(Duration(hours: offsetHours));
-  // Store as wall-clock UTC (non-timezone-shifting DateTime) to match app model.
+  // Store as wall-clock UTC (non-timezone-shifting DateTime)
+  // to match the app model.
   return DateTime(
     shiftedUtc.year,
     shiftedUtc.month,

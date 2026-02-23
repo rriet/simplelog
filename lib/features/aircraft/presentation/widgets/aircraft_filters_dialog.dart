@@ -1,22 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
 
+/// Public API documentation.
 enum AircraftSearchBy {
+  /// Public API documentation.
   all,
+  /// Public API documentation.
   registration,
+  /// Public API documentation.
   type,
+  /// Public API documentation.
   family,
+  /// Public API documentation.
   notes,
 }
 
+/// Public API documentation.
 class AircraftFiltersDialog extends StatefulWidget {
+  /// Public API documentation.
   const AircraftFiltersDialog({
-    super.key,
     required this.initialSearchBy,
+    super.key,
   });
 
+  /// Public API documentation.
   final AircraftSearchBy initialSearchBy;
 
+  /// Public API documentation.
   static Future<AircraftSearchBy?> show(
     BuildContext context, {
     required AircraftSearchBy initialSearchBy,
@@ -44,6 +55,7 @@ class _AircraftFiltersDialogState extends State<AircraftFiltersDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Dialog(
       child: SizedBox(
         width: 520,
@@ -58,17 +70,17 @@ class _AircraftFiltersDialogState extends State<AircraftFiltersDialog> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Aircraft Filters',
-                        style: TextStyle(
+                        l10n.aircraftFiltersTitle,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.of(context).pop(null),
+                      onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.close),
                     ),
                   ],
@@ -77,28 +89,28 @@ class _AircraftFiltersDialogState extends State<AircraftFiltersDialog> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: DropdownInputField<AircraftSearchBy>(
-                  label: 'Search By',
+                  label: l10n.searchByLabel,
                   value: _searchBy,
-                  items: const [
+                  items: [
                     DropdownMenuItem(
                       value: AircraftSearchBy.all,
-                      child: Text('All'),
+                      child: Text(l10n.optionAll),
                     ),
                     DropdownMenuItem(
                       value: AircraftSearchBy.registration,
-                      child: Text('Registration'),
+                      child: Text(l10n.fieldRegistration),
                     ),
                     DropdownMenuItem(
                       value: AircraftSearchBy.type,
-                      child: Text('Type'),
+                      child: Text(l10n.searchFieldType),
                     ),
                     DropdownMenuItem(
                       value: AircraftSearchBy.family,
-                      child: Text('Family'),
+                      child: Text(l10n.fieldFamily),
                     ),
                     DropdownMenuItem(
                       value: AircraftSearchBy.notes,
-                      child: Text('Notes'),
+                      child: Text(l10n.fieldNotes),
                     ),
                   ],
                   onChanged: (value) {
@@ -113,13 +125,13 @@ class _AircraftFiltersDialogState extends State<AircraftFiltersDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(null),
-                      child: const Text('Cancel'),
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(l10n.cancelAction),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop(_searchBy),
-                      child: const Text('Apply'),
+                      child: Text(l10n.applyAction),
                     ),
                   ],
                 ),

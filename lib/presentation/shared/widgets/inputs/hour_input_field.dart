@@ -5,10 +5,11 @@ import 'package:flutter/services.dart';
 ///
 /// This is not a wall-clock time field. Hours can grow beyond 24.
 class HourInputField extends StatefulWidget {
+  /// Creates an elapsed-hours input field.
   const HourInputField({
-    super.key,
     required this.controller,
     required this.label,
+    super.key,
     this.fallbackMinutes = 0,
     this.onChangedMinutes,
     this.onCleared,
@@ -18,16 +19,34 @@ class HourInputField extends StatefulWidget {
     this.errorText,
   });
 
+  /// Text controller that stores the field value.
   final TextEditingController controller;
+
+  /// Field label.
   final String label;
+
+  /// Fallback value used when the field loses focus empty.
   final int fallbackMinutes;
+
+  /// Called when a valid elapsed-time value is parsed.
   final ValueChanged<int>? onChangedMinutes;
+
+  /// Called when the field is cleared and empty values are allowed.
   final VoidCallback? onCleared;
+
+  /// Optional extra validator.
   final String? Function(String?)? validator;
+
+  /// Optional trailing icon widget.
   final Widget? suffixIcon;
+
+  /// Whether an empty value is accepted.
   final bool allowEmpty;
+
+  /// Optional inline validation error controlled externally.
   final String? errorText;
 
+  /// Formats elapsed minutes as `h:mm`.
   static String formatHours(int minutes) {
     if (minutes <= 0) return '0:00';
     final hours = minutes ~/ 60;
@@ -35,6 +54,7 @@ class HourInputField extends StatefulWidget {
     return '$hours:${mins.toString().padLeft(2, '0')}';
   }
 
+  /// Parses `h:mm` or compact numeric text into elapsed minutes.
   static int? parseHours(String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return null;
@@ -47,7 +67,7 @@ class HourInputField extends StatefulWidget {
       if (hours < 0 || minutes < 0 || minutes > 59) return null;
       return hours * 60 + minutes;
     }
-    final digits = trimmed.replaceAll(RegExp(r'[^0-9]'), '');
+    final digits = trimmed.replaceAll(RegExp('[^0-9]'), '');
     if (digits.isEmpty) return null;
     final raw = int.tryParse(digits);
     if (raw == null) return null;
@@ -61,6 +81,7 @@ class HourInputField extends StatefulWidget {
     return hours * 60 + mins;
   }
 
+  /// Returns `true` when the text can be parsed as elapsed time.
   static bool isValidHoursText(String value, {bool allowEmpty = false}) {
     final trimmed = value.trim();
     if (allowEmpty && trimmed.isEmpty) return true;
@@ -84,8 +105,9 @@ class _HourInputFieldState extends State<HourInputField> {
 
   @override
   void dispose() {
-    _focusNode.removeListener(_handleFocusChange);
-    _focusNode.dispose();
+    _focusNode
+      ..removeListener(_handleFocusChange)
+      ..dispose();
     super.dispose();
   }
 
@@ -169,7 +191,9 @@ class _HourInputFieldState extends State<HourInputField> {
   }
 }
 
+/// Public API documentation.
 class HourInputFormatter extends TextInputFormatter {
+  /// Creates a formatter that enforces `h:mm` display while typing.
   const HourInputFormatter();
 
   @override
@@ -177,9 +201,9 @@ class HourInputFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final digits = newValue.text.replaceAll(RegExp('[^0-9]'), '');
     if (digits.isEmpty) {
-      return const TextEditingValue(text: '');
+      return TextEditingValue.empty;
     }
 
     final raw = int.tryParse(digits) ?? 0;

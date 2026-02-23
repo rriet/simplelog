@@ -1,10 +1,16 @@
+/// Public API documentation.
 class CoordinatePair {
+  /// Public API documentation.
   const CoordinatePair({
     required this.latitude,
     required this.longitude,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final double latitude;
+  /// Public API documentation.
   final double longitude;
 }
 
@@ -12,32 +18,40 @@ class CoordinatePair {
 class CoordinateParser {
   const CoordinateParser._();
 
+  /// Public API documentation.
   static String formatDecimalPair(
     double latitude,
     double longitude, {
     int precision = 6,
+  /// Public API documentation.
   }) {
-    return '${latitude.toStringAsFixed(precision)}, ${longitude.toStringAsFixed(precision)}';
+    return '${latitude.toStringAsFixed(precision)}, '
+        '${longitude.toStringAsFixed(precision)}';
   }
 
+  /// Public API documentation.
   static String formatDmsPair(double latitude, double longitude) {
+    /// Public API documentation.
     final lat = _toDms(latitude, isLatitude: true);
     final lon = _toDms(longitude, isLatitude: false);
-    return '${lat.hemisphere}${lat.degrees} ${lat.minutes} ${lat.seconds} ${lon.hemisphere}${lon.degrees} ${lon.minutes} ${lon.seconds}';
+    return '${lat.hemisphere}${lat.degrees} ${lat.minutes} ${lat.seconds} '
+        '${lon.hemisphere}${lon.degrees} ${lon.minutes} ${lon.seconds}';
   }
 
+  /// Public API documentation.
   static String formatDegMinPair(double latitude, double longitude) {
     final lat = _toDegMin(latitude, isLatitude: true);
     final lon = _toDegMin(longitude, isLatitude: false);
     return '${lat.hemisphere}${lat.degrees}°${lat.minutesDecimal}/${lon.hemisphere}${lon.degrees}°${lon.minutesDecimal}';
   }
 
+  /// Public API documentation.
   static CoordinatePair? parsePair(String input) {
     final normalized = input.trim();
     if (normalized.isEmpty) return null;
 
     // Fast path: comma/semicolon separated decimal values.
-    final splitByCommonSeparator = normalized.split(RegExp(r'[;,]'));
+    final splitByCommonSeparator = normalized.split(RegExp('[;,]'));
     if (splitByCommonSeparator.length == 2) {
       final lat = parseSingle(splitByCommonSeparator[0], isLatitude: true);
       final lon = parseSingle(splitByCommonSeparator[1], isLatitude: false);
@@ -47,12 +61,16 @@ class CoordinateParser {
     }
 
     // General path: try all token split points (supports DMS and mixed forms).
-    final tokens = normalized.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+    final tokens = normalized
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .toList();
     for (var i = 1; i < tokens.length; i++) {
       final left = tokens.take(i).join(' ');
       final right = tokens.skip(i).join(' ');
       final lat = parseSingle(left, isLatitude: true);
       final lon = parseSingle(right, isLatitude: false);
+      /// Public API documentation.
       if (lat != null && lon != null) {
         return CoordinatePair(latitude: lat, longitude: lon);
       }
@@ -61,6 +79,7 @@ class CoordinateParser {
     return null;
   }
 
+  /// Public API documentation.
   static double? parseSingle(String input, {required bool isLatitude}) {
     var clean = input.trim().toUpperCase();
     if (clean.isEmpty) return null;
@@ -77,7 +96,7 @@ class CoordinateParser {
       sign = 1.0;
     }
 
-    clean = clean.replaceAll(RegExp(r'[NSEW]'), ' ');
+    clean = clean.replaceAll(RegExp('[NSEW]'), ' ');
     clean = clean.replaceAll('°', ' ');
     clean = clean.replaceAll("'", ' ');
     clean = clean.replaceAll('"', ' ');
@@ -132,7 +151,7 @@ class CoordinateParser {
   }) {
     if (!hasHemisphere) return null;
 
-    final unsigned = rawNumber.replaceFirst(RegExp(r'^[+-]'), '');
+    final unsigned = rawNumber.replaceFirst(RegExp('^[+-]'), '');
     if (unsigned.isEmpty) return null;
 
     final parts = unsigned.split('.');

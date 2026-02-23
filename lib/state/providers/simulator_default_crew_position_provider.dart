@@ -4,6 +4,7 @@ import 'package:simplelog/data/database/enums/crew_position.dart';
 
 const _defaultCrewPositionKey = 'simulator_default_crew_position';
 
+/// Persists and exposes the default crew position for simulator entries.
 class SimulatorDefaultCrewPositionNotifier extends AsyncNotifier<CrewPosition> {
   @override
   Future<CrewPosition> build() async {
@@ -12,6 +13,7 @@ class SimulatorDefaultCrewPositionNotifier extends AsyncNotifier<CrewPosition> {
     return _normalizeDefaultPosition(_parseCrewPosition(raw));
   }
 
+  /// Updates and saves the default simulator crew position.
   Future<void> setPosition(CrewPosition position) async {
     final normalized = _normalizeDefaultPosition(position);
     final prefs = await SharedPreferences.getInstance();
@@ -20,10 +22,11 @@ class SimulatorDefaultCrewPositionNotifier extends AsyncNotifier<CrewPosition> {
   }
 }
 
+/// Provider for the default simulator crew position.
 final simulatorDefaultCrewPositionProvider =
     AsyncNotifierProvider<SimulatorDefaultCrewPositionNotifier, CrewPosition>(
-  SimulatorDefaultCrewPositionNotifier.new,
-);
+      SimulatorDefaultCrewPositionNotifier.new,
+    );
 
 CrewPosition? _parseCrewPosition(String? raw) {
   if (raw == null || raw.isEmpty) return null;

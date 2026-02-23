@@ -2,25 +2,29 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/drift.dart' hide Column;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/features/crew/application/providers/crew_feature_providers.dart';
-
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/features/crew/application/providers/crew_feature_providers.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
+/// Public API documentation.
 class CrewEditScreen extends ConsumerStatefulWidget {
-  const CrewEditScreen({super.key, required this.item, this.isCreate = false});
+  /// Public API documentation.
+  const CrewEditScreen({required this.item, super.key, this.isCreate = false});
+/// Public API documentation.
 
+  /// Public API documentation.
   final CrewData item;
+  /// Public API documentation.
   final bool isCreate;
 
   @override
@@ -53,8 +57,8 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
     _phoneController = TextEditingController(
       text: widget.isCreate ? '' : (item.phone ?? ''),
     );
-    _isSelf = widget.isCreate ? false : item.isSelf;
-    _isFavorite = widget.isCreate ? false : item.isFavorite;
+    _isSelf = !widget.isCreate && item.isSelf;
+    _isFavorite = !widget.isCreate && item.isFavorite;
     _pictureBytes = widget.isCreate ? null : item.picture;
   }
 
@@ -214,17 +218,14 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
     switch (selection) {
       case _PhotoAction.camera:
         await _pickAndCrop(ImageSource.camera);
-        break;
       case _PhotoAction.gallery:
         if (isDesktop) {
           await _pickFromFiles();
         } else {
           await _pickAndCrop(ImageSource.gallery);
         }
-        break;
       case _PhotoAction.remove:
         setState(() => _pictureBytes = null);
-        break;
       case null:
         break;
     }
@@ -321,7 +322,7 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
               ),
             ),
             const Divider(height: 1),
-            Flexible(fit: FlexFit.loose, child: form),
+            Flexible(child: form),
           ],
         ),
       );
@@ -406,7 +407,7 @@ class _PhotoPickRouteState extends State<_PhotoPickRoute> {
   @override
   void initState() {
     super.initState();
-    _run();
+    unawaited(_run());
   }
 
   Future<void> _run() async {
@@ -451,7 +452,7 @@ class _PhotoPickRouteState extends State<_PhotoPickRoute> {
       }
       Navigator.of(context).pop(bytes);
       return;
-    } catch (_) {
+    } on Object catch (_) {
       if (!mounted) {
         return;
       }
@@ -486,7 +487,7 @@ class _PhotoPickRouteState extends State<_PhotoPickRoute> {
           '${tempDir.path}/crew_camera_${DateTime.now().millisecondsSinceEpoch}.jpg';
       await File(path).copy(tempPath);
       return tempPath;
-    } catch (_) {
+    } on Object catch (_) {
       return path;
     }
   }

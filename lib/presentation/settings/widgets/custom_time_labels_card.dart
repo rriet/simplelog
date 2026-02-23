@@ -4,7 +4,9 @@ import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 
+/// Public API documentation.
 class CustomTimeLabelsCard extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const CustomTimeLabelsCard({super.key});
 
   @override

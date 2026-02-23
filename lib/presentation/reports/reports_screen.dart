@@ -1,40 +1,48 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:intl/intl.dart';
-import 'package:latlong2/latlong.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/maps/map_tile_caching.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
-import 'package:simplelog/data/models/report_pdf_models.dart';
-import 'package:simplelog/data/reports/report_xsl_template_loader.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
+import 'package:simplelog/data/models/report_pdf_models.dart';
 import 'package:simplelog/data/models/reports_models.dart';
-import 'package:simplelog/features/reports/application/report_pdf_application_service.dart';
+import 'package:simplelog/data/reports/report_xsl_template_loader.dart';
+import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
-import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
+import 'package:simplelog/features/reports/application/report_pdf_application_service.dart';
 import 'package:simplelog/presentation/reports/providers/report_pdf_application_service_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/time_input_field.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:simplelog/core/l10n/app_localizations.dart';
 
+/// Public API documentation.
 enum ReportsPanelSection {
+  /// Public API documentation.
   overview,
+  /// Public API documentation.
   flights,
+  /// Public API documentation.
   analizes,
+  /// Public API documentation.
   reports,
+  /// Public API documentation.
   filters,
+  /// Public API documentation.
   totals,
 }
 
@@ -45,16 +53,22 @@ class _XslTemplateOption {
     required this.numberOfLines,
     required this.template,
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final String fileName;
   final String description;
+  /// Public API documentation.
   final int numberOfLines;
   final ReportPdfTemplate template;
 }
 
+/// Public API documentation.
 class ReportsScreen extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const ReportsScreen({super.key, this.section});
 
+  /// Public API documentation.
   final ReportsPanelSection? section;
 
   @override
@@ -63,7 +77,7 @@ class ReportsScreen extends ConsumerStatefulWidget {
 
 class _ReportsScreenState extends ConsumerState<ReportsScreen>
     with SingleTickerProviderStateMixin {
-  DateTime _from = DateTime.utc(1990, 1, 1);
+  DateTime _from = DateTime.utc(1990);
   DateTime _to = DateTime.now().toUtc();
   _ReportDateRangePreset _preset = _ReportDateRangePreset.sinceBeginning;
   ReportsFilterMatchMode _filterMatchMode = ReportsFilterMatchMode.all;
@@ -100,14 +114,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       ..clear()
       ..addAll(runtimeQuery.filters);
     _tabController = TabController(length: 3, vsync: this);
-    _loadTemplateOptions();
-    _loadOverviewData();
+    unawaited(_loadTemplateOptions());
+    unawaited(_loadOverviewData());
     if (widget.section == ReportsPanelSection.flights ||
         widget.section == ReportsPanelSection.analizes ||
         widget.section == ReportsPanelSection.reports) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _ensureDetailsLoaded();
+        unawaited(_ensureDetailsLoaded());
       });
     }
   }
@@ -144,7 +158,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         (widget.section == ReportsPanelSection.flights ||
             widget.section == ReportsPanelSection.analizes ||
             widget.section == ReportsPanelSection.reports)) {
-      _ensureDetailsLoaded();
+      unawaited(_ensureDetailsLoaded());
     }
   }
 
@@ -212,7 +226,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _detailsLoaded = true;
         });
       }
-    } catch (error) {
+    } on Object catch (error) {
       if (!mounted) return;
       setState(() => _error = error.toString());
     } finally {
@@ -229,14 +243,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   void _persistRuntimeQuery() {
     ref
         .read(reportsRuntimeQueryProvider.notifier)
-        .setValue(
-          ReportsRuntimeQueryState(
-            from: _from,
-            to: _to,
-            matchMode: _filterMatchMode,
-            filters: List<ReportsFilterCondition>.from(_filters),
-          ),
-        );
+        .value = ReportsRuntimeQueryState(
+      from: _from,
+      to: _to,
+      matchMode: _filterMatchMode,
+      filters: List<ReportsFilterCondition>.from(_filters),
+    );
   }
 
   Future<void> _loadDetailed() async {
@@ -280,7 +292,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         _entries = entries;
         _detailsLoaded = true;
       });
-    } catch (error) {
+    } on Object catch (error) {
       if (!mounted) return;
       setState(() => _error = error.toString());
     } finally {
@@ -403,24 +415,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
     final now = DateTime.now().toUtc();
     DateTime start;
-    DateTime end = now;
+    var end = now;
 
     switch (preset) {
       case _ReportDateRangePreset.sinceBeginning:
-        start = DateTime.utc(1990, 1, 1);
-        break;
+        start = DateTime.utc(1990);
       case _ReportDateRangePreset.last7Days:
         start = now.subtract(const Duration(days: 7));
-        break;
       case _ReportDateRangePreset.last14Days:
         start = now.subtract(const Duration(days: 14));
-        break;
       case _ReportDateRangePreset.last21Days:
         start = now.subtract(const Duration(days: 21));
-        break;
       case _ReportDateRangePreset.last28Days:
         start = now.subtract(const Duration(days: 28));
-        break;
       case _ReportDateRangePreset.last1Month:
         start = DateTime.utc(
           now.month == 1 ? now.year - 1 : now.year,
@@ -429,25 +436,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           now.hour,
           now.minute,
         );
-        break;
       case _ReportDateRangePreset.last365Days:
         start = now.subtract(const Duration(days: 365));
-        break;
       case _ReportDateRangePreset.currentMonth:
-        start = DateTime.utc(now.year, now.month, 1);
-        break;
+        start = DateTime.utc(now.year, now.month);
       case _ReportDateRangePreset.currentYear:
-        start = DateTime.utc(now.year, 1, 1);
-        break;
+        start = DateTime.utc(now.year);
       case _ReportDateRangePreset.lastMonth:
-        final monthStart = DateTime.utc(now.year, now.month, 1);
+        final monthStart = DateTime.utc(now.year, now.month);
         end = monthStart.subtract(const Duration(minutes: 1));
-        start = DateTime.utc(end.year, end.month, 1);
-        break;
+        start = DateTime.utc(end.year, end.month);
       case _ReportDateRangePreset.lastYear:
-        start = DateTime.utc(now.year - 1, 1, 1);
+        start = DateTime.utc(now.year - 1);
         end = DateTime.utc(now.year - 1, 12, 31, 23, 59);
-        break;
       case _ReportDateRangePreset.custom:
         return;
     }
@@ -487,7 +488,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<void> _setIncludePreviousExperience(bool value) async {
-    await ref.read(includePreviousExperienceProvider.notifier).setValue(value);
+    await ref
+        .read(includePreviousExperienceProvider.notifier)
+        .setValue(value: value);
     if (!mounted) return;
     await _loadOverviewData();
   }
@@ -533,7 +536,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     _persistRuntimeQuery();
     await ref
         .read(includePreviousExperienceProvider.notifier)
-        .setValue(query.includePreviousExperience);
+        .setValue(value: query.includePreviousExperience);
     if (!mounted) return;
     await _loadOverviewData();
   }
@@ -587,16 +590,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       );
 
       await _setPdfGenerationProgress(l10n.reportsPdfSaving, progress: 0.85);
+      final timestamp = DateTime.now()
+          .toUtc()
+          .toIso8601String()
+          .replaceAll(':', '')
+          .replaceAll('-', '')
+          .split('.')
+          .first;
       final path = await _savePdfBytes(
         bytes: bytes,
-        fileName:
-            'simplelog_report_'
-            '${DateTime.now().toUtc().toIso8601String().replaceAll(':', '').replaceAll('-', '').split('.').first}.pdf',
+        fileName: 'simplelog_report_$timestamp.pdf',
       );
       if (!mounted) return;
       await _setPdfGenerationProgress(l10n.reportsPdfDone, progress: 1);
       await _showInfoDialog(l10n.reportsPdfExported(path));
-    } catch (error, stackTrace) {
+    } on Object catch (error, stackTrace) {
       debugPrint('PDF generation failed: $error');
       debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
@@ -635,7 +643,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     ReportPdfApplicationService service,
   ) async {
     final cutoff = _from.subtract(const Duration(microseconds: 1));
-    final firstDate = DateTime.utc(1970, 1, 1);
+    final firstDate = DateTime.utc(1970);
     if (cutoff.isBefore(firstDate)) {
       return const ReportTemplateTotals();
     }
@@ -710,7 +718,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       for (final key in keys) {
         final bucket = groups.putIfAbsent(
           key,
-          () => _AnalysisGroupAccumulator(),
+          _AnalysisGroupAccumulator.new,
         );
         if (_analysisGroupBy == _AnalysisGroupBy.airport) {
           bucket.addForAirport(
@@ -723,11 +731,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         }
       }
     }
-    final list = groups.entries
+    return groups.entries
         .map((entry) => _AnalysisGroup(title: entry.key, totals: entry.value))
-        .toList(growable: false);
-    list.sort(_analysisSortCompare);
-    return list;
+        .toList(growable: false)
+      ..sort(_analysisSortCompare);
   }
 
   List<String> _analysisGroupKeysForFlight(
@@ -1065,10 +1072,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     return _EntriesPanel(
       entries: _entries,
       onEntryTap: (entry) {
-        LogbookEntryDialogs.show(
-          context,
-          entry: entry,
-          useCases: logbookUseCases,
+        unawaited(
+          LogbookEntryDialogs.show(
+            context,
+            entry: entry,
+            useCases: logbookUseCases,
+          ),
         );
       },
     );
@@ -1086,7 +1095,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 isExpanded: true,
                 decoration: InputDecoration(
                   labelText: l10n.reportsAnalyzeByLabel,
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                   isDense: true,
                 ),
                 items: _AnalysisGroupBy.values
@@ -1120,7 +1129,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 isExpanded: true,
                 decoration: InputDecoration(
                   labelText: l10n.reportsOrderByLabel,
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                   isDense: true,
                 ),
                 items: _AnalysisOrderBy.values
@@ -1201,7 +1210,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                         ? null
                         : (value) => ref
                               .read(includeHoursBeforeProvider.notifier)
-                              .setValue(value),
+                              .setValue(value: value),
                   ),
                 ],
               ),
@@ -1242,7 +1251,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: l10n.reportsXmlTemplateLabel,
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                     isDense: true,
                   ),
                   items: _xslTemplateOptions
@@ -1377,6 +1386,14 @@ String _reportFilterFieldLabel(
       return l10n.reportsFilterFieldAircraftTypeName;
     case ReportsFilterField.pilotName:
       return l10n.reportsFilterFieldPilotName;
+    case ReportsFilterField.pilotOnBoard:
+      return l10n.reportsFilterFieldPilotOnBoard;
+    case ReportsFilterField.pilotPic:
+      return l10n.reportsFilterFieldPilotPic;
+    case ReportsFilterField.pilotSic:
+      return l10n.reportsFilterFieldPilotSic;
+    case ReportsFilterField.pilotTrainee:
+      return l10n.reportsFilterFieldPilotTrainee;
     case ReportsFilterField.approachType:
       return l10n.reportsFilterFieldApproachType;
     case ReportsFilterField.remarks:
@@ -1447,6 +1464,8 @@ String _reportFilterOperatorLabel(
   switch (operator) {
     case ReportsFilterOperator.contains:
       return l10n.reportsFilterOperatorContains;
+    case ReportsFilterOperator.doesNotContain:
+      return l10n.reportsFilterOperatorDoesNotContain;
     case ReportsFilterOperator.startsWith:
       return l10n.reportsFilterOperatorStartsWith;
     case ReportsFilterOperator.doesNotStartWith:
@@ -1697,7 +1716,7 @@ class _FiltersCard extends StatelessWidget {
                                   isExpanded: true,
                                   decoration: InputDecoration(
                                     labelText: l10n.logbookFilterRange,
-                                    border: OutlineInputBorder(),
+                                    border: const OutlineInputBorder(),
                                     isDense: true,
                                   ),
                                   items: _ReportDateRangePreset.values
@@ -1726,7 +1745,7 @@ class _FiltersCard extends StatelessWidget {
                                           .toList(growable: false),
                                   onChanged: (value) {
                                     if (value != null) {
-                                      onPresetChanged(value);
+                                      unawaited(onPresetChanged(value));
                                     }
                                   },
                                 ),
@@ -1750,7 +1769,7 @@ class _FiltersCard extends StatelessWidget {
                               isExpanded: true,
                               decoration: InputDecoration(
                                 labelText: l10n.reportsPreviousExperienceLabel,
-                                border: OutlineInputBorder(),
+                                border: const OutlineInputBorder(),
                                 isDense: true,
                               ),
                               items: [
@@ -1782,7 +1801,7 @@ class _FiltersCard extends StatelessWidget {
                                   isExpanded: true,
                                   decoration: InputDecoration(
                                     labelText: l10n.reportsMatchModeLabel,
-                                    border: OutlineInputBorder(),
+                                    border: const OutlineInputBorder(),
                                     isDense: true,
                                   ),
                                   items: [
@@ -1805,7 +1824,7 @@ class _FiltersCard extends StatelessWidget {
                                   ],
                                   onChanged: (value) {
                                     if (value != null) {
-                                      onMatchModeChanged(value);
+                                      unawaited(onMatchModeChanged(value));
                                     }
                                   },
                                 ),
@@ -1855,11 +1874,10 @@ class _FiltersCard extends StatelessWidget {
                           SizedBox(
                             width: compact ? maxFieldWidth : 260,
                             child: DropdownButtonFormField<String>(
-                              initialValue: null,
                               isExpanded: true,
                               decoration: InputDecoration(
                                 labelText: l10n.reportsSavedQueriesLabel,
-                                border: OutlineInputBorder(),
+                                border: const OutlineInputBorder(),
                                 isDense: true,
                               ),
                               items: savedQueries
@@ -1881,7 +1899,7 @@ class _FiltersCard extends StatelessWidget {
                                 final query = savedQueries.firstWhere(
                                   (item) => item.id == value,
                                 );
-                                onApplySavedQuery(query);
+                                unawaited(onApplySavedQuery(query));
                               },
                             ),
                           ),
@@ -2341,7 +2359,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
   @override
   void initState() {
     super.initState();
-    _operator = _field.valueType.supportedOperators.first;
+    _operator = _operatorsForField(_field).first;
   }
 
   @override
@@ -2355,11 +2373,25 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
   void _onFieldChanged(ReportsFilterField value) {
     setState(() {
       _field = value;
-      _operator = value.valueType.supportedOperators.first;
+      _operator = _operatorsForField(value).first;
       _textController.clear();
       _numberController.clear();
       _timeController.text = '0:00';
     });
+  }
+
+  List<ReportsFilterOperator> _operatorsForField(ReportsFilterField field) {
+    if (field == ReportsFilterField.pilotName ||
+        field == ReportsFilterField.pilotOnBoard ||
+        field == ReportsFilterField.pilotPic ||
+        field == ReportsFilterField.pilotSic ||
+        field == ReportsFilterField.pilotTrainee) {
+      return const [
+        ReportsFilterOperator.contains,
+        ReportsFilterOperator.doesNotContain,
+      ];
+    }
+    return field.valueType.supportedOperators;
   }
 
   void _save() {
@@ -2390,7 +2422,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final operators = _field.valueType.supportedOperators;
+    final operators = _operatorsForField(_field);
     return Dialog(
       child: SizedBox(
         width: 520,
@@ -2405,7 +2437,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
                   Expanded(
                     child: Text(
                       l10n.reportsAddFilter,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
@@ -2423,7 +2455,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
                 isExpanded: true,
                 decoration: InputDecoration(
                   labelText: l10n.reportsFieldNameLabel,
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                 ),
                 items: ReportsFilterField.values
                     .map(
@@ -2454,7 +2486,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
                 isExpanded: true,
                 decoration: InputDecoration(
                   labelText: l10n.reportsConditionLabel,
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                 ),
                 items: operators
                     .map(
@@ -2506,7 +2538,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
           controller: _textController,
           decoration: InputDecoration(
             labelText: l10n.reportsValueLabel,
-            border: OutlineInputBorder(),
+            border: const OutlineInputBorder(),
           ),
         );
       case ReportsFilterValueType.number:
@@ -2515,7 +2547,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             labelText: l10n.reportsValueLabel,
-            border: OutlineInputBorder(),
+            border: const OutlineInputBorder(),
           ),
         );
       case ReportsFilterValueType.time:
@@ -2562,7 +2594,7 @@ class _SaveQueryDialogState extends State<_SaveQueryDialog> {
                   Expanded(
                     child: Text(
                       l10n.reportsSaveQuery,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
@@ -2579,7 +2611,7 @@ class _SaveQueryDialogState extends State<_SaveQueryDialog> {
                 controller: _controller,
                 decoration: InputDecoration(
                   labelText: l10n.fieldName,
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -2663,7 +2695,7 @@ class _FlightsMapDialog extends StatefulWidget {
 
 class _FlightsMapDialogState extends State<_FlightsMapDialog> {
   final _mapController = MapController();
-  double _zoom = 2.0;
+  double _zoom = 2;
   late bool _showLines;
   static const Color _mapLineColor = Color(0x994A90E2);
   static const Color _mapDotColor = Color(0xFF1565C0);
@@ -2748,7 +2780,8 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
         );
       }
       final fromKey =
-          '${fromPoint.latitude.toStringAsFixed(4)}_${fromPoint.longitude.toStringAsFixed(4)}';
+          '${fromPoint.latitude.toStringAsFixed(4)}_'
+          '${fromPoint.longitude.toStringAsFixed(4)}';
       if (markerKeys.add(fromKey)) {
         markers.add(
           Marker(
@@ -2760,7 +2793,8 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
         );
       }
       final toKey =
-          '${toPoint.latitude.toStringAsFixed(4)}_${toPoint.longitude.toStringAsFixed(4)}';
+          '${toPoint.latitude.toStringAsFixed(4)}_'
+          '${toPoint.longitude.toStringAsFixed(4)}';
       if (markerKeys.add(toKey)) {
         markers.add(
           Marker(

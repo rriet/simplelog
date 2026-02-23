@@ -2,25 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 
-import 'logbook_list_item.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_list_item.dart';
 
+/// Public API documentation.
 class LogbookEntriesYearList extends StatefulWidget {
+  /// Public API documentation.
   const LogbookEntriesYearList({
-    super.key,
     required this.entries,
+    super.key,
     this.isCompact = true,
     this.enableSlideActions = false,
     this.onEntryTap,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final List<LogbookEntry> entries;
+  /// Public API documentation.
   final bool isCompact;
+  /// Public API documentation.
   final bool enableSlideActions;
+  /// Public API documentation.
   final ValueChanged<LogbookEntry>? onEntryTap;
 
   @override
-  State<LogbookEntriesYearList> createState() =>
-      _LogbookEntriesYearListState();
+  State<LogbookEntriesYearList> createState() => _LogbookEntriesYearListState();
 }
 
 class _LogbookEntriesYearListState extends State<LogbookEntriesYearList> {
@@ -47,8 +54,9 @@ class _LogbookEntriesYearListState extends State<LogbookEntriesYearList> {
 
   @override
   void dispose() {
-    _controller.removeListener(_handleScroll);
-    _controller.dispose();
+    _controller
+      ..removeListener(_handleScroll)
+      ..dispose();
     super.dispose();
   }
 
@@ -115,7 +123,7 @@ class _LogbookEntriesYearListState extends State<LogbookEntriesYearList> {
             if (item is _YearHeader) {
               final key = _yearKeys.putIfAbsent(
                 item.year,
-                () => GlobalKey(),
+                GlobalKey.new,
               );
               return _YearHeaderTile(
                 key: key,
@@ -177,7 +185,7 @@ class _EntryItem extends _ListItem {
 }
 
 class _YearHeaderTile extends StatelessWidget {
-  const _YearHeaderTile({super.key, required this.year});
+  const _YearHeaderTile({required this.year, super.key});
 
   final int year;
 
@@ -189,9 +197,9 @@ class _YearHeaderTile extends StatelessWidget {
       child: Text(
         '--- $year ---',
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
+/// Public API documentation.
 class SimulatorDefaultPositionSelector extends ConsumerWidget {
+  /// Public API documentation.
   const SimulatorDefaultPositionSelector({super.key});
 
   @override
@@ -45,8 +47,12 @@ class SimulatorDefaultPositionSelector extends ConsumerWidget {
     switch (value) {
       case CrewPosition.pic:
         return 'PIC';
+      case CrewPosition.picus:
+        return 'PICUS';
       case CrewPosition.sic:
         return 'SIC';
+      case CrewPosition.trainee:
+        return 'Trainee';
       case CrewPosition.instructor:
         return 'Instructor';
       case CrewPosition.observer:

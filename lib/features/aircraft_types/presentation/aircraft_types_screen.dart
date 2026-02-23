@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
-import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
-
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
-import 'package:simplelog/core/constants/app_constants.dart';
+import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
+import 'package:simplelog/features/aircraft_types/presentation/aircraft_type_edit_screen.dart';
+import 'package:simplelog/features/aircraft_types/presentation/widgets/aircraft_type_search_bar.dart';
+import 'package:simplelog/features/aircraft_types/presentation/widgets/aircraft_types_list.dart';
+import 'package:simplelog/features/aircraft_types/presentation/widgets/family_group.dart';
+import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_lazy_panel.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
-import 'aircraft_type_edit_screen.dart';
-import 'widgets/aircraft_type_search_bar.dart';
-import 'widgets/aircraft_types_list.dart';
-import 'widgets/family_group.dart';
 
+/// Public API documentation.
 class AircraftTypesScreen extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const AircraftTypesScreen({super.key});
 
   @override
@@ -90,12 +91,11 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
 
   Future<void> _createAircraftType() async {
     final isCompact = MediaQuery.of(context).size.width < 600;
-    final placeholder = AircraftType(
+    const placeholder = AircraftType(
       id: kPlaceholderId,
       code: '',
       family: '',
       longName: '',
-      manufacturer: null,
       category: AircraftCategory.landplane,
       engineType: EngineType.piston,
       mtow: 0,
@@ -109,9 +109,9 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
 
     if (isCompact) {
       await Navigator.of(context).push(
-        MaterialPageRoute(
+        MaterialPageRoute<void>(
           builder: (_) =>
-              AircraftTypeEditScreen(item: placeholder, isCreate: true),
+              const AircraftTypeEditScreen(item: placeholder, isCreate: true),
         ),
       );
       return;
@@ -127,7 +127,10 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
               maxWidth: 520,
               maxHeight: size.height * 0.9,
             ),
-            child: AircraftTypeEditScreen(item: placeholder, isCreate: true),
+            child: const AircraftTypeEditScreen(
+              item: placeholder,
+              isCreate: true,
+            ),
           ),
         );
       },
@@ -139,7 +142,7 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
 
     if (isCompact) {
       await Navigator.of(context).push(
-        MaterialPageRoute(
+        MaterialPageRoute<void>(
           builder: (_) => AircraftTypeEditScreen(item: row.type),
         ),
       );
@@ -203,10 +206,14 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
                         child: LogbookEntriesLazyPanel(
                           pageLoader: (limit, offset) =>
                               logbookUseCases.fetchEntriesForAircraftTypePage(
-                            row.type.id,
-                            limit: limit,
-                            offset: offset,
-                          ),
+                                row.type.id,
+                                limit: limit,
+                                offset: offset,
+                              ),
+                          summaryLoader: () =>
+                              logbookUseCases.fetchFlightSummaryForAircraftType(
+                                row.type.id,
+                              ),
                           onEntryTap: (entry) => LogbookEntryDialogs.show(
                             context,
                             entry: entry,
@@ -255,10 +262,12 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
                   child: LogbookEntriesLazyPanel(
                     pageLoader: (limit, offset) =>
                         logbookUseCases.fetchEntriesForAircraftTypeFamilyPage(
-                      typeIds,
-                      limit: limit,
-                      offset: offset,
-                    ),
+                          typeIds,
+                          limit: limit,
+                          offset: offset,
+                        ),
+                    summaryLoader: () => logbookUseCases
+                        .fetchFlightSummaryForAircraftTypeFamily(typeIds),
                     onEntryTap: (entry) => LogbookEntryDialogs.show(
                       context,
                       entry: entry,
@@ -277,7 +286,7 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
   List<FamilyGroup> _groupByFamily(List<AircraftTypeRow> rows) {
     final groups = <FamilyGroup>[];
     String? currentFamily;
-    List<AircraftTypeRow> currentRows = [];
+    var currentRows = <AircraftTypeRow>[];
 
     void flush() {
       final family = currentFamily;

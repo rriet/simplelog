@@ -8,7 +8,10 @@ void main() {
     final libDir = Directory('$projectRoot/lib');
     final violations = <String>[];
 
-    await for (final entity in libDir.list(recursive: true, followLinks: false)) {
+    await for (final entity in libDir.list(
+      recursive: true,
+      followLinks: false,
+    )) {
       if (entity is! File) continue;
       final path = entity.path;
       if (!path.endsWith('.dart')) continue;
@@ -32,7 +35,8 @@ void main() {
       violations,
       isEmpty,
       reason:
-          'Validator imports are not allowed in *_screen.dart or *_widget.dart files.\n'
+          'Validator imports are not allowed in *_screen.dart '
+          'or *_widget.dart files.\n'
           '${violations.join('\n')}',
     );
   });

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Keyboard navigation helpers for searchable picker lists.
 class KeyboardListNavigation {
+  /// Utility class; do not instantiate.
   const KeyboardListNavigation._();
 
+  /// Handles arrow-key navigation from the search field into the list.
   static KeyEventResult handleSearchKey({
     required KeyEvent event,
     required int itemCount,
@@ -22,6 +25,7 @@ class KeyboardListNavigation {
     return KeyEventResult.ignored;
   }
 
+  /// Handles per-row keyboard actions in list items.
   static KeyEventResult handleRowKey({
     required KeyEvent event,
     required int index,

@@ -5,20 +5,24 @@ import 'package:simplelog/domain/repositories/crew_repository_contract.dart';
 import 'package:simplelog/domain/usecases/crew_use_cases.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
+/// Public API documentation.
 final crewRepositoryProvider = Provider<CrewRepositoryContract>((ref) {
   final db = ref.watch(databaseProvider);
   return CrewRepository(db);
 });
+/// Public API documentation.
 
+/// Public API documentation.
 final crewUseCasesProvider = Provider<CrewUseCases>((ref) {
   final repo = ref.watch(crewRepositoryProvider);
   return CrewUseCases(repo);
+/// Public API documentation.
 });
 
-final crewProvider =
-    StreamProvider.autoDispose.family<List<CrewRow>, String>(
-  (ref, query) {
-    final useCases = ref.watch(crewUseCasesProvider);
-    return useCases.watchCrew(query);
-  },
-);
+/// Public API documentation.
+final StreamProvider<List<CrewRow>> Function(String) crewProvider =
+    StreamProvider.autoDispose
+        .family<List<CrewRow>, String>((ref, query) {
+  final useCases = ref.watch(crewUseCasesProvider);
+  return useCases.watchCrew(query);
+});

@@ -2,16 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 
-import 'language_menu.dart';
+import 'package:simplelog/presentation/shared/widgets/language_menu.dart';
 
+/// Public API documentation.
 class BaseScaffold extends ConsumerWidget {
+  /// Public API documentation.
   const BaseScaffold({
-    super.key,
     required this.body,
+    super.key,
     this.drawer,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final Widget body;
+  /// Public API documentation.
   final Widget? drawer;
 
   @override

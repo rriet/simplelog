@@ -888,6 +888,18 @@ class AppLocalizationsLv extends AppLocalizations {
   String get reportsFilterFieldPilotName => 'Pilota vārds';
 
   @override
+  String get reportsFilterFieldPilotOnBoard => 'Pilots uz klāja';
+
+  @override
+  String get reportsFilterFieldPilotPic => 'Pilots PIC';
+
+  @override
+  String get reportsFilterFieldPilotSic => 'Pilots SIC';
+
+  @override
+  String get reportsFilterFieldPilotTrainee => 'Pilots praktikants';
+
+  @override
   String get reportsFilterFieldApproachType => 'Pietuves tips';
 
   @override
@@ -981,6 +993,9 @@ class AppLocalizationsLv extends AppLocalizations {
   String get reportsFilterOperatorContains => 'Satur';
 
   @override
+  String get reportsFilterOperatorDoesNotContain => 'Nesatur';
+
+  @override
   String get reportsFilterOperatorStartsWith => 'Sākas ar';
 
   @override
@@ -1045,4 +1060,418 @@ class AppLocalizationsLv extends AppLocalizations {
 
   @override
   String get reportsMetricOperations => 'Operācijas';
+
+  @override
+  String get aircraftFiltersTitle => 'Lidaparātu filtri';
+
+  @override
+  String get crewFiltersTitle => 'Apkalpes filtri';
+
+  @override
+  String get airportFiltersTitle => 'Lidostu filtri';
+
+  @override
+  String get searchByLabel => 'Meklēt pēc';
+
+  @override
+  String get orderByLabel => 'Kārtot pēc';
+
+  @override
+  String get optionAll => 'Visi';
+
+  @override
+  String get searchFieldType => 'Tips';
+
+  @override
+  String get applyAction => 'Piemērot';
+
+  @override
+  String get fieldTakeoffs => 'Pacelšanās';
+
+  @override
+  String get fieldLandings => 'Nosēšanās';
+
+  @override
+  String get fieldVisits => 'Operācijas';
+
+  @override
+  String get airportShowOnlyVisited => 'Rādīt tikai apmeklētās lidostas';
+
+  @override
+  String get airportSearchIcaoOrIata => 'ICAO vai IATA';
+
+  @override
+  String get summaryFirstFlight => 'Pirmais lidojums';
+
+  @override
+  String get summaryLastFlight => 'Pēdējais lidojums';
+
+  @override
+  String get summaryTotalTime => 'Kopējais laiks';
+
+  @override
+  String get summaryTotalPic => 'PIC kopā';
+
+  @override
+  String get notAvailableShort => '-';
+
+  @override
+  String get fieldCrew => 'Apkalpe';
+
+  @override
+  String get addCrewTitle => 'Pievienot apkalpi';
+
+  @override
+  String get selectCrewTitle => 'Izvēlēties apkalpi';
+
+  @override
+  String get crewPositionLabel => 'Pozīcija';
+
+  @override
+  String get crewPositionPic => 'PIC';
+
+  @override
+  String get crewPositionPicus => 'PICUS';
+
+  @override
+  String get crewPositionSic => 'SIC';
+
+  @override
+  String get crewPositionTrainee => 'Praktikants';
+
+  @override
+  String get crewPositionInstructor => 'Instruktors';
+
+  @override
+  String get crewPositionObserver => 'Novērotājs';
+
+  @override
+  String get crewPositionRelief => 'Maiņas pilots';
+
+  @override
+  String get crewPositionReliefCaptain => 'Maiņas kapteinis';
+
+  @override
+  String get crewPositionReliefFirstOfficer => 'Maiņas otrais pilots';
+
+  @override
+  String get crewPositionCabinSenior => 'Vecākais kabīnē';
+
+  @override
+  String get crewPositionCabinCrew => 'Kabīnes apkalpe';
+
+  @override
+  String get crewPositionOther => 'Cits';
+
+  @override
+  String get crewPositionUnknown => 'Nezināms';
+
+  @override
+  String get searchRegistration => 'Meklēt reģistrāciju';
+
+  @override
+  String get searchType => 'Meklēt tipu';
+
+  @override
+  String get searchFamily => 'Meklēt saimi';
+
+  @override
+  String get searchNotes => 'Meklēt piezīmes';
+
+  @override
+  String get searchName => 'Meklēt nosaukumu';
+
+  @override
+  String get searchCity => 'Meklēt pilsētu';
+
+  @override
+  String get searchCountry => 'Meklēt valsti';
+
+  @override
+  String get searchIcao => 'Meklēt ICAO';
+
+  @override
+  String get searchIata => 'Meklēt IATA';
+
+  @override
+  String get searchIcaoIata => 'Meklēt ICAO/IATA';
+
+  @override
+  String get createSimulatorTitle => 'Pievienot simulatoru';
+
+  @override
+  String get mapTitle => 'Karte';
+
+  @override
+  String get aircraftEmptyResults => 'Lidaparāti nav atrasti';
+
+  @override
+  String get crewEmptyResults => 'Apkalpe nav atrasta';
+
+  @override
+  String get crewLoadError => 'Kļūda ielādējot apkalpi';
+
+  @override
+  String get airportEmptyResults => 'Lidostas nav atrastas';
+
+  @override
+  String get airportLoadError => 'Kļūda ielādējot lidostas';
+
+  @override
+  String get errorLabel => 'Kļūda';
+
+  @override
+  String get dashboardTitle => 'Panelis';
+
+  @override
+  String get dashboardNoActiveRules => 'Nav konfigurētu aktīvu noteikumu.';
+
+  @override
+  String get dashboardRuleTotals => 'Noteikuma kopsummas';
+
+  @override
+  String get dashboardNoData => 'Nav datu.';
+
+  @override
+  String get dashboardEventsInCalculation => 'Aprēķinā iekļautie notikumi';
+
+  @override
+  String get dashboardNoEventsInWindow => 'Šajā logā nav notikumu.';
+
+  @override
+  String get dashboardFlightsLabel => 'Lidojumi';
+
+  @override
+  String get dashboardBlockLabel => 'Bloka laiks';
+
+  @override
+  String get dashboardFlightLabel => 'Lidojuma laiks';
+
+  @override
+  String get dashboardNightLabel => 'Nakts';
+
+  @override
+  String get dashboardIfrLabel => 'IFR';
+
+  @override
+  String get dashboardInstrumentLabel => 'Instrumentālais';
+
+  @override
+  String get dashboardDutyLabel => 'Dežūra';
+
+  @override
+  String get dashboardLandingsLabel => 'Nosēšanās';
+
+  @override
+  String get dashboardSetupTitle => 'Paneļa iestatījumi';
+
+  @override
+  String get dashboardAddRule => 'Pievienot noteikumu';
+
+  @override
+  String get dashboardNoRulesConfigured => 'Nav konfigurētu noteikumu.';
+
+  @override
+  String get dashboardEditRuleTitle => 'Rediģēt noteikumu';
+
+  @override
+  String get dashboardCreateRuleTitle => 'Izveidot noteikumu';
+
+  @override
+  String get dashboardRuleNameLabel => 'Noteikuma nosaukums';
+
+  @override
+  String get dashboardMetricLabel => 'Metrika';
+
+  @override
+  String get dashboardRuleTypeLabel => 'Noteikuma veids';
+
+  @override
+  String get dashboardWindowTypeLabel => 'Loga tips';
+
+  @override
+  String get dashboardStartReferenceLabel => 'Sākuma atskaite';
+
+  @override
+  String get dashboardWindowValueLabel => 'Loga vērtība';
+
+  @override
+  String get dashboardLimitValueLabel => 'Limita vērtība';
+
+  @override
+  String get dashboardUnitLabel => 'Mērvienība';
+
+  @override
+  String get dashboardWarnYellowBeforeLabel => 'Dzeltenais brīdinājums pirms';
+
+  @override
+  String get dashboardWarnRedBeforeLabel => 'Sarkanais brīdinājums pirms';
+
+  @override
+  String get dashboardCreateAction => 'Izveidot';
+
+  @override
+  String get dashboardTakeoffLabel => 'Pacelšanās';
+
+  @override
+  String get dashboardTakeoffDayLabel => 'Pacelšanās dienā';
+
+  @override
+  String get dashboardTakeoffNightLabel => 'Pacelšanās naktī';
+
+  @override
+  String get dashboardLandingsDayLabel => 'Nosēšanās dienā';
+
+  @override
+  String get dashboardLandingsNightLabel => 'Nosēšanās naktī';
+
+  @override
+  String get dashboardInstrumentApproachesLabel => 'Instrumentālās pieejas';
+
+  @override
+  String get dashboardPicTimeLabel => 'PIC laiks';
+
+  @override
+  String get dashboardSicTimeLabel => 'SIC laiks';
+
+  @override
+  String get dashboardPicusTimeLabel => 'PICUS laiks';
+
+  @override
+  String get dashboardDualTimeLabel => 'Duālais laiks';
+
+  @override
+  String get dashboardInstructorTimeLabel => 'Instruktora laiks';
+
+  @override
+  String get dashboardCrossCountryLabel => 'Pārlidojums';
+
+  @override
+  String get dashboardMinimumLabel => 'Minimums';
+
+  @override
+  String get dashboardMaximumLabel => 'Maksimums';
+
+  @override
+  String get dashboardHoursUnit => 'stundas';
+
+  @override
+  String get dashboardMinutesUnit => 'minūtes';
+
+  @override
+  String get dashboardDaysUnit => 'dienas';
+
+  @override
+  String get dashboardWeeksUnit => 'nedēļas';
+
+  @override
+  String get dashboardMonthsUnit => 'mēneši';
+
+  @override
+  String get dashboardYearsUnit => 'gadi';
+
+  @override
+  String get dashboardCountUnit => 'skaits';
+
+  @override
+  String get dashboardCalendarMonthsLabel => 'Kalendārie mēneši';
+
+  @override
+  String get dashboardCalendarYearsLabel => 'Kalendārie gadi';
+
+  @override
+  String get dashboardCalendarDaysLabel => 'Kalendārās dienas';
+
+  @override
+  String get dashboardCalendarQuarterLabel => 'Kalendārais ceturksnis';
+
+  @override
+  String get dashboardSameTimeNowLabel => 'Tas pats laiks (tagad)';
+
+  @override
+  String get dashboardMidnightLocalLabel => 'Vietējā pusnakts';
+
+  @override
+  String get dashboardMidnightUtcLabel => 'UTC pusnakts';
+
+  @override
+  String get dashboardRemainingSuffix => 'atlikums';
+
+  @override
+  String get dashboardOverLimitSuffix => 'virs limita';
+
+  @override
+  String get dashboardAboveMinimumSuffix => 'virs minimuma';
+
+  @override
+  String get dashboardBelowMinimumSuffix => 'zem minimuma';
+
+  @override
+  String get dashboardMinimumShortLabel => 'Min';
+
+  @override
+  String get dashboardMaximumShortLabel => 'Maks';
+
+  @override
+  String get dashboardSameTimeLabel => 'Tas pats laiks';
+
+  @override
+  String get checkFactoringRulesTitle => 'Pārbaudīt aprēķina noteikumus';
+
+  @override
+  String get continueSavingQuestion => 'Turpināt saglabāšanu?';
+
+  @override
+  String get reviewAction => 'Pārskatīt';
+
+  @override
+  String get saveAnywayAction => 'Saglabāt tik un tā';
+
+  @override
+  String get createFlightTitle => 'Jauns lidojums';
+
+  @override
+  String get editFlightTitle => 'Rediģēt lidojumu';
+
+  @override
+  String get calculateAction => 'Aprēķināt';
+
+  @override
+  String get nextAction => 'Tālāk';
+
+  @override
+  String get fieldDate => 'Datums';
+
+  @override
+  String get fieldPilotFunction => 'Pilota funkcija';
+
+  @override
+  String get chocksOffRequiredToCalculate =>
+      'Lai aprēķinātu, jānorāda Chocks OFF.';
+
+  @override
+  String get chocksOnRequiredToCalculate =>
+      'Lai aprēķinātu, jānorāda Chocks ON.';
+
+  @override
+  String get clearAction => 'Notīrīt';
+
+  @override
+  String get fieldRemarks => 'Piezīmes';
+
+  @override
+  String get noCrewAssigned => 'Nav piešķirtas apkalpes';
+
+  @override
+  String get removeAction => 'Noņemt';
+
+  @override
+  String get eventInfoTitle => 'Notikuma informācija';
+
+  @override
+  String get clearDatabaseTitle => 'Notīrīt datubāzi';
+
+  @override
+  String get clearDatabaseMessage =>
+      'Tas dzēsīs visus datus un izveidos tukšas tabulas no jauna.';
 }

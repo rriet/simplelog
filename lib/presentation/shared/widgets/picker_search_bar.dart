@@ -2,12 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:simplelog/presentation/shared/widgets/alphanumeric_search_keyboard.dart';
 
+/// Search input used by picker dialogs, with optional iOS custom keyboard.
 class PickerSearchBar extends StatefulWidget {
+  /// Creates a picker search bar.
   const PickerSearchBar({
-    super.key,
     required this.controller,
     required this.label,
     required this.onChanged,
+    super.key,
     this.autofocus = false,
     this.focusNode,
     this.onSubmitted,
@@ -17,15 +19,34 @@ class PickerSearchBar extends StatefulWidget {
     this.useCustomKeyboard = false,
   });
 
+  /// Text controller for the search text.
   final TextEditingController controller;
+
+  /// Input label.
   final String label;
+
+  /// Called when search text changes.
   final ValueChanged<String> onChanged;
+
+  /// Whether the field should autofocus.
   final bool autofocus;
+
+  /// Optional external focus node.
   final FocusNode? focusNode;
+
+  /// Called when submit/enter is triggered.
   final ValueChanged<String>? onSubmitted;
+
+  /// Optional keyboard event handler.
   final KeyEventResult Function(FocusNode, KeyEvent)? onKeyEvent;
+
+  /// Optional trailing widget displayed at the right side.
   final Widget? trailing;
+
+  /// External padding around the search row.
   final EdgeInsetsGeometry padding;
+
+  /// Whether to use the custom iOS keyboard overlay.
   final bool useCustomKeyboard;
 
   @override

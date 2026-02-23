@@ -2,17 +2,25 @@ import 'package:flutter/material.dart';
 
 /// Tappable date selector styled as a form input.
 class DateSelectorInputField extends StatelessWidget {
+  /// Creates a date selector input styled like other form fields.
   const DateSelectorInputField({
-    super.key,
     required this.label,
     required this.valueText,
     required this.onTap,
+    super.key,
     this.errorText,
   });
 
+  /// Field label.
   final String label;
+
+  /// Selected date text shown in the field.
   final String valueText;
+
+  /// Called when the field is tapped.
   final VoidCallback onTap;
+
+  /// Optional inline validation error.
   final String? errorText;
 
   @override

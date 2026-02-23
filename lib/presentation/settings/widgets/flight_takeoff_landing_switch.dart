@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/state/providers/flight_form_settings_provider.dart';
 
+/// Public API documentation.
 class FlightTakeoffLandingSwitch extends ConsumerWidget {
+  /// Public API documentation.
   const FlightTakeoffLandingSwitch({super.key});
 
   @override
@@ -14,7 +18,13 @@ class FlightTakeoffLandingSwitch extends ConsumerWidget {
         title: const Text('Log takeoff and landing times'),
         value: value,
         onChanged: (next) {
-          ref.read(flightFormTakeoffLandingLogProvider.notifier).setValue(next);
+          unawaited(
+            ref
+                .read(flightFormTakeoffLandingLogProvider.notifier)
+                .setValue(
+                  enabled: next,
+                ),
+          );
         },
       ),
       loading: () => const LinearProgressIndicator(),

@@ -1,7 +1,10 @@
+import 'dart:async';
+
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart' show Value;
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
@@ -11,22 +14,27 @@ import 'package:simplelog/features/logbook/application/providers/logbook_reposit
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 
+/// Public API documentation.
 class DashboardScreen extends ConsumerWidget {
+  /// Public API documentation.
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final cardsAsync = ref.watch(dashboardCardsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: Text(l10n.dashboardTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => showDialog<void>(
-              context: context,
-              builder: (_) => const _DashboardSetupDialog(),
+            onPressed: () => unawaited(
+              showDialog<void>(
+                context: context,
+                builder: (_) => const _DashboardSetupDialog(),
+              ),
             ),
           ),
         ],
@@ -37,17 +45,15 @@ class DashboardScreen extends ConsumerWidget {
             child: cardsAsync.when(
               data: (cards) {
                 if (cards.isEmpty) {
-                  return const Center(
-                    child: Text('No active rules configured.'),
-                  );
+                  return Center(child: Text(l10n.dashboardNoActiveRules));
                 }
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     final columns = constraints.maxWidth >= 1100
                         ? 3
                         : constraints.maxWidth >= 760
-                            ? 2
-                            : 1;
+                        ? 2
+                        : 1;
                     return GridView.builder(
                       padding: const EdgeInsets.all(16),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -57,13 +63,15 @@ class DashboardScreen extends ConsumerWidget {
                         childAspectRatio: 2.45,
                       ),
                       itemCount: cards.length,
-                      itemBuilder: (context, index) => _RuleCard(card: cards[index]),
+                      itemBuilder: (context, index) =>
+                          _RuleCard(card: cards[index]),
                     );
                   },
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(child: Text('Error: $error')),
+              error: (error, _) =>
+                  Center(child: Text('${l10n.errorLabel}: $error')),
             ),
           ),
         ],
@@ -79,6 +87,7 @@ class _RuleCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final repo = ref.read(dashboardRepositoryProvider);
     final color = switch (card.status) {
       LimitCardStatus.green => Colors.green,
@@ -88,17 +97,26 @@ class _RuleCard extends ConsumerWidget {
     final progress = card.limitValue <= 0
         ? 0.0
         : (card.currentValue / card.limitValue).clamp(0.0, 1.2);
-    final valueLabel = _formatValueByUnit(card.currentValue, card.rule.limitUnit);
-    final limitLabel = _formatValueByUnit(card.limitValue, card.rule.limitUnit);
+    final valueLabel = _formatValueByUnit(
+      card.currentValue,
+      card.rule.limitUnit,
+      l10n,
+    );
+    final limitLabel = _formatValueByUnit(
+      card.limitValue,
+      card.rule.limitUnit,
+      l10n,
+    );
     final remainingAbsLabel = _formatValueByUnit(
       card.remainingValue.abs(),
       card.rule.limitUnit,
+      l10n,
     );
     final dateFormat = DateFormat("dd MMM yyyy HH:mm 'UTC'");
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
+        onTap: () => unawaited(
           showDialog<void>(
             context: context,
             builder: (_) => _RuleDetailsDialog(
@@ -108,8 +126,8 @@ class _RuleCard extends ConsumerWidget {
               detailsWindowEnd: card.windowEnd,
               dataFuture: repo.loadRuleDetails(card.rule),
             ),
-          );
-        },
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -146,16 +164,21 @@ class _RuleCard extends ConsumerWidget {
               Text(
                 card.rule.ruleType == 'maximum'
                     ? (card.remainingValue >= 0
-                        ? '$remainingAbsLabel remaining'
-                        : '$remainingAbsLabel over limit')
+                          ? '$remainingAbsLabel '
+                              '${l10n.dashboardRemainingSuffix}'
+                          : '$remainingAbsLabel '
+                              '${l10n.dashboardOverLimitSuffix}')
                     : (card.remainingValue >= 0
-                        ? '$remainingAbsLabel above minimum'
-                        : '$remainingAbsLabel below minimum'),
+                          ? '$remainingAbsLabel '
+                              '${l10n.dashboardAboveMinimumSuffix}'
+                          : '$remainingAbsLabel '
+                              '${l10n.dashboardBelowMinimumSuffix}'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const Spacer(),
               Text(
-                '${dateFormat.format(card.windowStart.toUtc())} - ${dateFormat.format(card.windowEnd.toUtc())}',
+                '${dateFormat.format(card.windowStart.toUtc())} - '
+                '${dateFormat.format(card.windowEnd.toUtc())}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -165,7 +188,7 @@ class _RuleCard extends ConsumerWidget {
     );
   }
 
-  String _formatValueByUnit(double value, String unit) {
+  String _formatValueByUnit(double value, String unit, AppLocalizations l10n) {
     final normalizedUnit = unit.trim().toLowerCase();
     if (normalizedUnit == 'hours') {
       return _formatMinutesAsHourMinute((value * 60).round());
@@ -177,7 +200,7 @@ class _RuleCard extends ConsumerWidget {
       return value.round().toString();
     }
     if (normalizedUnit == 'days') {
-      return '${value.toStringAsFixed(2)} days';
+      return '${value.toStringAsFixed(2)} ${l10n.dashboardDaysUnit}';
     }
     return value.toStringAsFixed(1);
   }
@@ -207,6 +230,7 @@ class _RuleDetailsDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final logbookUseCases = ref.read(logbookUseCasesProvider);
     final entriesFuture = logbookUseCases.fetchLogbookPage(
       LogbookFilters(
@@ -225,11 +249,11 @@ class _RuleDetailsDialog extends ConsumerWidget {
 
     final compact = MediaQuery.of(context).size.width < 700;
 
-    Widget content = Column(
+    final Widget content = Column(
       children: [
         ListTile(
           title: Text(ruleName),
-          subtitle: const Text('Rule Totals'),
+          subtitle: Text(l10n.dashboardRuleTotals),
           trailing: IconButton(
             icon: const Icon(Icons.close),
             onPressed: () => Navigator.of(context).pop(),
@@ -244,11 +268,13 @@ class _RuleDetailsDialog extends ConsumerWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
+                return Center(
+                  child: Text('${l10n.errorLabel}: ${snapshot.error}'),
+                );
               }
               final details = snapshot.data;
               if (details == null) {
-                return const Center(child: Text('No data.'));
+                return Center(child: Text(l10n.dashboardNoData));
               }
               final dateFormat = DateFormat("dd MMM yyyy HH:mm 'UTC'");
               return Padding(
@@ -257,14 +283,15 @@ class _RuleDetailsDialog extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${dateFormat.format(details.windowStart.toUtc())} - ${dateFormat.format(details.windowEnd.toUtc())}',
+                      '${dateFormat.format(details.windowStart.toUtc())} - '
+                      '${dateFormat.format(details.windowEnd.toUtc())}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 12),
                     _TotalsSection(totals: details.totals),
                     const SizedBox(height: 14),
                     Text(
-                      'Events in calculation',
+                      l10n.dashboardEventsInCalculation,
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                     const SizedBox(height: 8),
@@ -285,8 +312,8 @@ class _RuleDetailsDialog extends ConsumerWidget {
                             ruleMetric: ruleMetric,
                           );
                           if (filtered.isEmpty) {
-                            return const Center(
-                              child: Text('No events in this window.'),
+                            return Center(
+                              child: Text(l10n.dashboardNoEventsInWindow),
                             );
                           }
                           return LogbookEntriesYearList(
@@ -349,15 +376,31 @@ class _TotalsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final rows = <({String label, String value})>[
-      (label: 'Flights', value: '${totals.flightsCount}'),
-      (label: 'Block', value: _formatMinutes(totals.blockMinutes)),
-      (label: 'Flight', value: _formatMinutes(totals.flightMinutes)),
-      (label: 'Night', value: _formatMinutes(totals.nightMinutes)),
-      (label: 'IFR', value: _formatMinutes(totals.ifrMinutes)),
-      (label: 'Instrument', value: _formatMinutes(totals.instrumentMinutes)),
-      (label: 'Duty', value: _formatMinutes(totals.dutyMinutes)),
-      (label: 'Landings', value: '${totals.landings}'),
+      (label: l10n.dashboardFlightsLabel, value: '${totals.flightsCount}'),
+      (
+        label: l10n.dashboardBlockLabel,
+        value: _formatMinutes(totals.blockMinutes),
+      ),
+      (
+        label: l10n.dashboardFlightLabel,
+        value: _formatMinutes(totals.flightMinutes),
+      ),
+      (
+        label: l10n.dashboardNightLabel,
+        value: _formatMinutes(totals.nightMinutes),
+      ),
+      (label: l10n.dashboardIfrLabel, value: _formatMinutes(totals.ifrMinutes)),
+      (
+        label: l10n.dashboardInstrumentLabel,
+        value: _formatMinutes(totals.instrumentMinutes),
+      ),
+      (
+        label: l10n.dashboardDutyLabel,
+        value: _formatMinutes(totals.dutyMinutes),
+      ),
+      (label: l10n.dashboardLandingsLabel, value: '${totals.landings}'),
     ];
 
     return Card(
@@ -450,18 +493,61 @@ class _DashboardSetupDialog extends ConsumerStatefulWidget {
   const _DashboardSetupDialog();
 
   @override
-  ConsumerState<_DashboardSetupDialog> createState() => _DashboardSetupDialogState();
+  ConsumerState<_DashboardSetupDialog> createState() =>
+      _DashboardSetupDialogState();
 }
 
 class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
+  static const String _metricDuty = 'duty';
+  static const String _metricBlock = 'block';
+  static const String _metricFlight = 'flight';
+  static const String _metricNight = 'night';
+  static const String _metricIfr = 'ifr';
+  static const String _metricInstrument = 'instrument';
+  static const String _metricTakeoff = 'takeoff';
+  static const String _metricTakeoffDay = 'takeoff_day';
+  static const String _metricTakeoffNight = 'takeoff_night';
+  static const String _metricLandings = 'landings';
+  static const String _metricLandingsDay = 'landings_day';
+  static const String _metricLandingsNight = 'landings_night';
+  static const String _metricInstrumentApproaches = 'instrument_approaches';
+  static const String _metricPic = 'pic';
+  static const String _metricSic = 'sic';
+  static const String _metricPicus = 'picus';
+  static const String _metricDual = 'dual';
+  static const String _metricInstructor = 'instructor';
+  static const String _metricCrossCountry = 'cross_country';
+
+  static const String _ruleTypeMinimum = 'minimum';
+  static const String _ruleTypeMaximum = 'maximum';
+
+  static const String _windowHours = 'hours';
+  static const String _windowDays = 'days';
+  static const String _windowWeeks = 'weeks';
+  static const String _windowMonths = 'months';
+  static const String _windowYears = 'years';
+  static const String _windowCalendarMonths = 'calendar_months';
+  static const String _windowCalendarYears = 'calendar_years';
+  static const String _windowCalendarDays = 'calendar_days';
+  static const String _windowCalendarQuarter = 'calendar_quarter';
+
+  static const String _referenceSameTime = 'same_time';
+  static const String _referenceMidnightLocal = 'midnight_local';
+  static const String _referenceMidnightUtc = 'midnight_utc';
+
+  static const String _unitHours = 'hours';
+  static const String _unitMinutes = 'minutes';
+  static const String _unitDays = 'days';
+  static const String _unitCount = 'count';
+
   static const Set<String> _countMetrics = {
-    'takeoff',
-    'takeoff_day',
-    'takeoff_night',
-    'landings',
-    'landings_day',
-    'landings_night',
-    'instrument_approaches',
+    _metricTakeoff,
+    _metricTakeoffDay,
+    _metricTakeoffNight,
+    _metricLandings,
+    _metricLandingsDay,
+    _metricLandingsNight,
+    _metricInstrumentApproaches,
   };
 
   static bool _isCountMetric(String metric) => _countMetrics.contains(metric);
@@ -479,8 +565,11 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
       'calendar_month' || 'calendar_months' => ('months', 'midnight_local'),
       'calendar_year' || 'calendar_years' => ('years', 'midnight_local'),
       'rolling_days' || 'consecutive_days' => ('days', 'same_time'),
-      'hours' || 'days' || 'weeks' || 'months' || 'years' =>
-        (clean, 'same_time'),
+      'hours' ||
+      'days' ||
+      'weeks' ||
+      'months' ||
+      'years' => (clean, 'same_time'),
       _ => (_defaultWindowType, _defaultWindowReference),
     };
   }
@@ -489,6 +578,7 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final rulesAsync = ref.watch(dashboardRulesProvider);
     return Dialog(
       child: SizedBox(
@@ -500,7 +590,7 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
           child: Column(
             children: [
               ListTile(
-                title: const Text('Dashboard Setup'),
+                title: Text(l10n.dashboardSetupTitle),
                 trailing: IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.of(context).pop(),
@@ -514,7 +604,7 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                     FilledButton.icon(
                       onPressed: () => _showRuleDialog(context),
                       icon: const Icon(Icons.add_chart_outlined),
-                      label: const Text('Add Rule'),
+                      label: Text(l10n.dashboardAddRule),
                     ),
                   ],
                 ),
@@ -523,17 +613,24 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                 child: rulesAsync.when(
                   data: (rules) {
                     if (rules.isEmpty) {
-                      return const Center(child: Text('No rules configured.'));
+                      return Center(
+                        child: Text(l10n.dashboardNoRulesConfigured),
+                      );
                     }
                     return ListView.separated(
                       itemCount: rules.length,
                       separatorBuilder: (_, _) => const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final rule = rules[index];
+                        final windowLabel = _windowLabel(
+                          rule.windowType,
+                          rule.windowValue,
+                        );
                         return ListTile(
                           title: Text(rule.ruleName),
                           subtitle: Text(
-                            '${rule.ruleType} • ${rule.metric} • ${_windowLabel(rule.windowType, rule.windowValue)}',
+                            '${rule.ruleType} • ${rule.metric} • '
+                            '$windowLabel',
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -557,8 +654,10 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                       },
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => Center(child: Text('Error: $error')),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, _) =>
+                      Center(child: Text('${l10n.errorLabel}: $error')),
                 ),
               ),
             ],
@@ -572,6 +671,7 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
     BuildContext context, {
     LimitRule? existing,
   }) async {
+    final l10n = AppLocalizations.of(context)!;
     final repo = ref.read(dashboardRepositoryProvider);
     final isEditing = existing != null;
     final ruleNameController = TextEditingController(
@@ -589,12 +689,14 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
     final redController = TextEditingController(
       text: (existing?.warnRedBefore ?? 50).toString(),
     );
-    var metric = existing?.metric ?? 'block';
-    var ruleType = existing?.ruleType ?? 'maximum';
+    var metric = existing?.metric ?? _metricBlock;
+    var ruleType = existing?.ruleType ?? _ruleTypeMaximum;
     final parsedWindowType = _parseWindowType(existing?.windowType ?? '');
     var windowType = parsedWindowType.$1;
     var windowReference = parsedWindowType.$2;
-    var limitUnit = existing?.limitUnit ?? (_isCountMetric(metric) ? 'count' : 'hours');
+    var limitUnit =
+        existing?.limitUnit ??
+        (_isCountMetric(metric) ? _unitCount : _unitHours);
     if (!context.mounted) return;
 
     final created = await showDialog<bool>(
@@ -602,131 +704,266 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            title: Text(isEditing ? 'Edit Rule' : 'Create Rule'),
+            title: Text(
+              isEditing
+                  ? l10n.dashboardEditRuleTitle
+                  : l10n.dashboardCreateRuleTitle,
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: ruleNameController,
-                    decoration: const InputDecoration(labelText: 'Rule name'),
+                    decoration: InputDecoration(
+                      labelText: l10n.dashboardRuleNameLabel,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: metric,
-                    decoration: const InputDecoration(labelText: 'Metric'),
-                    items: const [
-                      DropdownMenuItem(value: 'duty', child: Text('Duty')),
-                      DropdownMenuItem(value: 'block', child: Text('Block')),
-                      DropdownMenuItem(value: 'flight', child: Text('Flight')),
-                      DropdownMenuItem(value: 'night', child: Text('Night')),
-                      DropdownMenuItem(value: 'ifr', child: Text('IFR')),
-                      DropdownMenuItem(value: 'instrument', child: Text('Instrument')),
-                      DropdownMenuItem(value: 'takeoff', child: Text('Takeoff')),
-                      DropdownMenuItem(value: 'takeoff_day', child: Text('Takeoff Day')),
-                      DropdownMenuItem(value: 'takeoff_night', child: Text('Takeoff Night')),
-                      DropdownMenuItem(value: 'landings', child: Text('Landings')),
-                      DropdownMenuItem(value: 'landings_day', child: Text('Landings Day')),
-                      DropdownMenuItem(value: 'landings_night', child: Text('Landings Night')),
+                    decoration: InputDecoration(
+                      labelText: l10n.dashboardMetricLabel,
+                    ),
+                    items: [
                       DropdownMenuItem(
-                        value: 'instrument_approaches',
-                        child: Text('Instrument Approaches'),
-                      ),
-                      DropdownMenuItem(value: 'pic', child: Text('PIC Time')),
-                      DropdownMenuItem(value: 'sic', child: Text('SIC Time')),
-                      DropdownMenuItem(value: 'picus', child: Text('PICUS Time')),
-                      DropdownMenuItem(value: 'dual', child: Text('Dual Time')),
-                      DropdownMenuItem(
-                        value: 'instructor',
-                        child: Text('Instructor Time'),
+                        value: _metricDuty,
+                        child: Text(l10n.dashboardDutyLabel),
                       ),
                       DropdownMenuItem(
-                        value: 'cross_country',
-                        child: Text('Cross Country'),
+                        value: _metricBlock,
+                        child: Text(l10n.dashboardBlockLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricFlight,
+                        child: Text(l10n.dashboardFlightLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricNight,
+                        child: Text(l10n.dashboardNightLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricIfr,
+                        child: Text(l10n.dashboardIfrLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricInstrument,
+                        child: Text(l10n.dashboardInstrumentLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricTakeoff,
+                        child: Text(l10n.dashboardTakeoffLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricTakeoffDay,
+                        child: Text(l10n.dashboardTakeoffDayLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricTakeoffNight,
+                        child: Text(l10n.dashboardTakeoffNightLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricLandings,
+                        child: Text(l10n.dashboardLandingsLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricLandingsDay,
+                        child: Text(l10n.dashboardLandingsDayLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricLandingsNight,
+                        child: Text(l10n.dashboardLandingsNightLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricInstrumentApproaches,
+                        child: Text(l10n.dashboardInstrumentApproachesLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricPic,
+                        child: Text(l10n.dashboardPicTimeLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricSic,
+                        child: Text(l10n.dashboardSicTimeLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricPicus,
+                        child: Text(l10n.dashboardPicusTimeLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricDual,
+                        child: Text(l10n.dashboardDualTimeLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricInstructor,
+                        child: Text(l10n.dashboardInstructorTimeLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _metricCrossCountry,
+                        child: Text(l10n.dashboardCrossCountryLabel),
                       ),
                     ],
                     onChanged: (value) => setState(() {
                       metric = value ?? metric;
-                      limitUnit = _isCountMetric(metric) ? 'count' : 'hours';
+                      limitUnit = _isCountMetric(metric)
+                          ? _unitCount
+                          : _unitHours;
                     }),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: ruleType,
-                    decoration: const InputDecoration(labelText: 'Rule type'),
-                    items: const [
-                      DropdownMenuItem(value: 'minimum', child: Text('Minimum')),
-                      DropdownMenuItem(value: 'maximum', child: Text('Maximum')),
+                    decoration: InputDecoration(
+                      labelText: l10n.dashboardRuleTypeLabel,
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: _ruleTypeMinimum,
+                        child: Text(l10n.dashboardMinimumLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _ruleTypeMaximum,
+                        child: Text(l10n.dashboardMaximumLabel),
+                      ),
                     ],
-                    onChanged: (value) => setState(() => ruleType = value ?? ruleType),
+                    onChanged: (value) =>
+                        setState(() => ruleType = value ?? ruleType),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: windowType,
-                    decoration: const InputDecoration(labelText: 'Window type'),
-                    items: const [
-                      DropdownMenuItem(value: 'hours', child: Text('Hours')),
-                      DropdownMenuItem(value: 'days', child: Text('Days')),
-                      DropdownMenuItem(value: 'weeks', child: Text('Weeks')),
-                      DropdownMenuItem(value: 'months', child: Text('Months')),
-                      DropdownMenuItem(value: 'years', child: Text('Years')),
-                      DropdownMenuItem(value: 'calendar_months', child: Text('Calendar Months')),
-                      DropdownMenuItem(value: 'calendar_years', child: Text('Calendar Years')),
-                      DropdownMenuItem(value: 'calendar_days', child: Text('Calendar Days')),
+                    decoration: InputDecoration(
+                      labelText: l10n.dashboardWindowTypeLabel,
+                    ),
+                    items: [
                       DropdownMenuItem(
-                        value: 'calendar_quarter',
-                        child: Text('Calendar Quarter'),
+                        value: _windowHours,
+                        child: Text(l10n.dashboardHoursUnit),
+                      ),
+                      DropdownMenuItem(
+                        value: _windowDays,
+                        child: Text(l10n.dashboardDaysUnit),
+                      ),
+                      DropdownMenuItem(
+                        value: _windowWeeks,
+                        child: Text(l10n.dashboardWeeksUnit),
+                      ),
+                      DropdownMenuItem(
+                        value: _windowMonths,
+                        child: Text(l10n.dashboardMonthsUnit),
+                      ),
+                      DropdownMenuItem(
+                        value: _windowYears,
+                        child: Text(l10n.dashboardYearsUnit),
+                      ),
+                      DropdownMenuItem(
+                        value: _windowCalendarMonths,
+                        child: Text(l10n.dashboardCalendarMonthsLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _windowCalendarYears,
+                        child: Text(l10n.dashboardCalendarYearsLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _windowCalendarDays,
+                        child: Text(l10n.dashboardCalendarDaysLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _windowCalendarQuarter,
+                        child: Text(l10n.dashboardCalendarQuarterLabel),
                       ),
                     ],
-                    onChanged: (value) => setState(() => windowType = value ?? windowType),
+                    onChanged: (value) =>
+                        setState(() => windowType = value ?? windowType),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: windowReference,
-                    decoration: const InputDecoration(labelText: 'Start reference'),
-                    items: const [
-                      DropdownMenuItem(value: 'same_time', child: Text('Same time (now)')),
-                      DropdownMenuItem(value: 'midnight_local', child: Text('Midnight Local')),
-                      DropdownMenuItem(value: 'midnight_utc', child: Text('Midnight UTC')),
+                    decoration: InputDecoration(
+                      labelText: l10n.dashboardStartReferenceLabel,
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: _referenceSameTime,
+                        child: Text(l10n.dashboardSameTimeNowLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _referenceMidnightLocal,
+                        child: Text(l10n.dashboardMidnightLocalLabel),
+                      ),
+                      DropdownMenuItem(
+                        value: _referenceMidnightUtc,
+                        child: Text(l10n.dashboardMidnightUtcLabel),
+                      ),
                     ],
-                    onChanged: (value) =>
-                        setState(() => windowReference = value ?? windowReference),
+                    onChanged: (value) => setState(
+                      () => windowReference = value ?? windowReference,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: windowController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Window value'),
+                    decoration: InputDecoration(
+                      labelText: l10n.dashboardWindowValueLabel,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: limitController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Limit value'),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: l10n.dashboardLimitValueLabel,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: limitUnit,
-                    decoration: const InputDecoration(labelText: 'Unit'),
-                    items: const [
-                      DropdownMenuItem(value: 'hours', child: Text('Hours')),
-                      DropdownMenuItem(value: 'minutes', child: Text('Minutes')),
-                      DropdownMenuItem(value: 'days', child: Text('Days')),
-                      DropdownMenuItem(value: 'count', child: Text('Count')),
+                    decoration: InputDecoration(
+                      labelText: l10n.dashboardUnitLabel,
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: _unitHours,
+                        child: Text(l10n.dashboardHoursUnit),
+                      ),
+                      DropdownMenuItem(
+                        value: _unitMinutes,
+                        child: Text(l10n.dashboardMinutesUnit),
+                      ),
+                      DropdownMenuItem(
+                        value: _unitDays,
+                        child: Text(l10n.dashboardDaysUnit),
+                      ),
+                      DropdownMenuItem(
+                        value: _unitCount,
+                        child: Text(l10n.dashboardCountUnit),
+                      ),
                     ],
-                    onChanged: (value) => setState(() => limitUnit = value ?? limitUnit),
+                    onChanged: (value) =>
+                        setState(() => limitUnit = value ?? limitUnit),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: yellowController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Warn yellow before'),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: l10n.dashboardWarnYellowBeforeLabel,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: redController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Warn red before'),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: l10n.dashboardWarnRedBeforeLabel,
+                    ),
                   ),
                 ],
               ),
@@ -734,11 +971,13 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancelAction),
               ),
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: Text(isEditing ? 'Save' : 'Create'),
+                child: Text(
+                  isEditing ? l10n.saveAction : l10n.dashboardCreateAction,
+                ),
               ),
             ],
           ),
@@ -798,50 +1037,54 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
     required String windowType,
     required int windowValue,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final metricLabel = switch (metric) {
-      'duty' => 'Duty',
-      'block' => 'Block',
-      'flight' => 'Flight',
-      'night' => 'Night',
-      'ifr' => 'IFR',
-      'instrument' => 'Instrument',
-      'takeoff' => 'Takeoff',
-      'takeoff_day' => 'Takeoff Day',
-      'takeoff_night' => 'Takeoff Night',
-      'landings' => 'Landings',
-      'landings_day' => 'Landings Day',
-      'landings_night' => 'Landings Night',
-      'instrument_approaches' => 'Instrument Approaches',
-      'pic' => 'PIC Time',
-      'sic' => 'SIC Time',
-      'picus' => 'PICUS Time',
-      'dual' => 'Dual Time',
-      'instructor' => 'Instructor Time',
-      'cross_country' => 'Cross Country',
+      'duty' => l10n.dashboardDutyLabel,
+      'block' => l10n.dashboardBlockLabel,
+      'flight' => l10n.dashboardFlightLabel,
+      'night' => l10n.dashboardNightLabel,
+      'ifr' => l10n.dashboardIfrLabel,
+      'instrument' => l10n.dashboardInstrumentLabel,
+      'takeoff' => l10n.dashboardTakeoffLabel,
+      'takeoff_day' => l10n.dashboardTakeoffDayLabel,
+      'takeoff_night' => l10n.dashboardTakeoffNightLabel,
+      'landings' => l10n.dashboardLandingsLabel,
+      'landings_day' => l10n.dashboardLandingsDayLabel,
+      'landings_night' => l10n.dashboardLandingsNightLabel,
+      'instrument_approaches' => l10n.dashboardInstrumentApproachesLabel,
+      'pic' => l10n.dashboardPicTimeLabel,
+      'sic' => l10n.dashboardSicTimeLabel,
+      'picus' => l10n.dashboardPicusTimeLabel,
+      'dual' => l10n.dashboardDualTimeLabel,
+      'instructor' => l10n.dashboardInstructorTimeLabel,
+      'cross_country' => l10n.dashboardCrossCountryLabel,
       _ => metric,
     };
-    final typeLabel = ruleType == 'minimum' ? 'Min' : 'Max';
+    final typeLabel = ruleType == 'minimum'
+        ? l10n.dashboardMinimumShortLabel
+        : l10n.dashboardMaximumShortLabel;
     final windowLabel = _windowLabel(windowType, windowValue);
     return '$metricLabel • $typeLabel • $windowLabel';
   }
 
   String _windowLabel(String storedType, int value) {
+    final l10n = AppLocalizations.of(context)!;
     final parsed = _parseWindowType(storedType);
     final windowBase = parsed.$1;
     final reference = parsed.$2;
     final baseLabel = switch (windowBase) {
-      'hours' => '$value hours',
-      'days' => '$value days',
-      'weeks' => '$value weeks',
-      'months' => '$value months',
-      'years' => '$value years',
-      'calendar_quarter' => 'Calendar quarter ($value)',
+      'hours' => '$value ${l10n.dashboardHoursUnit}',
+      'days' => '$value ${l10n.dashboardDaysUnit}',
+      'weeks' => '$value ${l10n.dashboardWeeksUnit}',
+      'months' => '$value ${l10n.dashboardMonthsUnit}',
+      'years' => '$value ${l10n.dashboardYearsUnit}',
+      'calendar_quarter' => '${l10n.dashboardCalendarQuarterLabel} ($value)',
       _ => '$windowBase $value',
     };
     final referenceLabel = switch (reference) {
-      'same_time' => 'Same time',
-      'midnight_local' => 'Midnight Local',
-      'midnight_utc' => 'Midnight UTC',
+      'same_time' => l10n.dashboardSameTimeLabel,
+      'midnight_local' => l10n.dashboardMidnightLocalLabel,
+      'midnight_utc' => l10n.dashboardMidnightUtcLabel,
       _ => reference,
     };
     return '$baseLabel • $referenceLabel';

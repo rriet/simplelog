@@ -887,6 +887,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get reportsFilterFieldPilotName => 'Nombre piloto';
 
   @override
+  String get reportsFilterFieldPilotOnBoard => 'Piloto a bordo';
+
+  @override
+  String get reportsFilterFieldPilotPic => 'Piloto PIC';
+
+  @override
+  String get reportsFilterFieldPilotSic => 'Piloto SIC';
+
+  @override
+  String get reportsFilterFieldPilotTrainee => 'Piloto en entrenamiento';
+
+  @override
   String get reportsFilterFieldApproachType => 'Tipo de aproximacion';
 
   @override
@@ -981,6 +993,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get reportsFilterOperatorContains => 'Contiene';
 
   @override
+  String get reportsFilterOperatorDoesNotContain => 'No contiene';
+
+  @override
   String get reportsFilterOperatorStartsWith => 'Empieza con';
 
   @override
@@ -1045,4 +1060,419 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get reportsMetricOperations => 'Operaciones';
+
+  @override
+  String get aircraftFiltersTitle => 'Filtros de aeronaves';
+
+  @override
+  String get crewFiltersTitle => 'Filtros de tripulación';
+
+  @override
+  String get airportFiltersTitle => 'Filtros de aeropuertos';
+
+  @override
+  String get searchByLabel => 'Buscar por';
+
+  @override
+  String get orderByLabel => 'Ordenar por';
+
+  @override
+  String get optionAll => 'Todos';
+
+  @override
+  String get searchFieldType => 'Tipo';
+
+  @override
+  String get applyAction => 'Aplicar';
+
+  @override
+  String get fieldTakeoffs => 'Despegues';
+
+  @override
+  String get fieldLandings => 'Aterrizajes';
+
+  @override
+  String get fieldVisits => 'Operaciones';
+
+  @override
+  String get airportShowOnlyVisited => 'Mostrar solo aeropuertos visitados';
+
+  @override
+  String get airportSearchIcaoOrIata => 'ICAO o IATA';
+
+  @override
+  String get summaryFirstFlight => 'Primer vuelo';
+
+  @override
+  String get summaryLastFlight => 'Último vuelo';
+
+  @override
+  String get summaryTotalTime => 'Tiempo total';
+
+  @override
+  String get summaryTotalPic => 'Total PIC';
+
+  @override
+  String get notAvailableShort => '-';
+
+  @override
+  String get fieldCrew => 'Tripulación';
+
+  @override
+  String get addCrewTitle => 'Agregar tripulación';
+
+  @override
+  String get selectCrewTitle => 'Seleccionar tripulación';
+
+  @override
+  String get crewPositionLabel => 'Posición';
+
+  @override
+  String get crewPositionPic => 'PIC';
+
+  @override
+  String get crewPositionPicus => 'PICUS';
+
+  @override
+  String get crewPositionSic => 'SIC';
+
+  @override
+  String get crewPositionTrainee => 'Aprendiz';
+
+  @override
+  String get crewPositionInstructor => 'Instructor';
+
+  @override
+  String get crewPositionObserver => 'Observador';
+
+  @override
+  String get crewPositionRelief => 'Relevo';
+
+  @override
+  String get crewPositionReliefCaptain => 'Capitán de relevo';
+
+  @override
+  String get crewPositionReliefFirstOfficer => 'Primer oficial de relevo';
+
+  @override
+  String get crewPositionCabinSenior => 'Cabina senior';
+
+  @override
+  String get crewPositionCabinCrew => 'Tripulación de cabina';
+
+  @override
+  String get crewPositionOther => 'Otro';
+
+  @override
+  String get crewPositionUnknown => 'Desconocido';
+
+  @override
+  String get searchRegistration => 'Buscar matrícula';
+
+  @override
+  String get searchType => 'Buscar tipo';
+
+  @override
+  String get searchFamily => 'Buscar familia';
+
+  @override
+  String get searchNotes => 'Buscar notas';
+
+  @override
+  String get searchName => 'Buscar nombre';
+
+  @override
+  String get searchCity => 'Buscar ciudad';
+
+  @override
+  String get searchCountry => 'Buscar país';
+
+  @override
+  String get searchIcao => 'Buscar ICAO';
+
+  @override
+  String get searchIata => 'Buscar IATA';
+
+  @override
+  String get searchIcaoIata => 'Buscar ICAO/IATA';
+
+  @override
+  String get createSimulatorTitle => 'Agregar simulador';
+
+  @override
+  String get mapTitle => 'Mapa';
+
+  @override
+  String get aircraftEmptyResults => 'No se encontraron aeronaves';
+
+  @override
+  String get crewEmptyResults => 'No se encontró tripulación';
+
+  @override
+  String get crewLoadError => 'Error al cargar la tripulación';
+
+  @override
+  String get airportEmptyResults => 'No se encontraron aeropuertos';
+
+  @override
+  String get airportLoadError => 'Error al cargar aeropuertos';
+
+  @override
+  String get errorLabel => 'Error';
+
+  @override
+  String get dashboardTitle => 'Panel';
+
+  @override
+  String get dashboardNoActiveRules => 'No hay reglas activas configuradas.';
+
+  @override
+  String get dashboardRuleTotals => 'Totales de la regla';
+
+  @override
+  String get dashboardNoData => 'Sin datos.';
+
+  @override
+  String get dashboardEventsInCalculation => 'Eventos en el cálculo';
+
+  @override
+  String get dashboardNoEventsInWindow => 'No hay eventos en esta ventana.';
+
+  @override
+  String get dashboardFlightsLabel => 'Vuelos';
+
+  @override
+  String get dashboardBlockLabel => 'Block';
+
+  @override
+  String get dashboardFlightLabel => 'Vuelo';
+
+  @override
+  String get dashboardNightLabel => 'Noche';
+
+  @override
+  String get dashboardIfrLabel => 'IFR';
+
+  @override
+  String get dashboardInstrumentLabel => 'Instrumento';
+
+  @override
+  String get dashboardDutyLabel => 'Servicio';
+
+  @override
+  String get dashboardLandingsLabel => 'Aterrizajes';
+
+  @override
+  String get dashboardSetupTitle => 'Configuración del panel';
+
+  @override
+  String get dashboardAddRule => 'Agregar regla';
+
+  @override
+  String get dashboardNoRulesConfigured => 'No hay reglas configuradas.';
+
+  @override
+  String get dashboardEditRuleTitle => 'Editar regla';
+
+  @override
+  String get dashboardCreateRuleTitle => 'Crear regla';
+
+  @override
+  String get dashboardRuleNameLabel => 'Nombre de la regla';
+
+  @override
+  String get dashboardMetricLabel => 'Métrica';
+
+  @override
+  String get dashboardRuleTypeLabel => 'Tipo de regla';
+
+  @override
+  String get dashboardWindowTypeLabel => 'Tipo de ventana';
+
+  @override
+  String get dashboardStartReferenceLabel => 'Referencia de inicio';
+
+  @override
+  String get dashboardWindowValueLabel => 'Valor de ventana';
+
+  @override
+  String get dashboardLimitValueLabel => 'Valor límite';
+
+  @override
+  String get dashboardUnitLabel => 'Unidad';
+
+  @override
+  String get dashboardWarnYellowBeforeLabel => 'Aviso amarillo antes';
+
+  @override
+  String get dashboardWarnRedBeforeLabel => 'Aviso rojo antes';
+
+  @override
+  String get dashboardCreateAction => 'Crear';
+
+  @override
+  String get dashboardTakeoffLabel => 'Despegue';
+
+  @override
+  String get dashboardTakeoffDayLabel => 'Despegue diurno';
+
+  @override
+  String get dashboardTakeoffNightLabel => 'Despegue nocturno';
+
+  @override
+  String get dashboardLandingsDayLabel => 'Aterrizajes diurnos';
+
+  @override
+  String get dashboardLandingsNightLabel => 'Aterrizajes nocturnos';
+
+  @override
+  String get dashboardInstrumentApproachesLabel =>
+      'Aproximaciones instrumentales';
+
+  @override
+  String get dashboardPicTimeLabel => 'Tiempo PIC';
+
+  @override
+  String get dashboardSicTimeLabel => 'Tiempo SIC';
+
+  @override
+  String get dashboardPicusTimeLabel => 'Tiempo PICUS';
+
+  @override
+  String get dashboardDualTimeLabel => 'Tiempo dual';
+
+  @override
+  String get dashboardInstructorTimeLabel => 'Tiempo instructor';
+
+  @override
+  String get dashboardCrossCountryLabel => 'Travesía';
+
+  @override
+  String get dashboardMinimumLabel => 'Mínimo';
+
+  @override
+  String get dashboardMaximumLabel => 'Máximo';
+
+  @override
+  String get dashboardHoursUnit => 'horas';
+
+  @override
+  String get dashboardMinutesUnit => 'minutos';
+
+  @override
+  String get dashboardDaysUnit => 'días';
+
+  @override
+  String get dashboardWeeksUnit => 'semanas';
+
+  @override
+  String get dashboardMonthsUnit => 'meses';
+
+  @override
+  String get dashboardYearsUnit => 'años';
+
+  @override
+  String get dashboardCountUnit => 'conteo';
+
+  @override
+  String get dashboardCalendarMonthsLabel => 'Meses calendario';
+
+  @override
+  String get dashboardCalendarYearsLabel => 'Años calendario';
+
+  @override
+  String get dashboardCalendarDaysLabel => 'Días calendario';
+
+  @override
+  String get dashboardCalendarQuarterLabel => 'Trimestre calendario';
+
+  @override
+  String get dashboardSameTimeNowLabel => 'Misma hora (ahora)';
+
+  @override
+  String get dashboardMidnightLocalLabel => 'Medianoche local';
+
+  @override
+  String get dashboardMidnightUtcLabel => 'Medianoche UTC';
+
+  @override
+  String get dashboardRemainingSuffix => 'restante';
+
+  @override
+  String get dashboardOverLimitSuffix => 'sobre el límite';
+
+  @override
+  String get dashboardAboveMinimumSuffix => 'por encima del mínimo';
+
+  @override
+  String get dashboardBelowMinimumSuffix => 'por debajo del mínimo';
+
+  @override
+  String get dashboardMinimumShortLabel => 'Mín';
+
+  @override
+  String get dashboardMaximumShortLabel => 'Máx';
+
+  @override
+  String get dashboardSameTimeLabel => 'Misma hora';
+
+  @override
+  String get checkFactoringRulesTitle => 'Revisar reglas de cálculo';
+
+  @override
+  String get continueSavingQuestion => '¿Continuar guardando?';
+
+  @override
+  String get reviewAction => 'Revisar';
+
+  @override
+  String get saveAnywayAction => 'Guardar de todos modos';
+
+  @override
+  String get createFlightTitle => 'Nuevo vuelo';
+
+  @override
+  String get editFlightTitle => 'Editar vuelo';
+
+  @override
+  String get calculateAction => 'Calcular';
+
+  @override
+  String get nextAction => 'Siguiente';
+
+  @override
+  String get fieldDate => 'Fecha';
+
+  @override
+  String get fieldPilotFunction => 'Función del piloto';
+
+  @override
+  String get chocksOffRequiredToCalculate =>
+      'Se requiere Chocks OFF para calcular.';
+
+  @override
+  String get chocksOnRequiredToCalculate =>
+      'Se requiere Chocks ON para calcular.';
+
+  @override
+  String get clearAction => 'Limpiar';
+
+  @override
+  String get fieldRemarks => 'Observaciones';
+
+  @override
+  String get noCrewAssigned => 'Sin tripulación asignada';
+
+  @override
+  String get removeAction => 'Quitar';
+
+  @override
+  String get eventInfoTitle => 'Información del evento';
+
+  @override
+  String get clearDatabaseTitle => 'Borrar base de datos';
+
+  @override
+  String get clearDatabaseMessage =>
+      'Esto eliminará todos los datos y recreará tablas vacías.';
 }

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:simplelog/presentation/shared/widgets/app_drawer.dart';
+import 'package:simplelog/presentation/shared/widgets/base_scaffold.dart';
 import 'package:simplelog/state/aircraft_state.dart';
 import 'package:simplelog/state/providers/navigation_provider.dart';
-import 'app_drawer.dart';
-import 'base_scaffold.dart';
 
+/// Two-pane scaffold used on larger displays.
 class LargeScaffold extends ConsumerWidget {
+  /// Creates the large-screen scaffold.
   const LargeScaffold({super.key});
 
   @override

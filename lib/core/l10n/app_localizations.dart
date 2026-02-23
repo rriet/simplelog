@@ -1738,6 +1738,30 @@ abstract class AppLocalizations {
   /// **'Pilot Name'**
   String get reportsFilterFieldPilotName;
 
+  /// No description provided for @reportsFilterFieldPilotOnBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot On Board'**
+  String get reportsFilterFieldPilotOnBoard;
+
+  /// No description provided for @reportsFilterFieldPilotPic.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot PIC'**
+  String get reportsFilterFieldPilotPic;
+
+  /// No description provided for @reportsFilterFieldPilotSic.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot SIC'**
+  String get reportsFilterFieldPilotSic;
+
+  /// No description provided for @reportsFilterFieldPilotTrainee.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot Trainee'**
+  String get reportsFilterFieldPilotTrainee;
+
   /// No description provided for @reportsFilterFieldApproachType.
   ///
   /// In en, this message translates to:
@@ -1924,6 +1948,12 @@ abstract class AppLocalizations {
   /// **'Contains'**
   String get reportsFilterOperatorContains;
 
+  /// No description provided for @reportsFilterOperatorDoesNotContain.
+  ///
+  /// In en, this message translates to:
+  /// **'Does not contain'**
+  String get reportsFilterOperatorDoesNotContain;
+
   /// No description provided for @reportsFilterOperatorStartsWith.
   ///
   /// In en, this message translates to:
@@ -2055,6 +2085,828 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Operations'**
   String get reportsMetricOperations;
+
+  /// No description provided for @aircraftFiltersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Aircraft filters'**
+  String get aircraftFiltersTitle;
+
+  /// No description provided for @crewFiltersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Crew filters'**
+  String get crewFiltersTitle;
+
+  /// No description provided for @airportFiltersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Airport filters'**
+  String get airportFiltersTitle;
+
+  /// No description provided for @searchByLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by'**
+  String get searchByLabel;
+
+  /// No description provided for @orderByLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Order by'**
+  String get orderByLabel;
+
+  /// No description provided for @optionAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get optionAll;
+
+  /// No description provided for @searchFieldType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get searchFieldType;
+
+  /// No description provided for @applyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get applyAction;
+
+  /// No description provided for @fieldTakeoffs.
+  ///
+  /// In en, this message translates to:
+  /// **'Takeoffs'**
+  String get fieldTakeoffs;
+
+  /// No description provided for @fieldLandings.
+  ///
+  /// In en, this message translates to:
+  /// **'Landings'**
+  String get fieldLandings;
+
+  /// No description provided for @fieldVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Visits'**
+  String get fieldVisits;
+
+  /// No description provided for @airportShowOnlyVisited.
+  ///
+  /// In en, this message translates to:
+  /// **'Show only visited airports'**
+  String get airportShowOnlyVisited;
+
+  /// No description provided for @airportSearchIcaoOrIata.
+  ///
+  /// In en, this message translates to:
+  /// **'ICAO or IATA'**
+  String get airportSearchIcaoOrIata;
+
+  /// No description provided for @summaryFirstFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'First flight'**
+  String get summaryFirstFlight;
+
+  /// No description provided for @summaryLastFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Last flight'**
+  String get summaryLastFlight;
+
+  /// No description provided for @summaryTotalTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Total time'**
+  String get summaryTotalTime;
+
+  /// No description provided for @summaryTotalPic.
+  ///
+  /// In en, this message translates to:
+  /// **'PIC total'**
+  String get summaryTotalPic;
+
+  /// No description provided for @notAvailableShort.
+  ///
+  /// In en, this message translates to:
+  /// **'-'**
+  String get notAvailableShort;
+
+  /// No description provided for @fieldCrew.
+  ///
+  /// In en, this message translates to:
+  /// **'Crew'**
+  String get fieldCrew;
+
+  /// No description provided for @addCrewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add crew'**
+  String get addCrewTitle;
+
+  /// No description provided for @selectCrewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select crew'**
+  String get selectCrewTitle;
+
+  /// No description provided for @crewPositionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Position'**
+  String get crewPositionLabel;
+
+  /// No description provided for @crewPositionPic.
+  ///
+  /// In en, this message translates to:
+  /// **'PIC'**
+  String get crewPositionPic;
+
+  /// No description provided for @crewPositionPicus.
+  ///
+  /// In en, this message translates to:
+  /// **'PICUS'**
+  String get crewPositionPicus;
+
+  /// No description provided for @crewPositionSic.
+  ///
+  /// In en, this message translates to:
+  /// **'SIC'**
+  String get crewPositionSic;
+
+  /// No description provided for @crewPositionTrainee.
+  ///
+  /// In en, this message translates to:
+  /// **'Trainee'**
+  String get crewPositionTrainee;
+
+  /// No description provided for @crewPositionInstructor.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructor'**
+  String get crewPositionInstructor;
+
+  /// No description provided for @crewPositionObserver.
+  ///
+  /// In en, this message translates to:
+  /// **'Observer'**
+  String get crewPositionObserver;
+
+  /// No description provided for @crewPositionRelief.
+  ///
+  /// In en, this message translates to:
+  /// **'Relief'**
+  String get crewPositionRelief;
+
+  /// No description provided for @crewPositionReliefCaptain.
+  ///
+  /// In en, this message translates to:
+  /// **'Relief Captain'**
+  String get crewPositionReliefCaptain;
+
+  /// No description provided for @crewPositionReliefFirstOfficer.
+  ///
+  /// In en, this message translates to:
+  /// **'Relief First Officer'**
+  String get crewPositionReliefFirstOfficer;
+
+  /// No description provided for @crewPositionCabinSenior.
+  ///
+  /// In en, this message translates to:
+  /// **'Cabin Senior'**
+  String get crewPositionCabinSenior;
+
+  /// No description provided for @crewPositionCabinCrew.
+  ///
+  /// In en, this message translates to:
+  /// **'Cabin Crew'**
+  String get crewPositionCabinCrew;
+
+  /// No description provided for @crewPositionOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get crewPositionOther;
+
+  /// No description provided for @crewPositionUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get crewPositionUnknown;
+
+  /// No description provided for @searchRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'Search registration'**
+  String get searchRegistration;
+
+  /// No description provided for @searchType.
+  ///
+  /// In en, this message translates to:
+  /// **'Search type'**
+  String get searchType;
+
+  /// No description provided for @searchFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Search family'**
+  String get searchFamily;
+
+  /// No description provided for @searchNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Search notes'**
+  String get searchNotes;
+
+  /// No description provided for @searchName.
+  ///
+  /// In en, this message translates to:
+  /// **'Search name'**
+  String get searchName;
+
+  /// No description provided for @searchCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Search city'**
+  String get searchCity;
+
+  /// No description provided for @searchCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Search country'**
+  String get searchCountry;
+
+  /// No description provided for @searchIcao.
+  ///
+  /// In en, this message translates to:
+  /// **'Search ICAO'**
+  String get searchIcao;
+
+  /// No description provided for @searchIata.
+  ///
+  /// In en, this message translates to:
+  /// **'Search IATA'**
+  String get searchIata;
+
+  /// No description provided for @searchIcaoIata.
+  ///
+  /// In en, this message translates to:
+  /// **'Search ICAO/IATA'**
+  String get searchIcaoIata;
+
+  /// No description provided for @createSimulatorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add simulator'**
+  String get createSimulatorTitle;
+
+  /// No description provided for @mapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get mapTitle;
+
+  /// No description provided for @aircraftEmptyResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No aircraft found'**
+  String get aircraftEmptyResults;
+
+  /// No description provided for @crewEmptyResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No crew found'**
+  String get crewEmptyResults;
+
+  /// No description provided for @crewLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading crew'**
+  String get crewLoadError;
+
+  /// No description provided for @airportEmptyResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No airports found'**
+  String get airportEmptyResults;
+
+  /// No description provided for @airportLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading airports'**
+  String get airportLoadError;
+
+  /// No description provided for @errorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get errorLabel;
+
+  /// No description provided for @dashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get dashboardTitle;
+
+  /// No description provided for @dashboardNoActiveRules.
+  ///
+  /// In en, this message translates to:
+  /// **'No active rules configured.'**
+  String get dashboardNoActiveRules;
+
+  /// No description provided for @dashboardRuleTotals.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule totals'**
+  String get dashboardRuleTotals;
+
+  /// No description provided for @dashboardNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data.'**
+  String get dashboardNoData;
+
+  /// No description provided for @dashboardEventsInCalculation.
+  ///
+  /// In en, this message translates to:
+  /// **'Events in calculation'**
+  String get dashboardEventsInCalculation;
+
+  /// No description provided for @dashboardNoEventsInWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'No events in this window.'**
+  String get dashboardNoEventsInWindow;
+
+  /// No description provided for @dashboardFlightsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Flights'**
+  String get dashboardFlightsLabel;
+
+  /// No description provided for @dashboardBlockLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Block'**
+  String get dashboardBlockLabel;
+
+  /// No description provided for @dashboardFlightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Flight'**
+  String get dashboardFlightLabel;
+
+  /// No description provided for @dashboardNightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Night'**
+  String get dashboardNightLabel;
+
+  /// No description provided for @dashboardIfrLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'IFR'**
+  String get dashboardIfrLabel;
+
+  /// No description provided for @dashboardInstrumentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Instrument'**
+  String get dashboardInstrumentLabel;
+
+  /// No description provided for @dashboardDutyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Duty'**
+  String get dashboardDutyLabel;
+
+  /// No description provided for @dashboardLandingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Landings'**
+  String get dashboardLandingsLabel;
+
+  /// No description provided for @dashboardSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard setup'**
+  String get dashboardSetupTitle;
+
+  /// No description provided for @dashboardAddRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Add rule'**
+  String get dashboardAddRule;
+
+  /// No description provided for @dashboardNoRulesConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'No rules configured.'**
+  String get dashboardNoRulesConfigured;
+
+  /// No description provided for @dashboardEditRuleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit rule'**
+  String get dashboardEditRuleTitle;
+
+  /// No description provided for @dashboardCreateRuleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create rule'**
+  String get dashboardCreateRuleTitle;
+
+  /// No description provided for @dashboardRuleNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule name'**
+  String get dashboardRuleNameLabel;
+
+  /// No description provided for @dashboardMetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Metric'**
+  String get dashboardMetricLabel;
+
+  /// No description provided for @dashboardRuleTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule type'**
+  String get dashboardRuleTypeLabel;
+
+  /// No description provided for @dashboardWindowTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Window type'**
+  String get dashboardWindowTypeLabel;
+
+  /// No description provided for @dashboardStartReferenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Start reference'**
+  String get dashboardStartReferenceLabel;
+
+  /// No description provided for @dashboardWindowValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Window value'**
+  String get dashboardWindowValueLabel;
+
+  /// No description provided for @dashboardLimitValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit value'**
+  String get dashboardLimitValueLabel;
+
+  /// No description provided for @dashboardUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get dashboardUnitLabel;
+
+  /// No description provided for @dashboardWarnYellowBeforeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Warn yellow before'**
+  String get dashboardWarnYellowBeforeLabel;
+
+  /// No description provided for @dashboardWarnRedBeforeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Warn red before'**
+  String get dashboardWarnRedBeforeLabel;
+
+  /// No description provided for @dashboardCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get dashboardCreateAction;
+
+  /// No description provided for @dashboardTakeoffLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Takeoff'**
+  String get dashboardTakeoffLabel;
+
+  /// No description provided for @dashboardTakeoffDayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Takeoff day'**
+  String get dashboardTakeoffDayLabel;
+
+  /// No description provided for @dashboardTakeoffNightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Takeoff night'**
+  String get dashboardTakeoffNightLabel;
+
+  /// No description provided for @dashboardLandingsDayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Landings day'**
+  String get dashboardLandingsDayLabel;
+
+  /// No description provided for @dashboardLandingsNightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Landings night'**
+  String get dashboardLandingsNightLabel;
+
+  /// No description provided for @dashboardInstrumentApproachesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Instrument approaches'**
+  String get dashboardInstrumentApproachesLabel;
+
+  /// No description provided for @dashboardPicTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PIC time'**
+  String get dashboardPicTimeLabel;
+
+  /// No description provided for @dashboardSicTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SIC time'**
+  String get dashboardSicTimeLabel;
+
+  /// No description provided for @dashboardPicusTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PICUS time'**
+  String get dashboardPicusTimeLabel;
+
+  /// No description provided for @dashboardDualTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Dual time'**
+  String get dashboardDualTimeLabel;
+
+  /// No description provided for @dashboardInstructorTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructor time'**
+  String get dashboardInstructorTimeLabel;
+
+  /// No description provided for @dashboardCrossCountryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross country'**
+  String get dashboardCrossCountryLabel;
+
+  /// No description provided for @dashboardMinimumLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum'**
+  String get dashboardMinimumLabel;
+
+  /// No description provided for @dashboardMaximumLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum'**
+  String get dashboardMaximumLabel;
+
+  /// No description provided for @dashboardHoursUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'hours'**
+  String get dashboardHoursUnit;
+
+  /// No description provided for @dashboardMinutesUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'minutes'**
+  String get dashboardMinutesUnit;
+
+  /// No description provided for @dashboardDaysUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get dashboardDaysUnit;
+
+  /// No description provided for @dashboardWeeksUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'weeks'**
+  String get dashboardWeeksUnit;
+
+  /// No description provided for @dashboardMonthsUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'months'**
+  String get dashboardMonthsUnit;
+
+  /// No description provided for @dashboardYearsUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'years'**
+  String get dashboardYearsUnit;
+
+  /// No description provided for @dashboardCountUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'count'**
+  String get dashboardCountUnit;
+
+  /// No description provided for @dashboardCalendarMonthsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar months'**
+  String get dashboardCalendarMonthsLabel;
+
+  /// No description provided for @dashboardCalendarYearsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar years'**
+  String get dashboardCalendarYearsLabel;
+
+  /// No description provided for @dashboardCalendarDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar days'**
+  String get dashboardCalendarDaysLabel;
+
+  /// No description provided for @dashboardCalendarQuarterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar quarter'**
+  String get dashboardCalendarQuarterLabel;
+
+  /// No description provided for @dashboardSameTimeNowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Same time (now)'**
+  String get dashboardSameTimeNowLabel;
+
+  /// No description provided for @dashboardMidnightLocalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Midnight local'**
+  String get dashboardMidnightLocalLabel;
+
+  /// No description provided for @dashboardMidnightUtcLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Midnight UTC'**
+  String get dashboardMidnightUtcLabel;
+
+  /// No description provided for @dashboardRemainingSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'remaining'**
+  String get dashboardRemainingSuffix;
+
+  /// No description provided for @dashboardOverLimitSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'over limit'**
+  String get dashboardOverLimitSuffix;
+
+  /// No description provided for @dashboardAboveMinimumSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'above minimum'**
+  String get dashboardAboveMinimumSuffix;
+
+  /// No description provided for @dashboardBelowMinimumSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'below minimum'**
+  String get dashboardBelowMinimumSuffix;
+
+  /// No description provided for @dashboardMinimumShortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Min'**
+  String get dashboardMinimumShortLabel;
+
+  /// No description provided for @dashboardMaximumShortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get dashboardMaximumShortLabel;
+
+  /// No description provided for @dashboardSameTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Same time'**
+  String get dashboardSameTimeLabel;
+
+  /// No description provided for @checkFactoringRulesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check factoring rules'**
+  String get checkFactoringRulesTitle;
+
+  /// No description provided for @continueSavingQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue saving?'**
+  String get continueSavingQuestion;
+
+  /// No description provided for @reviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get reviewAction;
+
+  /// No description provided for @saveAnywayAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save anyway'**
+  String get saveAnywayAction;
+
+  /// No description provided for @createFlightTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Flight'**
+  String get createFlightTitle;
+
+  /// No description provided for @editFlightTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Flight'**
+  String get editFlightTitle;
+
+  /// No description provided for @calculateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate'**
+  String get calculateAction;
+
+  /// No description provided for @nextAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get nextAction;
+
+  /// No description provided for @fieldDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get fieldDate;
+
+  /// No description provided for @fieldPilotFunction.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot Function'**
+  String get fieldPilotFunction;
+
+  /// No description provided for @chocksOffRequiredToCalculate.
+  ///
+  /// In en, this message translates to:
+  /// **'Chocks OFF is required to calculate.'**
+  String get chocksOffRequiredToCalculate;
+
+  /// No description provided for @chocksOnRequiredToCalculate.
+  ///
+  /// In en, this message translates to:
+  /// **'Chocks ON is required to calculate.'**
+  String get chocksOnRequiredToCalculate;
+
+  /// No description provided for @clearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clearAction;
+
+  /// No description provided for @fieldRemarks.
+  ///
+  /// In en, this message translates to:
+  /// **'Remarks'**
+  String get fieldRemarks;
+
+  /// No description provided for @noCrewAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No crew assigned'**
+  String get noCrewAssigned;
+
+  /// No description provided for @removeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeAction;
+
+  /// No description provided for @eventInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event info'**
+  String get eventInfoTitle;
+
+  /// No description provided for @clearDatabaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear database'**
+  String get clearDatabaseTitle;
+
+  /// No description provided for @clearDatabaseMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This will delete all data and recreate empty tables.'**
+  String get clearDatabaseMessage;
 }
 
 class _AppLocalizationsDelegate

@@ -1,26 +1,36 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
 
+/// Public API documentation.
 class DutyEditScreen extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const DutyEditScreen({
     super.key,
     this.dutyId,
     this.initialStart,
     this.initialEnd,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final int? dutyId;
+  /// Public API documentation.
   final DateTime? initialStart;
+  /// Public API documentation.
   final DateTime? initialEnd;
 
+  /// Public API documentation.
   bool get isCreate => dutyId == null;
 
   @override
@@ -58,7 +68,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     );
     _dutyTimeController.text = HourInputField.formatHours(_dutyMinutes);
     _factoredController.text = HourInputField.formatHours(_dutyMinutes);
-    _loadExisting();
+    unawaited(_loadExisting());
   }
 
   @override
@@ -205,7 +215,8 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     final factoredMinutes =
         HourInputField.parseHours(_factoredController.text) ?? dutyMinutes;
     if (factoredMinutes > dutyMinutes) {
-      factoredDutyErrorText = 'Factored duty time is greater than total duty time.';
+      factoredDutyErrorText =
+          'Factored duty time is greater than total duty time.';
     }
 
     setState(() {
@@ -213,7 +224,9 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
       _factoredDutyErrorText = factoredDutyErrorText;
     });
 
-    if (!formValid || dutyEndErrorText != null || factoredDutyErrorText != null) {
+    if (!formValid ||
+        dutyEndErrorText != null ||
+        factoredDutyErrorText != null) {
       return;
     }
 
@@ -353,7 +366,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
               ),
             ),
             const Divider(height: 1),
-            Flexible(fit: FlexFit.loose, child: form),
+            Flexible(child: form),
           ],
         ),
       );

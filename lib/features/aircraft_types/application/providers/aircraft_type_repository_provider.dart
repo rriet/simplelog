@@ -5,25 +5,34 @@ import 'package:simplelog/domain/repositories/aircraft_type_repository_contract.
 import 'package:simplelog/domain/usecases/aircraft_type_use_cases.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
-final aircraftTypeRepositoryProvider =
-    Provider<AircraftTypeRepositoryContract>((ref) {
-  final db = ref.watch(databaseProvider);
-  return AircraftTypeRepository(db);
-});
+/// Public API documentation.
+final aircraftTypeRepositoryProvider = Provider<AircraftTypeRepositoryContract>(
+  (ref) {
+    final db = ref.watch(databaseProvider);
+    return AircraftTypeRepository(db);
+  },
+);
+/// Public API documentation.
 
+/// Public API documentation.
 final aircraftTypeUseCasesProvider = Provider<AircraftTypeUseCases>((ref) {
   final repo = ref.watch(aircraftTypeRepositoryProvider);
   return AircraftTypeUseCases(repo);
+/// Public API documentation.
 });
 
-final aircraftTypesProvider =
+/// Public API documentation.
+final StreamProvider<List<AircraftTypeRow>> Function(String)
+    aircraftTypesProvider =
     StreamProvider.family<List<AircraftTypeRow>, String>(
   (ref, query) {
     final useCases = ref.watch(aircraftTypeUseCasesProvider);
     return useCases.watchAircraftTypes(query);
+  /// Public API documentation.
   },
 );
 
+/// Public API documentation.
 final aircraftTypeFamiliesProvider = StreamProvider<List<String>>((ref) {
   final useCases = ref.watch(aircraftTypeUseCasesProvider);
   return useCases.watchFamilies();

@@ -1,26 +1,33 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/geo/coordinate_parser.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/features/airports/application/providers/airports_feature_providers.dart';
-
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/features/airports/application/providers/airports_feature_providers.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/uppercase_text_formatter.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
+/// Public API documentation.
 class AirportEditScreen extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const AirportEditScreen({
-    super.key,
     required this.item,
+    super.key,
     this.isCreate = false,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final Airport item;
+  /// Public API documentation.
   final bool isCreate;
 
   @override
@@ -61,7 +68,7 @@ class _AirportEditScreenState extends ConsumerState<AirportEditScreen> {
     );
     _latitude = widget.isCreate ? 0 : item.latitude;
     _longitude = widget.isCreate ? 0 : item.longitude;
-    _isFavorite = widget.isCreate ? false : item.isFavorite;
+    _isFavorite = !widget.isCreate && item.isFavorite;
   }
 
   @override
@@ -283,7 +290,7 @@ class _AirportEditScreenState extends ConsumerState<AirportEditScreen> {
               ),
             ),
             const Divider(height: 1),
-            Flexible(fit: FlexFit.loose, child: form),
+            Flexible(child: form),
           ],
         ),
       );
@@ -423,7 +430,7 @@ class _CoordinateEditDialogState extends State<_CoordinateEditDialog> {
           child: Text(l10n.cancelAction),
         ),
         FilledButton(
-          onPressed: () {
+          onPressed: () async {
             final lat = CoordinateParser.parseSingle(
               _latController.text,
               isLatitude: true,
@@ -433,7 +440,7 @@ class _CoordinateEditDialogState extends State<_CoordinateEditDialog> {
               isLatitude: false,
             );
             if (lat == null || lon == null) {
-              showAppMessageDialog(
+              await showAppMessageDialog(
                 context,
                 title: l10n.validationErrorTitle,
                 message:

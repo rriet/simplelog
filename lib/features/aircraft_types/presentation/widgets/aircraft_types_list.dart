@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
 
-import 'family_group.dart';
-import 'family_section.dart';
+import 'package:simplelog/features/aircraft_types/presentation/widgets/family_group.dart';
+import 'package:simplelog/features/aircraft_types/presentation/widgets/family_section.dart';
 
+/// Public API documentation.
 class AircraftTypesList extends StatelessWidget {
+  /// Public API documentation.
   const AircraftTypesList({
-    super.key,
     required this.groups,
     required this.isCompact,
     required this.onToggleLock,
@@ -14,14 +15,24 @@ class AircraftTypesList extends StatelessWidget {
     required this.onDelete,
     required this.onOpenDetails,
     required this.onOpenFamilyDetails,
+    super.key,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final List<FamilyGroup> groups;
+  /// Public API documentation.
   final bool isCompact;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onToggleLock;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onEdit;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onDelete;
+  /// Public API documentation.
   final ValueChanged<AircraftTypeRow> onOpenDetails;
+  /// Public API documentation.
   final ValueChanged<FamilyGroup> onOpenFamilyDetails;
 
   @override

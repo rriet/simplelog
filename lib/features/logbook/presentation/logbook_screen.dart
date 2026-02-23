@@ -1,26 +1,30 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
+import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
 import 'package:simplelog/data/models/reports_models.dart';
 import 'package:simplelog/data/models/simulator_crew_assignment_input.dart';
-
-import 'duty_edit_screen.dart';
-import 'flight_edit_screen.dart';
-import 'positioning_edit_screen.dart';
-import 'simulator_edit_screen.dart';
-import 'widgets/logbook_entry_dialogs.dart';
-import 'widgets/logbook_list.dart';
-import 'package:simplelog/presentation/reports/reports_screen.dart';
+import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
+import 'package:simplelog/features/logbook/presentation/duty_edit_screen.dart';
+import 'package:simplelog/features/logbook/presentation/flight_edit_screen.dart';
+import 'package:simplelog/features/logbook/presentation/flight_prefill.dart';
+import 'package:simplelog/features/logbook/presentation/positioning_edit_screen.dart';
+import 'package:simplelog/features/logbook/presentation/simulator_edit_screen.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_list.dart';
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
+import 'package:simplelog/presentation/reports/reports_screen.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 
+/// Public API documentation.
 class LogbookScreen extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const LogbookScreen({super.key});
 
   @override
@@ -53,7 +57,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
       initialIndex: persistedTab,
     )..addListener(_handleTabChanged);
     _scrollController.addListener(_onScroll);
-    _reloadFromReportsQuery(ref.read(reportsRuntimeQueryProvider));
+    unawaited(_reloadFromReportsQuery(ref.read(reportsRuntimeQueryProvider)));
   }
 
   @override
@@ -80,7 +84,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     if (_isLoading || !_hasMore || !_scrollController.hasClients) return;
     final threshold = _scrollController.position.maxScrollExtent - 300;
     if (_scrollController.position.pixels >= threshold) {
-      _loadNextPage();
+      unawaited(_loadNextPage());
     }
   }
 
@@ -139,8 +143,9 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   }) async {
     if (!reset && !_hasMore) return;
     if (_isLoading || !mounted) return;
-    final ReportsRuntimeQueryState query =
-        runtimeQuery ?? ref.read(reportsRuntimeQueryProvider);
+    final queryOrNull = runtimeQuery ?? ref.read(reportsRuntimeQueryProvider);
+    if (queryOrNull == null) return;
+    final query = queryOrNull;
     final includePreviousExperience = ref.read(
       includePreviousExperienceProvider,
     );
@@ -281,24 +286,27 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    ref.listen<ReportsRuntimeQueryState>(reportsRuntimeQueryProvider, (
-      prev,
-      next,
-    ) {
-      if (prev == next) return;
-      _reloadFromReportsQuery(next);
-    });
-    ref.listen<ReportsEventTypesSelection>(reportsEventTypesProvider, (
-      prev,
-      next,
-    ) {
-      if (prev == next) return;
-      _loadNextPage(reset: true);
-    });
-    ref.listen<LogbookFilters>(logbookFiltersProvider, (prev, next) {
-      if (prev == next) return;
-      _reload(next); // keeps compatibility with existing providers/listeners
-    });
+    ref
+      ..listen<ReportsRuntimeQueryState>(reportsRuntimeQueryProvider, (
+        prev,
+        next,
+      ) {
+        if (prev == next) return;
+        unawaited(_reloadFromReportsQuery(next));
+      })
+      ..listen<ReportsEventTypesSelection>(reportsEventTypesProvider, (
+        prev,
+        next,
+      ) {
+        if (prev == next) return;
+        unawaited(_loadNextPage(reset: true));
+      })
+      ..listen<LogbookFilters>(logbookFiltersProvider, (prev, next) {
+        if (prev == next) return;
+        unawaited(
+          _reload(next),
+        ); // keeps compatibility with existing providers/listeners
+      });
 
     return Stack(
       children: [
@@ -500,7 +508,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     if (isCompact) {
       await Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (_) => screen));
+      ).push(MaterialPageRoute<void>(builder: (_) => screen));
       await _refreshDutyById(group.dutyId);
       return;
     }
@@ -540,7 +548,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     if (isCompact) {
       await Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (_) => screen));
+      ).push(MaterialPageRoute<void>(builder: (_) => screen));
       await _loadNextPage(reset: true);
       return;
     }
@@ -881,23 +889,17 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     for (final entry in entries) {
       final start = entry.dutyStart;
       if (start != null) {
-        final range = dutyRanges.putIfAbsent(
-          start.id,
-          () => _DutyRange(dutyId: start.id),
-        );
-        range.start = entry.timeLine.eventDateTime;
-        range.startTimelineId = entry.timeLine.id;
-        range.duty = start;
+        dutyRanges.putIfAbsent(start.id, () => _DutyRange(dutyId: start.id))
+          ..start = entry.timeLine.eventDateTime
+          ..startTimelineId = entry.timeLine.id
+          ..duty = start;
       }
       final end = entry.dutyEnd;
       if (end != null) {
-        final range = dutyRanges.putIfAbsent(
-          end.id,
-          () => _DutyRange(dutyId: end.id),
-        );
-        range.end = entry.timeLine.eventDateTime;
-        range.endTimelineId = entry.timeLine.id;
-        range.duty = end;
+        dutyRanges.putIfAbsent(end.id, () => _DutyRange(dutyId: end.id))
+          ..end = entry.timeLine.eventDateTime
+          ..endTimelineId = entry.timeLine.id
+          ..duty = end;
       }
     }
 

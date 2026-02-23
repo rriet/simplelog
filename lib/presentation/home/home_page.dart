@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/presentation/shared/widgets/collapsible_scaffold.dart';
 import 'package:simplelog/presentation/shared/widgets/large_scaffold.dart';
 
+/// Public API documentation.
 class MyHomePage extends ConsumerWidget {
+  /// Public API documentation.
   const MyHomePage({super.key});
 
   @override

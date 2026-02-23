@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 
-import 'aircraft_list_item.dart';
+import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_list_item.dart';
 
+/// Public API documentation.
 class AircraftList extends StatelessWidget {
+  /// Public API documentation.
   const AircraftList({
-    super.key,
     required this.items,
     required this.isCompact,
     required this.onToggleFavorite,
@@ -14,14 +15,24 @@ class AircraftList extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onOpenDetails,
+    super.key,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final List<AircraftRow> items;
+  /// Public API documentation.
   final bool isCompact;
+  /// Public API documentation.
   final ValueChanged<AircraftRow> onToggleFavorite;
+  /// Public API documentation.
   final ValueChanged<AircraftRow> onToggleLock;
+  /// Public API documentation.
   final ValueChanged<AircraftRow> onEdit;
+  /// Public API documentation.
   final ValueChanged<AircraftRow> onDelete;
+  /// Public API documentation.
   final ValueChanged<AircraftRow> onOpenDetails;
 
   @override
@@ -67,8 +78,9 @@ class AircraftList extends StatelessWidget {
     final favorites = source.where((row) => row.isFavorite).toList()
       ..sort((a, b) => a.registration.compareTo(b.registration));
     if (favorites.isNotEmpty) {
-      result.add(const _SectionEntry.header('Favorites'));
-      result.addAll(favorites.map(_SectionEntry.row));
+      result
+        ..add(const _SectionEntry.header('Favorites'))
+        ..addAll(favorites.map(_SectionEntry.row));
     }
 
     final groups = <String, List<AircraftRow>>{};
@@ -78,9 +90,11 @@ class AircraftList extends StatelessWidget {
     }
     final keys = groups.keys.toList()..sort();
     for (final key in keys) {
-      final rows = groups[key]!..sort((a, b) => a.registration.compareTo(b.registration));
-      result.add(_SectionEntry.header(key));
-      result.addAll(rows.map(_SectionEntry.row));
+      final rows = groups[key]!
+        ..sort((a, b) => a.registration.compareTo(b.registration));
+      result
+        ..add(_SectionEntry.header(key))
+        ..addAll(rows.map(_SectionEntry.row));
     }
     return result;
   }
@@ -112,7 +126,9 @@ class _SectionHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelLarge,

@@ -1,12 +1,15 @@
 import 'package:intl/intl.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
-import 'package:simplelog/data/database/enums/engine_type.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
+import 'package:simplelog/data/database/enums/engine_type.dart';
 
+/// Public API documentation.
 class SimpleLogCsvExporter {
+  /// Public API documentation.
   SimpleLogCsvExporter(this.db);
 
+  /// Public API documentation.
   final AppDatabase db;
 
   static const List<String> _headers = [
@@ -71,9 +74,11 @@ class SimpleLogCsvExporter {
     'Custom Time 2 Minutes',
     'Custom Time 3 Minutes',
     'Custom Time 4 Minutes',
+    /// Public API documentation.
     'Total Minutes',
   ];
 
+  /// Public API documentation.
   Future<String> exportFlightsAndSimulatorsCsv() async {
     final flights = await db.select(db.flights).get();
     final simulators = await db.select(db.simulatorTrainings).get();
@@ -378,8 +383,7 @@ class SimpleLogCsvExporter {
       if (byDate != 0) return byDate;
       return b.sortTimelineId.compareTo(a.sortTimelineId);
     });
-    final buffer = StringBuffer();
-    buffer.writeln(_serializeCsvRow(_headers));
+    final buffer = StringBuffer()..writeln(_serializeCsvRow(_headers));
     for (final row in rows) {
       final normalized = row.values.length == _headers.length
           ? row.values

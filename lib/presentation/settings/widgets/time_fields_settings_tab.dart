@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
+import 'package:simplelog/presentation/settings/widgets/flight_takeoff_landing_switch.dart';
+import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/flight_time_fields_visibility_provider.dart';
-import 'package:simplelog/presentation/settings/widgets/flight_takeoff_landing_switch.dart';
 
+/// Public API documentation.
 class TimeFieldsSettingsTab extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const TimeFieldsSettingsTab({super.key});
 
   @override

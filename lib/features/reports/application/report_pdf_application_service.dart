@@ -6,7 +6,9 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/report_pdf_models.dart';
 
+/// Public API documentation.
 class ReportTemplateRow {
+  /// Public API documentation.
   const ReportTemplateRow({
     required this.date,
     required this.aircraftModel,
@@ -29,41 +31,76 @@ class ReportTemplateRow {
     required this.sicMinutes,
     required this.instructorMinutes,
     required this.totalMinutes,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final String date;
+  /// Public API documentation.
   final String aircraftModel;
+  /// Public API documentation.
   final String aircraftRegistration;
+  /// Public API documentation.
   final String fromIcao;
+  /// Public API documentation.
   final String toIcao;
+  /// Public API documentation.
   final String remarks;
+  /// Public API documentation.
   final int ifrApproaches;
+  /// Public API documentation.
   final int landingsTotal;
+  /// Public API documentation.
   final int selMinutes;
+  /// Public API documentation.
   final int melMinutes;
+  /// Public API documentation.
   final int xcMinutes;
+  /// Public API documentation.
   final int dayMinutes;
+  /// Public API documentation.
   final int nightMinutes;
+  /// Public API documentation.
   final int ifrMinutes;
+  /// Public API documentation.
   final int simInstMinutes;
+  /// Public API documentation.
   final int fstdMinutes;
+  /// Public API documentation.
   final int dualMinutes;
+  /// Public API documentation.
   final int picPicusMinutes;
+  /// Public API documentation.
   final int sicMinutes;
+  /// Public API documentation.
   final int instructorMinutes;
+  /// Public API documentation.
   final int totalMinutes;
+/// Public API documentation.
 }
+/// Public API documentation.
 
+/// Public API documentation.
 class ReportTemplateTotals {
+  /// Public API documentation.
   const ReportTemplateTotals({
+    /// Public API documentation.
     this.ifrApproaches = 0,
+    /// Public API documentation.
     this.landingsTotal = 0,
+    /// Public API documentation.
     this.selMinutes = 0,
+    /// Public API documentation.
     this.melMinutes = 0,
+    /// Public API documentation.
     this.xcMinutes = 0,
+    /// Public API documentation.
     this.dayMinutes = 0,
+    /// Public API documentation.
     this.nightMinutes = 0,
     this.ifrMinutes = 0,
+    /// Public API documentation.
     this.simInstMinutes = 0,
     this.fstdMinutes = 0,
     this.dualMinutes = 0,
@@ -73,25 +110,43 @@ class ReportTemplateTotals {
     this.totalMinutes = 0,
   });
 
+  /// Public API documentation.
   final int ifrApproaches;
+  /// Public API documentation.
   final int landingsTotal;
+  /// Public API documentation.
   final int selMinutes;
+  /// Public API documentation.
   final int melMinutes;
+  /// Public API documentation.
   final int xcMinutes;
+  /// Public API documentation.
   final int dayMinutes;
+  /// Public API documentation.
   final int nightMinutes;
+  /// Public API documentation.
   final int ifrMinutes;
+  /// Public API documentation.
   final int simInstMinutes;
+  /// Public API documentation.
   final int fstdMinutes;
+  /// Public API documentation.
   final int dualMinutes;
+  /// Public API documentation.
   final int picPicusMinutes;
+  /// Public API documentation.
   final int sicMinutes;
+  /// Public API documentation.
   final int instructorMinutes;
+  /// Public API documentation.
   final int totalMinutes;
 
+  /// Public API documentation.
   ReportTemplateTotals addRow(ReportTemplateRow row) {
+    /// Public API documentation.
     return ReportTemplateTotals(
       ifrApproaches: ifrApproaches + row.ifrApproaches,
+      /// Public API documentation.
       landingsTotal: landingsTotal + row.landingsTotal,
       selMinutes: selMinutes + row.selMinutes,
       melMinutes: melMinutes + row.melMinutes,
@@ -109,6 +164,7 @@ class ReportTemplateTotals {
     );
   }
 
+  /// Public API documentation.
   ReportTemplateTotals addTotals(ReportTemplateTotals other) {
     return ReportTemplateTotals(
       ifrApproaches: ifrApproaches + other.ifrApproaches,
@@ -130,9 +186,12 @@ class ReportTemplateTotals {
   }
 }
 
+/// Public API documentation.
 class ReportPdfApplicationService {
+  /// Public API documentation.
   const ReportPdfApplicationService();
 
+  /// Public API documentation.
   Future<Uint8List> generateFromTemplate({
     required ReportPdfTemplate template,
     required List<LogbookEntry> entries,
@@ -158,7 +217,9 @@ class ReportPdfApplicationService {
     final rowsPerPage = template.rowsPerPage <= 0 ? 26 : template.rowsPerPage;
     final pages = <List<ReportTemplateRow>>[];
     for (var i = 0; i < rows.length; i += rowsPerPage) {
-      final end = (i + rowsPerPage > rows.length) ? rows.length : i + rowsPerPage;
+      final end = (i + rowsPerPage > rows.length)
+          ? rows.length
+          : i + rowsPerPage;
       pages.add(rows.sublist(i, end));
     }
     if (pages.isEmpty) {
@@ -197,6 +258,7 @@ class ReportPdfApplicationService {
             instructorMinutes: 0,
             totalMinutes: 0,
           ),
+        /// Public API documentation.
         );
       }
       final after = carry.addTotals(pageTotals);
@@ -242,50 +304,72 @@ class ReportPdfApplicationService {
     return document.save();
   }
 
+  /// Public API documentation.
   List<ReportTemplateRow> buildRows(List<LogbookEntry> entries) {
     final sortedEntries = [...entries]
-      ..sort((a, b) => a.timeLine.eventDateTime.compareTo(b.timeLine.eventDateTime));
-    return sortedEntries.map((entry) {
-      final flight = entry.flight;
-      final sim = entry.simulatorTraining;
-      final pos = entry.positioning;
-      final type = entry.aircraftType;
-
-      final totalMinutes = flight?.timeBlockMinutes ?? pos?.timeTotalMinutes ?? sim?.timeTotal ?? 0;
-      final nightMinutes = flight?.timeNightMinutes ?? 0;
-      final dayMinutes = math.max(0, totalMinutes - nightMinutes);
-      final isSeaplane = type?.category.name == 'seaplane';
-      final isMultiEngine = (type?.engineCount ?? 0) > 1;
-      final selMinutes = (!isSeaplane && !isMultiEngine) ? totalMinutes : 0;
-      final melMinutes = (!isSeaplane && isMultiEngine) ? totalMinutes : 0;
-
-      return ReportTemplateRow(
-        date: DateFormat('dd-MM-yyyy').format(entry.timeLine.eventDateTime.toUtc()),
-        aircraftModel: type?.code ?? '',
-        aircraftRegistration: entry.aircraft?.registration ?? '',
-        fromIcao: entry.departureAirport?.icao ?? entry.positioningDepartureAirport?.icao ?? '',
-        toIcao: entry.arrivalAirport?.icao ?? entry.positioningArrivalAirport?.icao ?? '',
-        remarks: (flight?.remarks ?? sim?.remarks ?? '').trim(),
-        ifrApproaches: flight?.ifrApproaches ?? 0,
-        landingsTotal: (flight?.landingsDay ?? 0) + (flight?.landingsNight ?? 0),
-        selMinutes: selMinutes,
-        melMinutes: melMinutes,
-        xcMinutes: flight?.timeCrossCountryMinutes ?? 0,
-        dayMinutes: dayMinutes,
-        nightMinutes: nightMinutes,
-        ifrMinutes: flight?.timeIFRMinutes ?? 0,
-        simInstMinutes:
-            (flight?.timeInstrumentMinutes ?? 0) + (flight?.timeSimulatedInstrumentMinutes ?? 0),
-        fstdMinutes: sim?.timeTotal ?? 0,
-        dualMinutes: flight?.timeDualMinutes ?? 0,
-        picPicusMinutes: (flight?.timePICMinutes ?? 0) + (flight?.timePICUSMinutes ?? 0),
-        sicMinutes: flight?.timeSICMinutes ?? 0,
-        instructorMinutes: flight?.timeInstructorMinutes ?? 0,
-        totalMinutes: totalMinutes,
+      ..sort(
+        (a, b) => a.timeLine.eventDateTime.compareTo(b.timeLine.eventDateTime),
       );
-    }).toList(growable: false);
+    return sortedEntries
+        .map((entry) {
+          final flight = entry.flight;
+          final sim = entry.simulatorTraining;
+          final pos = entry.positioning;
+          final type = entry.aircraftType;
+
+          final totalMinutes =
+              flight?.timeBlockMinutes ??
+              pos?.timeTotalMinutes ??
+              sim?.timeTotal ??
+              0;
+          /// Public API documentation.
+          final nightMinutes = flight?.timeNightMinutes ?? 0;
+          final dayMinutes = math.max(0, totalMinutes - nightMinutes);
+          final isSeaplane = type?.category.name == 'seaplane';
+          final isMultiEngine = (type?.engineCount ?? 0) > 1;
+          final selMinutes = (!isSeaplane && !isMultiEngine) ? totalMinutes : 0;
+          final melMinutes = (!isSeaplane && isMultiEngine) ? totalMinutes : 0;
+
+          return ReportTemplateRow(
+            date: DateFormat(
+              'dd-MM-yyyy',
+            ).format(entry.timeLine.eventDateTime.toUtc()),
+            aircraftModel: type?.code ?? '',
+            aircraftRegistration: entry.aircraft?.registration ?? '',
+            fromIcao:
+                entry.departureAirport?.icao ??
+                entry.positioningDepartureAirport?.icao ??
+                '',
+            toIcao:
+                entry.arrivalAirport?.icao ??
+                entry.positioningArrivalAirport?.icao ??
+                '',
+            remarks: (flight?.remarks ?? sim?.remarks ?? '').trim(),
+            ifrApproaches: flight?.ifrApproaches ?? 0,
+            landingsTotal:
+                (flight?.landingsDay ?? 0) + (flight?.landingsNight ?? 0),
+            selMinutes: selMinutes,
+            melMinutes: melMinutes,
+            xcMinutes: flight?.timeCrossCountryMinutes ?? 0,
+            dayMinutes: dayMinutes,
+            nightMinutes: nightMinutes,
+            ifrMinutes: flight?.timeIFRMinutes ?? 0,
+            simInstMinutes:
+                (flight?.timeInstrumentMinutes ?? 0) +
+                (flight?.timeSimulatedInstrumentMinutes ?? 0),
+            fstdMinutes: sim?.timeTotal ?? 0,
+            dualMinutes: flight?.timeDualMinutes ?? 0,
+            picPicusMinutes:
+                (flight?.timePICMinutes ?? 0) + (flight?.timePICUSMinutes ?? 0),
+            sicMinutes: flight?.timeSICMinutes ?? 0,
+            instructorMinutes: flight?.timeInstructorMinutes ?? 0,
+            totalMinutes: totalMinutes,
+          );
+        })
+        .toList(growable: false);
   }
 
+  /// Public API documentation.
   ReportTemplateTotals sumTotals(List<ReportTemplateRow> rows) {
     var totals = const ReportTemplateTotals();
     for (final row in rows) {
@@ -293,7 +377,6 @@ class ReportPdfApplicationService {
     }
     return totals;
   }
-
 
   Map<String, dynamic> _rowToMap(ReportTemplateRow row) {
     return {
@@ -364,7 +447,9 @@ class ReportPdfApplicationService {
       columnIndexByKey[table.columns[i].key] = i;
     }
 
-    final headers = table.columns.map((column) => column.header).toList(growable: false);
+    final headers = table.columns
+        .map((column) => column.header)
+        .toList(growable: false);
     final data = <List<String>>[
       ...pageRows.map(
         (row) {
@@ -378,8 +463,11 @@ class ReportPdfApplicationService {
 
     for (final footerRow in table.footerRows) {
       final row = List<String>.filled(table.columns.length, '');
-      final label = footerRow.literalLabel ??
-          (footerRow.labelToken == null ? '' : template.labels.resolveToken(footerRow.labelToken!));
+      final label =
+          footerRow.literalLabel ??
+          (footerRow.labelToken == null
+              ? ''
+              : template.labels.resolveToken(footerRow.labelToken!));
       if (label.isNotEmpty && row.isNotEmpty) {
         row[0] = label;
       }
@@ -400,7 +488,9 @@ class ReportPdfApplicationService {
     final cellAlignments = <int, pw.Alignment>{};
     for (var index = 0; index < table.columns.length; index++) {
       final column = table.columns[index];
-      columnWidths[index] = pw.FlexColumnWidth(column.width <= 0 ? 1 : column.width);
+      columnWidths[index] = pw.FlexColumnWidth(
+        column.width <= 0 ? 1 : column.width,
+      );
       cellAlignments[index] = _alignmentFor(column.alignment);
     }
 
@@ -444,5 +534,4 @@ class ReportPdfApplicationService {
         return PdfPageFormat.a5;
     }
   }
-
 }

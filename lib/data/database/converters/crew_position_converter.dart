@@ -1,15 +1,19 @@
 import 'package:drift/drift.dart';
 
-import '../enums/crew_position.dart';
+import 'package:simplelog/data/database/enums/crew_position.dart';
 
+/// Public API documentation.
 class CrewPositionConverter extends TypeConverter<CrewPosition, String> {
+  /// Public API documentation.
   const CrewPositionConverter();
 
   @override
   CrewPosition fromSql(String fromDb) {
     return switch (fromDb) {
       'pic' => CrewPosition.pic,
+      'picus' => CrewPosition.picus,
       'sic' => CrewPosition.sic,
+      'trainee' => CrewPosition.trainee,
       'instructor' => CrewPosition.instructor,
       'observer' => CrewPosition.observer,
       'relief' => CrewPosition.relief,
@@ -26,7 +30,9 @@ class CrewPositionConverter extends TypeConverter<CrewPosition, String> {
   String toSql(CrewPosition value) {
     return switch (value) {
       CrewPosition.pic => 'pic',
+      CrewPosition.picus => 'picus',
       CrewPosition.sic => 'sic',
+      CrewPosition.trainee => 'trainee',
       CrewPosition.instructor => 'instructor',
       CrewPosition.observer => 'observer',
       CrewPosition.relief => 'relief',
@@ -36,8 +42,8 @@ class CrewPositionConverter extends TypeConverter<CrewPosition, String> {
       CrewPosition.cabinCrew => 'cabin_crew',
       CrewPosition.other => 'other',
       CrewPosition.unknown => throw ArgumentError(
-          'Cannot save unknown CrewPosition to database',
-        ),
+        'Cannot save unknown CrewPosition to database',
+      ),
     };
   }
 }

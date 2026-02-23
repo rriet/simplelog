@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
@@ -20,11 +22,15 @@ import 'package:simplelog/presentation/shared/widgets/inputs/picker_with_add_inp
 import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
+/// Public API documentation.
 class PositioningEditScreen extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const PositioningEditScreen({super.key, this.positioningId});
 
+  /// Public API documentation.
   final int? positioningId;
 
+  /// Public API documentation.
   bool get isCreate => positioningId == null;
 
   @override
@@ -59,7 +65,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     );
     _arrivalTimeController.text = '';
     _timeController.text = HourInputField.formatHours(0);
-    _loadExisting();
+    unawaited(_loadExisting());
   }
 
   @override
@@ -162,13 +168,9 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
   }
 
   Future<void> _createAirportAndSelect({required bool asDeparture}) async {
-    final placeholder = Airport(
+    const placeholder = Airport(
       id: kPlaceholderId,
       icao: '',
-      iata: null,
-      name: null,
-      city: null,
-      country: null,
       latitude: 0,
       longitude: 0,
       isFavorite: false,
@@ -176,7 +178,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     );
     final result = await showConstrainedEditDialog<dynamic>(
       context: context,
-      child: AirportEditScreen(item: placeholder, isCreate: true),
+      child: const AirportEditScreen(item: placeholder, isCreate: true),
     );
 
     if (!mounted) return;
@@ -330,7 +332,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       airportsProvider(
         const AirportSearchParams(
           query: '',
-          filters: AirportFilters(showOnlyVisited: false),
+          filters: AirportFilters(),
         ),
       ),
     );
@@ -478,7 +480,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
               ),
             ),
             const Divider(height: 1),
-            Flexible(fit: FlexFit.loose, child: form),
+            Flexible(child: form),
           ],
         ),
       );

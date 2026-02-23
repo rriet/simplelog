@@ -1,5 +1,3 @@
-// ignore_for_file: annotate_overrides
-
 import 'package:drift/drift.dart';
 import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/data/database/app_database.dart';
@@ -7,11 +5,14 @@ import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/data/models/airport_row.dart';
 import 'package:simplelog/domain/repositories/airport_repository_contract.dart';
 
+/// Public API documentation.
 class AirportRepository implements AirportRepositoryContract {
+  /// Public API documentation.
   AirportRepository(this._db);
 
   final AppDatabase _db;
 
+  @override
   Stream<List<AirportRow>> watchAirports(
     String query,
     AirportFilters filters,
@@ -22,12 +23,14 @@ class AirportRepository implements AirportRepositoryContract {
 
     if (filters.showOnlyVisited) {
       whereParts.add(
-        '(COALESCE(fv.flight_count, 0) + COALESCE(pv.positioning_count, 0)) > 0',
+        '(COALESCE(fv.flight_count, 0) + '
+        'COALESCE(pv.positioning_count, 0)) > 0',
       );
     }
 
-    final whereClause =
-        whereParts.isEmpty ? '' : 'WHERE ${whereParts.join(' AND ')}';
+    final whereClause = whereParts.isEmpty
+        ? ''
+        : 'WHERE ${whereParts.join(' AND ')}';
 
     final orderBy = switch (filters.orderBy) {
       AirportOrderBy.icao => 'a.icao ASC',
@@ -38,10 +41,12 @@ class AirportRepository implements AirportRepositoryContract {
       AirportOrderBy.landings => 'COALESCE(ld.landing_count, 0) DESC',
       AirportOrderBy.takeoffs => 'COALESCE(tk.takeoff_count, 0) DESC',
       AirportOrderBy.visits =>
-        '(COALESCE(fv.flight_count, 0) + COALESCE(pv.positioning_count, 0)) DESC',
+        '(COALESCE(fv.flight_count, 0) + '
+        'COALESCE(pv.positioning_count, 0)) DESC',
     };
 
-    final sql = '''
+    final sql =
+        '''
 WITH flight_visits AS (
   SELECT airport_id, COUNT(*) AS flight_count
   FROM (
@@ -144,30 +149,40 @@ ORDER BY a.is_favorite DESC, $orderBy
     return normalizeLooseSearch(source).contains(normalizedQuery);
   }
 
+  @override
   Future<void> toggleLock(Airport item) async {
-    await _db.update(_db.airports).replace(
+    await _db
+        .update(_db.airports)
+        .replace(
           item.copyWith(isLocked: !item.isLocked),
         );
   }
 
+  @override
   Future<void> toggleFavorite(Airport item) async {
-    await _db.update(_db.airports).replace(
+    await _db
+        .update(_db.airports)
+        .replace(
           item.copyWith(isFavorite: !item.isFavorite),
         );
   }
 
+  @override
   Future<void> delete(Airport item) async {
     await _db.delete(_db.airports).delete(item);
   }
 
+  @override
   Future<int> create(AirportsCompanion companion) {
     return _db.into(_db.airports).insert(companion);
   }
 
+  @override
   Future<void> update(Airport item) async {
     await _db.update(_db.airports).replace(item);
   }
 
+  @override
   Future<int> countDuplicateIcao(String icao, int currentId) async {
     final countExpr = _db.airports.id.count();
     final query = _db.selectOnly(_db.airports)

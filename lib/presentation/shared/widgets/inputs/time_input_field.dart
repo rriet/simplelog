@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Reusable elapsed-time input field (`h:mm`) with optional constraints.
 class TimeInputField extends StatefulWidget {
+  /// Creates a time input field with formatting and validation behavior.
   const TimeInputField({
-    super.key,
     required this.controller,
     required this.label,
+    super.key,
     this.fallbackMinutes = 0,
     this.onChangedMinutes,
     this.onCleared,
@@ -17,21 +19,43 @@ class TimeInputField extends StatefulWidget {
     this.errorText,
   });
 
+  /// Text controller used by the field.
   final TextEditingController controller;
+
+  /// Field label.
   final String label;
+
+  /// Fallback minutes applied when the field is left empty.
   final int fallbackMinutes;
+
+  /// Called when a valid minute value is parsed.
   final ValueChanged<int>? onChangedMinutes;
+
+  /// Called when the field is cleared and empty values are allowed.
   final VoidCallback? onCleared;
+
+  /// Optional custom validator.
   final String? Function(String?)? validator;
+
+  /// Optional trailing icon widget.
   final Widget? suffixIcon;
+
+  /// Reserved toggle for forcing text field mode in adaptive UIs.
   final bool forceTextField;
+
+  /// Whether empty values are accepted.
   final bool allowEmpty;
+
+  /// Optional maximum hour limit.
   final int? maxHours;
+
+  /// Optional external inline error text.
   final String? errorText;
 
   @override
   State<TimeInputField> createState() => _TimeInputFieldState();
 
+  /// Formats elapsed minutes as `h:mm`.
   static String formatMinutes(int minutes) {
     if (minutes <= 0) return '0:00';
     final hours = minutes ~/ 60;
@@ -39,6 +63,7 @@ class TimeInputField extends StatefulWidget {
     return '$hours:${mins.toString().padLeft(2, '0')}';
   }
 
+  /// Parses `h:mm` or compact numeric text into elapsed minutes.
   static int? parseMinutes(String value, {int? maxHours}) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return null;
@@ -52,7 +77,7 @@ class TimeInputField extends StatefulWidget {
       if (maxHours != null && hours > maxHours) return null;
       return hours * 60 + minutes;
     }
-    final digits = trimmed.replaceAll(RegExp(r'[^0-9]'), '');
+    final digits = trimmed.replaceAll(RegExp('[^0-9]'), '');
     if (digits.isEmpty) return null;
     final raw = int.tryParse(digits);
     if (raw == null) return null;
@@ -67,6 +92,7 @@ class TimeInputField extends StatefulWidget {
     return hours * 60 + mins;
   }
 
+  /// Returns whether a text value is valid for this field.
   static bool isValidTimeText(
     String value, {
     bool allowEmpty = false,
@@ -91,8 +117,9 @@ class _TimeInputFieldState extends State<TimeInputField> {
 
   @override
   void dispose() {
-    _focusNode.removeListener(_handleFocusChange);
-    _focusNode.dispose();
+    _focusNode
+      ..removeListener(_handleFocusChange)
+      ..dispose();
     super.dispose();
   }
 
@@ -169,7 +196,8 @@ class _TimeInputFieldState extends State<TimeInputField> {
           maxHours: widget.maxHours,
         )) {
           final hoursHint = widget.maxHours != null
-              ? ' and hours must be between 00 and ${widget.maxHours!.toString().padLeft(2, '0')}'
+              ? ' and hours must be between 00 and '
+                    '${widget.maxHours!.toString().padLeft(2, '0')}'
               : '';
           return 'Invalid time. Minutes must be between 00 and 59$hoursHint.';
         }
@@ -179,7 +207,9 @@ class _TimeInputFieldState extends State<TimeInputField> {
   }
 }
 
+/// Public API documentation.
 class TimeInputFormatter extends TextInputFormatter {
+  /// Creates a formatter that keeps user input in `h:mm` shape.
   const TimeInputFormatter();
 
   @override
@@ -187,9 +217,9 @@ class TimeInputFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final digits = newValue.text.replaceAll(RegExp('[^0-9]'), '');
     if (digits.isEmpty) {
-      return const TextEditingValue(text: '');
+      return TextEditingValue.empty;
     }
     final minutes = int.tryParse(digits) ?? 0;
     final hours = digits.length <= 2 ? 0 : minutes ~/ 100;

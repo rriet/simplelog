@@ -1,7 +1,9 @@
+import 'dart:async';
+
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
@@ -26,11 +28,15 @@ import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.da
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
+/// Public API documentation.
 class SimulatorEditScreen extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const SimulatorEditScreen({super.key, this.simulatorId});
 
+  /// Public API documentation.
   final int? simulatorId;
 
+  /// Public API documentation.
   bool get isCreate => simulatorId == null;
 
   @override
@@ -68,7 +74,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     );
     _endTimeController.text = '';
     _timeController.text = HourInputField.formatHours(0);
-    _loadExisting();
+    unawaited(_loadExisting());
   }
 
   @override
@@ -169,19 +175,17 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   }
 
   Future<void> _createSimulatorAndSelect() async {
-    final placeholder = Aircraft(
+    const placeholder = Aircraft(
       id: kPlaceholderId,
       aircraftTypeId: 0,
       registration: '',
-      mtow: null,
       isSimulator: true,
       isFavorite: false,
       isLocked: false,
-      notes: null,
     );
     final result = await showConstrainedEditDialog<dynamic>(
       context: context,
-      child: AircraftEditScreen(
+      child: const AircraftEditScreen(
         item: placeholder,
         isCreate: true,
         initialIsSimulator: true,
@@ -292,7 +296,8 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       sessionTimeErrorText = 'Enter a valid simulator session time.';
     }
     if (!_validateCrewRows()) {
-      crewErrorText = 'Crew rows must have crew and position, without duplicates.';
+      crewErrorText =
+          'Crew rows must have crew and position, without duplicates.';
     }
 
     setState(() {
@@ -493,7 +498,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
               ),
             ),
             const Divider(height: 1),
-            Flexible(fit: FlexFit.loose, child: form),
+            Flexible(child: form),
           ],
         ),
       );
@@ -581,7 +586,10 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                               SizedBox(
                                 width: 120,
                                 child: Text(
-                                  crewPositionLabel(row.position),
+                                  crewPositionLabel(
+                                    AppLocalizations.of(context)!,
+                                    row.position,
+                                  ),
                                   style: Theme.of(context).textTheme.bodySmall,
                                   textAlign: TextAlign.left,
                                   overflow: TextOverflow.ellipsis,

@@ -1,26 +1,27 @@
-// ignore_for_file: annotate_overrides
-
 import 'dart:async';
 
 import 'package:drift/drift.dart';
+import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/models/crew_info_item.dart';
+import 'package:simplelog/data/models/duty_edit_data.dart';
+import 'package:simplelog/data/models/flight_edit_data.dart';
+import 'package:simplelog/data/models/flight_write_input.dart';
+import 'package:simplelog/data/models/logbook_entry.dart';
+import 'package:simplelog/data/models/logbook_filters.dart';
+import 'package:simplelog/data/models/logbook_flight_summary.dart';
+import 'package:simplelog/data/models/positioning_edit_data.dart';
+import 'package:simplelog/data/models/simulator_crew_assignment_input.dart';
+import 'package:simplelog/data/models/simulator_edit_data.dart';
+import 'package:simplelog/domain/repositories/logbook_repository_contract.dart';
 
-import '../database/app_database.dart';
-import '../models/duty_edit_data.dart';
-import '../models/crew_info_item.dart';
-import '../models/flight_edit_data.dart';
-import '../models/flight_write_input.dart';
-import '../models/logbook_entry.dart';
-import '../models/logbook_filters.dart';
-import '../models/positioning_edit_data.dart';
-import '../models/simulator_crew_assignment_input.dart';
-import '../models/simulator_edit_data.dart';
-import '../../domain/repositories/logbook_repository_contract.dart';
-
+/// Public API documentation.
 class LogbookRepository implements LogbookRepositoryContract {
+  /// Public API documentation.
   LogbookRepository(this._db);
 
   final AppDatabase _db;
 
+  @override
   Future<void> toggleEntryLock(LogbookEntry entry) async {
     switch (entry.type) {
       case LogbookEventType.flight:
@@ -56,6 +57,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     }
   }
 
+  @override
   Future<void> toggleDutyLock(int dutyId) async {
     final duty = await findDutyById(dutyId);
     if (duty == null) return;
@@ -64,18 +66,21 @@ class LogbookRepository implements LogbookRepositoryContract {
         .replace(duty.copyWith(isLocked: !duty.isLocked));
   }
 
+  @override
   Future<DutyPeriod?> findDutyById(int dutyId) async {
     return (_db.select(
       _db.dutyPeriods,
     )..where((t) => t.id.equals(dutyId))).getSingleOrNull();
   }
 
+  @override
   Future<Flight?> findFlightById(int flightId) async {
     return (_db.select(
       _db.flights,
     )..where((t) => t.id.equals(flightId))).getSingleOrNull();
   }
 
+  @override
   Future<FlightEditData?> loadFlightEditData(int flightId) async {
     final flight = await findFlightById(flightId);
     if (flight == null) return null;
@@ -89,12 +94,14 @@ class LogbookRepository implements LogbookRepositoryContract {
     );
   }
 
+  @override
   Future<List<FlightCrewAssignment>> fetchFlightCrewAssignments(int flightId) {
     return (_db.select(
       _db.flightCrewAssignments,
     )..where((t) => t.flightId.equals(flightId))).get();
   }
 
+  @override
   Future<DutyEditData?> loadDutyEditData(int dutyId) async {
     final duty = await findDutyById(dutyId);
     if (duty == null) return null;
@@ -112,12 +119,14 @@ class LogbookRepository implements LogbookRepositoryContract {
     );
   }
 
+  @override
   Future<Positioning?> findPositioningById(int positioningId) async {
     return (_db.select(
       _db.positionings,
     )..where((t) => t.id.equals(positioningId))).getSingleOrNull();
   }
 
+  @override
   Future<PositioningEditData?> loadPositioningEditData(
     int positioningId,
   ) async {
@@ -133,12 +142,14 @@ class LogbookRepository implements LogbookRepositoryContract {
     );
   }
 
+  @override
   Future<SimulatorTraining?> findSimulatorTrainingById(int simulatorId) async {
     return (_db.select(
       _db.simulatorTrainings,
     )..where((t) => t.id.equals(simulatorId))).getSingleOrNull();
   }
 
+  @override
   Future<SimulatorEditData?> loadSimulatorEditData(int simulatorId) async {
     final simulatorTraining = await findSimulatorTrainingById(simulatorId);
     if (simulatorTraining == null) return null;
@@ -153,6 +164,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     );
   }
 
+  @override
   Future<List<SimulatorCrewAssignment>> fetchSimulatorCrewAssignments(
     int simulatorId,
   ) {
@@ -161,6 +173,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     )..where((t) => t.simulatorId.equals(simulatorId))).get();
   }
 
+  @override
   Future<void> createDuty({
     required DateTime start,
     required DateTime end,
@@ -188,6 +201,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     });
   }
 
+  @override
   Future<void> updateDuty({
     required DutyPeriod duty,
     required DateTime start,
@@ -219,6 +233,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     });
   }
 
+  @override
   Future<void> createPositioning({
     required int departureAirportId,
     required int arrivalAirportId,
@@ -247,13 +262,16 @@ class LogbookRepository implements LogbookRepositoryContract {
     });
   }
 
+  @override
   Future<void> createFlight({
     required FlightWriteInput input,
   }) async {
     await _db.transaction(() async {
       final departureTimelineId = await _db
           .into(_db.timeLines)
-          .insert(TimeLinesCompanion.insert(eventDateTime: input.departureDateTime));
+          .insert(
+            TimeLinesCompanion.insert(eventDateTime: input.departureDateTime),
+          );
       final flightId = await _db
           .into(_db.flights)
           .insert(
@@ -272,7 +290,8 @@ class LogbookRepository implements LogbookRepositoryContract {
               timeInstructorMinutes: input.timeInstructorMinutes,
               timeIFRMinutes: input.timeIFRMinutes,
               timeInstrumentMinutes: input.timeInstrumentMinutes,
-              timeSimulatedInstrumentMinutes: input.timeSimulatedInstrumentMinutes,
+              timeSimulatedInstrumentMinutes:
+                  input.timeSimulatedInstrumentMinutes,
               timeNightMinutes: input.timeNightMinutes,
               timeCrossCountryMinutes: input.timeCrossCountryMinutes,
               timeCustom1Minutes: input.timeCustom1Minutes,
@@ -300,6 +319,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     });
   }
 
+  @override
   Future<void> updateFlight({
     required Flight flight,
     required FlightWriteInput input,
@@ -310,7 +330,9 @@ class LogbookRepository implements LogbookRepositoryContract {
       )..where((t) => t.id.equals(flight.departureDateTimeId))).getSingle();
       await _db
           .update(_db.timeLines)
-          .replace(departureLine.copyWith(eventDateTime: input.departureDateTime));
+          .replace(
+            departureLine.copyWith(eventDateTime: input.departureDateTime),
+          );
       await _db
           .update(_db.flights)
           .replace(
@@ -328,7 +350,8 @@ class LogbookRepository implements LogbookRepositoryContract {
               timeInstructorMinutes: input.timeInstructorMinutes,
               timeIFRMinutes: input.timeIFRMinutes,
               timeInstrumentMinutes: input.timeInstrumentMinutes,
-              timeSimulatedInstrumentMinutes: input.timeSimulatedInstrumentMinutes,
+              timeSimulatedInstrumentMinutes:
+                  input.timeSimulatedInstrumentMinutes,
               timeNightMinutes: input.timeNightMinutes,
               timeCrossCountryMinutes: input.timeCrossCountryMinutes,
               timeCustom1Minutes: input.timeCustom1Minutes,
@@ -354,6 +377,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     });
   }
 
+  @override
   Future<void> updatePositioning({
     required Positioning positioning,
     required DateTime departureDateTime,
@@ -385,6 +409,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     });
   }
 
+  @override
   Future<void> createSimulatorTraining({
     required int aircraftId,
     required DateTime startDateTime,
@@ -416,6 +441,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     });
   }
 
+  @override
   Future<void> updateSimulatorTraining({
     required SimulatorTraining simulatorTraining,
     required int aircraftId,
@@ -494,6 +520,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     }
   }
 
+  @override
   Future<List<String>> fetchFlightCrewLabels(int flightId) async {
     final rows = await (_db.select(_db.flightCrewAssignments).join([
       innerJoin(
@@ -508,6 +535,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     }).toList();
   }
 
+  @override
   Future<List<CrewInfoItem>> fetchFlightCrewInfo(int flightId) async {
     final rows = await (_db.select(_db.flightCrewAssignments).join([
       innerJoin(
@@ -530,6 +558,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     }).toList();
   }
 
+  @override
   Future<List<String>> fetchSimulatorCrewLabels(int simulatorId) async {
     final rows =
         await (_db.select(_db.simulatorCrewAssignments).join([
@@ -548,14 +577,18 @@ class LogbookRepository implements LogbookRepositoryContract {
     }).toList();
   }
 
+  @override
   Future<List<CrewInfoItem>> fetchSimulatorCrewInfo(int simulatorId) async {
     final rows =
         await (_db.select(_db.simulatorCrewAssignments).join([
-          innerJoin(
-            _db.crew,
-            _db.crew.id.equalsExp(_db.simulatorCrewAssignments.crewId),
-          ),
-        ])..where(_db.simulatorCrewAssignments.simulatorId.equals(simulatorId))).get();
+              innerJoin(
+                _db.crew,
+                _db.crew.id.equalsExp(_db.simulatorCrewAssignments.crewId),
+              ),
+            ])..where(
+              _db.simulatorCrewAssignments.simulatorId.equals(simulatorId),
+            ))
+            .get();
     return rows.map((row) {
       final crew = row.readTable(_db.crew);
       final assignment = row.readTable(_db.simulatorCrewAssignments);
@@ -571,6 +604,7 @@ class LogbookRepository implements LogbookRepositoryContract {
     }).toList();
   }
 
+  @override
   Future<List<LogbookEntry>> fetchEntriesForAirport(int airportId) async {
     final dep = _db.alias(_db.airports, 'dep');
     final arr = _db.alias(_db.airports, 'arr');
@@ -649,14 +683,16 @@ class LogbookRepository implements LogbookRepositoryContract {
     return entries;
   }
 
+  @override
   Future<List<LogbookEntry>> fetchEntriesForAirportPage(
     int airportId, {
     required int limit,
     required int offset,
   }) async {
     if (limit <= 0) return const <LogbookEntry>[];
-    final rows = await _db.customSelect(
-      '''
+    final rows = await _db
+        .customSelect(
+          '''
 SELECT timeline_id
 FROM (
   SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
@@ -672,16 +708,17 @@ FROM (
 ORDER BY event_ts DESC, timeline_id DESC
 LIMIT ? OFFSET ?
 ''',
-      variables: [
-        Variable<int>(airportId),
-        Variable<int>(airportId),
-        Variable<int>(airportId),
-        Variable<int>(airportId),
-        Variable<int>(limit),
-        Variable<int>(offset),
-      ],
-      readsFrom: {_db.flights, _db.positionings, _db.timeLines},
-    ).get();
+          variables: [
+            Variable<int>(airportId),
+            Variable<int>(airportId),
+            Variable<int>(airportId),
+            Variable<int>(airportId),
+            Variable<int>(limit),
+            Variable<int>(offset),
+          ],
+          readsFrom: {_db.flights, _db.positionings, _db.timeLines},
+        )
+        .get();
 
     if (rows.isEmpty) return const <LogbookEntry>[];
     final timelineIds = rows
@@ -693,6 +730,16 @@ LIMIT ? OFFSET ?
     return _fetchEntriesByTimelineIds(timelineIds);
   }
 
+  @override
+  Future<LogbookFlightSummary> fetchFlightSummaryForAirport(int airportId) {
+    return _fetchFlightSummary(
+      where:
+          _db.flights.departureAirportId.equals(airportId) |
+          _db.flights.arrivalAirportId.equals(airportId),
+    );
+  }
+
+  @override
   Future<List<LogbookEntry>> fetchEntriesForAircraft(int aircraftId) async {
     final dep = _db.alias(_db.airports, 'dep');
     final arr = _db.alias(_db.airports, 'arr');
@@ -760,14 +807,16 @@ LIMIT ? OFFSET ?
     return entries;
   }
 
+  @override
   Future<List<LogbookEntry>> fetchEntriesForAircraftPage(
     int aircraftId, {
     required int limit,
     required int offset,
   }) async {
     if (limit <= 0) return const <LogbookEntry>[];
-    final rows = await _db.customSelect(
-      '''
+    final rows = await _db
+        .customSelect(
+          '''
 SELECT timeline_id
 FROM (
   SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
@@ -783,14 +832,15 @@ FROM (
 ORDER BY event_ts DESC, timeline_id DESC
 LIMIT ? OFFSET ?
 ''',
-      variables: [
-        Variable<int>(aircraftId),
-        Variable<int>(aircraftId),
-        Variable<int>(limit),
-        Variable<int>(offset),
-      ],
-      readsFrom: {_db.flights, _db.simulatorTrainings, _db.timeLines},
-    ).get();
+          variables: [
+            Variable<int>(aircraftId),
+            Variable<int>(aircraftId),
+            Variable<int>(limit),
+            Variable<int>(offset),
+          ],
+          readsFrom: {_db.flights, _db.simulatorTrainings, _db.timeLines},
+        )
+        .get();
 
     if (rows.isEmpty) return const <LogbookEntry>[];
     final timelineIds = rows
@@ -802,6 +852,14 @@ LIMIT ? OFFSET ?
     return _fetchEntriesByTimelineIds(timelineIds);
   }
 
+  @override
+  Future<LogbookFlightSummary> fetchFlightSummaryForAircraft(int aircraftId) {
+    return _fetchFlightSummary(
+      where: _db.flights.aircraftId.equals(aircraftId),
+    );
+  }
+
+  @override
   Future<List<LogbookEntry>> fetchEntriesForAircraftType(
     int aircraftTypeId,
   ) async {
@@ -871,14 +929,16 @@ LIMIT ? OFFSET ?
     return entries;
   }
 
+  @override
   Future<List<LogbookEntry>> fetchEntriesForAircraftTypePage(
     int aircraftTypeId, {
     required int limit,
     required int offset,
   }) async {
     if (limit <= 0) return const <LogbookEntry>[];
-    final rows = await _db.customSelect(
-      '''
+    final rows = await _db
+        .customSelect(
+          '''
 SELECT timeline_id
 FROM (
   SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
@@ -896,19 +956,20 @@ FROM (
 ORDER BY event_ts DESC, timeline_id DESC
 LIMIT ? OFFSET ?
 ''',
-      variables: [
-        Variable<int>(aircraftTypeId),
-        Variable<int>(aircraftTypeId),
-        Variable<int>(limit),
-        Variable<int>(offset),
-      ],
-      readsFrom: {
-        _db.flights,
-        _db.simulatorTrainings,
-        _db.aircrafts,
-        _db.timeLines,
-      },
-    ).get();
+          variables: [
+            Variable<int>(aircraftTypeId),
+            Variable<int>(aircraftTypeId),
+            Variable<int>(limit),
+            Variable<int>(offset),
+          ],
+          readsFrom: {
+            _db.flights,
+            _db.simulatorTrainings,
+            _db.aircrafts,
+            _db.timeLines,
+          },
+        )
+        .get();
 
     if (rows.isEmpty) return const <LogbookEntry>[];
     final timelineIds = rows
@@ -920,6 +981,22 @@ LIMIT ? OFFSET ?
     return _fetchEntriesByTimelineIds(timelineIds);
   }
 
+  @override
+  Future<LogbookFlightSummary> fetchFlightSummaryForAircraftType(
+    int aircraftTypeId,
+  ) {
+    return _fetchFlightSummary(
+      joinBuilder: (query) => query.join([
+        innerJoin(
+          _db.aircrafts,
+          _db.aircrafts.id.equalsExp(_db.flights.aircraftId),
+        ),
+      ]),
+      where: _db.aircrafts.aircraftTypeId.equals(aircraftTypeId),
+    );
+  }
+
+  @override
   Future<List<LogbookEntry>> fetchEntriesForAircraftTypeFamilyPage(
     List<int> aircraftTypeIds, {
     required int limit,
@@ -929,14 +1006,15 @@ LIMIT ? OFFSET ?
     if (ids.isEmpty || limit <= 0) return const <LogbookEntry>[];
     final placeholders = List.filled(ids.length, '?').join(',');
     final variables = <Variable<Object>>[
-      ...ids.map<Variable<Object>>((id) => Variable<int>(id)),
-      ...ids.map<Variable<Object>>((id) => Variable<int>(id)),
+      ...ids.map<Variable<Object>>(Variable<int>.new),
+      ...ids.map<Variable<Object>>(Variable<int>.new),
       Variable<int>(limit),
       Variable<int>(offset),
     ];
 
-    final rows = await _db.customSelect(
-      '''
+    final rows = await _db
+        .customSelect(
+          '''
 SELECT timeline_id
 FROM (
   SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
@@ -954,14 +1032,15 @@ FROM (
 ORDER BY event_ts DESC, timeline_id DESC
 LIMIT ? OFFSET ?
 ''',
-      variables: variables,
-      readsFrom: {
-        _db.flights,
-        _db.simulatorTrainings,
-        _db.aircrafts,
-        _db.timeLines,
-      },
-    ).get();
+          variables: variables,
+          readsFrom: {
+            _db.flights,
+            _db.simulatorTrainings,
+            _db.aircrafts,
+            _db.timeLines,
+          },
+        )
+        .get();
 
     if (rows.isEmpty) return const <LogbookEntry>[];
     final timelineIds = rows
@@ -973,6 +1052,24 @@ LIMIT ? OFFSET ?
     return _fetchEntriesByTimelineIds(timelineIds);
   }
 
+  @override
+  Future<LogbookFlightSummary> fetchFlightSummaryForAircraftTypeFamily(
+    List<int> aircraftTypeIds,
+  ) {
+    final ids = aircraftTypeIds.where((id) => id > 0).toSet().toList();
+    if (ids.isEmpty) return Future.value(const LogbookFlightSummary.empty());
+    return _fetchFlightSummary(
+      joinBuilder: (query) => query.join([
+        innerJoin(
+          _db.aircrafts,
+          _db.aircrafts.id.equalsExp(_db.flights.aircraftId),
+        ),
+      ]),
+      where: _db.aircrafts.aircraftTypeId.isIn(ids),
+    );
+  }
+
+  @override
   Future<List<LogbookEntry>> fetchEntriesForCrew(int crewId) async {
     final dep = _db.alias(_db.airports, 'dep');
     final arr = _db.alias(_db.airports, 'arr');
@@ -1050,14 +1147,16 @@ LIMIT ? OFFSET ?
     return entries;
   }
 
+  @override
   Future<List<LogbookEntry>> fetchEntriesForCrewPage(
     int crewId, {
     required int limit,
     required int offset,
   }) async {
     if (limit <= 0) return const <LogbookEntry>[];
-    final rows = await _db.customSelect(
-      '''
+    final rows = await _db
+        .customSelect(
+          '''
 SELECT timeline_id
 FROM (
   SELECT tl.id AS timeline_id, tl.event_date_time AS event_ts
@@ -1075,20 +1174,21 @@ FROM (
 ORDER BY event_ts DESC, timeline_id DESC
 LIMIT ? OFFSET ?
 ''',
-      variables: [
-        Variable<int>(crewId),
-        Variable<int>(crewId),
-        Variable<int>(limit),
-        Variable<int>(offset),
-      ],
-      readsFrom: {
-        _db.flights,
-        _db.flightCrewAssignments,
-        _db.simulatorTrainings,
-        _db.simulatorCrewAssignments,
-        _db.timeLines,
-      },
-    ).get();
+          variables: [
+            Variable<int>(crewId),
+            Variable<int>(crewId),
+            Variable<int>(limit),
+            Variable<int>(offset),
+          ],
+          readsFrom: {
+            _db.flights,
+            _db.flightCrewAssignments,
+            _db.simulatorTrainings,
+            _db.simulatorCrewAssignments,
+            _db.timeLines,
+          },
+        )
+        .get();
 
     if (rows.isEmpty) return const <LogbookEntry>[];
     final timelineIds = rows
@@ -1100,6 +1200,20 @@ LIMIT ? OFFSET ?
     return _fetchEntriesByTimelineIds(timelineIds);
   }
 
+  @override
+  Future<LogbookFlightSummary> fetchFlightSummaryForCrew(int crewId) {
+    return _fetchFlightSummary(
+      joinBuilder: (query) => query.join([
+        innerJoin(
+          _db.flightCrewAssignments,
+          _db.flightCrewAssignments.flightId.equalsExp(_db.flights.id),
+        ),
+      ]),
+      where: _db.flightCrewAssignments.crewId.equals(crewId),
+    );
+  }
+
+  @override
   Future<void> deleteEntry(LogbookEntry entry) async {
     switch (entry.type) {
       case LogbookEventType.flight:
@@ -1154,6 +1268,7 @@ LIMIT ? OFFSET ?
     }
   }
 
+  @override
   Future<void> deleteDutyById(int dutyId) async {
     final duty = await findDutyById(dutyId);
     if (duty == null) return;
@@ -1168,6 +1283,7 @@ LIMIT ? OFFSET ?
     });
   }
 
+  @override
   Stream<List<LogbookEntry>> watchLogbook(LogbookFilters filters) {
     if (filters.types.isEmpty) {
       return Stream.value(<LogbookEntry>[]);
@@ -1212,6 +1328,7 @@ LIMIT ? OFFSET ?
     });
   }
 
+  @override
   Future<LogbookEntry?> fetchEntryByTimelineId(int timeLineId) async {
     final departureAirport = _db.alias(_db.airports, 'departure_airports');
     final arrivalAirport = _db.alias(_db.airports, 'arrival_airports');
@@ -1252,6 +1369,7 @@ LIMIT ? OFFSET ?
     return mapped.isEmpty ? null : mapped.first;
   }
 
+  @override
   Future<List<LogbookEntry>> fetchLogbookPage(
     LogbookFilters filters, {
     required int limit,
@@ -1282,8 +1400,7 @@ LIMIT ? OFFSET ?
       dutyEnd: dutyEnd,
       simAircraft: simAircraft,
       simAircraftType: simAircraftType,
-    );
-    query.limit(limit, offset: offset);
+    )..limit(limit, offset: offset);
 
     final rows = await query.get();
     return _mapRows(
@@ -1299,7 +1416,7 @@ LIMIT ? OFFSET ?
     );
   }
 
-  JoinedSelectStatement _buildBaseQuery({
+  JoinedSelectStatement<HasResultSet, dynamic> _buildBaseQuery({
     required $AirportsTable departureAirport,
     required $AirportsTable arrivalAirport,
     required $AirportsTable positioningDeparture,
@@ -1366,7 +1483,7 @@ LIMIT ? OFFSET ?
     return query;
   }
 
-  JoinedSelectStatement _buildQuery(
+  JoinedSelectStatement<HasResultSet, dynamic> _buildQuery(
     LogbookFilters filters, {
     required $AirportsTable departureAirport,
     required $AirportsTable arrivalAirport,
@@ -1400,12 +1517,10 @@ LIMIT ? OFFSET ?
     }
     query.where(_typesPredicate(filters.types, dutyStart, dutyEnd));
 
-    query.orderBy([
+    return query..orderBy([
       OrderingTerm.desc(_db.timeLines.eventDateTime),
       OrderingTerm.desc(_db.timeLines.id),
     ]);
-
-    return query;
   }
 
   List<LogbookEntry> _mapRows(
@@ -1495,6 +1610,42 @@ LIMIT ? OFFSET ?
     return mapped;
   }
 
+  Future<LogbookFlightSummary> _fetchFlightSummary({
+    required Expression<bool> where,
+    void Function(JoinedSelectStatement<$FlightsTable, Flight>)? joinBuilder,
+  }) async {
+    final totalBlockExpr = _db.flights.timeBlockMinutes.sum();
+    final totalPicExpr = _db.flights.timePICMinutes.sum();
+    final firstFlightExpr = _db.timeLines.eventDateTime.min();
+    final lastFlightExpr = _db.timeLines.eventDateTime.max();
+
+    final query = _db.selectOnly(_db.flights)
+      ..addColumns([
+        totalBlockExpr,
+        totalPicExpr,
+        firstFlightExpr,
+        lastFlightExpr,
+      ])
+      ..join([
+        innerJoin(
+          _db.timeLines,
+          _db.timeLines.id.equalsExp(_db.flights.departureDateTimeId),
+        ),
+      ]);
+    joinBuilder?.call(query);
+    query.where(where);
+
+    final row = await query.getSingleOrNull();
+    if (row == null) return const LogbookFlightSummary.empty();
+
+    return LogbookFlightSummary(
+      totalBlockMinutes: row.read(totalBlockExpr) ?? 0,
+      totalPicMinutes: row.read(totalPicExpr) ?? 0,
+      firstFlight: row.read(firstFlightExpr),
+      lastFlight: row.read(lastFlightExpr),
+    );
+  }
+
   Expression<bool> _typesPredicate(
     Set<LogbookEventType> types,
     $DutyPeriodsTable dutyStart,
@@ -1520,6 +1671,7 @@ LIMIT ? OFFSET ?
     return row;
   }
 
+  @override
   Future<DateTime?> fetchFirstEventDate() async {
     final row =
         await (_db.select(_db.timeLines)

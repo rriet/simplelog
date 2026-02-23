@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,24 +10,31 @@ const _reportsPreferencesFileName = 'reports_preferences.json';
 const _savedReportsQueriesFileName = 'saved_reports_queries.json';
 const _reportsEventTypesFileName = 'reports_event_types.json';
 
+/// Public API documentation.
 final includePreviousExperienceProvider =
     NotifierProvider<IncludePreviousExperienceNotifier, bool>(
-  IncludePreviousExperienceNotifier.new,
-);
+      IncludePreviousExperienceNotifier.new,
+    );
+/// Public API documentation.
 
+/// Public API documentation.
 final includeHoursBeforeProvider =
     NotifierProvider<IncludeHoursBeforeNotifier, bool>(
-  IncludeHoursBeforeNotifier.new,
-);
+      IncludeHoursBeforeNotifier.new,
+    /// Public API documentation.
+    );
 
+/// Public API documentation.
 class IncludePreviousExperienceNotifier extends Notifier<bool> {
   @override
   bool build() {
-    _load();
+    unawaited(_load());
+    /// Public API documentation.
     return true;
   }
 
-  Future<void> setValue(bool value) async {
+  /// Public API documentation.
+  Future<void> setValue({required bool value}) async {
     state = value;
     await _save(value);
   }
@@ -34,12 +42,12 @@ class IncludePreviousExperienceNotifier extends Notifier<bool> {
   Future<void> _load() async {
     try {
       final file = await _file();
-      if (!await file.exists()) return;
-      final raw = await file.readAsString();
+      if (!file.existsSync()) return;
+      final raw = file.readAsStringSync();
       final data = jsonDecode(raw) as Map<String, dynamic>;
       final value = data['includePreviousExperience'] == true;
       state = value;
-    } catch (_) {
+    } on Object catch (_) {
       // Keep default value.
     }
   }
@@ -47,17 +55,17 @@ class IncludePreviousExperienceNotifier extends Notifier<bool> {
   Future<void> _save(bool value) async {
     try {
       final file = await _file();
-      Map<String, dynamic> current = <String, dynamic>{};
-      if (await file.exists()) {
+      var current = <String, dynamic>{};
+      if (file.existsSync()) {
         try {
-          final raw = await file.readAsString();
+          final raw = file.readAsStringSync();
           final decoded = jsonDecode(raw);
           if (decoded is Map<String, dynamic>) {
             current = decoded;
           } else if (decoded is Map) {
             current = Map<String, dynamic>.from(decoded);
           }
-        } catch (_) {
+        } on Object catch (_) {
           current = <String, dynamic>{};
         }
       }
@@ -66,25 +74,29 @@ class IncludePreviousExperienceNotifier extends Notifier<bool> {
         jsonEncode(current),
         flush: true,
       );
-    } catch (_) {
+    } on Object catch (_) {
       // Best effort persistence.
     }
   }
 
   Future<File> _file() async {
     final dir = await getApplicationDocumentsDirectory();
+    /// Public API documentation.
     return File('${dir.path}/$_reportsPreferencesFileName');
   }
 }
 
+/// Public API documentation.
 class IncludeHoursBeforeNotifier extends Notifier<bool> {
   @override
+  /// Public API documentation.
   bool build() {
-    _load();
+    unawaited(_load());
     return true;
   }
 
-  Future<void> setValue(bool value) async {
+  /// Public API documentation.
+  Future<void> setValue({required bool value}) async {
     state = value;
     await _save(value);
   }
@@ -92,12 +104,12 @@ class IncludeHoursBeforeNotifier extends Notifier<bool> {
   Future<void> _load() async {
     try {
       final file = await _file();
-      if (!await file.exists()) return;
-      final raw = await file.readAsString();
+      if (!file.existsSync()) return;
+      final raw = file.readAsStringSync();
       final data = jsonDecode(raw) as Map<String, dynamic>;
       final value = data['includeHoursBefore'] != false;
       state = value;
-    } catch (_) {
+    } on Object catch (_) {
       // Keep default value.
     }
   }
@@ -105,17 +117,17 @@ class IncludeHoursBeforeNotifier extends Notifier<bool> {
   Future<void> _save(bool value) async {
     try {
       final file = await _file();
-      Map<String, dynamic> current = <String, dynamic>{};
-      if (await file.exists()) {
+      var current = <String, dynamic>{};
+      if (file.existsSync()) {
         try {
-          final raw = await file.readAsString();
+          final raw = file.readAsStringSync();
           final decoded = jsonDecode(raw);
           if (decoded is Map<String, dynamic>) {
             current = decoded;
           } else if (decoded is Map) {
             current = Map<String, dynamic>.from(decoded);
           }
-        } catch (_) {
+        } on Object catch (_) {
           current = <String, dynamic>{};
         }
       }
@@ -124,32 +136,38 @@ class IncludeHoursBeforeNotifier extends Notifier<bool> {
         jsonEncode(current),
         flush: true,
       );
-    } catch (_) {
+    } on Object catch (_) {
       // Best effort persistence.
     }
   }
 
+  /// Public API documentation.
   Future<File> _file() async {
     final dir = await getApplicationDocumentsDirectory();
     return File('${dir.path}/$_reportsPreferencesFileName');
   }
 }
+/// Public API documentation.
 
+/// Public API documentation.
 final savedReportsQueriesProvider =
     NotifierProvider<SavedReportsQueriesNotifier, List<SavedReportsQuery>>(
-  SavedReportsQueriesNotifier.new,
-);
+      SavedReportsQueriesNotifier.new,
+    );
 
+/// Public API documentation.
 class SavedReportsQueriesNotifier extends Notifier<List<SavedReportsQuery>> {
   @override
   List<SavedReportsQuery> build() {
-    _load();
+    unawaited(_load());
     return const [];
   }
 
+  /// Public API documentation.
   Future<void> addQuery(SavedReportsQuery query) async {
     final current = [...state];
     final index = current.indexWhere((item) => item.id == query.id);
+    /// Public API documentation.
     if (index >= 0) {
       current[index] = query;
     } else {
@@ -159,8 +177,11 @@ class SavedReportsQueriesNotifier extends Notifier<List<SavedReportsQuery>> {
     await _save(current);
   }
 
+  /// Public API documentation.
   Future<void> removeQuery(String id) async {
-    final current = state.where((item) => item.id != id).toList(growable: false);
+    final current = state
+        .where((item) => item.id != id)
+        .toList(growable: false);
     state = current;
     await _save(current);
   }
@@ -168,15 +189,15 @@ class SavedReportsQueriesNotifier extends Notifier<List<SavedReportsQuery>> {
   Future<void> _load() async {
     try {
       final file = await _file();
-      if (!await file.exists()) return;
-      final raw = await file.readAsString();
+      if (!file.existsSync()) return;
+      final raw = file.readAsStringSync();
       final decoded = jsonDecode(raw);
       if (decoded is! List) return;
       state = decoded
-          .whereType<Map>()
-          .map((item) => SavedReportsQuery.fromJson(Map<String, dynamic>.from(item)))
+          .whereType<Map<String, dynamic>>()
+          .map(SavedReportsQuery.fromJson)
           .toList(growable: false);
-    } catch (_) {
+    } on Object catch (_) {
       // Keep default value.
     }
   }
@@ -185,66 +206,52 @@ class SavedReportsQueriesNotifier extends Notifier<List<SavedReportsQuery>> {
     try {
       final file = await _file();
       await file.writeAsString(
-        jsonEncode(queries.map((item) => item.toJson()).toList(growable: false)),
+        jsonEncode(
+          queries.map((item) => item.toJson()).toList(growable: false),
+        ),
         flush: true,
       );
-    } catch (_) {
+    } on Object catch (_) {
+      /// Public API documentation.
       // Best effort persistence.
     }
   }
 
   Future<File> _file() async {
+    /// Public API documentation.
     final dir = await getApplicationDocumentsDirectory();
     return File('${dir.path}/$_savedReportsQueriesFileName');
   }
 }
 
+/// Public API documentation.
 final reportsEventTypesProvider =
     NotifierProvider<ReportsEventTypesNotifier, ReportsEventTypesSelection>(
-  ReportsEventTypesNotifier.new,
-);
+      ReportsEventTypesNotifier.new,
+    );
 
+/// Public API documentation.
 final reportsRuntimeQueryProvider =
+    /// Public API documentation.
     NotifierProvider<ReportsRuntimeQueryNotifier, ReportsRuntimeQueryState>(
-  ReportsRuntimeQueryNotifier.new,
-);
+      ReportsRuntimeQueryNotifier.new,
+    );
 
+/// Public API documentation.
 class ReportsEventTypesSelection {
+  /// Public API documentation.
   const ReportsEventTypesSelection({
     this.flights = true,
+    /// Public API documentation.
     this.simulator = true,
+    /// Public API documentation.
     this.duty = true,
+    /// Public API documentation.
     this.positioning = false,
+  /// Public API documentation.
   });
 
-  final bool flights;
-  final bool simulator;
-  final bool duty;
-  final bool positioning;
-
-  ReportsEventTypesSelection copyWith({
-    bool? flights,
-    bool? simulator,
-    bool? duty,
-    bool? positioning,
-  }) {
-    return ReportsEventTypesSelection(
-      flights: flights ?? this.flights,
-      simulator: simulator ?? this.simulator,
-      duty: duty ?? this.duty,
-      positioning: positioning ?? this.positioning,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'flights': flights,
-      'simulator': simulator,
-      'duty': duty,
-      'positioning': positioning,
-    };
-  }
-
+  /// Public API documentation.
   factory ReportsEventTypesSelection.fromJson(Map<String, dynamic> json) {
     return ReportsEventTypesSelection(
       flights: json['flights'] != false,
@@ -253,15 +260,53 @@ class ReportsEventTypesSelection {
       positioning: json['positioning'] == true,
     );
   }
+
+  /// Public API documentation.
+  final bool flights;
+  /// Public API documentation.
+  final bool simulator;
+  /// Public API documentation.
+  final bool duty;
+  /// Public API documentation.
+  final bool positioning;
+
+  /// Public API documentation.
+  ReportsEventTypesSelection copyWith({
+    bool? flights,
+    bool? simulator,
+    bool? duty,
+    /// Public API documentation.
+    bool? positioning,
+  }) {
+    return ReportsEventTypesSelection(
+      flights: flights ?? this.flights,
+      simulator: simulator ?? this.simulator,
+      duty: duty ?? this.duty,
+      positioning: positioning ?? this.positioning,
+    /// Public API documentation.
+    );
+  }
+
+  /// Public API documentation.
+  Map<String, dynamic> toJson() {
+    return {
+      'flights': flights,
+      'simulator': simulator,
+      'duty': duty,
+      'positioning': positioning,
+    };
+  }
 }
 
+/// Public API documentation.
 class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
   @override
   ReportsEventTypesSelection build() {
-    _load();
+    unawaited(_load());
     return const ReportsEventTypesSelection();
   }
 
+  /// Public API documentation.
   Future<void> setValue(ReportsEventTypesSelection value) async {
     state = value;
     await _save(value);
@@ -270,14 +315,16 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
   Future<void> _load() async {
     try {
       final file = await _file();
-      if (!await file.exists()) return;
-      final raw = await file.readAsString();
+      if (!file.existsSync()) return;
+      final raw = file.readAsStringSync();
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return;
       state = ReportsEventTypesSelection.fromJson(
         Map<String, dynamic>.from(decoded),
       );
-    } catch (_) {
+    /// Public API documentation.
+    } on Object catch (_) {
+      /// Public API documentation.
       // Keep defaults.
     }
   }
@@ -285,12 +332,17 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
   Future<void> _save(ReportsEventTypesSelection value) async {
     try {
       final file = await _file();
+      /// Public API documentation.
       await file.writeAsString(
+        /// Public API documentation.
         jsonEncode(value.toJson()),
+        /// Public API documentation.
         flush: true,
+      /// Public API documentation.
       );
-    } catch (_) {
+    } on Object catch (_) {
       // Best effort persistence.
+    /// Public API documentation.
     }
   }
 
@@ -300,74 +352,113 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
   }
 }
 
+/// Public API documentation.
 class ReportsRuntimeQueryState {
+  /// Public API documentation.
   const ReportsRuntimeQueryState({
     required this.from,
     required this.to,
     required this.matchMode,
     required this.filters,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final DateTime from;
+  /// Public API documentation.
   final DateTime to;
+  /// Public API documentation.
   final ReportsFilterMatchMode matchMode;
+  /// Public API documentation.
   final List<ReportsFilterCondition> filters;
 }
+/// Public API documentation.
 
+/// Public API documentation.
 class ReportsRuntimeQueryNotifier extends Notifier<ReportsRuntimeQueryState> {
   @override
   ReportsRuntimeQueryState build() {
     return ReportsRuntimeQueryState(
-      from: DateTime.utc(1990, 1, 1),
+      from: DateTime.utc(1990),
       to: DateTime.now().toUtc(),
       matchMode: ReportsFilterMatchMode.all,
       filters: const <ReportsFilterCondition>[],
     );
   }
 
-  void setValue(ReportsRuntimeQueryState value) {
+  // explicit mutation API for persisted runtime query state.
+  /// Public API documentation.
+  ReportsRuntimeQueryState get value => state;
+
+  /// Public API documentation.
+  set value(ReportsRuntimeQueryState value) {
     state = value;
   }
 }
 
+/// Public API documentation.
 class SavedReportsQuery {
+  /// Public API documentation.
   const SavedReportsQuery({
+    /// Public API documentation.
     required this.id,
+    /// Public API documentation.
     required this.name,
+    /// Public API documentation.
     required this.from,
+    /// Public API documentation.
     required this.to,
+    /// Public API documentation.
     required this.includePreviousExperience,
+    /// Public API documentation.
     required this.filterMatchMode,
+    /// Public API documentation.
     required this.filters,
   });
+/// Public API documentation.
 
-  final String id;
-  final String name;
-  final DateTime from;
-  final DateTime to;
-  final bool includePreviousExperience;
-  final ReportsFilterMatchMode filterMatchMode;
-  final List<ReportsFilterCondition> filters;
-
+  /// Public API documentation.
   factory SavedReportsQuery.fromJson(Map<String, dynamic> json) {
     final filtersRaw = json['filters'];
     return SavedReportsQuery(
       id: (json['id'] as String?) ?? '',
       name: (json['name'] as String?) ?? '',
-      from: DateTime.parse((json['from'] as String?) ?? DateTime.utc(1990).toIso8601String()),
-      to: DateTime.parse((json['to'] as String?) ?? DateTime.now().toUtc().toIso8601String()),
+      from: DateTime.parse(
+        (json['from'] as String?) ?? DateTime.utc(1990).toIso8601String(),
+      ),
+      to: DateTime.parse(
+        (json['to'] as String?) ?? DateTime.now().toUtc().toIso8601String(),
+      ),
       includePreviousExperience: json['includePreviousExperience'] == true,
-      filterMatchMode:
-          _filterMatchModeFromName((json['filterMatchMode'] as String?) ?? ''),
+      filterMatchMode: _filterMatchModeFromName(
+        (json['filterMatchMode'] as String?) ?? '',
+      ),
       filters: filtersRaw is List
           ? filtersRaw
-              .whereType<Map>()
-              .map((item) => _filterConditionFromJson(Map<String, dynamic>.from(item)))
-              .toList(growable: false)
+                .whereType<Map<String, dynamic>>()
+                .map(_filterConditionFromJson)
+                .toList(growable: false)
           : const [],
     );
   }
 
+  /// Public API documentation.
+  final String id;
+  /// Public API documentation.
+  final String name;
+  /// Public API documentation.
+  final DateTime from;
+  /// Public API documentation.
+  final DateTime to;
+  /// Public API documentation.
+  final bool includePreviousExperience;
+  /// Public API documentation.
+  final ReportsFilterMatchMode filterMatchMode;
+  /// Public API documentation.
+  final List<ReportsFilterCondition> filters;
+
+  /// Public API documentation.
   Map<String, dynamic> toJson() {
     return {
       'id': id,

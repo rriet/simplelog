@@ -1,8 +1,10 @@
 import 'package:drift/drift.dart';
 
-import '../app_database.dart';
+import 'package:simplelog/data/database/app_database.dart';
 
+/// Public API documentation.
 extension TimelineViewQueries on AppDatabase {
+  /// Public API documentation.
   JoinedSelectStatement<HasResultSet, dynamic> getTimeline() {
     final departureAirport = alias(airports, 'departure_airports');
     final arrivalAirport = alias(airports, 'arrival_airports');

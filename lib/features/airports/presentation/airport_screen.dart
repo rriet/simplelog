@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/maps/map_tile_caching.dart';
-import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
-import 'package:simplelog/features/airports/application/providers/airports_feature_providers.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/models/airport_extensions.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/data/models/airport_row.dart';
-import 'package:simplelog/data/models/airport_extensions.dart';
-import 'package:simplelog/core/constants/app_constants.dart';
+import 'package:simplelog/features/airports/application/providers/airports_feature_providers.dart';
+import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
+import 'package:simplelog/features/airports/presentation/widgets/airport_filters_dialog.dart';
+import 'package:simplelog/features/airports/presentation/widgets/airport_list.dart';
+import 'package:simplelog/features/airports/presentation/widgets/airport_search_bar.dart';
+import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_lazy_panel.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
-import 'airport_edit_screen.dart';
-import 'widgets/airport_search_bar.dart';
-import 'widgets/airport_list.dart';
-import 'widgets/airport_filters_dialog.dart';
 
+/// Public API documentation.
 class AirportsScreen extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const AirportsScreen({super.key});
 
   @override
@@ -113,10 +114,10 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
           child: Column(
             children: [
               ListTile(
-                title: const Text('Airport'),
+                title: Text(l10n.screenAirports),
                 trailing: TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Done'),
+                  child: Text(l10n.okAction),
                 ),
               ),
               const Divider(height: 1),
@@ -145,10 +146,14 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
                         child: LogbookEntriesLazyPanel(
                           pageLoader: (limit, offset) =>
                               logbookUseCases.fetchEntriesForAirportPage(
-                            airport.id,
-                            limit: limit,
-                            offset: offset,
-                          ),
+                                airport.id,
+                                limit: limit,
+                                offset: offset,
+                              ),
+                          summaryLoader: () =>
+                              logbookUseCases.fetchFlightSummaryForAirport(
+                                airport.id,
+                              ),
                           onEntryTap: (entry) => LogbookEntryDialogs.show(
                             context,
                             entry: entry,
@@ -169,13 +174,9 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
 
   Future<void> _createAirport() async {
     final isCompact = MediaQuery.of(context).size.width < 600;
-    final placeholder = Airport(
+    const placeholder = Airport(
       id: kPlaceholderId,
       icao: '',
-      iata: null,
-      name: null,
-      city: null,
-      country: null,
       latitude: 0,
       longitude: 0,
       isFavorite: false,
@@ -184,8 +185,9 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
 
     if (isCompact) {
       await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => AirportEditScreen(item: placeholder, isCreate: true),
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              const AirportEditScreen(item: placeholder, isCreate: true),
         ),
       );
       return;
@@ -201,7 +203,7 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
               maxWidth: 520,
               maxHeight: size.height * 0.9,
             ),
-            child: AirportEditScreen(item: placeholder, isCreate: true),
+            child: const AirportEditScreen(item: placeholder, isCreate: true),
           ),
         );
       },
@@ -213,7 +215,9 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
 
     if (isCompact) {
       await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => AirportEditScreen(item: row.airport)),
+        MaterialPageRoute<void>(
+          builder: (_) => AirportEditScreen(item: row.airport),
+        ),
       );
       return;
     }
@@ -241,17 +245,17 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
       case AirportSearchField.all:
         return l10n.searchAirports;
       case AirportSearchField.icao:
-        return 'Search ICAO';
+        return l10n.searchIcao;
       case AirportSearchField.iata:
-        return 'Search IATA';
+        return l10n.searchIata;
       case AirportSearchField.icaoOrIata:
-        return 'Search ICAO/IATA';
+        return l10n.searchIcaoIata;
       case AirportSearchField.name:
-        return 'Search Name';
+        return l10n.searchName;
       case AirportSearchField.city:
-        return 'Search City';
+        return l10n.searchCity;
       case AirportSearchField.country:
-        return 'Search Country';
+        return l10n.searchCountry;
     }
   }
 
@@ -351,6 +355,7 @@ Future<void> _showAirportExpandedMapDialog(
   BuildContext context,
   LatLng center,
 ) async {
+  final l10n = AppLocalizations.of(context)!;
   final controller = MapController();
   await showDialog<void>(
     context: context,
@@ -361,10 +366,10 @@ Future<void> _showAirportExpandedMapDialog(
         child: Column(
           children: [
             ListTile(
-              title: const Text('Map'),
+              title: Text(l10n.mapTitle),
               trailing: TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Done'),
+                child: Text(l10n.okAction),
               ),
             ),
             const Divider(height: 1),
@@ -469,9 +474,9 @@ String _formatDms(double value, {required bool isLat}) {
   final minutes = minutesFull.floor();
   final seconds = ((minutesFull - minutes) * 60).round();
   final direction = isLat ? (value >= 0 ? 'N' : 'S') : (value >= 0 ? 'E' : 'W');
-  final degSymbol = '\u00B0';
-  final minSymbol = '\u2032';
-  final secSymbol = '\u2033';
+  const degSymbol = '\u00B0';
+  const minSymbol = '\u2032';
+  const secSymbol = '\u2033';
   final degText = degrees.toString().padLeft(isLat ? 2 : 3, '0');
   final minText = minutes.toString().padLeft(2, '0');
   final secText = seconds.toString().padLeft(2, '0');

@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/features/airports/application/providers/airports_feature_providers.dart';
+import 'package:simplelog/features/airports/presentation/widgets/airport_filters_dialog.dart';
+/// Public API documentation.
 import 'package:simplelog/presentation/shared/widgets/entity_picker_dialog.dart';
+/// Public API documentation.
 
-import 'airport_filters_dialog.dart';
-
+/// Public API documentation.
 class AirportPickerDialog extends StatelessWidget {
+  /// Public API documentation.
   const AirportPickerDialog({
-    super.key,
+    /// Public API documentation.
     required this.title,
+    super.key,
+  /// Public API documentation.
   });
 
+  /// Public API documentation.
   final String title;
 
+  /// Public API documentation.
   static Future<Airport?> show(
     BuildContext context, {
     required String title,
@@ -33,28 +41,38 @@ class AirportPickerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return EntityPickerDialog<Airport>(
       title: title,
       searchLabelBuilder: (ref) {
         final filters = ref.watch(airportFiltersProvider);
-        return _searchLabel(filters.searchField);
+        return _searchLabel(l10n, filters.searchField);
       },
       itemsBuilder: (ref, query) {
         final filters = ref.watch(airportFiltersProvider);
-        return ref.watch(
-          airportsProvider(AirportSearchParams(query: query, filters: filters)),
-        ).whenData((rows) => rows.map((row) => row.airport).toList());
+        final rowsAsync = ref.watch(
+          airportsProvider(
+            AirportSearchParams(query: query, filters: filters),
+          ),
+        );
+        return rowsAsync.when(
+          data: (rows) => AsyncValue<List<Airport>>.data(
+            rows.map((row) => row.airport).toList(growable: false),
+          ),
+          loading: () => const AsyncValue<List<Airport>>.loading(),
+          error: AsyncValue<List<Airport>>.error,
+        );
       },
       itemKey: (airport) => airport.id,
-      itemTitle: (airport) =>
-          '${airport.icao}${(airport.iata ?? '').isEmpty ? '' : ' / ${airport.iata}'}',
+      itemTitle: (airport) => '${airport.icao}'
+          '${(airport.iata ?? '').isEmpty ? '' : ' / ${airport.iata}'}',
       itemSubtitle: (airport) => [
         if ((airport.name ?? '').trim().isNotEmpty) airport.name!,
         if ((airport.city ?? '').trim().isNotEmpty) airport.city!,
         if ((airport.country ?? '').trim().isNotEmpty) airport.country!,
       ].join(' • '),
       searchTrailingBuilder: (context, ref) => IconButton(
-        tooltip: 'Filters',
+        tooltip: l10n.logbookFilterAction,
         onPressed: () async {
           final current = ref.read(airportFiltersProvider);
           final updated = await AirportFiltersDialog.show(
@@ -68,31 +86,33 @@ class AirportPickerDialog extends StatelessWidget {
       ),
       isFavorite: (airport) => airport.isFavorite,
       onToggleFavorite: (ref, airport) async {
-        await ref.read(airportControllerProvider.notifier).toggleFavorite(
+        await ref
+            .read(airportControllerProvider.notifier)
+            .toggleFavorite(
               airport,
             );
       },
-      emptyText: 'No airports found',
-      errorBuilder: (_, _) => const Center(child: Text('Error loading airports')),
+      emptyText: l10n.airportEmptyResults,
+      errorBuilder: (_, _) => Center(child: Text(l10n.airportLoadError)),
     );
   }
 
-  String _searchLabel(AirportSearchField field) {
+  String _searchLabel(AppLocalizations l10n, AirportSearchField field) {
     switch (field) {
       case AirportSearchField.all:
-        return 'Search airports';
+        return l10n.searchAirports;
       case AirportSearchField.icao:
-        return 'Search ICAO';
+        return l10n.searchIcao;
       case AirportSearchField.iata:
-        return 'Search IATA';
+        return l10n.searchIata;
       case AirportSearchField.icaoOrIata:
-        return 'Search ICAO/IATA';
+        return l10n.searchIcaoIata;
       case AirportSearchField.name:
-        return 'Search name';
+        return l10n.searchName;
       case AirportSearchField.city:
-        return 'Search city';
+        return l10n.searchCity;
       case AirportSearchField.country:
-        return 'Search country';
+        return l10n.searchCountry;
     }
   }
 }

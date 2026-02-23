@@ -1,34 +1,44 @@
-import 'package:drift/drift.dart';
 import 'dart:math' as math;
+
+import 'package:drift/drift.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/features/dashboard/domain/dashboard_models.dart';
 
+/// Public API documentation.
 class DashboardRepository {
+  /// Public API documentation.
   DashboardRepository(this._db);
 
   final AppDatabase _db;
+  /// Public API documentation.
   String? _cachedFlightsIfrColumnName;
 
+  /// Public API documentation.
   Stream<List<LimitRule>> watchRules() {
     return (_db.select(
       _db.limitRules,
+    /// Public API documentation.
     )..orderBy([(t) => OrderingTerm.asc(t.ruleName)])).watch();
   }
 
+  /// Public API documentation.
   Future<int> createRule(LimitRulesCompanion companion) {
     return _db.into(_db.limitRules).insert(companion);
   }
 
+  /// Public API documentation.
   Future<void> updateRule(LimitRule rule) async {
     await _db.update(_db.limitRules).replace(rule);
   }
 
+  /// Public API documentation.
   Future<void> deleteRule(int ruleId) async {
     await (_db.delete(
       _db.limitRules,
     )..where((t) => t.ruleId.equals(ruleId))).go();
   }
 
+  /// Public API documentation.
   Future<DashboardRuleDetails> loadRuleDetails(LimitRule rule) async {
     final now = DateTime.now().toUtc();
     final window = _resolveWindow(now, rule.windowType, rule.windowValue);
@@ -79,6 +89,7 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
         flightMinutes: _readInteger(flightsTotalsRow, 'flight_minutes'),
         nightMinutes: _readInteger(flightsTotalsRow, 'night_minutes'),
         ifrMinutes: _readInteger(flightsTotalsRow, 'ifr_minutes'),
+        /// Public API documentation.
         instrumentMinutes: _readInteger(flightsTotalsRow, 'instrument_minutes'),
         dutyMinutes: _readInteger(dutyTotalsRow, 'duty_minutes'),
         landings: _readInteger(flightsTotalsRow, 'landings'),
@@ -86,6 +97,7 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
     );
   }
 
+  /// Public API documentation.
   Stream<List<DashboardRuleCard>> watchDashboardCards() {
     return _db
         .customSelect(
@@ -103,8 +115,8 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
 
   Future<List<DashboardRuleCard>> _computeCards() async {
     final rulesQuery = _db.select(_db.limitRules)
-      ..where((t) => t.active.equals(true));
-    rulesQuery.orderBy([(t) => OrderingTerm.asc(t.ruleName)]);
+      ..where((t) => t.active.equals(true))
+      ..orderBy([(t) => OrderingTerm.asc(t.ruleName)]);
 
     final rules = await rulesQuery.get();
     if (rules.isEmpty) return const [];
@@ -273,36 +285,31 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
       case 'calendar_month':
       case 'calendar_months':
         return (
-          DateTime.utc(now.year, now.month - (v - 1), 1),
+          DateTime.utc(now.year, now.month - (v - 1)),
           DateTime.utc(
             now.year,
             now.month + 1,
-            1,
           ).subtract(const Duration(milliseconds: 1)),
         );
       case 'calendar_year':
       case 'calendar_years':
         return (
-          DateTime.utc(now.year - (v - 1), 1, 1),
+          DateTime.utc(now.year - (v - 1)),
           DateTime.utc(
             now.year + 1,
-            1,
-            1,
           ).subtract(const Duration(milliseconds: 1)),
         );
       case 'calendar_quarter':
         final quarterStartMonth = ((now.month - 1) ~/ 3) * 3 + 1;
-        final quarterStart = DateTime.utc(now.year, quarterStartMonth, 1);
+        final quarterStart = DateTime.utc(now.year, quarterStartMonth);
         return (
           DateTime.utc(
             quarterStart.year,
             quarterStart.month - (3 * (v - 1)),
-            1,
           ),
           DateTime.utc(
             now.year,
             quarterStartMonth + 3,
-            1,
           ).subtract(const Duration(milliseconds: 1)),
         );
       default:
@@ -452,11 +459,10 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
   }
 
   int _daysInMonth(int year, int month) {
-    final firstDayThisMonth = DateTime.utc(year, month, 1);
+    final firstDayThisMonth = DateTime.utc(year, month);
     final firstDayNextMonth = DateTime.utc(
       firstDayThisMonth.year,
       firstDayThisMonth.month + 1,
-      1,
     );
     return firstDayNextMonth.subtract(const Duration(days: 1)).day;
   }

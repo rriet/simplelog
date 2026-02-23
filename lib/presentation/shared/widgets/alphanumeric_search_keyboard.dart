@@ -1,24 +1,33 @@
 import 'package:flutter/material.dart';
 
+/// Public API documentation.
 class AlphanumericSearchKeyboard extends StatelessWidget {
+  /// Public API documentation.
   const AlphanumericSearchKeyboard({
-    super.key,
     required this.onText,
     required this.onBackspace,
     required this.onEnter,
+    super.key,
     this.onSpace,
     this.onHide,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final ValueChanged<String> onText;
+  /// Public API documentation.
   final VoidCallback onBackspace;
+  /// Public API documentation.
   final VoidCallback onEnter;
+  /// Public API documentation.
   final VoidCallback? onSpace;
+  /// Public API documentation.
   final VoidCallback? onHide;
 
   static const _gap = 8.0;
   static const _rowHeight = 56.0;
-  static const _bottomSpacer = _rowHeight * 2 / 3;
+  static const double _bottomSpacer = _rowHeight * 2 / 3;
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +105,8 @@ class AlphanumericSearchKeyboard extends StatelessWidget {
           }
           final count = specs.length;
           if (count == 0) return const SizedBox.shrink();
-          final maxFitWidth = (constraints.maxWidth - (count - 1) * _gap) / count;
+          final maxFitWidth =
+              (constraints.maxWidth - (count - 1) * _gap) / count;
           if (maxFitWidth <= 0) {
             return _buildFlexibleRow(specs);
           }
@@ -104,7 +114,10 @@ class AlphanumericSearchKeyboard extends StatelessWidget {
           final minWidth = maxFitWidth < 36.0 ? maxFitWidth : 36.0;
           final keyWidth = targetWidth.clamp(minWidth, maxFitWidth);
           final rowWidth = count * keyWidth + (count - 1) * _gap;
-          final horizontalInset = ((constraints.maxWidth - rowWidth) / 2).clamp(0.0, double.infinity);
+          final horizontalInset = ((constraints.maxWidth - rowWidth) / 2).clamp(
+            0.0,
+            double.infinity,
+          );
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: horizontalInset),
             child: Row(
@@ -176,7 +189,9 @@ class AlphanumericSearchKeyboard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       backgroundColor: spec.isPrimary
           ? const Color(0xFF0A84FF)
-          : (spec.isSpecial ? const Color(0xFFA5ADB8) : const Color(0xFFF2F2F3)),
+          : (spec.isSpecial
+                ? const Color(0xFFA5ADB8)
+                : const Color(0xFFF2F2F3)),
       foregroundColor: spec.isPrimary ? Colors.white : Colors.black87,
     );
 

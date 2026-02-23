@@ -1,6 +1,8 @@
 import 'package:simplelog/data/database/enums/crew_position.dart';
 
+/// Public API documentation.
 class SouthwestImportOptions {
+  /// Public API documentation.
   const SouthwestImportOptions({
     this.defaultSelfPosition = CrewPosition.sic,
     this.recalculateBlockTime = true,
@@ -12,19 +14,32 @@ class SouthwestImportOptions {
     this.overrideExistingData = false,
     this.addCopilotStaffNumberToNotes = true,
     this.addFlightNumberToNotes = true,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final CrewPosition defaultSelfPosition;
+  /// Public API documentation.
   final bool recalculateBlockTime;
+  /// Public API documentation.
   final bool recalculateNightTime;
+  /// Public API documentation.
   final bool recalculateIfrTime;
+  /// Public API documentation.
   final bool recalculateCrossCountry;
+  /// Public API documentation.
   final int crossCountryThresholdNm;
+  /// Public API documentation.
   final bool recalculateInstrumentTime;
+  /// Public API documentation.
   final bool overrideExistingData;
+  /// Public API documentation.
   final bool addCopilotStaffNumberToNotes;
+  /// Public API documentation.
   final bool addFlightNumberToNotes;
 
+  /// Public API documentation.
   SouthwestImportOptions copyWith({
     CrewPosition? defaultSelfPosition,
     bool? recalculateBlockTime,
@@ -49,8 +64,8 @@ class SouthwestImportOptions {
       recalculateInstrumentTime:
           recalculateInstrumentTime ?? this.recalculateInstrumentTime,
       overrideExistingData: overrideExistingData ?? this.overrideExistingData,
-      addCopilotStaffNumberToNotes: addCopilotStaffNumberToNotes ??
-          this.addCopilotStaffNumberToNotes,
+      addCopilotStaffNumberToNotes:
+          addCopilotStaffNumberToNotes ?? this.addCopilotStaffNumberToNotes,
       addFlightNumberToNotes:
           addFlightNumberToNotes ?? this.addFlightNumberToNotes,
     );

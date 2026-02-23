@@ -3,28 +3,39 @@ import 'package:intl/intl.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/database/app_database.dart';
-import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/airport_extensions.dart';
+import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
+/// Public API documentation.
 class LogbookListItem extends StatelessWidget {
+  /// Public API documentation.
   const LogbookListItem({
-    super.key,
     required this.entry,
     required this.isCompact,
+    super.key,
     this.enableSlideActions = true,
     this.onEdit,
     this.onOpen,
     this.onDelete,
     this.onToggleLock,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final LogbookEntry entry;
+  /// Public API documentation.
   final bool isCompact;
+  /// Public API documentation.
   final bool enableSlideActions;
+  /// Public API documentation.
   final ValueChanged<LogbookEntry>? onEdit;
+  /// Public API documentation.
   final ValueChanged<LogbookEntry>? onOpen;
+  /// Public API documentation.
   final ValueChanged<LogbookEntry>? onDelete;
+  /// Public API documentation.
   final ValueChanged<LogbookEntry>? onToggleLock;
 
   @override
@@ -41,7 +52,8 @@ class LogbookListItem extends StatelessWidget {
         final timeText = locale.formatTimeOfDay(
           TimeOfDay(hour: dateUtc.hour, minute: dateUtc.minute),
         );
-        // Avoid right-column overflow in split view before parent breakpoints kick in.
+        // Avoid right-column overflow in split view before parent breakpoints
+        // kick in.
         final effectiveCompact = isCompact || constraints.maxWidth < 760;
 
         final eventLabel = _eventLabel(l10n, entry);
@@ -173,7 +185,7 @@ class LogbookListItem extends StatelessWidget {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SimpleTopLine(
+        const _SimpleTopLine(
           icon: Icons.airplane_ticket_outlined,
           label: 'Positioning',
         ),
@@ -283,7 +295,6 @@ class LogbookListItem extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _DateBlock(day: dayText, month: monthText),
             const SizedBox(width: 10),
@@ -338,6 +349,7 @@ class LogbookListItem extends StatelessWidget {
     final blockMinutes = flight?.timeBlockMinutes ?? 0;
     final totalBlockMinutes = flight?.timeTotalBlockMinutes ?? blockMinutes;
     final blockTime = '${_formatBlockMinutes(blockMinutes)}h';
+    final totalBlockTime = _formatBlockMinutes(totalBlockMinutes);
     final depCode = entry.departureAirport?.icao ?? '-';
     final arrCode = entry.arrivalAirport?.icao ?? '-';
 
@@ -401,8 +413,8 @@ class LogbookListItem extends StatelessWidget {
                                 TextSpan(text: blockTime),
                                 if (totalBlockMinutes != blockMinutes)
                                   TextSpan(
-                                    text:
-                                        ' (${_formatBlockMinutes(totalBlockMinutes)}h)',
+                                    text: ' ($totalBlockTime'
+                                        'h)',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodySmall,
@@ -551,7 +563,9 @@ class LogbookListItem extends StatelessWidget {
           entry.positioningDepartureAirport,
           entry.positioningArrivalAirport,
         );
-      default:
+      case LogbookEventType.simulatorTraining:
+      case LogbookEventType.dutyPeriod:
+      case LogbookEventType.unknown:
         return null;
     }
   }
@@ -692,7 +706,7 @@ class _FlightTopLine extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
-                Text('-'),
+                const Text('-'),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
@@ -724,7 +738,7 @@ class _DateBlock extends StatelessWidget {
           Theme.of(context).textTheme.headlineSmall,
         )?.copyWith(
           fontSize:
-              ((Theme.of(context).textTheme.headlineSmall?.fontSize ?? 0) + 2),
+              (Theme.of(context).textTheme.headlineSmall?.fontSize ?? 0) + 2,
         );
     final labelStyle = _ScaledText.scaledStyle(
       Theme.of(context).textTheme.labelMedium?.copyWith(

@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 
+/// Public API documentation.
 class AirportFiltersDialog extends StatefulWidget {
+  /// Public API documentation.
   const AirportFiltersDialog({
-    super.key,
     required this.initial,
+    super.key,
+  /// Public API documentation.
   });
 
+  /// Public API documentation.
   final AirportFilters initial;
 
+  /// Public API documentation.
   static Future<AirportFilters?> show(
     BuildContext context, {
     required AirportFilters initial,
@@ -38,6 +44,7 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Dialog(
       child: SizedBox(
         width: 520,
@@ -52,14 +59,17 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Airport Filters',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        l10n.airportFiltersTitle,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.of(context).pop(null),
+                      onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.close),
                     ),
                   ],
@@ -70,9 +80,9 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Order by',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                    Text(
+                      l10n.orderByLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<AirportOrderBy>(
@@ -84,7 +94,7 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
                           .map(
                             (option) => DropdownMenuItem(
                               value: option,
-                              child: Text(_orderByLabel(option)),
+                              child: Text(_orderByLabel(l10n, option)),
                             ),
                           )
                           .toList(),
@@ -96,15 +106,15 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
                     const SizedBox(height: 12),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Show only visited'),
+                      title: Text(l10n.airportShowOnlyVisited),
                       value: _showOnlyVisited,
                       onChanged: (value) =>
                           setState(() => _showOnlyVisited = value),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Search by',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                    Text(
+                      l10n.searchByLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<AirportSearchField>(
@@ -116,7 +126,7 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
                           .map(
                             (option) => DropdownMenuItem(
                               value: option,
-                              child: Text(_searchFieldLabel(option)),
+                              child: Text(_searchFieldLabel(l10n, option)),
                             ),
                           )
                           .toList(),
@@ -134,8 +144,8 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(null),
-                      child: const Text('Cancel'),
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(l10n.cancelAction),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
@@ -146,7 +156,7 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
                           showOnlyVisited: _showOnlyVisited,
                         ),
                       ),
-                      child: const Text('Apply'),
+                      child: Text(l10n.applyAction),
                     ),
                   ],
                 ),
@@ -158,43 +168,43 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
     );
   }
 
-  String _orderByLabel(AirportOrderBy orderBy) {
+  String _orderByLabel(AppLocalizations l10n, AirportOrderBy orderBy) {
     switch (orderBy) {
       case AirportOrderBy.icao:
-        return 'ICAO';
+        return l10n.fieldIcao;
       case AirportOrderBy.iata:
-        return 'IATA';
+        return l10n.fieldIata;
       case AirportOrderBy.name:
-        return 'Name';
+        return l10n.fieldName;
       case AirportOrderBy.city:
-        return 'City';
+        return l10n.fieldCity;
       case AirportOrderBy.country:
-        return 'Country';
+        return l10n.fieldCountry;
       case AirportOrderBy.landings:
-        return 'Landings';
+        return l10n.fieldLandings;
       case AirportOrderBy.takeoffs:
-        return 'TakeOffs';
+        return l10n.fieldTakeoffs;
       case AirportOrderBy.visits:
-        return 'Visits';
+        return l10n.fieldVisits;
     }
   }
 
-  String _searchFieldLabel(AirportSearchField field) {
+  String _searchFieldLabel(AppLocalizations l10n, AirportSearchField field) {
     switch (field) {
       case AirportSearchField.all:
-        return 'All';
+        return l10n.optionAll;
       case AirportSearchField.icao:
-        return 'ICAO';
+        return l10n.fieldIcao;
       case AirportSearchField.iata:
-        return 'IATA';
+        return l10n.fieldIata;
       case AirportSearchField.icaoOrIata:
-        return 'ICAO or IATA';
+        return l10n.airportSearchIcaoOrIata;
       case AirportSearchField.name:
-        return 'Name';
+        return l10n.fieldName;
       case AirportSearchField.city:
-        return 'City';
+        return l10n.fieldCity;
       case AirportSearchField.country:
-        return 'Country';
+        return l10n.fieldCountry;
     }
   }
 }

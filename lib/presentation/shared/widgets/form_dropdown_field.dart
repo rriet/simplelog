@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
 
+/// Public API documentation.
 class FormDropdownField<T> extends StatelessWidget {
+  /// Public API documentation.
   const FormDropdownField({
-    super.key,
     required this.label,
     required this.value,
     required this.items,
     required this.itemLabel,
     required this.onChanged,
+    super.key,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final String label;
+  /// Public API documentation.
   final T value;
+  /// Public API documentation.
   final List<T> items;
+  /// Public API documentation.
   final String Function(T value) itemLabel;
+  /// Public API documentation.
   final ValueChanged<T?> onChanged;
 
   @override

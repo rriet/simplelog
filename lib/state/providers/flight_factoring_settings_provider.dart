@@ -3,9 +3,12 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Public API documentation.
 const flightFactoringSettingsKey = 'flight_factoring_settings';
 
+/// Persisted calculation rules used for flight time factoring.
 class FlightFactoringSettings {
+  /// Creates factoring settings with defaults.
   const FlightFactoringSettings({
     this.crossCountryThresholdNm = 50,
     this.instrumentPercent = 0,
@@ -20,18 +23,71 @@ class FlightFactoringSettings {
     this.irp4SubtractMinutes = 0,
   });
 
+  /// Builds settings from persisted JSON.
+  factory FlightFactoringSettings.fromJson(String? raw) {
+    if (raw == null || raw.isEmpty) {
+      return const FlightFactoringSettings();
+    }
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) {
+      return const FlightFactoringSettings();
+    }
+    int readInt(String key, int fallback) {
+      final value = decoded[key];
+      if (value is int) return value;
+      if (value is num) return value.round();
+      return fallback;
+    }
+
+    return FlightFactoringSettings(
+      crossCountryThresholdNm: readInt('crossCountryThresholdNm', 50),
+      instrumentPercent: readInt('instrumentPercent', 0).clamp(0, 100),
+      instrumentMinimumMinutes: readInt('instrumentMinimumMinutes', 0),
+      instrumentSubtractMinutes: readInt('instrumentSubtractMinutes', 0),
+      ifrPercent: readInt('ifrPercent', 0).clamp(0, 100),
+      ifrMinimumMinutes: readInt('ifrMinimumMinutes', 0),
+      ifrSubtractMinutes: readInt('ifrSubtractMinutes', 0),
+      irp3Percent: readInt('irp3Percent', 100).clamp(0, 100),
+      irp3SubtractMinutes: readInt('irp3SubtractMinutes', 0),
+      irp4Percent: readInt('irp4Percent', 100).clamp(0, 100),
+      irp4SubtractMinutes: readInt('irp4SubtractMinutes', 0),
+    );
+  }
+
+  /// Minimum NM threshold to mark cross-country.
   final int crossCountryThresholdNm;
+
+  /// Instrument factoring percentage.
   final int instrumentPercent;
+
+  /// Minimum instrument minutes required after factoring.
   final int instrumentMinimumMinutes;
+
+  /// Instrument minutes subtracted before percentage.
   final int instrumentSubtractMinutes;
+
+  /// IFR factoring percentage.
   final int ifrPercent;
+
+  /// Minimum IFR minutes required after factoring.
   final int ifrMinimumMinutes;
+
+  /// IFR minutes subtracted before percentage.
   final int ifrSubtractMinutes;
+
+  /// IRP3 percentage applied after subtraction.
   final int irp3Percent;
+
+  /// IRP3 minutes subtracted before percentage.
   final int irp3SubtractMinutes;
+
+  /// IRP4 percentage applied after subtraction.
   final int irp4Percent;
+
+  /// IRP4 minutes subtracted before percentage.
   final int irp4SubtractMinutes;
 
+  /// Returns a copy with selected values changed.
   FlightFactoringSettings copyWith({
     int? crossCountryThresholdNm,
     int? instrumentPercent,
@@ -63,6 +119,7 @@ class FlightFactoringSettings {
     );
   }
 
+  /// Serializes settings for persistence.
   Map<String, dynamic> toJson() {
     return {
       'crossCountryThresholdNm': crossCountryThresholdNm,
@@ -78,38 +135,9 @@ class FlightFactoringSettings {
       'irp4SubtractMinutes': irp4SubtractMinutes,
     };
   }
-
-  static FlightFactoringSettings fromJson(String? raw) {
-    if (raw == null || raw.isEmpty) {
-      return const FlightFactoringSettings();
-    }
-    final decoded = jsonDecode(raw);
-    if (decoded is! Map<String, dynamic>) {
-      return const FlightFactoringSettings();
-    }
-    int readInt(String key, int fallback) {
-      final value = decoded[key];
-      if (value is int) return value;
-      if (value is num) return value.round();
-      return fallback;
-    }
-
-    return FlightFactoringSettings(
-      crossCountryThresholdNm: readInt('crossCountryThresholdNm', 50),
-      instrumentPercent: readInt('instrumentPercent', 0).clamp(0, 100),
-      instrumentMinimumMinutes: readInt('instrumentMinimumMinutes', 0),
-      instrumentSubtractMinutes: readInt('instrumentSubtractMinutes', 0),
-      ifrPercent: readInt('ifrPercent', 0).clamp(0, 100),
-      ifrMinimumMinutes: readInt('ifrMinimumMinutes', 0),
-      ifrSubtractMinutes: readInt('ifrSubtractMinutes', 0),
-      irp3Percent: readInt('irp3Percent', 100).clamp(0, 100),
-      irp3SubtractMinutes: readInt('irp3SubtractMinutes', 0),
-      irp4Percent: readInt('irp4Percent', 100).clamp(0, 100),
-      irp4SubtractMinutes: readInt('irp4SubtractMinutes', 0),
-    );
-  }
 }
 
+/// Persists and exposes [FlightFactoringSettings].
 class FlightFactoringSettingsNotifier
     extends AsyncNotifier<FlightFactoringSettings> {
   @override
@@ -120,6 +148,7 @@ class FlightFactoringSettingsNotifier
     );
   }
 
+  /// Saves new settings and updates state.
   Future<void> setValue(FlightFactoringSettings value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
@@ -130,6 +159,7 @@ class FlightFactoringSettingsNotifier
   }
 }
 
+/// Provider for [FlightFactoringSettings].
 final flightFactoringSettingsProvider =
     AsyncNotifierProvider<
       FlightFactoringSettingsNotifier,

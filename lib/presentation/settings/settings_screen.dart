@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
+import 'package:simplelog/presentation/database/database_screen.dart';
+import 'package:simplelog/presentation/settings/widgets/flight_factoring_settings_card.dart';
+import 'package:simplelog/presentation/settings/widgets/previous_experience_settings_tab.dart';
+import 'package:simplelog/presentation/settings/widgets/simulator_default_position_selector.dart';
+import 'package:simplelog/presentation/settings/widgets/theme_mode_selector.dart';
+import 'package:simplelog/presentation/settings/widgets/time_fields_settings_tab.dart';
 
-import 'widgets/theme_mode_selector.dart';
-import 'widgets/simulator_default_position_selector.dart';
-import 'widgets/flight_factoring_settings_card.dart';
-import 'widgets/time_fields_settings_tab.dart';
-import 'widgets/previous_experience_settings_tab.dart';
-import '../database/database_screen.dart';
-
+/// Public API documentation.
 class SettingsScreen extends ConsumerWidget {
+  /// Public API documentation.
   const SettingsScreen({super.key});
 
   @override

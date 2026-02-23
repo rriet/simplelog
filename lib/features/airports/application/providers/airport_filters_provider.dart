@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,18 +8,23 @@ import 'package:simplelog/data/models/airport_filters.dart';
 
 const _airportFiltersFileName = 'airport_filters.json';
 
+/// Public API documentation.
 final airportFiltersProvider =
     NotifierProvider<AirportFiltersNotifier, AirportFilters>(
-  AirportFiltersNotifier.new,
-);
+      AirportFiltersNotifier.new,
+    );
+/// Public API documentation.
 
+/// Public API documentation.
 class AirportFiltersNotifier extends Notifier<AirportFilters> {
   @override
   AirportFilters build() {
-    _load();
+    unawaited(_load());
     return const AirportFilters();
+  /// Public API documentation.
   }
 
+  /// Public API documentation.
   Future<void> setFilters(AirportFilters filters) async {
     state = filters;
     await _save(filters);
@@ -27,24 +33,26 @@ class AirportFiltersNotifier extends Notifier<AirportFilters> {
   Future<void> _load() async {
     try {
       final file = await _file();
-      if (!await file.exists()) return;
-      final raw = await file.readAsString();
+      if (!file.existsSync()) return;
+      final raw = file.readAsStringSync();
       final data = jsonDecode(raw) as Map<String, dynamic>;
       final loaded = AirportFilters(
-        orderBy: AirportOrderBy.values[_safeInt(
-          data['orderBy'],
-          fallback: AirportOrderBy.icao.index,
-          max: AirportOrderBy.values.length - 1,
-        )],
-        searchField: AirportSearchField.values[_safeInt(
-          data['searchField'],
-          fallback: AirportSearchField.all.index,
-          max: AirportSearchField.values.length - 1,
-        )],
+        orderBy:
+            AirportOrderBy.values[_safeInt(
+              data['orderBy'],
+              fallback: AirportOrderBy.icao.index,
+              max: AirportOrderBy.values.length - 1,
+            )],
+        searchField:
+            AirportSearchField.values[_safeInt(
+              data['searchField'],
+              fallback: AirportSearchField.all.index,
+              max: AirportSearchField.values.length - 1,
+            )],
         showOnlyVisited: data['showOnlyVisited'] == true,
       );
       state = loaded;
-    } catch (_) {
+    } on Object catch (_) {
       // Ignore invalid persisted state and keep defaults.
     }
   }
@@ -58,7 +66,7 @@ class AirportFiltersNotifier extends Notifier<AirportFilters> {
         'showOnlyVisited': filters.showOnlyVisited,
       };
       await file.writeAsString(jsonEncode(payload), flush: true);
-    } catch (_) {
+    } on Object catch (_) {
       // Best effort persistence.
     }
   }

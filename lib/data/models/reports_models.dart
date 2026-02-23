@@ -1,87 +1,191 @@
+/// Public API documentation.
 class ReportsQuery {
+  /// Public API documentation.
   const ReportsQuery({
     required this.from,
     required this.to,
     required this.includePreviousExperience,
     required this.filterMatchMode,
     required this.filters,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final DateTime from;
+  /// Public API documentation.
   final DateTime to;
+  /// Public API documentation.
   final bool includePreviousExperience;
+  /// Public API documentation.
   final ReportsFilterMatchMode filterMatchMode;
+  /// Public API documentation.
   final List<ReportsFilterCondition> filters;
+/// Public API documentation.
 }
+/// Public API documentation.
 
-enum ReportsFilterMatchMode { all, any }
+/// Public API documentation.
+enum ReportsFilterMatchMode {
+  /// Public API documentation.
+  all,
 
-enum ReportsFilterValueType { text, number, time, boolean }
+  /// Public API documentation.
+  any,
+}
+/// Public API documentation.
 
+/// Public API documentation.
+enum ReportsFilterValueType {
+  /// Public API documentation.
+  text,
+
+  /// Public API documentation.
+  number,
+
+  /// Public API documentation.
+  time,
+
+  /// Public API documentation.
+  boolean,
+}
+/// Public API documentation.
+
+/// Public API documentation.
 enum ReportsFilterField {
+  /// Public API documentation.
   departureIcao,
+  /// Public API documentation.
   departureIata,
+  /// Public API documentation.
   departureName,
+  /// Public API documentation.
   departureCity,
+  /// Public API documentation.
   departureCountry,
+  /// Public API documentation.
   arrivalIcao,
+  /// Public API documentation.
   arrivalIata,
+  /// Public API documentation.
   arrivalName,
+  /// Public API documentation.
   arrivalCity,
+  /// Public API documentation.
   arrivalCountry,
+  /// Public API documentation.
   aircraftTail,
+  /// Public API documentation.
   aircraftTypeCode,
+  /// Public API documentation.
   aircraftTypeFamily,
+  /// Public API documentation.
   aircraftTypeName,
+  /// Public API documentation.
   pilotName,
+  /// Public API documentation.
+  pilotOnBoard,
+  /// Public API documentation.
+  pilotPic,
+  /// Public API documentation.
+  pilotSic,
+  /// Public API documentation.
+  pilotTrainee,
+  /// Public API documentation.
   approachType,
+  /// Public API documentation.
   remarks,
+  /// Public API documentation.
   notes,
+  /// Public API documentation.
   blockTime,
+  /// Public API documentation.
   flightTime,
+  /// Public API documentation.
   totalTime,
+  /// Public API documentation.
   nightTime,
+  /// Public API documentation.
   ifrTime,
+  /// Public API documentation.
   instrumentTime,
+  /// Public API documentation.
   simulatedInstrumentTime,
+  /// Public API documentation.
   picTime,
+  /// Public API documentation.
   picusTime,
+  /// Public API documentation.
   sicTime,
+  /// Public API documentation.
   dualTime,
+  /// Public API documentation.
   instructorTime,
+  /// Public API documentation.
   crossCountryTime,
+  /// Public API documentation.
   custom1Time,
+  /// Public API documentation.
   custom2Time,
+  /// Public API documentation.
   custom3Time,
+  /// Public API documentation.
   custom4Time,
+  /// Public API documentation.
   distanceNm,
+  /// Public API documentation.
   takeoffs,
+  /// Public API documentation.
   takeoffsDay,
+  /// Public API documentation.
   takeoffsNight,
+  /// Public API documentation.
   landings,
+  /// Public API documentation.
   landingsDay,
+  /// Public API documentation.
   landingsNight,
+  /// Public API documentation.
   ifrApproaches,
+  /// Public API documentation.
   isMultiPilot,
+  /// Public API documentation.
   isSimulator,
 }
 
+/// Public API documentation.
 enum ReportsFilterOperator {
+  /// Public API documentation.
   contains,
+  /// Public API documentation.
+  doesNotContain,
+  /// Public API documentation.
   startsWith,
+  /// Public API documentation.
   doesNotStartWith,
+  /// Public API documentation.
   endsWith,
+  /// Public API documentation.
   doesNotEndWith,
+  /// Public API documentation.
   isExactly,
+  /// Public API documentation.
   isNot,
+  /// Public API documentation.
   greaterThan,
+  /// Public API documentation.
   lessThan,
+  /// Public API documentation.
   equals,
+  /// Public API documentation.
   isTrue,
+  /// Public API documentation.
   isFalse,
 }
 
+/// Public API documentation.
 extension ReportsFilterFieldMeta on ReportsFilterField {
+  /// Public API documentation.
   ReportsFilterValueType get valueType {
     switch (this) {
       case ReportsFilterField.departureIcao:
@@ -99,6 +203,10 @@ extension ReportsFilterFieldMeta on ReportsFilterField {
       case ReportsFilterField.aircraftTypeFamily:
       case ReportsFilterField.aircraftTypeName:
       case ReportsFilterField.pilotName:
+      case ReportsFilterField.pilotOnBoard:
+      case ReportsFilterField.pilotPic:
+      case ReportsFilterField.pilotSic:
+      case ReportsFilterField.pilotTrainee:
       case ReportsFilterField.approachType:
       case ReportsFilterField.remarks:
       case ReportsFilterField.notes:
@@ -136,6 +244,7 @@ extension ReportsFilterFieldMeta on ReportsFilterField {
     }
   }
 
+  /// Public API documentation.
   String get label {
     switch (this) {
       case ReportsFilterField.departureIcao:
@@ -164,10 +273,20 @@ extension ReportsFilterFieldMeta on ReportsFilterField {
         return 'Aircraft Type Code';
       case ReportsFilterField.aircraftTypeFamily:
         return 'Aircraft Type Family';
+      /// Public API documentation.
       case ReportsFilterField.aircraftTypeName:
+        /// Public API documentation.
         return 'Aircraft Type Name';
       case ReportsFilterField.pilotName:
         return 'Pilot Name';
+      case ReportsFilterField.pilotOnBoard:
+        return 'Pilot On Board';
+      case ReportsFilterField.pilotPic:
+        return 'Pilot PIC';
+      case ReportsFilterField.pilotSic:
+        return 'Pilot SIC';
+      case ReportsFilterField.pilotTrainee:
+        return 'Pilot Trainee';
       case ReportsFilterField.approachType:
         return 'Approach Type';
       case ReportsFilterField.remarks:
@@ -186,7 +305,9 @@ extension ReportsFilterFieldMeta on ReportsFilterField {
         return 'IFR Time';
       case ReportsFilterField.instrumentTime:
         return 'Instrument Time';
+      /// Public API documentation.
       case ReportsFilterField.simulatedInstrumentTime:
+        /// Public API documentation.
         return 'Sim Instrument Time';
       case ReportsFilterField.picTime:
         return 'PIC Time';
@@ -219,7 +340,9 @@ extension ReportsFilterFieldMeta on ReportsFilterField {
       case ReportsFilterField.landings:
         return 'Landings';
       case ReportsFilterField.landingsDay:
+        /// Public API documentation.
         return 'Landings Day';
+      /// Public API documentation.
       case ReportsFilterField.landingsNight:
         return 'Landings Night';
       case ReportsFilterField.ifrApproaches:
@@ -227,17 +350,26 @@ extension ReportsFilterFieldMeta on ReportsFilterField {
       case ReportsFilterField.isMultiPilot:
         return 'Multi Pilot';
       case ReportsFilterField.isSimulator:
+        /// Public API documentation.
         return 'Simulator';
+    /// Public API documentation.
     }
+  /// Public API documentation.
   }
+/// Public API documentation.
 }
 
+/// Public API documentation.
 extension ReportsFilterOperators on ReportsFilterValueType {
+  /// Public API documentation.
   List<ReportsFilterOperator> get supportedOperators {
     switch (this) {
       case ReportsFilterValueType.text:
         return const [
           ReportsFilterOperator.contains,
+          /// Public API documentation.
+          ReportsFilterOperator.doesNotContain,
+          /// Public API documentation.
           ReportsFilterOperator.startsWith,
           ReportsFilterOperator.doesNotStartWith,
           ReportsFilterOperator.endsWith,
@@ -261,11 +393,16 @@ extension ReportsFilterOperators on ReportsFilterValueType {
   }
 }
 
+/// Public API documentation.
 extension ReportsFilterOperatorLabel on ReportsFilterOperator {
+  /// Public API documentation.
   String get label {
+    /// Public API documentation.
     switch (this) {
       case ReportsFilterOperator.contains:
         return 'Contains';
+      case ReportsFilterOperator.doesNotContain:
+        return 'Does not contain';
       case ReportsFilterOperator.startsWith:
         return 'Starts With';
       case ReportsFilterOperator.doesNotStartWith:
@@ -287,24 +424,43 @@ extension ReportsFilterOperatorLabel on ReportsFilterOperator {
       case ReportsFilterOperator.isTrue:
         return 'Is True';
       case ReportsFilterOperator.isFalse:
+        /// Public API documentation.
         return 'Is False';
+    /// Public API documentation.
     }
+  /// Public API documentation.
   }
+/// Public API documentation.
 }
+/// Public API documentation.
 
+/// Public API documentation.
 class ReportsFilterCondition {
+  /// Public API documentation.
   const ReportsFilterCondition({
+    /// Public API documentation.
     required this.field,
+    /// Public API documentation.
     required this.operator,
+    /// Public API documentation.
     this.textValue,
+    /// Public API documentation.
     this.numberValue,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final ReportsFilterField field;
+  /// Public API documentation.
   final ReportsFilterOperator operator;
+  /// Public API documentation.
   final String? textValue;
+  /// Public API documentation.
   final int? numberValue;
+/// Public API documentation.
 
+  /// Public API documentation.
   String get displayValue {
     final text = textValue?.trim() ?? '';
     if (text.isNotEmpty) return text;
@@ -313,7 +469,9 @@ class ReportsFilterCondition {
   }
 }
 
+/// Public API documentation.
 class ReportsTotals {
+  /// Public API documentation.
   const ReportsTotals({
     required this.sectors,
     required this.takeoffsDay,
@@ -334,38 +492,16 @@ class ReportsTotals {
     required this.crossCountryMinutes,
     required this.simulatorMinutes,
     required this.dutyMinutes,
+    /// Public API documentation.
     required this.custom1Minutes,
+    /// Public API documentation.
     required this.custom2Minutes,
     required this.custom3Minutes,
     required this.custom4Minutes,
     required this.multiPilotMinutes,
   });
 
-  final int sectors;
-  final int takeoffsDay;
-  final int takeoffsNight;
-  final int landingsDay;
-  final int landingsNight;
-  final int ifrApproaches;
-  final int distanceNM;
-  final int totalMinutes;
-  final int nightMinutes;
-  final int ifrMinutes;
-  final int simulatedInstrumentMinutes;
-  final int picMinutes;
-  final int picusMinutes;
-  final int sicMinutes;
-  final int dualMinutes;
-  final int instructorMinutes;
-  final int crossCountryMinutes;
-  final int simulatorMinutes;
-  final int dutyMinutes;
-  final int custom1Minutes;
-  final int custom2Minutes;
-  final int custom3Minutes;
-  final int custom4Minutes;
-  final int multiPilotMinutes;
-
+  /// Public API documentation.
   const ReportsTotals.zero()
     : sectors = 0,
       takeoffsDay = 0,
@@ -384,14 +520,72 @@ class ReportsTotals {
       dualMinutes = 0,
       instructorMinutes = 0,
       crossCountryMinutes = 0,
+      /// Public API documentation.
       simulatorMinutes = 0,
+      /// Public API documentation.
       dutyMinutes = 0,
+      /// Public API documentation.
       custom1Minutes = 0,
+      /// Public API documentation.
       custom2Minutes = 0,
+      /// Public API documentation.
       custom3Minutes = 0,
+      /// Public API documentation.
       custom4Minutes = 0,
+      /// Public API documentation.
       multiPilotMinutes = 0;
+/// Public API documentation.
 
+  /// Public API documentation.
+  final int sectors;
+  /// Public API documentation.
+  final int takeoffsDay;
+  /// Public API documentation.
+  final int takeoffsNight;
+  /// Public API documentation.
+  final int landingsDay;
+  /// Public API documentation.
+  final int landingsNight;
+  /// Public API documentation.
+  final int ifrApproaches;
+  /// Public API documentation.
+  final int distanceNM;
+  /// Public API documentation.
+  final int totalMinutes;
+  /// Public API documentation.
+  final int nightMinutes;
+  /// Public API documentation.
+  final int ifrMinutes;
+  /// Public API documentation.
+  final int simulatedInstrumentMinutes;
+  /// Public API documentation.
+  final int picMinutes;
+  /// Public API documentation.
+  final int picusMinutes;
+  /// Public API documentation.
+  final int sicMinutes;
+  /// Public API documentation.
+  final int dualMinutes;
+  /// Public API documentation.
+  final int instructorMinutes;
+  /// Public API documentation.
+  final int crossCountryMinutes;
+  /// Public API documentation.
+  final int simulatorMinutes;
+  /// Public API documentation.
+  final int dutyMinutes;
+  /// Public API documentation.
+  final int custom1Minutes;
+  /// Public API documentation.
+  final int custom2Minutes;
+  /// Public API documentation.
+  final int custom3Minutes;
+  /// Public API documentation.
+  final int custom4Minutes;
+  /// Public API documentation.
+  final int multiPilotMinutes;
+
+  /// Public API documentation.
   ReportsTotals operator +(ReportsTotals other) {
     return ReportsTotals(
       sectors: sectors + other.sectors,
@@ -423,7 +617,9 @@ class ReportsTotals {
   }
 }
 
+/// Public API documentation.
 class ReportsFlightRow {
+  /// Public API documentation.
   const ReportsFlightRow({
     required this.flightId,
     required this.departureDateTime,
@@ -449,33 +645,59 @@ class ReportsFlightRow {
     required this.landings,
   });
 
+  /// Public API documentation.
   final int flightId;
+  /// Public API documentation.
   final DateTime departureDateTime;
+  /// Public API documentation.
   final String registration;
+  /// Public API documentation.
   final String modelCode;
+  /// Public API documentation.
   final String modelFamily;
+  /// Public API documentation.
   final String fromIcao;
+  /// Public API documentation.
   final String toIcao;
+  /// Public API documentation.
   final String pilotNames;
+  /// Public API documentation.
   final double? fromLatitude;
+  /// Public API documentation.
   final double? fromLongitude;
+  /// Public API documentation.
   final double? toLatitude;
+  /// Public API documentation.
   final double? toLongitude;
+  /// Public API documentation.
   final int totalMinutes;
+  /// Public API documentation.
   final int picMinutes;
+  /// Public API documentation.
   final int picusMinutes;
+  /// Public API documentation.
   final int sicMinutes;
+  /// Public API documentation.
   final int dualMinutes;
+  /// Public API documentation.
   final int ifrMinutes;
+  /// Public API documentation.
   final int instrumentMinutes;
+  /// Public API documentation.
   final int nightMinutes;
+  /// Public API documentation.
   final int takeoffs;
+  /// Public API documentation.
   final int landings;
 }
 
+/// Public API documentation.
 class ReportsData {
+  /// Public API documentation.
   const ReportsData({required this.totals, required this.flights});
 
+  /// Public API documentation.
   final ReportsTotals totals;
+  /// Public API documentation.
   final List<ReportsFlightRow> flights;
 }

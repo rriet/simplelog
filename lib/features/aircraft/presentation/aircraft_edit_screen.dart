@@ -1,15 +1,14 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart' show Value;
-import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
-import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
-import 'package:simplelog/data/models/aircraft_type_row.dart';
-
+import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
+import 'package:simplelog/data/models/aircraft_type_row.dart';
+import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
+import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
 import 'package:simplelog/features/aircraft_types/presentation/aircraft_type_edit_screen.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
@@ -18,16 +17,23 @@ import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.da
 import 'package:simplelog/presentation/shared/widgets/uppercase_text_formatter.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
+/// Public API documentation.
 class AircraftEditScreen extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const AircraftEditScreen({
-    super.key,
     required this.item,
+    super.key,
     this.isCreate = false,
     this.initialIsSimulator,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final Aircraft item;
+  /// Public API documentation.
   final bool isCreate;
+  /// Public API documentation.
   final bool? initialIsSimulator;
 
   @override
@@ -61,7 +67,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     _isSimulatorMode = widget.isCreate
         ? (widget.initialIsSimulator ?? item.isSimulator)
         : item.isSimulator;
-    _isFavorite = widget.isCreate ? false : item.isFavorite;
+    _isFavorite = !widget.isCreate && item.isFavorite;
   }
 
   @override
@@ -126,7 +132,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     } else {
       final item = widget.item;
       final updated = item.copyWith(
-        aircraftTypeId: _aircraftTypeId!,
+        aircraftTypeId: _aircraftTypeId,
         registration: registration,
         mtow: Value(mtow),
         isSimulator: _isSimulatorMode,
@@ -159,12 +165,11 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
 
   Future<void> _createAircraftType() async {
     final isCompact = MediaQuery.of(context).size.width < 600;
-    final placeholder = AircraftType(
+    const placeholder = AircraftType(
       id: -1,
       code: '',
       family: '',
       longName: '',
-      manufacturer: null,
       category: AircraftCategory.landplane,
       engineType: EngineType.piston,
       mtow: 0,
@@ -180,7 +185,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
       final newId = await Navigator.of(context).push<int?>(
         MaterialPageRoute(
           builder: (_) =>
-              AircraftTypeEditScreen(item: placeholder, isCreate: true),
+              const AircraftTypeEditScreen(item: placeholder, isCreate: true),
         ),
       );
       if (newId != null) {
@@ -199,7 +204,10 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
               maxWidth: 520,
               maxHeight: size.height * 0.9,
             ),
-            child: AircraftTypeEditScreen(item: placeholder, isCreate: true),
+            child: const AircraftTypeEditScreen(
+              item: placeholder,
+              isCreate: true,
+            ),
           ),
         );
       },
@@ -286,7 +294,9 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
                             border: Border.all(
                               color: Theme.of(context).colorScheme.outline,
                             ),
-                            borderRadius: BorderRadius.circular(addBorderRadius),
+                            borderRadius: BorderRadius.circular(
+                              addBorderRadius,
+                            ),
                           ),
                           alignment: Alignment.center,
                           child: Icon(Icons.add, size: addIconSize),
@@ -316,7 +326,8 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
                   if (_mtowController.text.trim().isNotEmpty) return null;
                   return _effectiveTypeMtow(rows).toString();
                 },
-                orElse: () => _mtowController.text.trim().isNotEmpty ? null : '0',
+                orElse: () =>
+                    _mtowController.text.trim().isNotEmpty ? null : '0',
               ),
               onChanged: (_) => setState(() {}),
             ),
@@ -363,7 +374,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
               ),
             ),
             const Divider(height: 1),
-            Flexible(fit: FlexFit.loose, child: form),
+            Flexible(child: form),
           ],
         ),
       );

@@ -1,22 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
 
+/// Public API documentation.
 enum CrewSearchBy {
+  /// Public API documentation.
   all,
+  /// Public API documentation.
   name,
+  /// Public API documentation.
   email,
+  /// Public API documentation.
   phone,
+  /// Public API documentation.
   notes,
 }
 
+/// Public API documentation.
 class CrewFiltersDialog extends StatefulWidget {
+  /// Public API documentation.
   const CrewFiltersDialog({
-    super.key,
     required this.initialSearchBy,
+    super.key,
   });
 
+  /// Public API documentation.
   final CrewSearchBy initialSearchBy;
 
+  /// Public API documentation.
   static Future<CrewSearchBy?> show(
     BuildContext context, {
     required CrewSearchBy initialSearchBy,
@@ -44,6 +55,7 @@ class _CrewFiltersDialogState extends State<CrewFiltersDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Dialog(
       child: SizedBox(
         width: 520,
@@ -58,17 +70,17 @@ class _CrewFiltersDialogState extends State<CrewFiltersDialog> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Crew Filters',
-                        style: TextStyle(
+                        l10n.crewFiltersTitle,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.of(context).pop(null),
+                      onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.close),
                     ),
                   ],
@@ -77,14 +89,29 @@ class _CrewFiltersDialogState extends State<CrewFiltersDialog> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: DropdownInputField<CrewSearchBy>(
-                  label: 'Search By',
+                  label: l10n.searchByLabel,
                   value: _searchBy,
-                  items: const [
-                    DropdownMenuItem(value: CrewSearchBy.all, child: Text('All')),
-                    DropdownMenuItem(value: CrewSearchBy.name, child: Text('Name')),
-                    DropdownMenuItem(value: CrewSearchBy.email, child: Text('Email')),
-                    DropdownMenuItem(value: CrewSearchBy.phone, child: Text('Phone')),
-                    DropdownMenuItem(value: CrewSearchBy.notes, child: Text('Notes')),
+                  items: [
+                    DropdownMenuItem(
+                      value: CrewSearchBy.all,
+                      child: Text(l10n.optionAll),
+                    ),
+                    DropdownMenuItem(
+                      value: CrewSearchBy.name,
+                      child: Text(l10n.fieldName),
+                    ),
+                    DropdownMenuItem(
+                      value: CrewSearchBy.email,
+                      child: Text(l10n.fieldEmail),
+                    ),
+                    DropdownMenuItem(
+                      value: CrewSearchBy.phone,
+                      child: Text(l10n.fieldPhone),
+                    ),
+                    DropdownMenuItem(
+                      value: CrewSearchBy.notes,
+                      child: Text(l10n.fieldNotes),
+                    ),
                   ],
                   onChanged: (value) {
                     if (value == null) return;
@@ -98,13 +125,13 @@ class _CrewFiltersDialogState extends State<CrewFiltersDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(null),
-                      child: const Text('Cancel'),
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(l10n.cancelAction),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop(_searchBy),
-                      child: const Text('Apply'),
+                      child: Text(l10n.applyAction),
                     ),
                   ],
                 ),

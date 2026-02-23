@@ -7,18 +7,15 @@ import 'package:simplelog/features/crew/presentation/crew_edit_screen.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
+/// Public API documentation.
 Future<int?> createCrewAndReturnId({
   required BuildContext context,
   required WidgetRef ref,
   required Map<int, String> crewLabelCache,
 }) async {
-  final placeholder = CrewData(
+  const placeholder = CrewData(
     id: kPlaceholderId,
     name: '',
-    email: null,
-    notes: null,
-    phone: null,
-    picture: null,
     isSelf: false,
     isFavorite: false,
     isLocked: false,
@@ -26,7 +23,7 @@ Future<int?> createCrewAndReturnId({
 
   final result = await showConstrainedEditDialog<dynamic>(
     context: context,
-    child: CrewEditScreen(item: placeholder, isCreate: true),
+    child: const CrewEditScreen(item: placeholder, isCreate: true),
   );
   if (result != true) return null;
 

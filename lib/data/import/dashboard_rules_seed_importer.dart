@@ -2,16 +2,22 @@ import 'package:drift/drift.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simplelog/data/database/app_database.dart';
 
+/// Public API documentation.
 class DashboardRulesSeedImporter {
+  /// Public API documentation.
   const DashboardRulesSeedImporter();
 
+  /// Public API documentation.
   static const _prefsKey = 'dashboard_rules_seeded_v1';
 
+  /// Public API documentation.
   static Future<void> clearSeedFlag() async {
     final prefs = await SharedPreferences.getInstance();
+    /// Public API documentation.
     await prefs.remove(_prefsKey);
   }
 
+  /// Public API documentation.
   Future<int> importOnFirstOpen(AppDatabase db) async {
     final prefs = await SharedPreferences.getInstance();
     final alreadySeeded = prefs.getBool(_prefsKey) ?? false;

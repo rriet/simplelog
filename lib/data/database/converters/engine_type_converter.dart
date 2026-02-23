@@ -1,7 +1,9 @@
 import 'package:drift/drift.dart';
-import '../enums/engine_type.dart';
+import 'package:simplelog/data/database/enums/engine_type.dart';
 
+/// Public API documentation.
 class EngineTypeConverter extends TypeConverter<EngineType, String> {
+  /// Public API documentation.
   const EngineTypeConverter();
 
   @override

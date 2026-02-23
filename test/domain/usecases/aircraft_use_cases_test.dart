@@ -9,7 +9,7 @@ void main() {
     test('validateDelete returns locked message for locked aircraft', () async {
       final repo = _FakeAircraftRepository();
       final useCases = AircraftUseCases(repo);
-      final item = Aircraft(
+      const item = Aircraft(
         id: 1,
         aircraftTypeId: 1,
         registration: 'N123',
@@ -27,11 +27,10 @@ void main() {
 
     test('validateDelete returns usage message for simulator', () async {
       final repo = _FakeAircraftRepository(
-        flightCount: 0,
         simCount: 3,
       );
       final useCases = AircraftUseCases(repo);
-      final item = Aircraft(
+      const item = Aircraft(
         id: 1,
         aircraftTypeId: 1,
         registration: 'SIM',
@@ -51,19 +50,19 @@ void main() {
 
 class _FakeAircraftRepository implements AircraftRepositoryContract {
   _FakeAircraftRepository({
-    this.flightCount = 0,
     this.simCount = 0,
   });
 
-  final int flightCount;
   final int simCount;
 
   @override
-  Future<int> countDuplicateRegistration(String registration, int currentId) async =>
-      0;
+  Future<int> countDuplicateRegistration(
+    String registration,
+    int currentId,
+  ) async => 0;
 
   @override
-  Future<int> countFlightsForAircraft(int aircraftId) async => flightCount;
+  Future<int> countFlightsForAircraft(int aircraftId) async => 0;
 
   @override
   Future<int> countSimSessionsForAircraft(int aircraftId) async => simCount;

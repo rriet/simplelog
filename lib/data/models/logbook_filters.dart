@@ -1,16 +1,40 @@
-import 'logbook_entry.dart';
+import 'package:flutter/foundation.dart';
+import 'package:simplelog/data/models/logbook_entry.dart';
 
+@immutable
+/// Public API documentation.
 class LogbookFilters {
+  /// Public API documentation.
   const LogbookFilters({
+    required this.types,
     this.from,
     this.to,
-    required this.types,
+  /// Public API documentation.
   });
 
+  /// Public API documentation.
+  factory LogbookFilters.initial() {
+    return const LogbookFilters(
+      types: {
+        LogbookEventType.flight,
+        LogbookEventType.simulatorTraining,
+        LogbookEventType.dutyPeriod,
+        LogbookEventType.positioning,
+      },
+    /// Public API documentation.
+    );
+  /// Public API documentation.
+  }
+/// Public API documentation.
+
+  /// Public API documentation.
   final DateTime? from;
+  /// Public API documentation.
   final DateTime? to;
+  /// Public API documentation.
   final Set<LogbookEventType> types;
 
+  /// Public API documentation.
   LogbookFilters copyWith({
     DateTime? from,
     DateTime? to,
@@ -20,17 +44,6 @@ class LogbookFilters {
       from: from ?? this.from,
       to: to ?? this.to,
       types: types ?? this.types,
-    );
-  }
-
-  static LogbookFilters initial() {
-    return const LogbookFilters(
-      types: {
-        LogbookEventType.flight,
-        LogbookEventType.simulatorTraining,
-        LogbookEventType.dutyPeriod,
-        LogbookEventType.positioning,
-      },
     );
   }
 

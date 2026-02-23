@@ -7,7 +7,7 @@ void main() {
     const validator = FlightWriteValidator();
 
     test('returns error when arrival is before departure', () {
-      final departure = DateTime.utc(2026, 1, 1, 10, 0);
+      final departure = DateTime.utc(2026, 1, 1, 10);
       final input = _baseInput(
         departureDateTime: departure,
         arrivalDateTime: departure.subtract(const Duration(minutes: 1)),
@@ -17,7 +17,9 @@ void main() {
 
       expect(report.hasErrors, isTrue);
       expect(
-        report.errors.any((issue) => issue.code == 'flight.arrival.beforeDeparture'),
+        report.errors.any(
+          (issue) => issue.code == 'flight.arrival.beforeDeparture',
+        ),
         isTrue,
       );
     });
@@ -54,7 +56,7 @@ FlightWriteInput _baseInput({
     aircraftId: 1,
     departureAirportId: 1,
     arrivalAirportId: 2,
-    departureDateTime: departureDateTime ?? DateTime.utc(2026, 1, 1, 10, 0),
+    departureDateTime: departureDateTime ?? DateTime.utc(2026, 1, 1, 10),
     takeOffDateTime: null,
     landingDateTime: null,
     arrivalDateTime: arrivalDateTime,

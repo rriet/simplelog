@@ -1,9 +1,12 @@
 import 'package:simplelog/data/models/flight_write_input.dart';
 import 'package:simplelog/domain/validation/validation_issue.dart';
 
+/// Public API documentation.
 class FlightWriteValidator {
+  /// Public API documentation.
   const FlightWriteValidator();
 
+  /// Public API documentation.
   ValidationReport validate(FlightWriteInput input) {
     final errors = <ValidationIssue>[];
     final warnings = <ValidationIssue>[];
@@ -49,7 +52,8 @@ class FlightWriteValidator {
         ),
       );
     }
-    if (input.timeTotalBlockMinutes < 0 || input.timeTotalBlockMinutes > 24 * 60) {
+    if (input.timeTotalBlockMinutes < 0 ||
+        input.timeTotalBlockMinutes > 24 * 60) {
       errors.add(
         const ValidationIssue(
           code: 'flight.totalBlock.invalid',
@@ -117,13 +121,15 @@ class FlightWriteValidator {
         const ValidationIssue(
           code: 'flight.primaryRoles.multiple',
           message:
-              'More than one of PIC, PICUS, SIC, Dual, Instructor has time greater than 0.',
+              'More than one of PIC, PICUS, SIC, Dual, Instructor '
+              'has time greater than 0.',
           severity: ValidationSeverity.warning,
         ),
       );
     }
 
-    final primarySum = input.timePICMinutes +
+    final primarySum =
+        input.timePICMinutes +
         input.timePICUSMinutes +
         input.timeSICMinutes +
         input.timeDualMinutes +

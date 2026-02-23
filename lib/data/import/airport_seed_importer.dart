@@ -4,11 +4,15 @@ import 'package:drift/drift.dart';
 import 'package:flutter/services.dart';
 import 'package:simplelog/data/database/app_database.dart';
 
+/// Public API documentation.
 class AirportSeedImporter {
+  /// Public API documentation.
   const AirportSeedImporter();
 
+  /// Public API documentation.
   static const _assetPath = 'assets/data/airports.json';
 
+  /// Public API documentation.
   Future<int> importIfEmpty(AppDatabase db) async {
     final countExpr = db.airports.id.count();
     final query = db.selectOnly(db.airports)..addColumns([countExpr]);

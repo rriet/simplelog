@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
 import 'package:simplelog/presentation/shared/widgets/entity_picker_dialog.dart';
 
+/// Public API documentation.
 class AircraftPickerDialog extends StatelessWidget {
+  /// Public API documentation.
   const AircraftPickerDialog({
-    super.key,
     required this.title,
+    super.key,
     this.onlySimulators = false,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final String title;
+  /// Public API documentation.
   final bool onlySimulators;
 
+  /// Public API documentation.
   static Future<AircraftRow?> show(
     BuildContext context, {
     required String title,
@@ -35,13 +43,13 @@ class AircraftPickerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return EntityPickerDialog<AircraftRow>(
       title: title,
-      searchLabel: 'Search aircraft',
+      searchLabel: l10n.searchAircraft,
       itemsBuilder: (ref, query) => ref.watch(aircraftProvider(query)),
-      itemFilter: (row) => onlySimulators
-          ? row.aircraft.isSimulator
-          : !row.aircraft.isSimulator,
+      itemFilter: (row) =>
+          onlySimulators ? row.aircraft.isSimulator : !row.aircraft.isSimulator,
       itemKey: (row) => row.id,
       itemTitle: (row) => row.registration,
       itemSubtitle: (row) => row.type?.code ?? row.type?.longName ?? '-',
@@ -53,11 +61,13 @@ class AircraftPickerDialog extends StatelessWidget {
       ),
       isFavorite: (row) => row.aircraft.isFavorite,
       onToggleFavorite: (ref, row) async {
-        await ref.read(aircraftControllerProvider.notifier).toggleFavorite(
+        await ref
+            .read(aircraftControllerProvider.notifier)
+            .toggleFavorite(
               row.aircraft,
             );
       },
-      emptyText: 'No aircraft found',
+      emptyText: l10n.aircraftEmptyResults,
     );
   }
 }

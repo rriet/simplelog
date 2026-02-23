@@ -3,21 +3,33 @@ import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 
 /// Tappable picker field with a companion add button, styled like form inputs.
 class PickerWithAddInputField extends StatelessWidget {
+  /// Creates a picker row with optional add action button.
   const PickerWithAddInputField({
-    super.key,
     required this.label,
     required this.valueText,
     required this.onTap,
+    super.key,
     this.onAdd,
     this.addTooltip,
     this.errorText,
   });
 
+  /// Field label.
   final String label;
+
+  /// Selected value text shown in the field.
   final String valueText;
+
+  /// Called when the picker field is tapped.
   final VoidCallback onTap;
+
+  /// Optional action triggered by the add button.
   final VoidCallback? onAdd;
+
+  /// Optional tooltip for the add button.
   final String? addTooltip;
+
+  /// Optional inline validation error.
   final String? errorText;
 
   @override

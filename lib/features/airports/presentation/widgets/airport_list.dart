@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/airport_row.dart';
 
-import 'airport_list_item.dart';
+import 'package:simplelog/features/airports/presentation/widgets/airport_list_item.dart';
 
+/// Public API documentation.
 class AirportList extends StatelessWidget {
+  /// Public API documentation.
   const AirportList({
-    super.key,
     required this.items,
     required this.isCompact,
     required this.onToggleFavorite,
@@ -14,14 +15,24 @@ class AirportList extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onOpenDetails,
+    super.key,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final List<AirportRow> items;
+  /// Public API documentation.
   final bool isCompact;
+  /// Public API documentation.
   final ValueChanged<AirportRow> onToggleFavorite;
+  /// Public API documentation.
   final ValueChanged<AirportRow> onToggleLock;
+  /// Public API documentation.
   final ValueChanged<AirportRow> onEdit;
+  /// Public API documentation.
   final ValueChanged<AirportRow> onDelete;
+  /// Public API documentation.
   final ValueChanged<AirportRow> onOpenDetails;
 
   @override

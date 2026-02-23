@@ -3,16 +3,23 @@ import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 
+/// Public API documentation.
 class SouthwestImportOptionsDialog extends StatefulWidget {
+  /// Public API documentation.
   const SouthwestImportOptionsDialog({
-    super.key,
     required this.fileName,
     required this.initial,
+    super.key,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final String fileName;
+  /// Public API documentation.
   final SouthwestImportOptions initial;
 
+  /// Public API documentation.
   static Future<SouthwestImportOptions?> show(
     BuildContext context, {
     required String fileName,
@@ -92,7 +99,7 @@ class _SouthwestImportOptionsDialogState
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.of(context).pop(null),
+                      onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.close),
                     ),
                   ],
@@ -203,7 +210,7 @@ class _SouthwestImportOptionsDialogState
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(null),
+                      onPressed: () => Navigator.of(context).pop(),
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 8),

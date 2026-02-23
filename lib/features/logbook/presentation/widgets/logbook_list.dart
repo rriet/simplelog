@@ -2,63 +2,98 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_list_item.dart';
 import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
-import 'logbook_list_item.dart';
-
+/// Public API documentation.
 abstract class LogbookListItemModel {
+  /// Public API documentation.
   const LogbookListItemModel();
 
+  /// Public API documentation.
   DateTime get sortDate;
+/// Public API documentation.
 }
 
+/// Public API documentation.
 class LogbookEntryItem extends LogbookListItemModel {
+  /// Public API documentation.
   const LogbookEntryItem(this.entry);
 
+  /// Public API documentation.
   final LogbookEntry entry;
+/// Public API documentation.
 
   @override
   DateTime get sortDate => entry.timeLine.eventDateTime;
 }
 
+/// Public API documentation.
 class LogbookDutyGroupItem extends LogbookListItemModel {
+  /// Public API documentation.
   const LogbookDutyGroupItem({
     required this.dutyId,
+    /// Public API documentation.
     required this.start,
+    /// Public API documentation.
     required this.end,
+    /// Public API documentation.
     required this.entries,
+    /// Public API documentation.
     required this.isLocked,
+    /// Public API documentation.
     required this.dutyMinutes,
+    /// Public API documentation.
     required this.factoredMinutes,
+  /// Public API documentation.
   });
 
+  /// Public API documentation.
   final int dutyId;
+  /// Public API documentation.
   final DateTime start;
+  /// Public API documentation.
   final DateTime end;
+  /// Public API documentation.
   final List<LogbookEntry> entries;
+  /// Public API documentation.
   final bool isLocked;
+  /// Public API documentation.
   final int dutyMinutes;
+  /// Public API documentation.
   final int factoredMinutes;
+/// Public API documentation.
 
+  /// Public API documentation.
   @override
   DateTime get sortDate => start;
 }
 
+/// Public API documentation.
 class LogbookYearHeaderItem extends LogbookListItemModel {
+  /// Public API documentation.
   const LogbookYearHeaderItem(this.year, DateTime date) : _date = date;
 
+  /// Public API documentation.
   final int year;
   final DateTime _date;
 
   @override
+  /// Public API documentation.
   DateTime get sortDate => _date;
+/// Public API documentation.
 }
+/// Public API documentation.
 
+/// Public API documentation.
 class LogbookList extends StatefulWidget {
+  /// Public API documentation.
   const LogbookList({
-    super.key,
+    /// Public API documentation.
     required this.onOpenEntry,
+    /// Public API documentation.
     required this.items,
+    /// Public API documentation.
     required this.onEditEntry,
     required this.onDeleteEntry,
     required this.onToggleLockEntry,
@@ -66,18 +101,29 @@ class LogbookList extends StatefulWidget {
     required this.onDeleteDuty,
     required this.onToggleLockDuty,
     required this.onYearChange,
+    super.key,
     this.controller,
   });
 
+  /// Public API documentation.
   final List<LogbookListItemModel> items;
+  /// Public API documentation.
   final ValueChanged<LogbookEntry> onOpenEntry;
+  /// Public API documentation.
   final ValueChanged<LogbookEntry> onEditEntry;
+  /// Public API documentation.
   final ValueChanged<LogbookEntry> onDeleteEntry;
+  /// Public API documentation.
   final ValueChanged<LogbookEntry> onToggleLockEntry;
+  /// Public API documentation.
   final ValueChanged<LogbookDutyGroupItem> onEditDuty;
+  /// Public API documentation.
   final ValueChanged<LogbookDutyGroupItem> onDeleteDuty;
+  /// Public API documentation.
   final ValueChanged<LogbookDutyGroupItem> onToggleLockDuty;
+  /// Public API documentation.
   final ValueChanged<int?> onYearChange;
+  /// Public API documentation.
   final ScrollController? controller;
 
   @override
@@ -192,7 +238,7 @@ class _LogbookListState extends State<LogbookList> {
           itemBuilder: (context, index) {
             final item = displayItems[index];
             if (item is LogbookYearHeaderItem) {
-              final key = _yearKeys.putIfAbsent(item.year, () => GlobalKey());
+              final key = _yearKeys.putIfAbsent(item.year, GlobalKey.new);
               return _YearHeader(key: key, year: item.year);
             }
             return Column(
@@ -512,7 +558,7 @@ class _DutyTitle extends StatelessWidget {
 }
 
 class _YearHeader extends StatelessWidget {
-  const _YearHeader({super.key, required this.year});
+  const _YearHeader({required this.year, super.key});
 
   final int year;
 

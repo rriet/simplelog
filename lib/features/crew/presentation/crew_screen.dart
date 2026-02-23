@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:simplelog/core/text/search_normalizer.dart';
+import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
-import 'package:simplelog/features/crew/application/providers/crew_feature_providers.dart';
-
+import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_row.dart';
-import 'package:simplelog/core/constants/app_constants.dart';
+import 'package:simplelog/features/crew/application/providers/crew_feature_providers.dart';
+import 'package:simplelog/features/crew/presentation/crew_edit_screen.dart';
+import 'package:simplelog/features/crew/presentation/widgets/crew_filters_dialog.dart';
+import 'package:simplelog/features/crew/presentation/widgets/crew_info_dialog.dart';
+import 'package:simplelog/features/crew/presentation/widgets/crew_list.dart';
+import 'package:simplelog/features/crew/presentation/widgets/crew_search_bar.dart';
+import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
-import 'crew_edit_screen.dart';
-import 'widgets/crew_info_dialog.dart';
-import 'widgets/crew_search_bar.dart';
-import 'widgets/crew_list.dart';
-import 'widgets/crew_filters_dialog.dart';
 
+/// Public API documentation.
 class CrewScreen extends ConsumerStatefulWidget {
+  /// Public API documentation.
   const CrewScreen({super.key});
 
   @override
@@ -136,13 +137,9 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
 
   Future<void> _createCrew() async {
     final isCompact = MediaQuery.of(context).size.width < 600;
-    final placeholder = CrewData(
+    const placeholder = CrewData(
       id: kPlaceholderId,
       name: '',
-      email: null,
-      notes: null,
-      phone: null,
-      picture: null,
       isSelf: false,
       isFavorite: false,
       isLocked: false,
@@ -150,8 +147,9 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
 
     if (isCompact) {
       await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => CrewEditScreen(item: placeholder, isCreate: true),
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              const CrewEditScreen(item: placeholder, isCreate: true),
         ),
       );
       return;
@@ -167,7 +165,7 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
               maxWidth: 520,
               maxHeight: size.height * 0.9,
             ),
-            child: CrewEditScreen(item: placeholder, isCreate: true),
+            child: const CrewEditScreen(item: placeholder, isCreate: true),
           ),
         );
       },
@@ -180,7 +178,9 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
     if (isCompact) {
       await Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (_) => CrewEditScreen(item: row.crew)));
+      ).push(
+        MaterialPageRoute<void>(builder: (_) => CrewEditScreen(item: row.crew)),
+      );
       return;
     }
 

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/data/models/airport_row.dart';
 import 'package:simplelog/data/models/airport_extensions.dart';
+import 'package:simplelog/data/models/airport_row.dart';
 import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
+/// Public API documentation.
 class AirportListItem extends StatelessWidget {
+  /// Public API documentation.
   const AirportListItem({
-    super.key,
     required this.row,
     required this.isCompact,
     required this.onToggleFavorite,
@@ -14,14 +15,24 @@ class AirportListItem extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onOpenDetails,
+    super.key,
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final AirportRow row;
+  /// Public API documentation.
   final bool isCompact;
+  /// Public API documentation.
   final VoidCallback onToggleFavorite;
+  /// Public API documentation.
   final VoidCallback onToggleLock;
+  /// Public API documentation.
   final VoidCallback onEdit;
+  /// Public API documentation.
   final VoidCallback onDelete;
+  /// Public API documentation.
   final VoidCallback onOpenDetails;
 
   @override
@@ -59,8 +70,7 @@ class AirportListItem extends StatelessWidget {
               ],
             )
           : Text(code),
-      subtitle:
-          subtitleParts.isEmpty ? null : Text(subtitleParts.join(' • ')),
+      subtitle: subtitleParts.isEmpty ? null : Text(subtitleParts.join(' • ')),
       onTap: onOpenDetails,
       trailing: isCompact
           ? null

@@ -1,6 +1,6 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart' show Value;
 import 'package:intl/intl.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
@@ -12,7 +12,9 @@ import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_fiel
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 
+/// Public API documentation.
 class PreviousExperienceSettingsTab extends ConsumerWidget {
+  /// Public API documentation.
   const PreviousExperienceSettingsTab({super.key});
 
   @override
@@ -46,29 +48,37 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
             }
             return Column(
               children: rows
-                  .map(
-                    (row) => Card(
-                      child: ListTile(
-                        title: Text(
-                          '${row.aircraftType.code} • ${row.aircraftType.longName}',
+                  .map<Widget>(
+                    (row) {
+                      final block = _formatMinutes(
+                        row.previousExperience.timeBlockMinutes,
+                      );
+                      final pic = _formatMinutes(
+                        row.previousExperience.timePICMinutes,
+                      );
+                      final sim = _formatMinutes(
+                        row.previousExperience.timeSimulatorMinutes,
+                      );
+                      return Card(
+                        child: ListTile(
+                          title: Text(
+                            '${row.aircraftType.code} • '
+                            '${row.aircraftType.longName}',
+                          ),
+                          subtitle: Text('Block $block  PIC $pic  SIM $sim'),
+                          onTap: () => _openEditor(
+                            context,
+                            ref,
+                            initial: row.previousExperience,
+                          ),
+                          trailing: IconButton(
+                            tooltip: 'Delete',
+                            icon: const Icon(Icons.delete_outline),
+                            onPressed: () => _deleteEntry(context, ref, row),
+                          ),
                         ),
-                        subtitle: Text(
-                          'Block ${_formatMinutes(row.previousExperience.timeBlockMinutes)}  '
-                          'PIC ${_formatMinutes(row.previousExperience.timePICMinutes)}  '
-                          'SIM ${_formatMinutes(row.previousExperience.timeSimulatorMinutes)}',
-                        ),
-                        onTap: () => _openEditor(
-                          context,
-                          ref,
-                          initial: row.previousExperience,
-                        ),
-                        trailing: IconButton(
-                          tooltip: 'Delete',
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () => _deleteEntry(context, ref, row),
-                        ),
-                      ),
-                    ),
+                      );
+                    },
                   )
                   .toList(growable: false),
             );
@@ -117,7 +127,7 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
     try {
       final useCases = ref.read(aircraftTypeUseCasesProvider);
       typesAsync = await useCases.watchAircraftTypes('').first;
-    } catch (error) {
+    } on Object catch (error) {
       if (context.mounted) {
         await showAppMessageDialog(
           context,
@@ -326,7 +336,8 @@ class _PreviousExperienceEditDialogState
         .toList(growable: false);
     if (biggerThanBlock.isNotEmpty) {
       warnings.add(
-        'These times are greater than Total Block: ${biggerThanBlock.join(', ')}.',
+        'These times are greater than Total Block: '
+        '${biggerThanBlock.join(', ')}.',
       );
     }
 
@@ -369,7 +380,7 @@ class _PreviousExperienceEditDialogState
     } else {
       await repo.update(
         widget.initial!.copyWith(
-          aircraftTypeId: _aircraftTypeId!,
+          aircraftTypeId: _aircraftTypeId,
           dateTimeFirstFlight: Value(_firstFlight),
           dateTimeLastFlight: Value(_lastFlight),
           timePICMinutes: _minutes('pic'),
@@ -459,12 +470,12 @@ class _PreviousExperienceEditDialogState
                               ),
                             )
                             .toList(growable: false),
-                        onChanged: (value) =>
-                            setState(() {
-                              _aircraftTypeId = value;
-                              _showRequiredErrors = false;
-                            }),
-                        errorText: _showRequiredErrors && _aircraftTypeId == null
+                        onChanged: (value) => setState(() {
+                          _aircraftTypeId = value;
+                          _showRequiredErrors = false;
+                        }),
+                        errorText:
+                            _showRequiredErrors && _aircraftTypeId == null
                             ? 'Select aircraft type.'
                             : null,
                       ),

@@ -3,10 +3,11 @@ import 'package:flutter/services.dart';
 
 /// Compact reusable text input field.
 class TextInputField extends StatelessWidget {
+  /// Creates a text input field with shared app styling.
   const TextInputField({
-    super.key,
     required this.controller,
     required this.label,
+    super.key,
     this.minLines = 1,
     this.maxLines = 1,
     this.suffixIcon,
@@ -17,15 +18,34 @@ class TextInputField extends StatelessWidget {
     this.errorText,
   });
 
+  /// Text controller used by the field.
   final TextEditingController controller;
+
+  /// Field label.
   final String label;
+
+  /// Minimum visible lines.
   final int? minLines;
+
+  /// Maximum visible lines.
   final int? maxLines;
+
+  /// Optional trailing icon widget.
   final Widget? suffixIcon;
+
+  /// Optional validator callback.
   final String? Function(String?)? validator;
+
+  /// Called when text changes.
   final ValueChanged<String>? onChanged;
+
+  /// Optional keyboard type override.
   final TextInputType? keyboardType;
+
+  /// Optional input formatters.
   final List<TextInputFormatter>? inputFormatters;
+
+  /// Optional external inline error text.
   final String? errorText;
 
   @override

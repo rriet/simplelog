@@ -1,8 +1,11 @@
 import 'package:drift/drift.dart';
-import '../enums/aircraft_category.dart';
+import 'package:simplelog/data/database/enums/aircraft_category.dart';
 
+/// Public API documentation.
 class AircraftCategoryConverter
+    /// Public API documentation.
     extends TypeConverter<AircraftCategory, String> {
+  /// Public API documentation.
   const AircraftCategoryConverter();
 
   @override
@@ -28,8 +31,8 @@ class AircraftCategoryConverter
       AircraftCategory.seaplane => 'seaplane',
       AircraftCategory.tiltwing => 'tiltwing',
       AircraftCategory.unknown => throw ArgumentError(
-          'Cannot save unknown AircraftCategory to database',
-        ),
+        'Cannot save unknown AircraftCategory to database',
+      ),
     };
   }
 }

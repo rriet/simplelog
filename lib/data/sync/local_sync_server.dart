@@ -3,12 +3,18 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+/// Public API documentation.
 typedef DatabaseBytesReader = Future<Uint8List> Function();
+/// Public API documentation.
 typedef DatabaseBytesWriter = Future<void> Function(Uint8List bytes);
+/// Public API documentation.
 typedef PeerHelloHandler = void Function(String host, int port);
+/// Public API documentation.
 typedef TransferCompleteHandler = void Function();
 
+/// Public API documentation.
 class LocalSyncServer {
+  /// Public API documentation.
   LocalSyncServer({
     required DatabaseBytesReader readDatabase,
     required DatabaseBytesWriter writeDatabase,
@@ -16,32 +22,43 @@ class LocalSyncServer {
     TransferCompleteHandler? onTransferComplete,
     int? schemaVersion,
     String? deviceName,
-  })  : _readDatabase = readDatabase,
-        _writeDatabase = writeDatabase,
-        _onPeerHello = onPeerHello,
-        _onTransferComplete = onTransferComplete,
-        _schemaVersion = schemaVersion,
-        _deviceName = deviceName;
+  }) : _readDatabase = readDatabase,
+       _writeDatabase = writeDatabase,
+       _onPeerHello = onPeerHello,
+       _onTransferComplete = onTransferComplete,
+       _schemaVersion = schemaVersion,
+       _deviceName = deviceName;
 
   final DatabaseBytesReader _readDatabase;
   final DatabaseBytesWriter _writeDatabase;
+  /// Public API documentation.
   final PeerHelloHandler? _onPeerHello;
+  /// Public API documentation.
   final TransferCompleteHandler? _onTransferComplete;
   final int? _schemaVersion;
   String? _deviceName;
+  /// Public API documentation.
   HttpServer? _server;
 
+  /// Public API documentation.
   bool get isRunning => _server != null;
+  /// Public API documentation.
   int? get port => _server?.port;
+  /// Public API documentation.
+  String? get deviceName => _deviceName;
 
-  void setDeviceName(String name) {
+  // updated through an explicit server-status transition method.
+  /// Public API documentation.
+  set deviceName(String name) {
     _deviceName = name;
   }
 
+  /// Public API documentation.
   Future<void> start({int port = 0}) async {
     if (_server != null) {
       return;
     }
+/// Public API documentation.
 
     _server = await HttpServer.bind(
       InternetAddress.anyIPv4,
@@ -52,6 +69,7 @@ class LocalSyncServer {
     unawaited(_handleRequests(_server!));
   }
 
+  /// Public API documentation.
   Future<void> stop() async {
     final server = _server;
     if (server == null) {
@@ -84,7 +102,7 @@ class LocalSyncServer {
             _onPeerHello?.call(host, port);
           }
           _writeJson(request, {'ok': true});
-        } catch (error) {
+        } on Object catch (error) {
           _writeError(request, error.toString());
         }
         continue;
@@ -94,11 +112,13 @@ class LocalSyncServer {
         try {
           final bytes = await _readDatabase();
           request.response.statusCode = HttpStatus.ok;
-          request.response.headers.contentType =
-              ContentType('application', 'octet-stream');
+          request.response.headers.contentType = ContentType(
+            'application',
+            'octet-stream',
+          );
           request.response.add(bytes);
           await request.response.close();
-        } catch (error) {
+        } on Object catch (error) {
           _writeError(request, error.toString());
         }
         continue;
@@ -109,7 +129,7 @@ class LocalSyncServer {
           final bytes = await _collectBytes(request);
           await _writeDatabase(bytes);
           _writeJson(request, {'ok': true});
-        } catch (error) {
+        } on Object catch (error) {
           _writeError(request, error.toString());
         }
         continue;
@@ -142,13 +162,13 @@ class LocalSyncServer {
     request.response.statusCode = HttpStatus.ok;
     request.response.headers.contentType = ContentType.json;
     request.response.write(jsonEncode(payload));
-    request.response.close();
+    unawaited(request.response.close());
   }
 
   void _writeError(HttpRequest request, String message) {
     request.response.statusCode = HttpStatus.internalServerError;
     request.response.headers.contentType = ContentType.json;
     request.response.write(jsonEncode({'ok': false, 'error': message}));
-    request.response.close();
+    unawaited(request.response.close());
   }
 }

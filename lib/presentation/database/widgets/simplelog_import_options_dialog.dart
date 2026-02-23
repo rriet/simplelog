@@ -3,16 +3,23 @@ import 'package:simplelog/data/import/simplelog_import_options.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 
+/// Public API documentation.
 class SimpleLogImportOptionsDialog extends StatefulWidget {
+  /// Public API documentation.
   const SimpleLogImportOptionsDialog({
-    super.key,
     required this.fileName,
+    super.key,
     this.initial = const SimpleLogImportOptions(),
+  /// Public API documentation.
   });
+/// Public API documentation.
 
+  /// Public API documentation.
   final String fileName;
+  /// Public API documentation.
   final SimpleLogImportOptions initial;
 
+  /// Public API documentation.
   static Future<SimpleLogImportOptions?> show(
     BuildContext context, {
     required String fileName,
@@ -147,7 +154,7 @@ class _SimpleLogImportOptionsDialogState
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.of(context).pop(null),
+                      onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.close),
                     ),
                   ],
@@ -361,7 +368,7 @@ class _SimpleLogImportOptionsDialogState
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(null),
+                      onPressed: () => Navigator.of(context).pop(),
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 8),
@@ -447,7 +454,7 @@ class _CompactFieldRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final spacing = 8.0;
+        const spacing = 8.0;
         final count = fields.length;
         final totalSpacing = (count - 1) * spacing;
         final eachWidth = count == 0

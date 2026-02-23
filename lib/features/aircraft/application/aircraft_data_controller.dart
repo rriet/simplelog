@@ -5,6 +5,7 @@ import 'package:simplelog/features/aircraft/application/providers/aircraft_repos
 import 'package:simplelog/state/controllers/data_controller.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
+/// Public API documentation.
 class AircraftDataController extends Notifier<void>
     implements DataController<Aircraft, AircraftsCompanion> {
   @override

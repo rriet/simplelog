@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/features/crew/application/providers/crew_feature_providers.dart';
 import 'package:simplelog/presentation/shared/widgets/entity_picker_dialog.dart';
 
+/// Public API documentation.
 class CrewPickerDialog extends StatelessWidget {
+  /// Public API documentation.
   const CrewPickerDialog({
-    super.key,
     required this.title,
+    super.key,
+  /// Public API documentation.
   });
 
+  /// Public API documentation.
   final String title;
 
+  /// Public API documentation.
   static Future<CrewRow?> show(
     BuildContext context, {
     required String title,
@@ -29,9 +35,10 @@ class CrewPickerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return EntityPickerDialog<CrewRow>(
       title: title,
-      searchLabel: 'Search crew',
+      searchLabel: l10n.searchCrew,
       itemsBuilder: (ref, query) => ref.watch(crewProvider(query)),
       itemKey: (row) => row.id,
       itemTitle: (row) => row.name,
@@ -41,10 +48,12 @@ class CrewPickerDialog extends StatelessWidget {
       ].join(' • '),
       isFavorite: (row) => row.crew.isFavorite,
       onToggleFavorite: (ref, row) async {
-        await ref.read(crewControllerProvider.notifier).toggleFavorite(row.crew);
+        await ref
+            .read(crewControllerProvider.notifier)
+            .toggleFavorite(row.crew);
       },
-      emptyText: 'No crew found',
-      errorBuilder: (_, _) => const Center(child: Text('Error loading crew')),
+      emptyText: l10n.crewEmptyResults,
+      errorBuilder: (_, _) => Center(child: Text(l10n.crewLoadError)),
     );
   }
 }
