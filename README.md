@@ -6,8 +6,15 @@ Designed by an airline pilot, it is built to reduce typing, speed up entries,
 and keep your records accurate.
 
 Enter the essentials, press **Calculate**, review, and save.
-SimpleLog is free and open source, and community donations help keep the
-project alive and actively maintained.
+
+## Support the Project
+
+> **SimpleLog is free and open source.**  
+> To keep it alive, I need to cover ongoing costs like developer licenses and
+> the time required to maintain and improve the app.
+>
+> If SimpleLog helps you, please consider supporting it with a donation.  
+> Donation link coming soon.
 
 ## Why SimpleLog
 
@@ -63,9 +70,6 @@ SimpleLog follows a **your-data-is-yours** model:
 Distribution will be available via downloadable binaries and app stores.
 
 This section will be updated with direct install links.
-
-If SimpleLog helps you, please consider supporting the project with a donation.
-A donation link will be added soon.
 
 ## Contribution
 
