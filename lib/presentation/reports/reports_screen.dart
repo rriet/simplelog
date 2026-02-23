@@ -94,8 +94,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   bool _loading = false;
   bool _detailsLoaded = false;
+  bool _entriesLoaded = false;
+  bool _pilotNamesLoaded = false;
   bool _pendingDetailsLoad = false;
+  bool _pendingIncludeEntries = false;
+  bool _pendingIncludePilotNames = false;
   String? _error;
+  bool _analysisLoading = false;
+  int _analysisBuildToken = 0;
+  List<_AnalysisGroup> _analysisGroups = const [];
 
   ReportsData _data = const ReportsData(
     totals: ReportsTotals.zero(),
@@ -121,7 +128,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         widget.section == ReportsPanelSection.reports) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        unawaited(_ensureDetailsLoaded());
+        final includeEntries =
+            widget.section == ReportsPanelSection.flights ||
+            widget.section == ReportsPanelSection.reports;
+        unawaited(
+          _ensureDetailsLoaded(
+            includeEntries: includeEntries,
+            includePilotNames: _needsPilotNamesForFilters(),
+          ),
+        );
       });
     }
   }
@@ -158,7 +173,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         (widget.section == ReportsPanelSection.flights ||
             widget.section == ReportsPanelSection.analizes ||
             widget.section == ReportsPanelSection.reports)) {
-      unawaited(_ensureDetailsLoaded());
+      final includeEntries =
+          widget.section == ReportsPanelSection.flights ||
+          widget.section == ReportsPanelSection.reports;
+      unawaited(
+        _ensureDetailsLoaded(
+          includeEntries: includeEntries,
+          includePilotNames: _needsPilotNamesForFilters(),
+        ),
+      );
     }
   }
 
@@ -201,8 +224,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           );
           _entries = const [];
           _detailsLoaded = false;
+          _entriesLoaded = false;
+          _pilotNamesLoaded = false;
+          _analysisGroups = const [];
+          _analysisLoading = false;
         });
       } else {
+        final includePilotNames = _needsPilotNamesForFilters();
         final result = await repo.load(
           ReportsQuery(
             from: _from,
@@ -211,20 +239,23 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             filterMatchMode: _filterMatchMode,
             filters: _filters,
           ),
+          includePilotNames: includePilotNames,
         );
         final flights = eventTypes.flights
             ? result.flights
             : const <ReportsFlightRow>[];
-        final entries = await _fetchEntriesForFlights(flights, eventTypes);
         if (!mounted) return;
         setState(() {
           _data = ReportsData(
             totals: _applyTypeSelectionToTotals(result.totals, eventTypes),
             flights: flights,
           );
-          _entries = entries;
+          _entries = const [];
           _detailsLoaded = true;
+          _entriesLoaded = false;
+          _pilotNamesLoaded = includePilotNames;
         });
+        unawaited(_refreshAnalysisGroups());
       }
     } on Object catch (error) {
       if (!mounted) return;
@@ -233,8 +264,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       if (mounted) {
         setState(() => _loading = false);
         if (_pendingDetailsLoad) {
+          final includeEntries = _pendingIncludeEntries;
+          final includePilotNames = _pendingIncludePilotNames;
           _pendingDetailsLoad = false;
-          unawaited(_ensureDetailsLoaded());
+          _pendingIncludeEntries = false;
+          _pendingIncludePilotNames = false;
+          unawaited(
+            _ensureDetailsLoaded(
+              includeEntries: includeEntries,
+              includePilotNames: includePilotNames,
+            ),
+          );
         }
       }
     }
@@ -251,7 +291,70 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
   }
 
-  Future<void> _loadDetailed() async {
+  bool _isPilotFilterField(ReportsFilterField field) {
+    switch (field) {
+      case ReportsFilterField.pilotName:
+      case ReportsFilterField.pilotOnBoard:
+      case ReportsFilterField.pilotPic:
+      case ReportsFilterField.pilotSic:
+      case ReportsFilterField.pilotTrainee:
+        return true;
+      case ReportsFilterField.departureIcao:
+      case ReportsFilterField.departureIata:
+      case ReportsFilterField.departureName:
+      case ReportsFilterField.departureCity:
+      case ReportsFilterField.departureCountry:
+      case ReportsFilterField.arrivalIcao:
+      case ReportsFilterField.arrivalIata:
+      case ReportsFilterField.arrivalName:
+      case ReportsFilterField.arrivalCity:
+      case ReportsFilterField.arrivalCountry:
+      case ReportsFilterField.aircraftTail:
+      case ReportsFilterField.aircraftTypeCode:
+      case ReportsFilterField.aircraftTypeFamily:
+      case ReportsFilterField.aircraftTypeName:
+      case ReportsFilterField.approachType:
+      case ReportsFilterField.remarks:
+      case ReportsFilterField.notes:
+      case ReportsFilterField.blockTime:
+      case ReportsFilterField.flightTime:
+      case ReportsFilterField.totalTime:
+      case ReportsFilterField.nightTime:
+      case ReportsFilterField.ifrTime:
+      case ReportsFilterField.instrumentTime:
+      case ReportsFilterField.simulatedInstrumentTime:
+      case ReportsFilterField.picTime:
+      case ReportsFilterField.picusTime:
+      case ReportsFilterField.sicTime:
+      case ReportsFilterField.dualTime:
+      case ReportsFilterField.instructorTime:
+      case ReportsFilterField.crossCountryTime:
+      case ReportsFilterField.custom1Time:
+      case ReportsFilterField.custom2Time:
+      case ReportsFilterField.custom3Time:
+      case ReportsFilterField.custom4Time:
+      case ReportsFilterField.distanceNm:
+      case ReportsFilterField.takeoffs:
+      case ReportsFilterField.takeoffsDay:
+      case ReportsFilterField.takeoffsNight:
+      case ReportsFilterField.landings:
+      case ReportsFilterField.landingsDay:
+      case ReportsFilterField.landingsNight:
+      case ReportsFilterField.ifrApproaches:
+      case ReportsFilterField.isMultiPilot:
+      case ReportsFilterField.isSimulator:
+        return false;
+    }
+  }
+
+  bool _needsPilotNamesForFilters() {
+    return _filters.any((filter) => _isPilotFilterField(filter.field));
+  }
+
+  Future<void> _loadDetailed({
+    required bool includeEntries,
+    required bool includePilotNames,
+  }) async {
     if (_from.isAfter(_to)) {
       setState(
         () => _error = AppLocalizations.of(context)!.reportsStartBeforeEndError,
@@ -270,28 +373,53 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
     try {
       final repo = ref.read(reportsRepositoryProvider);
-      final result = await repo.load(
-        ReportsQuery(
-          from: _from,
-          to: _to,
-          includePreviousExperience: includePreviousExperience,
-          filterMatchMode: _filterMatchMode,
-          filters: _filters,
-        ),
-      );
-      final flights = eventTypes.flights
-          ? result.flights
-          : const <ReportsFlightRow>[];
-      final entries = await _fetchEntriesForFlights(flights, eventTypes);
-      if (!mounted) return;
-      setState(() {
-        _data = ReportsData(
-          totals: _applyTypeSelectionToTotals(result.totals, eventTypes),
-          flights: flights,
+      if (!includeEntries && _filters.isEmpty) {
+        final flights = eventTypes.flights
+            ? await repo.loadFlightsForAnalysis(
+                from: _from,
+                to: _to,
+                includePilotNames: includePilotNames,
+              )
+            : const <ReportsFlightRow>[];
+        if (!mounted) return;
+        setState(() {
+          _data = ReportsData(totals: _data.totals, flights: flights);
+          _entries = const [];
+          _detailsLoaded = true;
+          _entriesLoaded = false;
+          _pilotNamesLoaded = includePilotNames;
+        });
+        unawaited(_refreshAnalysisGroups());
+      } else {
+        final result = await repo.load(
+          ReportsQuery(
+            from: _from,
+            to: _to,
+            includePreviousExperience: includePreviousExperience,
+            filterMatchMode: _filterMatchMode,
+            filters: _filters,
+          ),
+          includePilotNames: includePilotNames,
         );
-        _entries = entries;
-        _detailsLoaded = true;
-      });
+        final flights = eventTypes.flights
+            ? result.flights
+            : const <ReportsFlightRow>[];
+        final entries = includeEntries
+            ? await _fetchEntriesForFlights(flights, eventTypes)
+            : const <LogbookEntry>[];
+        if (!mounted) return;
+        setState(() {
+          _data = ReportsData(
+            totals: _applyTypeSelectionToTotals(result.totals, eventTypes),
+            flights: flights,
+          );
+          _entries = entries;
+          _detailsLoaded = true;
+          _entriesLoaded = includeEntries;
+          _pilotNamesLoaded = includePilotNames;
+        });
+        unawaited(_refreshAnalysisGroups());
+      }
     } on Object catch (error) {
       if (!mounted) return;
       setState(() => _error = error.toString());
@@ -355,18 +483,39 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         .toList(growable: false);
   }
 
-  Future<void> _ensureDetailsLoaded() async {
-    if (_detailsLoaded) return;
-    if (_loading) {
-      _pendingDetailsLoad = true;
+  Future<void> _ensureDetailsLoaded({
+    required bool includeEntries,
+    required bool includePilotNames,
+  }) async {
+    if (_detailsLoaded &&
+        (!includeEntries || _entriesLoaded) &&
+        (!includePilotNames || _pilotNamesLoaded)) {
       return;
     }
-    await _loadDetailed();
+    if (_loading) {
+      _pendingDetailsLoad = true;
+      _pendingIncludeEntries = _pendingIncludeEntries || includeEntries;
+      _pendingIncludePilotNames =
+          _pendingIncludePilotNames || includePilotNames;
+      return;
+    }
+    await _loadDetailed(
+      includeEntries: includeEntries,
+      includePilotNames: includePilotNames,
+    );
   }
 
   Future<void> _onTabChanged(int index) async {
-    if (index > 0) {
-      await _ensureDetailsLoaded();
+    if (index == 1) {
+      await _ensureDetailsLoaded(
+        includeEntries: true,
+        includePilotNames: _needsPilotNamesForFilters(),
+      );
+    } else if (index == 2) {
+      await _ensureDetailsLoaded(
+        includeEntries: false,
+        includePilotNames: _needsPilotNamesForFilters(),
+      );
     }
   }
 
@@ -546,7 +695,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<void> _openMapDialog() async {
-    await _loadDetailed();
+    await _loadDetailed(
+      includeEntries: false,
+      includePilotNames: _needsPilotNamesForFilters(),
+    );
     if (!mounted) return;
     await showDialog<void>(
       context: context,
@@ -573,7 +725,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     await _setPdfGenerationProgress(l10n.reportsPdfPreparing, progress: 0.1);
 
     try {
-      await _ensureDetailsLoaded();
+      await _ensureDetailsLoaded(
+        includeEntries: true,
+        includePilotNames: _needsPilotNamesForFilters(),
+      );
       if (!mounted) return;
       final templateConfig = selectedTemplate.template;
       final pdfService = ref.read(reportPdfApplicationServiceProvider);
@@ -710,16 +865,18 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     return path;
   }
 
-  List<_AnalysisGroup> _buildAnalysisGroups() {
+  Future<void> _refreshAnalysisGroups() async {
+    if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
+    final token = ++_analysisBuildToken;
+    setState(() => _analysisLoading = true);
+
     final groups = <String, _AnalysisGroupAccumulator>{};
-    for (final flight in _data.flights) {
+    for (var i = 0; i < _data.flights.length; i++) {
+      final flight = _data.flights[i];
       final keys = _analysisGroupKeysForFlight(flight, l10n);
       for (final key in keys) {
-        final bucket = groups.putIfAbsent(
-          key,
-          _AnalysisGroupAccumulator.new,
-        );
+        final bucket = groups.putIfAbsent(key, _AnalysisGroupAccumulator.new);
         if (_analysisGroupBy == _AnalysisGroupBy.airport) {
           bucket.addForAirport(
             flight,
@@ -730,11 +887,23 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           bucket.add(flight);
         }
       }
+
+      if (i % 250 == 0) {
+        await Future<void>.delayed(Duration.zero);
+        if (!mounted || token != _analysisBuildToken) return;
+      }
     }
-    return groups.entries
+
+    final builtGroups = groups.entries
         .map((entry) => _AnalysisGroup(title: entry.key, totals: entry.value))
         .toList(growable: false)
       ..sort(_analysisSortCompare);
+
+    if (!mounted || token != _analysisBuildToken) return;
+    setState(() {
+      _analysisGroups = builtGroups;
+      _analysisLoading = false;
+    });
   }
 
   List<String> _analysisGroupKeysForFlight(
@@ -764,7 +933,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         unknownType: l10n.reportsUnknownType,
         unknownFamily: l10n.reportsUnknownFamily,
         unknownAirport: l10n.reportsUnknownAirport,
-        unknownPilot: l10n.reportsUnknownPilot,
       ),
     ];
   }
@@ -813,8 +981,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         return l10n.reportsAnalyzeByFamily;
       case _AnalysisGroupBy.airport:
         return l10n.reportsAnalyzeByAirport;
-      case _AnalysisGroupBy.pilot:
-        return l10n.reportsAnalyzeByPilot;
       case _AnalysisGroupBy.year:
         return l10n.reportsAnalyzeByYear;
       case _AnalysisGroupBy.month:
@@ -1118,6 +1284,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 onChanged: (value) {
                   if (value != null) {
                     setState(() => _analysisGroupBy = value);
+                    if (_detailsLoaded) {
+                      unawaited(_refreshAnalysisGroups());
+                    } else {
+                      unawaited(
+                        _ensureDetailsLoaded(
+                          includeEntries: false,
+                          includePilotNames: _needsPilotNamesForFilters(),
+                        ),
+                      );
+                    }
                   }
                 },
               ),
@@ -1152,6 +1328,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 onChanged: (value) {
                   if (value != null) {
                     setState(() => _analysisOrderBy = value);
+                    unawaited(_refreshAnalysisGroups());
                   }
                 },
               ),
@@ -1159,7 +1336,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           ],
         ),
         const SizedBox(height: 10),
-        Expanded(child: _AnalysisList(groups: _buildAnalysisGroups())),
+        Expanded(
+          child: _analysisLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _AnalysisList(groups: _analysisGroups),
+        ),
       ],
     );
   }
@@ -1347,7 +1528,7 @@ String _reportDateRangePresetLabel(
   }
 }
 
-enum _AnalysisGroupBy { aircraft, type, family, airport, pilot, year, month }
+enum _AnalysisGroupBy { aircraft, type, family, airport, year, month }
 
 enum _AnalysisOrderBy { natural, hours, landings, takeoff, operations }
 
@@ -1498,7 +1679,6 @@ extension on _AnalysisGroupBy {
     required String unknownType,
     required String unknownFamily,
     required String unknownAirport,
-    required String unknownPilot,
   }) {
     switch (this) {
       case _AnalysisGroupBy.aircraft:
@@ -1519,8 +1699,6 @@ extension on _AnalysisGroupBy {
           return toIcao;
         }
         return unknownAirport;
-      case _AnalysisGroupBy.pilot:
-        return row.pilotNames.trim().isEmpty ? unknownPilot : row.pilotNames;
       case _AnalysisGroupBy.year:
         return row.departureDateTime.year.toString();
       case _AnalysisGroupBy.month:

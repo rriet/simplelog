@@ -134,7 +134,10 @@ class ReportsRepository {
   }
 
   /// Public API documentation.
-  Future<ReportsData> load(ReportsQuery query) async {
+  Future<ReportsData> load(
+    ReportsQuery query, {
+    bool includePilotNames = true,
+  }) async {
     final depTimeLines = _db.alias(_db.timeLines, 'report_dep_tl');
     final depAirports = _db.alias(_db.airports, 'report_dep_airports');
     final arrAirports = _db.alias(_db.airports, 'report_arr_airports');
@@ -166,9 +169,13 @@ class ReportsRepository {
           ..orderBy([OrderingTerm.desc(depTimeLines.eventDateTime)]);
 
     final rows = await flightsQuery.get();
-    final pilotNamesByFlight = await _fetchPilotNamesByFlight(
-      rows.map((row) => row.readTable(_db.flights).id).toList(growable: false),
-    );
+    final pilotNamesByFlight = includePilotNames
+        ? await _fetchPilotNamesByFlight(
+            rows
+                .map((row) => row.readTable(_db.flights).id)
+                .toList(growable: false),
+          )
+        : const <int, _PilotNamesByRole>{};
     final flightData = rows
         .map((row) {
           final flight = row.readTable(_db.flights);
@@ -257,6 +264,90 @@ class ReportsRepository {
       totals = totals + await _sumPreviousExperience(query);
     }
     return ReportsData(totals: totals, flights: flights);
+  }
+
+  /// Loads only flight rows needed by the Analyses tab.
+  Future<List<ReportsFlightRow>> loadFlightsForAnalysis({
+    required DateTime from,
+    required DateTime to,
+    bool includePilotNames = false,
+  }) async {
+    final depTimeLines = _db.alias(_db.timeLines, 'analysis_dep_tl');
+    final depAirports = _db.alias(_db.airports, 'analysis_dep_airports');
+    final arrAirports = _db.alias(_db.airports, 'analysis_arr_airports');
+    final flightsQuery =
+        _db.select(_db.flights).join([
+            innerJoin(
+              depTimeLines,
+              depTimeLines.id.equalsExp(_db.flights.departureDateTimeId),
+            ),
+            innerJoin(
+              _db.aircrafts,
+              _db.aircrafts.id.equalsExp(_db.flights.aircraftId),
+            ),
+            leftOuterJoin(
+              _db.aircraftTypes,
+              _db.aircraftTypes.id.equalsExp(_db.aircrafts.aircraftTypeId),
+            ),
+            leftOuterJoin(
+              depAirports,
+              depAirports.id.equalsExp(_db.flights.departureAirportId),
+            ),
+            leftOuterJoin(
+              arrAirports,
+              arrAirports.id.equalsExp(_db.flights.arrivalAirportId),
+            ),
+          ])
+          ..where(depTimeLines.eventDateTime.isBiggerOrEqualValue(from))
+          ..where(depTimeLines.eventDateTime.isSmallerOrEqualValue(to))
+          ..orderBy([OrderingTerm.desc(depTimeLines.eventDateTime)]);
+
+    final rows = await flightsQuery.get();
+    final pilotNamesByFlight = includePilotNames
+        ? await _fetchPilotNamesByFlight(
+            rows
+                .map((row) => row.readTable(_db.flights).id)
+                .toList(growable: false),
+          )
+        : const <int, _PilotNamesByRole>{};
+
+    return rows
+        .map((row) {
+          final flight = row.readTable(_db.flights);
+          final depTime = row.readTable(depTimeLines);
+          final aircraft = row.readTable(_db.aircrafts);
+          final type = row.readTableOrNull(_db.aircraftTypes);
+          final depAirport = row.readTableOrNull(depAirports);
+          final arrAirport = row.readTableOrNull(arrAirports);
+          return ReportsFlightRow(
+            flightId: flight.id,
+            departureDateTime: depTime.eventDateTime,
+            registration: aircraft.registration,
+            modelCode: type?.code ?? '',
+            modelFamily: type?.family ?? '',
+            fromIcao: depAirport?.icao ?? '',
+            toIcao: arrAirport?.icao ?? '',
+            pilotNames:
+                pilotNamesByFlight[flight.id]?.allOnBoardNamesLower ?? '',
+            fromLatitude: depAirport?.latitude,
+            fromLongitude: depAirport?.longitude,
+            toLatitude: arrAirport?.latitude,
+            toLongitude: arrAirport?.longitude,
+            totalMinutes: flight.timeBlockMinutes,
+            picMinutes: flight.timePICMinutes,
+            picusMinutes: flight.timePICUSMinutes,
+            sicMinutes: flight.timeSICMinutes,
+            dualMinutes: flight.timeDualMinutes,
+            ifrMinutes: flight.timeIFRMinutes,
+            instrumentMinutes:
+                flight.timeInstrumentMinutes +
+                flight.timeSimulatedInstrumentMinutes,
+            nightMinutes: flight.timeNightMinutes,
+            takeoffs: flight.takeOffsDays + flight.takeOffsNight,
+            landings: flight.landingsDay + flight.landingsNight,
+          );
+        })
+        .toList(growable: false);
   }
 
   ReportsTotals _sumFlightData(List<_ReportFlightData> rows) {
