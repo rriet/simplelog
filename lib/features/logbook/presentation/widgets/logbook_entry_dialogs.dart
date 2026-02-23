@@ -43,8 +43,8 @@ class LogbookEntryDialogs {
     final l10n = AppLocalizations.of(context)!;
     final date = entry.timeLine.eventDateTime;
     final locale = Localizations.localeOf(context).toString();
-    final dateLabel = DateFormat('dd/MMM yyyy', locale).format(date);
-    final timeLabel = DateFormat('HH:mm', locale).format(date);
+    final dateLabel = DateFormat('dd/MMM yyyy', locale).format(_asUtc(date));
+    final timeLabel = DateFormat('HH:mm', locale).format(_asUtc(date));
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => Dialog(
@@ -97,7 +97,9 @@ class LogbookEntryDialogs {
     final arrTime = _formatTime(arrDateTime, null);
     final totalTime = _formatMinutes(pos?.timeTotalMinutes ?? 0);
     final notes = (pos?.notes ?? '').trim();
-    final dateLabel = DateFormat('dd/MMM/yyyy', locale).format(depDateTime);
+    final dateLabel = DateFormat('dd/MMM/yyyy', locale).format(
+      _asUtc(depDateTime),
+    );
 
     await showDialog<void>(
       context: context,
@@ -238,7 +240,7 @@ class LogbookEntryDialogs {
     final crewList = await useCases.fetchFlightCrewInfo(flight.id);
 
     final date = entry.timeLine.eventDateTime;
-    final dateLabel = DateFormat('dd/MMM yyyy', locale).format(date);
+    final dateLabel = DateFormat('dd/MMM yyyy', locale).format(_asUtc(date));
     final depTime = _formatTime(entry.flight?.takeOffDateTime, date);
     final arrTime = _formatTime(entry.flight?.arrivalDateTime, null);
 
@@ -247,6 +249,7 @@ class LogbookEntryDialogs {
     final tail = entry.aircraft?.registration ?? '-';
     final dep = entry.departureAirport?.icao ?? '-';
     final arr = entry.arrivalAirport?.icao ?? '-';
+    final blockTime = '${_formatMinutes(flight.timeBlockMinutes)}h';
     final remarks = flight.remarks.trim();
     final notes = flight.notes.trim();
     final hasCrew = crewList.isNotEmpty;
@@ -334,41 +337,20 @@ class LogbookEntryDialogs {
                           children: [
                             Expanded(
                               child: _PositioningInfoValue(
-                                label: 'Tail',
-                                value: tail,
+                                label: 'Function',
+                                value: pfpm ?? '-',
                               ),
                             ),
                             Expanded(
                               child: _PositioningInfoValue(
-                                label: 'Block',
-                                value:
-                                    '${_formatMinutes(flight.timeBlockMinutes)}'
-                                    'h',
+                                label: 'Tail',
+                                value: tail,
                                 alignEnd: true,
                               ),
                             ),
                           ],
                         ),
-                        if (pfpm != null) ...[
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _PositioningInfoValue(
-                                  label: 'Function',
-                                  value: pfpm,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  _PositioningInfoCard(
-                    child: Column(
-                      children: [
+                        const SizedBox(height: 10),
                         Row(
                           children: [
                             Expanded(
@@ -377,10 +359,14 @@ class LogbookEntryDialogs {
                                 value: dep,
                               ),
                             ),
-                            Text(
-                              '→',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: colorScheme.primary,
+                            Expanded(
+                              child: Center(
+                                child: Text(
+                                  '→',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    color: colorScheme.primary,
+                                  ),
+                                ),
                               ),
                             ),
                             Expanded(
@@ -402,6 +388,25 @@ class LogbookEntryDialogs {
                               ),
                             ),
                             Expanded(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Block',
+                                    style: theme.textTheme.labelMedium
+                                        ?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    blockTime,
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.titleMedium,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
                               child: _PositioningInfoValue(
                                 label: 'Arrival',
                                 value: arrTime,
@@ -410,57 +415,118 @@ class LogbookEntryDialogs {
                             ),
                           ],
                         ),
+                        
+                        if (timeMetrics.isNotEmpty) ...[
+                          Divider(
+                            color: colorScheme.outlineVariant,
+                            height: 21,
+                            thickness: 1,
+                          ),
+                          Wrap(
+                            spacing: 14,
+                            runSpacing: 8,
+                            children: timeMetrics
+                                .map(
+                                  (item) => _MetricPill(
+                                    label: item.$1,
+                                    value: '${_formatMinutes(item.$2)}h',
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ],
+                        if (hasCrew) ...[
+                          Divider(
+                            color: colorScheme.outlineVariant,
+                            height: 21,
+                            thickness: 1,
+                          ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Crew',
+                              textAlign: TextAlign.left,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          ...crewList.map(
+                            (crew) => Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: InkWell(
+                                  onTap: () =>
+                                      _showCrewInfo(context, crew, useCases),
+                                  child: Text(
+                                    '${crew.positionLabel}: ${crew.name}',
+                                    textAlign: TextAlign.left,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (remarks.isNotEmpty) ...[
+                          Divider(
+                            color: colorScheme.outlineVariant,
+                            height: 21,
+                            thickness: 1,
+                          ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Remarks',
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              remarks,
+                              textAlign: TextAlign.left,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                        if (notes.isNotEmpty) ...[
+                          Divider(
+                            color: colorScheme.outlineVariant,
+                            height: 21,
+                            thickness: 1,
+                          ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Notes',
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              notes,
+                              textAlign: TextAlign.left,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                  if (timeMetrics.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    _PositioningInfoCard(
-                      child: Wrap(
-                        spacing: 14,
-                        runSpacing: 8,
-                        children: timeMetrics
-                            .map(
-                              (item) => _MetricPill(
-                                label: item.$1,
-                                value: '${_formatMinutes(item.$2)}h',
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-                  ],
-                  if (hasCrew) ...[
-                    const SizedBox(height: 10),
-                    _PositioningInfoCard(
-                      child: _CrewInfoList(
-                        title: 'Crew',
-                        crewList: crewList,
-                        onTap: (crew) => _showCrewInfo(context, crew, useCases),
-                        titleStyle: theme.textTheme.labelLarge?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ],
-                  if (remarks.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    _PositioningInfoCard(
-                      child: _PositioningInfoValue(
-                        label: 'Remarks',
-                        value: remarks,
-                      ),
-                    ),
-                  ],
-                  if (notes.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    _PositioningInfoCard(
-                      child: _PositioningInfoValue(
-                        label: 'Notes',
-                        value: notes,
-                      ),
-                    ),
-                  ],
+                  
+                  
                 ],
               ),
             ),
@@ -482,7 +548,7 @@ class LogbookEntryDialogs {
     final crewList = await useCases.fetchSimulatorCrewInfo(sim.id);
 
     final date = entry.timeLine.eventDateTime;
-    final dateLabel = DateFormat('dd/MMM yyyy', locale).format(date);
+    final dateLabel = DateFormat('dd/MMM yyyy', locale).format(_asUtc(date));
     final typeName =
         entry.aircraftType?.longName ?? entry.aircraftType?.code ?? '-';
     final tail = entry.aircraft?.registration ?? '-';
@@ -793,10 +859,19 @@ String _formatMinutes(int minutes) {
 String _formatTime(DateTime? explicit, DateTime? fallback) {
   final value = explicit ?? fallback;
   if (value == null) return '--:--';
-  if (value.hour == 0 && value.minute == 0) return '--:--';
-  final hour = value.hour.toString().padLeft(2, '0');
-  final minute = value.minute.toString().padLeft(2, '0');
+  final utc = _asUtc(value);
+  if (utc.hour == 0 && utc.minute == 0) return '--:--';
+  final hour = utc.hour.toString().padLeft(2, '0');
+  final minute = utc.minute.toString().padLeft(2, '0');
   return '$hour:$minute';
+}
+
+DateTime _asUtc(DateTime value) {
+  if (value.isUtc) return value;
+  return DateTime.fromMillisecondsSinceEpoch(
+    value.millisecondsSinceEpoch,
+    isUtc: true,
+  );
 }
 
 String _eventLabel(AppLocalizations l10n, LogbookEntry entry) {
