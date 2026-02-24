@@ -1,8 +1,8 @@
 import 'package:intl/intl.dart';
 
-/// Public API documentation.
+/// Precomputed pieces of a UTC `DateTime` useful for formatting.
 class DbDateTimeParts {
-  /// Public API documentation.
+  /// Creates a new value object with broken‑out date and time fields.
   const DbDateTimeParts({
     required this.year,
     required this.monthNumber,
@@ -11,29 +11,33 @@ class DbDateTimeParts {
     required this.hour,
     required this.minute,
     required this.hhmm,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Four‑digit year component.
   final int year;
-  /// Public API documentation.
+
+  /// Month number \[1–12\].
   final int monthNumber;
-  /// Public API documentation.
+
+  /// Short localized month name (e.g. `Jan`).
   final String monthShort;
-  /// Public API documentation.
+
+  /// Day of month.
   final int day;
-  /// Public API documentation.
+
+  /// Hour in 24‑hour clock.
   final int hour;
-  /// Public API documentation.
+
+  /// Minute component.
   final int minute;
-  /// Public API documentation.
+
+  /// Cached `"HH:mm"` representation.
   final String hhmm;
 }
 
-/// Public API documentation.
+/// Helpers for converting between wall‑clock times and UTC database values.
 class DbDateTime {
-  /// Public API documentation.
+  /// Private constructor to prevent instantiation.
   const DbDateTime._();
 
   /// Normalizes a database timestamp as UTC.
@@ -44,7 +48,7 @@ class DbDateTime {
     );
   }
 
-  /// Public API documentation.
+  /// Like [dbToUtc] but accepts nullable input.
   static DateTime? dbToUtcOrNull(DateTime? value) {
     if (value == null) return null;
     return dbToUtc(value);
@@ -53,26 +57,24 @@ class DbDateTime {
   /// Converts wall-clock fields to UTC for storage without timezone shifting.
   static DateTime wallClockToDbUtc(DateTime value) {
     return DateTime.utc(
-      /// Public API documentation.
       value.year,
       value.month,
       value.day,
       value.hour,
       value.minute,
-      /// Public API documentation.
       value.second,
       value.millisecond,
       value.microsecond,
     );
   }
 
-  /// Public API documentation.
+  /// Like [wallClockToDbUtc] but accepts nullable input.
   static DateTime? wallClockToDbUtcOrNull(DateTime? value) {
     if (value == null) return null;
     return wallClockToDbUtc(value);
   }
 
-  /// Public API documentation.
+  /// Extracts [DbDateTimeParts] from a UTC database timestamp.
   static DbDateTimeParts parts(DateTime dbValue, {String? locale}) {
     final utc = dbToUtc(dbValue);
     final hh = utc.hour.toString().padLeft(2, '0');

@@ -5,9 +5,9 @@ import 'package:simplelog/presentation/shared/widgets/base_scaffold.dart';
 import 'package:simplelog/state/aircraft_state.dart';
 import 'package:simplelog/state/providers/navigation_provider.dart';
 
-/// Public API documentation.
+/// Scaffold used on compact layouts with a collapsible navigation drawer.
 class CollapsibleScaffold extends ConsumerWidget {
-  /// Public API documentation.
+  /// Creates the collapsible navigation scaffold.
   const CollapsibleScaffold({super.key});
 
   @override

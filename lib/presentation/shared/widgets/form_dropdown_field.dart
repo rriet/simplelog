@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Public API documentation.
+/// Labeled dropdown field suitable for use inside forms.
 class FormDropdownField<T> extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates a dropdown that renders [items] using [itemLabel].
   const FormDropdownField({
     required this.label,
     required this.value,
@@ -10,19 +10,21 @@ class FormDropdownField<T> extends StatelessWidget {
     required this.itemLabel,
     required this.onChanged,
     super.key,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Localized label shown above the dropdown.
   final String label;
-  /// Public API documentation.
+
+  /// Currently selected value.
   final T value;
-  /// Public API documentation.
+
+  /// All selectable items.
   final List<T> items;
-  /// Public API documentation.
+
+  /// Maps an item into the display text shown in the list.
   final String Function(T value) itemLabel;
-  /// Public API documentation.
+
+  /// Invoked when the selected value changes.
   final ValueChanged<T?> onChanged;
 
   @override

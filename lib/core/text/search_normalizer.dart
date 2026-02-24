@@ -1,4 +1,4 @@
-/// Public API documentation.
+/// Strips diacritics and accents from the given [input] string.
 String stripDiacritics(String input) {
   const diacriticsMap = {
     'á': 'a',
@@ -165,16 +165,15 @@ String stripDiacritics(String input) {
   }
   return buffer.toString();
 }
-/// Public API documentation.
 
-/// Public API documentation.
+/// Normalizes [value] for loose text search (case- and accent-insensitive).
 String normalizeLooseSearch(String value) {
   final cleaned = stripDiacritics(value).toLowerCase();
   return cleaned.replaceAll(RegExp('[^a-z0-9]'), '');
-/// Public API documentation.
 }
 
-/// Public API documentation.
+/// Normalizes [value] for crew-name lookups, 
+/// keeping only letters, digits and spaces.
 String normalizeCrewSearch(String value) {
   final cleaned = stripDiacritics(value).toLowerCase();
   final textOnly = cleaned.replaceAll(RegExp('[^a-z0-9 ]'), '');

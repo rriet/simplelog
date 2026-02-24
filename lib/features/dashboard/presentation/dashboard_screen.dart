@@ -14,9 +14,9 @@ import 'package:simplelog/features/logbook/application/providers/logbook_reposit
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 
-/// Public API documentation.
+/// High-level overview with recent flight and duty limits visualized in cards.
 class DashboardScreen extends ConsumerWidget {
-  /// Public API documentation.
+  /// Creates the dashboard screen.
   const DashboardScreen({super.key});
 
   @override

@@ -1,24 +1,24 @@
 import 'package:flutter/foundation.dart';
 
-/// Public API documentation.
+/// User-selected filter and sort options for airport searches.
 class AirportFilters {
-  /// Public API documentation.
+  /// Creates a new set of airport filters.
   const AirportFilters({
     this.orderBy = AirportOrderBy.icao,
     this.searchField = AirportSearchField.all,
     this.showOnlyVisited = false,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Column used to order airport results.
   final AirportOrderBy orderBy;
-  /// Public API documentation.
+
+  /// Field used when interpreting the search query.
   final AirportSearchField searchField;
-  /// Public API documentation.
+
+  /// When `true`, only airports that appear in the logbook are shown.
   final bool showOnlyVisited;
 
-  /// Public API documentation.
+  /// Returns a copy with some fields replaced.
   AirportFilters copyWith({
     AirportOrderBy? orderBy,
     AirportSearchField? searchField,
@@ -26,68 +26,76 @@ class AirportFilters {
   }) {
     return AirportFilters(
       orderBy: orderBy ?? this.orderBy,
-      /// Public API documentation.
       searchField: searchField ?? this.searchField,
-      /// Public API documentation.
       showOnlyVisited: showOnlyVisited ?? this.showOnlyVisited,
-    /// Public API documentation.
     );
-  /// Public API documentation.
   }
-/// Public API documentation.
 }
-/// Public API documentation.
 
-/// Public API documentation.
+/// Fields that can be used to sort airport lists.
 enum AirportOrderBy {
-  /// Public API documentation.
+  /// Sort by ICAO code.
   icao,
-  /// Public API documentation.
+
+  /// Sort by IATA code.
   iata,
-  /// Public API documentation.
+
+  /// Sort by airport name.
   name,
-  /// Public API documentation.
+
+  /// Sort by city.
   city,
-  /// Public API documentation.
+
+  /// Sort by country.
   country,
-  /// Public API documentation.
+
+  /// Sort by number of landings.
   landings,
-  /// Public API documentation.
+
+  /// Sort by number of takeoffs.
   takeoffs,
-  /// Public API documentation.
+
+  /// Sort by number of unique visits.
   visits,
 }
 
-/// Public API documentation.
+/// Fields that the search box can target.
 enum AirportSearchField {
-  /// Public API documentation.
+  /// Search across multiple fields.
   all,
-  /// Public API documentation.
+
+  /// Search by ICAO only.
   icao,
-  /// Public API documentation.
+
+  /// Search by IATA only.
   iata,
-  /// Public API documentation.
+
+  /// Search by either ICAO or IATA.
   icaoOrIata,
-  /// Public API documentation.
+
+  /// Search by airport name.
   name,
-  /// Public API documentation.
+
+  /// Search by city name.
   city,
-  /// Public API documentation.
+
+  /// Search by country name.
   country,
 }
 
 @immutable
-/// Public API documentation.
+/// Parameter object used to memoize airport search queries.
 class AirportSearchParams {
-  /// Public API documentation.
+  /// Creates a parameter object for [query] and [filters].
   const AirportSearchParams({
     required this.query,
     required this.filters,
   });
 
-  /// Public API documentation.
+  /// Search string typed by the user.
   final String query;
-  /// Public API documentation.
+
+  /// Filter and sort options.
   final AirportFilters filters;
 
   @override

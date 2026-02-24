@@ -11,9 +11,9 @@ import 'package:simplelog/data/import/import_operation_result.dart';
 import 'package:simplelog/data/import/simplelog_import_options.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
 
-/// Public API documentation.
+/// Aggregate statistics returned after running an import.
 class SimpleLogImportResult {
-  /// Public API documentation.
+  /// Creates a result describing how many items were imported or skipped.
   const SimpleLogImportResult({
     required this.totalRows,
     required this.flights,
@@ -25,44 +25,51 @@ class SimpleLogImportResult {
     required this.crew,
     required this.skipped,
     required this.errors,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Number of data rows processed in the input file.
   final int totalRows;
-  /// Public API documentation.
+
+  /// Number of flights successfully imported.
   final int flights;
-  /// Public API documentation.
+
+  /// Number of positioning legs successfully imported.
   final int positionings;
-  /// Public API documentation.
+
+  /// Number of simulator sessions successfully imported.
   final int simulators;
-  /// Public API documentation.
+
+  /// Number of new or updated airports.
   final int airports;
-  /// Public API documentation.
+
+  /// Number of new or updated aircraft types.
   final int aircraftTypes;
-  /// Public API documentation.
+
+  /// Number of new or updated aircraft.
   final int aircrafts;
-  /// Public API documentation.
+
+  /// Number of new or updated crew records.
   final int crew;
-  /// Public API documentation.
+
+  /// Rows that were skipped due to missing or invalid data.
   final int skipped;
-  /// Public API documentation.
+
+  /// Rows that failed with an error.
   final int errors;
 }
 
-/// Public API documentation.
+/// Callback used to report import progress to the UI.
 typedef ImportProgressCallback = void Function(int processed, int total);
 
-/// Public API documentation.
+/// Handles importing legacy SimpleLog CSV exports into the local database.
 class SimpleLogCsvImporter {
-  /// Public API documentation.
+  /// Creates an importer bound to the given [db] instance.
   SimpleLogCsvImporter(this.db);
 
-  /// Public API documentation.
+  /// Database used as the target for the import.
   final AppDatabase db;
 
-  /// Public API documentation.
+  /// Imports a SimpleLog CSV string into the database.
   Future<SimpleLogImportResult> importCsv(
     String content, {
     SimpleLogImportOptions options = const SimpleLogImportOptions(),
@@ -687,7 +694,7 @@ class SimpleLogCsvImporter {
     );
   }
 
-  /// Public API documentation.
+  /// Wraps [importCsv] and converts failures into [ImportOperationResult].
   Future<ImportOperationResult<SimpleLogImportResult>> importCsvSafely(
     String content, {
     SimpleLogImportOptions options = const SimpleLogImportOptions(),
@@ -701,7 +708,6 @@ class SimpleLogCsvImporter {
       );
       return ImportOperationResult.success(result);
     } on FormatException catch (error) {
-      /// Public API documentation.
       return ImportOperationResult.failure(
         ImportFailure(
           type: ImportFailureType.invalidFormat,
@@ -720,7 +726,7 @@ class SimpleLogCsvImporter {
     }
   }
 
-  /// Public API documentation.
+  /// Imports Southwest Airlines CSV exports using convenience defaults.
   Future<SimpleLogImportResult> importSouthwestCsv(
     String content, {
     SouthwestImportOptions options = const SouthwestImportOptions(),
@@ -1184,7 +1190,7 @@ class SimpleLogCsvImporter {
     );
   }
 
-  /// Public API documentation.
+  /// Safe variant of [importSouthwestCsv] that wraps errors in a result type.
   Future<ImportOperationResult<SimpleLogImportResult>> importSouthwestCsvSafely(
     String content, {
     SouthwestImportOptions options = const SouthwestImportOptions(),

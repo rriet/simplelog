@@ -3,62 +3,59 @@ import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/domain/common/domain_validation.dart';
 import 'package:simplelog/domain/repositories/aircraft_repository_contract.dart';
 
-/// Public API documentation.
+/// High‑level operations and validation rules for managing aircraft.
 class AircraftUseCases {
-  /// Public API documentation.
+  /// Creates a new set of aircraft use cases backed by [_repository].
   AircraftUseCases(this._repository);
 
-  /// Public API documentation.
+  /// Repository used to read and persist aircraft data.
   final AircraftRepositoryContract _repository;
 
-  /// Public API documentation.
+  /// Watches aircraft that match the given search [query].
   Stream<List<AircraftRow>> watchAircraft(String query) {
-    /// Public API documentation.
     return _repository.watchAircraft(query);
   }
 
-  /// Public API documentation.
+  /// Fetches aircraft filtered by [aircraftTypeId].
   Future<List<AircraftRow>> fetchAircraftByType(int aircraftTypeId) {
-    /// Public API documentation.
     return _repository.fetchAircraftByType(aircraftTypeId);
   }
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Toggles the locked state of [item].
   Future<void> toggleLock(Aircraft item) => _repository.toggleLock(item);
-  /// Public API documentation.
+
+  /// Toggles the favorite state of [item].
   Future<void> toggleFavorite(Aircraft item) =>
-      /// Public API documentation.
       _repository.toggleFavorite(item);
-  /// Public API documentation.
+
+  /// Deletes [item] if allowed.
   Future<void> delete(Aircraft item) => _repository.delete(item);
-  /// Public API documentation.
+
+  /// Creates a new aircraft from [companion].
   Future<int> create(AircraftsCompanion companion) =>
       _repository.create(companion);
-  /// Public API documentation.
-  Future<void> update(Aircraft item) => _repository.update(item);
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Persists updates to [item].
+  Future<void> update(Aircraft item) => _repository.update(item);
+
+  /// Counts how many other aircraft share the same [registration].
   Future<int> countDuplicateRegistration(String registration, int currentId) {
     return _repository.countDuplicateRegistration(registration, currentId);
-  /// Public API documentation.
   }
 
-  /// Public API documentation.
+  /// Counts flights that reference [aircraftId].
   Future<int> countFlightsForAircraft(int aircraftId) {
     return _repository.countFlightsForAircraft(aircraftId);
   }
 
-  /// Public API documentation.
+  /// Counts simulator sessions that reference [aircraftId].
   Future<int> countSimSessionsForAircraft(int aircraftId) {
     return _repository.countSimSessionsForAircraft(aircraftId);
   }
 
-  /// Public API documentation.
+  /// Validates whether [companion] contains a unique, non‑empty registration.
   Future<DomainValidation> validateCreate(AircraftsCompanion companion) async {
     final registration = companion.registration.value.trim();
-    /// Public API documentation.
     if (registration.isEmpty) {
       return const DomainValidation.error('Registration is required.');
     }
@@ -72,9 +69,8 @@ class AircraftUseCases {
     return const DomainValidation.ok();
   }
 
-  /// Public API documentation.
+  /// Validates whether [item] can be updated without violating constraints.
   Future<DomainValidation> validateUpdate(Aircraft item) async {
-    /// Public API documentation.
     final registration = item.registration.trim();
     if (registration.isEmpty) {
       return const DomainValidation.error('Registration is required.');
@@ -89,7 +85,7 @@ class AircraftUseCases {
     return const DomainValidation.ok();
   }
 
-  /// Public API documentation.
+  /// Validates whether [item] can be safely deleted.
   Future<DomainValidation> validateDelete(Aircraft item) async {
     if (item.isLocked) {
       return const DomainValidation.error('This aircraft is locked.');

@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
-/// Public API documentation.
+/// Dropdown for selecting the default crew position 
+/// when importing simulator data.
 class SimulatorDefaultPositionSelector extends ConsumerWidget {
-  /// Public API documentation.
+  /// Creates the simulator default position selector.
   const SimulatorDefaultPositionSelector({super.key});
 
   @override

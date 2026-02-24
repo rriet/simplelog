@@ -2,32 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
 
-/// Public API documentation.
+/// Field to search against when filtering the aircraft list.
 enum AircraftSearchBy {
-  /// Public API documentation.
+  /// Search in all supported fields.
   all,
-  /// Public API documentation.
+
+  /// Search by registration only.
   registration,
-  /// Public API documentation.
+
+  /// Search by aircraft type.
   type,
-  /// Public API documentation.
+
+  /// Search by aircraft family.
   family,
-  /// Public API documentation.
+
+  /// Search by notes.
   notes,
 }
 
-/// Public API documentation.
+/// Dialog allowing the user to adjust aircraft list filter options.
 class AircraftFiltersDialog extends StatefulWidget {
-  /// Public API documentation.
+  /// Creates a dialog with an initial [initialSearchBy] mode.
   const AircraftFiltersDialog({
     required this.initialSearchBy,
     super.key,
   });
 
-  /// Public API documentation.
+  /// Initial search field when the dialog is opened.
   final AircraftSearchBy initialSearchBy;
 
-  /// Public API documentation.
+  /// Shows the dialog and returns the selected [AircraftSearchBy], if any.
   static Future<AircraftSearchBy?> show(
     BuildContext context, {
     required AircraftSearchBy initialSearchBy,

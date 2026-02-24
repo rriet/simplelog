@@ -10,65 +10,71 @@ import 'package:simplelog/data/models/positioning_edit_data.dart';
 import 'package:simplelog/data/models/simulator_crew_assignment_input.dart';
 import 'package:simplelog/data/models/simulator_edit_data.dart';
 
-/// Public API documentation.
+/// Abstraction over logbook persistence and query operations.
 abstract class LogbookRepositoryContract {
-  /// Public API documentation.
+  /// Watches the logbook entries that match the given [filters].
   Stream<List<LogbookEntry>> watchLogbook(LogbookFilters filters);
 
-  /// Public API documentation.
+  /// Fetches a single page of logbook entries for the given [filters].
   Future<List<LogbookEntry>> fetchLogbookPage(
     LogbookFilters filters, {
     required int limit,
-    /// Public API documentation.
     required int offset,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Returns the earliest event date in the logbook, if any.
   Future<DateTime?> fetchFirstEventDate();
-  /// Public API documentation.
-  Future<LogbookEntry?> fetchEntryByTimelineId(int timeLineId);
-  /// Public API documentation.
-  Future<Flight?> findFlightById(int flightId);
-  /// Public API documentation.
-  Future<FlightEditData?> loadFlightEditData(int flightId);
-  /// Public API documentation.
-  Future<List<FlightCrewAssignment>> fetchFlightCrewAssignments(int flightId);
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Looks up an entry by its timeline row id.
+  Future<LogbookEntry?> fetchEntryByTimelineId(int timeLineId);
+
+  /// Finds a flight by its id.
+  Future<Flight?> findFlightById(int flightId);
+
+  /// Loads all data needed to edit a flight.
+  Future<FlightEditData?> loadFlightEditData(int flightId);
+
+  /// Returns all crew assignments for the given [flightId].
+  Future<List<FlightCrewAssignment>> fetchFlightCrewAssignments(int flightId);
+
+  /// Toggles the locked state for the given [entry].
   Future<void> toggleEntryLock(LogbookEntry entry);
-  /// Public API documentation.
+
+  /// Toggles the locked state for a duty period by [dutyId].
   Future<void> toggleDutyLock(int dutyId);
-  /// Public API documentation.
+
+  /// Finds a duty period by id.
   Future<DutyPeriod?> findDutyById(int dutyId);
-  /// Public API documentation.
+
+  /// Loads data needed to edit a duty period.
   Future<DutyEditData?> loadDutyEditData(int dutyId);
-  /// Public API documentation.
+
+  /// Loads data needed to edit a positioning entry.
   Future<PositioningEditData?> loadPositioningEditData(int positioningId);
-  /// Public API documentation.
+
+  /// Finds a positioning entry by id.
   Future<Positioning?> findPositioningById(int positioningId);
-  /// Public API documentation.
+
+  /// Finds a simulator training entry by id.
   Future<SimulatorTraining?> findSimulatorTrainingById(int simulatorId);
-  /// Public API documentation.
+
+  /// Loads data needed to edit a simulator training entry.
   Future<SimulatorEditData?> loadSimulatorEditData(int simulatorId);
-  /// Public API documentation.
+
+  /// Fetches all simulator crew assignments for the given [simulatorId].
   Future<List<SimulatorCrewAssignment>> fetchSimulatorCrewAssignments(
     int simulatorId,
-  /// Public API documentation.
   );
 
-  /// Public API documentation.
+  /// Creates a duty period with the provided times and factored value.
   Future<void> createDuty({
     required DateTime start,
     required DateTime end,
     required int dutyMinutes,
     required int factoredMinutes,
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Updates an existing duty period with new timing information.
   Future<void> updateDuty({
     required DutyPeriod duty,
     required DateTime start,
@@ -77,19 +83,17 @@ abstract class LogbookRepositoryContract {
     required int factoredMinutes,
   });
 
-  /// Public API documentation.
+  /// Creates a new positioning entry between two airports.
   Future<void> createPositioning({
     required int departureAirportId,
     required int arrivalAirportId,
-    /// Public API documentation.
     required DateTime departureDateTime,
     required DateTime? arrivalDateTime,
     required int totalMinutes,
     required String notes,
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Updates an existing positioning entry.
   Future<void> updatePositioning({
     required Positioning positioning,
     required DateTime departureDateTime,
@@ -98,117 +102,123 @@ abstract class LogbookRepositoryContract {
     required int arrivalAirportId,
     required int totalMinutes,
     required String notes,
-  /// Public API documentation.
   });
 
-  /// Public API documentation.
+  /// Creates a new flight from the given [input].
   Future<void> createFlight({
     required FlightWriteInput input,
   });
 
-  /// Public API documentation.
+  /// Updates an existing [flight] with the given [input] data.
   Future<void> updateFlight({
     required Flight flight,
     required FlightWriteInput input,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Creates a simulator training entry and associated crew assignments.
   Future<void> createSimulatorTraining({
-    /// Public API documentation.
     required int aircraftId,
-    /// Public API documentation.
     required DateTime startDateTime,
     required DateTime? endDateTime,
     required int totalMinutes,
     required String remarks,
     required String notes,
-    /// Public API documentation.
     required List<SimulatorCrewAssignmentInput> crewAssignments,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Updates an existing simulator training entry.
   Future<void> updateSimulatorTraining({
     required SimulatorTraining simulatorTraining,
     required int aircraftId,
-    /// Public API documentation.
     required DateTime startDateTime,
-    /// Public API documentation.
     required DateTime? endDateTime,
-    /// Public API documentation.
     required int totalMinutes,
     required String remarks,
     required String notes,
     required List<SimulatorCrewAssignmentInput> crewAssignments,
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Resolves human‑readable crew labels for a flight.
   Future<List<String>> fetchFlightCrewLabels(int flightId);
-  /// Public API documentation.
+
+  /// Returns detailed crew info items for a flight.
   Future<List<CrewInfoItem>> fetchFlightCrewInfo(int flightId);
-  /// Public API documentation.
+
+  /// Resolves human‑readable crew labels for a simulator session.
   Future<List<String>> fetchSimulatorCrewLabels(int simulatorId);
-  /// Public API documentation.
+
+  /// Returns detailed crew info items for a simulator session.
   Future<List<CrewInfoItem>> fetchSimulatorCrewInfo(int simulatorId);
-  /// Public API documentation.
+
+  /// Fetches all entries that reference the given [airportId].
   Future<List<LogbookEntry>> fetchEntriesForAirport(int airportId);
-  /// Public API documentation.
+
+  /// Fetches a page of entries for [airportId].
   Future<List<LogbookEntry>> fetchEntriesForAirportPage(
     int airportId, {
     required int limit,
     required int offset,
   });
-  /// Public API documentation.
+
+  /// Computes a flight‑time summary for a specific airport.
   Future<LogbookFlightSummary> fetchFlightSummaryForAirport(int airportId);
-  /// Public API documentation.
+
+  /// Fetches all entries that reference the given [aircraftId].
   Future<List<LogbookEntry>> fetchEntriesForAircraft(int aircraftId);
-  /// Public API documentation.
+
+  /// Fetches a page of entries for [aircraftId].
   Future<List<LogbookEntry>> fetchEntriesForAircraftPage(
     int aircraftId, {
     required int limit,
     required int offset,
   });
-  /// Public API documentation.
+
+  /// Computes a flight‑time summary for a specific aircraft.
   Future<LogbookFlightSummary> fetchFlightSummaryForAircraft(int aircraftId);
-  /// Public API documentation.
+
+  /// Fetches all entries for the given [aircraftTypeId].
   Future<List<LogbookEntry>> fetchEntriesForAircraftType(int aircraftTypeId);
-  /// Public API documentation.
+
+  /// Fetches a page of entries for [aircraftTypeId].
   Future<List<LogbookEntry>> fetchEntriesForAircraftTypePage(
     int aircraftTypeId, {
     required int limit,
     required int offset,
   });
-  /// Public API documentation.
+
+  /// Computes a flight‑time summary for a specific aircraft type.
   Future<LogbookFlightSummary> fetchFlightSummaryForAircraftType(
     int aircraftTypeId,
   );
-  /// Public API documentation.
+
+  /// Fetches a page of entries for the provided aircraft type ids.
   Future<List<LogbookEntry>> fetchEntriesForAircraftTypeFamilyPage(
     List<int> aircraftTypeIds, {
     required int limit,
     required int offset,
   });
-  /// Public API documentation.
+
+  /// Computes flight‑time summary across a family of aircraft types.
   Future<LogbookFlightSummary> fetchFlightSummaryForAircraftTypeFamily(
     List<int> aircraftTypeIds,
   );
-  /// Public API documentation.
+
+  /// Fetches all entries involving the given crew member.
   Future<List<LogbookEntry>> fetchEntriesForCrew(int crewId);
-  /// Public API documentation.
+
+  /// Fetches a page of entries for the given crew member.
   Future<List<LogbookEntry>> fetchEntriesForCrewPage(
     int crewId, {
     required int limit,
     required int offset,
   });
-  /// Public API documentation.
+
+  /// Computes a flight‑time summary for the given crew member.
   Future<LogbookFlightSummary> fetchFlightSummaryForCrew(int crewId);
 
-  /// Public API documentation.
+  /// Deletes the given [entry] and any associated domain rows.
   Future<void> deleteEntry(LogbookEntry entry);
-  /// Public API documentation.
+
+  /// Deletes a duty period and associated timeline rows.
   Future<void> deleteDutyById(int dutyId);
 }

@@ -1,17 +1,23 @@
-/// Public API documentation.
+/// High-level category describing how an aircraft operates.
 enum AircraftCategory {
-  /// Public API documentation.
+  /// Can operate on both land and water.
   amphibian,
-  /// Public API documentation.
+
+  /// Gyrocopter / autogyro.
   gyrocopter,
-  /// Public API documentation.
+
+  /// Helicopter or rotorcraft.
   helicopter,
-  /// Public API documentation.
+
+  /// Conventional landplane.
   landplane,
-  /// Public API documentation.
+
+  /// Pure seaplane (water only).
   seaplane,
-  /// Public API documentation.
+
+  /// Tilt‑wing or VTOL type.
   tiltwing,
-  /// Public API documentation.
+
+  /// Unknown or uncategorized.
   unknown,
 }

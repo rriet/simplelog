@@ -2,27 +2,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/features/airports/application/providers/airport_repository_provider.dart';
 
-/// Public API documentation.
+/// Riverpod controller that exposes airport mutation operations to the UI.
 class AirportController extends Notifier<void> {
   @override
   void build() {}
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Toggles the `isLocked` flag for the given [item].
   Future<void> toggleLock(Airport item) async {
     final useCases = ref.read(airportUseCasesProvider);
     await useCases.toggleLock(item);
-  /// Public API documentation.
   }
 
-  /// Public API documentation.
+  /// Toggles the `isFavorite` flag for the given [item].
   Future<void> toggleFavorite(Airport item) async {
     final useCases = ref.read(airportUseCasesProvider);
-    /// Public API documentation.
     await useCases.toggleFavorite(item);
   }
 
-  /// Public API documentation.
+  /// Deletes [item] from the logbook.
   Future<void> delete(Airport item) async {
     final useCases = ref.read(airportUseCasesProvider);
     await useCases.delete(item);

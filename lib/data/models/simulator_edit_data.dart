@@ -1,20 +1,20 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Aggregate data needed to edit a simulator training entry.
 class SimulatorEditData {
-  /// Public API documentation.
+  /// Creates a view model for editing a simulator training session.
   const SimulatorEditData({
     required this.simulatorTraining,
     required this.startLine,
     required this.crewAssignments,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// The simulator training record being edited.
   final SimulatorTraining simulatorTraining;
-  /// Public API documentation.
+
+  /// Optional starting point in the timeline for this training.
   final TimeLine? startLine;
-  /// Public API documentation.
+
+  /// Crew assignments associated with the simulator session.
   final List<SimulatorCrewAssignment> crewAssignments;
 }

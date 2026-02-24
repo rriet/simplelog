@@ -1,8 +1,8 @@
 import 'dart:math';
 
-/// Optimized FlightCalculations class with performance improvements
+/// Performs distance, time and day/night calculations for a single flight leg.
 class FlightCalculations {
-  /// Public API documentation.
+  /// Creates a calculator for a flight from departure to arrival.
   FlightCalculations({
     required this.latDep,
     required this.longDep,
@@ -23,53 +23,49 @@ class FlightCalculations {
     flightDistanceNm = flightDistance(latDep, longDep, latArr, longArr);
   }
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Departure latitude in decimal degrees.
   final double latDep;
 
-  /// Public API documentation.
+  /// Departure longitude in decimal degrees.
   final double longDep;
 
-  /// Public API documentation.
+  /// Arrival latitude in decimal degrees.
   final double latArr;
 
-  /// Public API documentation.
+  /// Arrival longitude in decimal degrees.
   final double longArr;
 
-  /// Public API documentation.
+  /// Chocks‑off / departure time in UTC seconds from epoch.
   final int depTimeEpochSeconds;
 
-  /// Public API documentation.
+  /// Chocks‑on / arrival time in UTC seconds from epoch.
   final int arrTimeEpochSeconds;
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Sunrise time at departure in minutes from midnight UTC.
   late final int sunriseDep;
 
-  /// Public API documentation.
+  /// Sunset time at departure in minutes from midnight UTC.
   late final int sunsetDep;
 
-  /// Public API documentation.
+  /// Sunrise time at arrival in minutes from midnight UTC.
   late final int sunriseArr;
 
-  /// Public API documentation.
+  /// Sunset time at arrival in minutes from midnight UTC.
   late final int sunsetArr;
 
-  /// Public API documentation.
+  /// Total block/flight time in minutes.
   late final int flightTimeMinutes;
 
-  /// Public API documentation.
+  /// Great‑circle distance in nautical miles.
   late final double flightDistanceNm;
 
-  /// Public API documentation.
+  /// Whether take‑off occurs during daytime.
   late final bool dayTakeOff;
 
-  /// Public API documentation.
+  /// Whether landing occurs during daytime.
   late final bool dayLanding;
 
-  /// Public API documentation.
+  /// Cached result for [_calculatePreciseNightTime].
   int? _nightTimeMinutes;
 
   /// Lazily calculated to avoid unnecessary expensive work.
@@ -80,10 +76,10 @@ class FlightCalculations {
   static const double _sunsetAngleDeg = 90.833;
   static final double _cosSunsetAngle = cos(_sunsetAngleDeg * pi / 180.0);
 
-  /// Public API documentation.
+  /// Local time of sunrise at departure as `"HH:mm"`.
   String get sunriseTime => _formatMinutes(sunriseDep);
 
-  /// Public API documentation.
+  /// Local time of sunset at departure as `"HH:mm"`.
   String get sunsetTime => _formatMinutes(sunsetDep);
 
   String _formatMinutes(int minutes) {

@@ -4,20 +4,20 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 
 import 'package:simplelog/presentation/shared/widgets/language_menu.dart';
 
-/// Public API documentation.
+/// Shared scaffold for top‑level screens with a 
+/// localized title and language menu.
 class BaseScaffold extends ConsumerWidget {
-  /// Public API documentation.
+  /// Creates a scaffold with the given [body] and optional [drawer].
   const BaseScaffold({
     required this.body,
     super.key,
     this.drawer,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Main content of the page.
   final Widget body;
-  /// Public API documentation.
+
+  /// Optional navigation drawer.
   final Widget? drawer;
 
   @override

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 import 'package:simplelog/presentation/shared/widgets/square_outline_button.dart';
 
-/// Public API documentation.
+/// Central place for configuring the application's light and dark themes.
 class AppTheme {
   static const _fontFamily = 'Inter';
 
@@ -11,9 +11,7 @@ class AppTheme {
   static const _red = Color(0xFFE31837);
   static const _yellow = Color(0xFFF9C80E);
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Builds the light color scheme and component theming.
   static ThemeData light() {
     final colorScheme =
         ColorScheme.fromSeed(
@@ -74,11 +72,9 @@ class AppTheme {
         foregroundColor: colorScheme.onPrimary,
       ),
     );
-
-    /// Public API documentation.
   }
 
-  /// Public API documentation.
+  /// Builds the dark color scheme and component theming.
   static ThemeData dark() {
     final colorScheme =
         ColorScheme.fromSeed(

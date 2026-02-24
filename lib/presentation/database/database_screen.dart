@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:simplelog/presentation/database/widgets/database_sync_trigger.dart';
 
-/// Public API documentation.
+/// Simple wrapper screen exposing database sync and management tools.
 class DatabaseScreen extends ConsumerWidget {
-  /// Public API documentation.
+  /// Creates the database tools screen.
   const DatabaseScreen({super.key});
 
   @override

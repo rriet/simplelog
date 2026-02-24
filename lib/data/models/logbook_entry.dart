@@ -1,22 +1,26 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// High‑level type of event represented by a logbook entry.
 enum LogbookEventType {
-  /// Public API documentation.
+  /// A normal flight sector.
   flight,
-  /// Public API documentation.
+
+  /// A simulator training session.
   simulatorTraining,
-  /// Public API documentation.
+
+  /// A duty period boundary (start or end).
   dutyPeriod,
-  /// Public API documentation.
+
+  /// A positioning (dead‑heading) segment.
   positioning,
-  /// Public API documentation.
+
+  /// Fallback for entries that do not match any known type.
   unknown,
 }
 
-/// Public API documentation.
+/// Rich view over a timeline entry and its associated domain entities.
 class LogbookEntry {
-  /// Public API documentation.
+  /// Creates a new logbook entry wrapper.
   LogbookEntry({
     required this.timeLine,
     this.flight,
@@ -24,71 +28,72 @@ class LogbookEntry {
     this.aircraftType,
     this.positioning,
     this.simulatorTraining,
-    /// Public API documentation.
     this.dutyStart,
-    /// Public API documentation.
     this.dutyEnd,
-    /// Public API documentation.
     this.departureAirport,
-    /// Public API documentation.
     this.arrivalAirport,
-    /// Public API documentation.
     this.positioningDepartureAirport,
-    /// Public API documentation.
     this.positioningArrivalAirport,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Underlying timeline entry for this event.
   final TimeLine timeLine;
-  /// Public API documentation.
+
+  /// Flight data when this entry represents a flight sector.
   final Flight? flight;
-  /// Public API documentation.
+
+  /// Aircraft used for the event, if any.
   final Aircraft? aircraft;
-  /// Public API documentation.
+
+  /// Aircraft type associated with the event, if any.
   final AircraftType? aircraftType;
-  /// Public API documentation.
+
+  /// Positioning segment data, when applicable.
   final Positioning? positioning;
-  /// Public API documentation.
+
+  /// Simulator training data, when applicable.
   final SimulatorTraining? simulatorTraining;
-  /// Public API documentation.
+
+  /// Duty period that starts at this timeline entry, if any.
   final DutyPeriod? dutyStart;
-  /// Public API documentation.
+
+  /// Duty period that ends at this timeline entry, if any.
   final DutyPeriod? dutyEnd;
-  /// Public API documentation.
+
+  /// Departure airport for the flight or positioning leg, if resolved.
   final Airport? departureAirport;
-  /// Public API documentation.
+
+  /// Arrival airport for the flight or positioning leg, if resolved.
   final Airport? arrivalAirport;
-  /// Public API documentation.
+
+  /// Departure airport for positioning legs when 
+  /// different from [departureAirport].
   final Airport? positioningDepartureAirport;
-  /// Public API documentation.
+
+  /// Arrival airport for positioning legs when different from [arrivalAirport].
   final Airport? positioningArrivalAirport;
 
-  /// Public API documentation.
+  /// Derives the [LogbookEventType] for this entry based on attached data.
   LogbookEventType get type {
-    /// Public API documentation.
     if (flight != null) return LogbookEventType.flight;
-    /// Public API documentation.
     if (positioning != null) return LogbookEventType.positioning;
-    /// Public API documentation.
     if (simulatorTraining != null) return LogbookEventType.simulatorTraining;
-    /// Public API documentation.
     if (dutyStart != null || dutyEnd != null) {
       return LogbookEventType.dutyPeriod;
     }
     return LogbookEventType.unknown;
   }
 
-  /// Public API documentation.
+  /// Whether this entry marks the start of a duty period.
   bool get isDutyStart => dutyStart != null;
-  /// Public API documentation.
+
+  /// Whether this entry marks the end of a duty period.
   bool get isDutyEnd => dutyEnd != null;
 }
 
-/// Public API documentation.
+/// Small projection of a duty period with timing information.
 class DutyRangeInfo {
-  /// Public API documentation.
+  /// Creates a representation of a duty's [start]/[end] range.
   DutyRangeInfo({
     required this.dutyId,
     required this.start,
@@ -96,12 +101,15 @@ class DutyRangeInfo {
     required this.isLocked,
   });
 
-  /// Public API documentation.
+  /// Identifier of the duty period.
   final int dutyId;
-  /// Public API documentation.
+
+  /// UTC start date/time of the duty period.
   final DateTime start;
-  /// Public API documentation.
+
+  /// UTC end date/time of the duty period.
   final DateTime end;
-  /// Public API documentation.
+
+  /// Whether the duty period is locked against modification.
   final bool isLocked;
 }

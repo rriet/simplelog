@@ -1,29 +1,41 @@
-/// Public API documentation.
+/// Position or role held by a crew member for a given flight.
 enum CrewPosition {
-  /// Public API documentation.
+  /// Pilot in command.
   pic,
-  /// Public API documentation.
+
+  /// Pilot in command under supervision.
   picus,
-  /// Public API documentation.
+
+  /// Second in command.
   sic,
-  /// Public API documentation.
+
+  /// Trainee pilot.
   trainee,
-  /// Public API documentation.
+
+  /// Instructor pilot.
   instructor,
-  /// Public API documentation.
+
+  /// Observer in the cockpit.
   observer,
-  /// Public API documentation.
+
+  /// Generic relief crew member.
   relief,
-  /// Public API documentation.
+
+  /// Relief captain.
   reliefCaptain,
-  /// Public API documentation.
+
+  /// Relief first officer.
   reliefFirstOfficer,
-  /// Public API documentation.
+
+  /// Lead cabin crew.
   cabinSenior,
-  /// Public API documentation.
+
+  /// Cabin crew member.
   cabinCrew,
-  /// Public API documentation.
+
+  /// Other role not covered above.
   other,
-  /// Public API documentation.
+
+  /// Unknown position.
   unknown,
 }

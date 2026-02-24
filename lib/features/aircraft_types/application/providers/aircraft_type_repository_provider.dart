@@ -5,23 +5,22 @@ import 'package:simplelog/domain/repositories/aircraft_type_repository_contract.
 import 'package:simplelog/domain/usecases/aircraft_type_use_cases.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
-/// Public API documentation.
+/// Provides the concrete [AircraftTypeRepositoryContract] backed by Drift.
 final aircraftTypeRepositoryProvider = Provider<AircraftTypeRepositoryContract>(
   (ref) {
     final db = ref.watch(databaseProvider);
     return AircraftTypeRepository(db);
   },
 );
-/// Public API documentation.
 
-/// Public API documentation.
+
+/// Provides high‑level aircraft‑type use cases built on the repository.
 final aircraftTypeUseCasesProvider = Provider<AircraftTypeUseCases>((ref) {
   final repo = ref.watch(aircraftTypeRepositoryProvider);
   return AircraftTypeUseCases(repo);
-/// Public API documentation.
 });
 
-/// Public API documentation.
+/// Stream provider factory used to watch aircraft types filtered by query.
 final StreamProvider<List<AircraftTypeRow>> Function(String)
     aircraftTypesProvider =
     StreamProvider.family<List<AircraftTypeRow>, String>(

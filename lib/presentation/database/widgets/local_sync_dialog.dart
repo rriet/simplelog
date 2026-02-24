@@ -15,11 +15,10 @@ import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/database_sync_controller_provider.dart';
 
-/// Public API documentation.
+/// TCP port used for local peer‑to‑peer sync.
 const int syncPort = 54742;
-/// Public API documentation.
 
-/// Public API documentation.
+/// Dialog that discovers peers and sends/receives database snapshots over LAN.
 class LocalSyncDialog extends ConsumerStatefulWidget {
   /// Public API documentation.
   const LocalSyncDialog({super.key});

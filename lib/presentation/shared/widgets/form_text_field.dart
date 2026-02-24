@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Public API documentation.
+/// Small convenience wrapper around `TextFormField` with a label and padding.
 class FormTextField extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates a labeled text form field.
   const FormTextField({
     required this.controller,
     required this.label,
@@ -13,23 +13,27 @@ class FormTextField extends StatelessWidget {
     this.suffixIcon,
     this.inputFormatters,
     this.maxLines,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Controller backing the field value.
   final TextEditingController controller;
-  /// Public API documentation.
+
+  /// Localized label shown above the field.
   final String label;
-  /// Public API documentation.
+
+  /// Keyboard type for the underlying input.
   final TextInputType? keyboardType;
-  /// Public API documentation.
+
+  /// Optional validator invoked by a surrounding `Form`.
   final String? Function(String?)? validator;
-  /// Public API documentation.
+
+  /// Optional trailing icon widget.
   final Widget? suffixIcon;
-  /// Public API documentation.
+
+  /// Optional list of input formatters applied to user input.
   final List<TextInputFormatter>? inputFormatters;
-  /// Public API documentation.
+
+  /// Maximum number of lines; `null` falls back to a single line.
   final int? maxLines;
 
   @override

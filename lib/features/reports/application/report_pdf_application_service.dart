@@ -6,9 +6,9 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/report_pdf_models.dart';
 
-/// Public API documentation.
+/// Flattened data for a single row in a logbook report.
 class ReportTemplateRow {
-  /// Public API documentation.
+  /// Creates a row from already formatted cell values and time totals.
   const ReportTemplateRow({
     required this.date,
     required this.aircraftModel,
@@ -37,121 +37,113 @@ class ReportTemplateRow {
     required this.instructorMinutes,
     required this.totalMinutes,
     this.extra = const <String, String>{},
-
-    /// Public API documentation.
   });
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Date string displayed in the report (already formatted).
   final String date;
 
-  /// Public API documentation.
+  /// Aircraft model used for the entry.
   final String aircraftModel;
 
-  /// Public API documentation.
+  /// Aircraft registration for the entry.
   final String aircraftRegistration;
 
-  /// Public API documentation.
+  /// Departure aerodrome ICAO code.
   final String fromIcao;
 
-  /// Public API documentation.
+  /// Destination aerodrome ICAO code.
   final String toIcao;
 
-  /// Public API documentation.
+  /// Free‑form remarks shown in the report.
   final String remarks;
 
-  /// Public API documentation.
+  /// Number of instrument approaches flown on this row.
   final int ifrApproaches;
 
-  /// Public API documentation.
+  /// Total landings (day + night).
   final int landingsTotal;
 
-  /// Public API documentation.
+  /// Total take‑offs (day + night).
   final int takeoffsTotal;
 
-  /// Public API documentation.
+  /// Day take‑offs.
   final int takeoffsDay;
 
-  /// Public API documentation.
+  /// Night take‑offs.
   final int takeoffsNight;
 
-  /// Public API documentation.
+  /// Day landings.
   final int landingsDay;
 
-  /// Public API documentation.
+  /// Night landings.
   final int landingsNight;
 
-  /// Public API documentation.
+  /// Single‑engine land (SEL) time in minutes.
   final int selMinutes;
 
-  /// Public API documentation.
+  /// Multi‑engine land (MEL) time in minutes.
   final int melMinutes;
 
-  /// Public API documentation.
+  /// Cross‑country time in minutes.
   final int xcMinutes;
 
-  /// Public API documentation.
+  /// Day flying time in minutes.
   final int dayMinutes;
 
-  /// Public API documentation.
+  /// Night flying time in minutes.
   final int nightMinutes;
 
-  /// Public API documentation.
+  /// IFR time in minutes.
   final int ifrMinutes;
 
-  /// Public API documentation.
+  /// Simulated instrument time in minutes.
   final int simInstMinutes;
 
-  /// Public API documentation.
+  /// Flight simulator or FSTD time in minutes.
   final int fstdMinutes;
 
-  /// Public API documentation.
+  /// Dual instruction time in minutes.
   final int dualMinutes;
 
-  /// Public API documentation.
+  /// PIC + PICUS time in minutes.
   final int picPicusMinutes;
 
-  /// Public API documentation.
+  /// SIC time in minutes.
   final int sicMinutes;
 
-  /// Public API documentation.
+  /// Time logged as instructor in minutes.
   final int instructorMinutes;
 
-  /// Public API documentation.
+  /// Total block or flight time in minutes.
   final int totalMinutes;
 
-  /// Public API documentation.
+  /// Additional dynamic values used by template‑specific columns.
   final Map<String, String> extra;
-
-  /// Public API documentation.
 }
 
-/// Public API documentation.
+/// Simple value object containing PIC and SIC names for a row.
 class ReportEntryCrewNames {
-  /// Public API documentation.
+  /// Creates a new pair of crew names.
   const ReportEntryCrewNames({
     this.pic = '',
     this.sic = '',
   });
 
-  /// Public API documentation.
+  /// Name of the pilot‑in‑command.
   final String pic;
 
-  /// Public API documentation.
+  /// Name of the second‑in‑command.
   final String sic;
 }
 
-/// Public API documentation.
-
-/// Public API documentation.
+/// Aggregate totals used when rendering report summaries.
 class ReportTemplateTotals {
-  /// Public API documentation.
+  /// Creates a new totals object with optional initial values.
   const ReportTemplateTotals({
-    /// Public API documentation.
+    /// Number of instrument approaches.
     this.ifrApproaches = 0,
 
-    /// Public API documentation.
+    /// Total landings (day + night).
     this.landingsTotal = 0,
     this.takeoffsTotal = 0,
     this.takeoffsDay = 0,
@@ -159,23 +151,23 @@ class ReportTemplateTotals {
     this.landingsDay = 0,
     this.landingsNight = 0,
 
-    /// Public API documentation.
+    /// Single‑engine land minutes.
     this.selMinutes = 0,
 
-    /// Public API documentation.
+    /// Multi‑engine land minutes.
     this.melMinutes = 0,
 
-    /// Public API documentation.
+    /// Cross‑country minutes.
     this.xcMinutes = 0,
 
-    /// Public API documentation.
+    /// Day minutes.
     this.dayMinutes = 0,
 
-    /// Public API documentation.
+    /// Night minutes.
     this.nightMinutes = 0,
     this.ifrMinutes = 0,
 
-    /// Public API documentation.
+    /// Simulated instrument minutes.
     this.simInstMinutes = 0,
     this.fstdMinutes = 0,
     this.dualMinutes = 0,
@@ -185,73 +177,70 @@ class ReportTemplateTotals {
     this.totalMinutes = 0,
   });
 
-  /// Public API documentation.
+  /// Number of instrument approaches.
   final int ifrApproaches;
 
-  /// Public API documentation.
+  /// Total landings (day + night).
   final int landingsTotal;
 
-  /// Public API documentation.
+  /// Total take‑offs (day + night).
   final int takeoffsTotal;
 
-  /// Public API documentation.
+  /// Day take‑offs.
   final int takeoffsDay;
 
-  /// Public API documentation.
+  /// Night take‑offs.
   final int takeoffsNight;
 
-  /// Public API documentation.
+  /// Day landings.
   final int landingsDay;
 
-  /// Public API documentation.
+  /// Night landings.
   final int landingsNight;
 
-  /// Public API documentation.
+  /// Single‑engine land minutes.
   final int selMinutes;
 
-  /// Public API documentation.
+  /// Multi‑engine land minutes.
   final int melMinutes;
 
-  /// Public API documentation.
+  /// Cross‑country minutes.
   final int xcMinutes;
 
-  /// Public API documentation.
+  /// Day minutes.
   final int dayMinutes;
 
-  /// Public API documentation.
+  /// Night minutes.
   final int nightMinutes;
 
-  /// Public API documentation.
+  /// IFR minutes.
   final int ifrMinutes;
 
-  /// Public API documentation.
+  /// Simulated instrument minutes.
   final int simInstMinutes;
 
-  /// Public API documentation.
+  /// Flight simulator or FSTD minutes.
   final int fstdMinutes;
 
-  /// Public API documentation.
+  /// Dual instruction minutes.
   final int dualMinutes;
 
-  /// Public API documentation.
+  /// PIC + PICUS minutes.
   final int picPicusMinutes;
 
-  /// Public API documentation.
+  /// SIC minutes.
   final int sicMinutes;
 
-  /// Public API documentation.
+  /// Instructor minutes.
   final int instructorMinutes;
 
-  /// Public API documentation.
+  /// Total minutes across all categories.
   final int totalMinutes;
 
-  /// Public API documentation.
+  /// Returns new totals with values from [row] added.
   ReportTemplateTotals addRow(ReportTemplateRow row) {
-    /// Public API documentation.
     return ReportTemplateTotals(
       ifrApproaches: ifrApproaches + row.ifrApproaches,
-
-      /// Public API documentation.
       landingsTotal: landingsTotal + row.landingsTotal,
       takeoffsTotal: takeoffsTotal + row.takeoffsTotal,
       takeoffsDay: takeoffsDay + row.takeoffsDay,
@@ -274,7 +263,7 @@ class ReportTemplateTotals {
     );
   }
 
-  /// Public API documentation.
+  /// Returns new totals that are the sum of `this` and [other].
   ReportTemplateTotals addTotals(ReportTemplateTotals other) {
     return ReportTemplateTotals(
       ifrApproaches: ifrApproaches + other.ifrApproaches,
@@ -301,9 +290,9 @@ class ReportTemplateTotals {
   }
 }
 
-/// Public API documentation.
+/// Application‑level service responsible for building logbook PDF reports.
 class ReportPdfApplicationService {
-  /// Public API documentation.
+  /// Creates a new instance of the service.
   const ReportPdfApplicationService();
 
   static final DateFormat _dateCellFormat = DateFormat('dd-MM-yyyy');
@@ -337,7 +326,8 @@ class ReportPdfApplicationService {
     'total',
   };
 
-  /// Public API documentation.
+  /// Generates a PDF document based on the 
+  /// given [template] and logbook [entries].
   Future<Uint8List> generateFromTemplate({
     required ReportPdfTemplate template,
     required List<LogbookEntry> entries,
@@ -448,8 +438,6 @@ class ReportPdfApplicationService {
             instructorMinutes: 0,
             totalMinutes: 0,
           ),
-
-          /// Public API documentation.
         );
       }
       final after = carry.addTotals(pageTotals);
@@ -734,7 +722,7 @@ class ReportPdfApplicationService {
     );
   }
 
-  /// Public API documentation.
+  /// Builds flattened rows from raw [entries] for use by report templates.
   List<ReportTemplateRow> buildRows(
     List<LogbookEntry> entries, {
     Map<int, ReportEntryCrewNames> flightCrewById = const {},
@@ -769,7 +757,7 @@ class ReportPdfApplicationService {
               sim?.timeTotal ??
               0;
 
-          /// Public API documentation.
+          /// Night portion of the total block time.
           final nightMinutes = flight?.timeNightMinutes ?? 0;
           final dayMinutes = math.max(0, totalMinutes - nightMinutes);
           final isSeaplane = type?.category.name == 'seaplane';
@@ -1007,7 +995,7 @@ class ReportPdfApplicationService {
     return _hmTimeFormat.format(value.toUtc());
   }
 
-  /// Public API documentation.
+  /// Sums [rows] into a single [ReportTemplateTotals] instance.
   ReportTemplateTotals sumTotals(List<ReportTemplateRow> rows) {
     var totals = const ReportTemplateTotals();
     for (final row in rows) {
@@ -1016,7 +1004,7 @@ class ReportPdfApplicationService {
     return totals;
   }
 
-  /// Public API documentation.
+  /// Computes totals directly from logbook [entries] without building rows.
   ReportTemplateTotals sumTotalsFromEntries(List<LogbookEntry> entries) {
     var ifrApproaches = 0;
     var landingsTotal = 0;

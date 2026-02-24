@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
-/// Public API documentation.
+/// Shared styling configuration for tab bars used in the app.
 class AppTabBarStyles {
   const AppTabBarStyles._();
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Whether tab bars should be horizontally scrollable.
   static const bool isScrollable = true;
-  /// Public API documentation.
+
+  /// Alignment of tabs within the available space.
   static const TabAlignment tabAlignment = TabAlignment.start;
-  /// Public API documentation.
+
+  /// Default padding around each tab label.
   static const EdgeInsetsGeometry labelPadding = EdgeInsets.symmetric(
     horizontal: 12,
   );

@@ -1,27 +1,38 @@
-/// Public API documentation.
+/// Categorization of aircraft engine types used for reporting and filtering.
 enum EngineType {
-  /// Public API documentation.
+  /// Rocket-powered engines.
   rocket,
-  /// Public API documentation.
+
+  /// Piston engines.
   piston,
-  /// Public API documentation.
+
+  /// Turboprop engines.
   turboprop,
-  /// Public API documentation.
+
+  /// Turbojet or turbofan engines.
   jet,
-  /// Public API documentation.
+
+  /// Electric motors.
   electric,
-  /// Public API documentation.
+
+  /// Ultralight aircraft powerplant.
   ultraLightAircraft,
-  /// Public API documentation.
+
+  /// Uncrewed aerial vehicles (drones).
   drone,
-  /// Public API documentation.
+
+  /// Unpowered gliders.
   glider,
-  /// Public API documentation.
+
+  /// Lighter‑than‑air airships.
   airship,
-  /// Public API documentation.
+
+  /// Free balloons.
   balloon,
-  /// Public API documentation.
+
+  /// Powered paraglider / paraplane.
   paraplane,
-  /// Public API documentation.
+
+  /// Unknown or unspecified type.
   unknown,
 }

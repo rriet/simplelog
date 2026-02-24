@@ -9,9 +9,9 @@ import 'package:simplelog/presentation/settings/widgets/simulator_default_positi
 import 'package:simplelog/presentation/settings/widgets/theme_mode_selector.dart';
 import 'package:simplelog/presentation/settings/widgets/time_fields_settings_tab.dart';
 
-/// Public API documentation.
+/// Root settings screen with tabs for general, database and time-field options.
 class SettingsScreen extends ConsumerWidget {
-  /// Public API documentation.
+  /// Creates the settings screen widget.
   const SettingsScreen({super.key});
 
   @override

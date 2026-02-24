@@ -1,55 +1,59 @@
-/// Public API documentation.
+/// Result of an import operation with either data or a failure.
 class ImportOperationResult<T> {
-  /// Public API documentation.
+  /// Creates a successful result containing imported [data].
   const ImportOperationResult.success(this.data)
     : failure = null,
-      /// Public API documentation.
+      /// Indicates that the import completed successfully.
       isSuccess = true;
 
-  /// Public API documentation.
+  /// Creates a failed result describing why the import did not succeed.
   const ImportOperationResult.failure(this.failure)
-    /// Public API documentation.
+    /// No data is available when the import fails.
     : data = null,
-      /// Public API documentation.
+      /// Indicates that the import failed.
       isSuccess = false;
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Imported data when the operation was successful, otherwise `null`.
   final T? data;
-  /// Public API documentation.
+
+  /// Details about the failure when the operation did not succeed.
   final ImportFailure? failure;
-  /// Public API documentation.
+
+  /// Whether the operation completed successfully.
   final bool isSuccess;
 }
 
-/// Public API documentation.
+/// Describes why an import operation failed.
 class ImportFailure {
-  /// Public API documentation.
+  /// Creates a new failure description.
   const ImportFailure({
     required this.type,
     required this.message,
-    /// Public API documentation.
+    /// Optional exception that triggered the failure.
     this.exception,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// High‑level type of failure.
   final ImportFailureType type;
-  /// Public API documentation.
+
+  /// Human‑readable description of what went wrong.
   final String message;
-  /// Public API documentation.
+
+  /// Underlying exception, if one was thrown.
   final Object? exception;
 }
 
-/// Public API documentation.
+/// Categories of failures that can occur during import.
 enum ImportFailureType {
-  /// Public API documentation.
+  /// The input file or payload could not be interpreted.
   invalidFormat,
-  /// Public API documentation.
+
+  /// Parsing of individual rows or fields failed.
   parseError,
-  /// Public API documentation.
+
+  /// Persisting data to the database failed.
   databaseError,
-  /// Public API documentation.
+
+  /// Any other unexpected error.
   unexpected,
 }

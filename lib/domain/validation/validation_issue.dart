@@ -1,88 +1,86 @@
-/// Public API documentation.
+/// Indicates how serious a validation issue is.
 enum ValidationSeverity {
-  /// Public API documentation.
+  /// Prevents the operation from completing.
   error,
 
-  /// Public API documentation.
+  /// Non‑blocking advisory for the user.
   warning,
 }
-/// Public API documentation.
 
-/// Public API documentation.
+/// Single validation message with code, text and severity.
 class ValidationIssue {
-  /// Public API documentation.
+  /// Creates a validation issue.
   const ValidationIssue({
     required this.code,
     required this.message,
     required this.severity,
-    /// Public API documentation.
     this.field,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Machine‑readable code for the issue.
   final String code;
-  /// Public API documentation.
+
+  /// Human‑readable description of the issue.
   final String message;
-  /// Public API documentation.
+
+  /// Severity of this issue.
   final ValidationSeverity severity;
-  /// Public API documentation.
+
+  /// Optional field name associated with the issue.
   final String? field;
 }
-/// Public API documentation.
 
-/// Public API documentation.
+/// Collection of errors and warnings returned from a validation step.
 class ValidationReport {
-  /// Public API documentation.
+  /// Creates a report from lists of [errors] and [warnings].
   const ValidationReport({
     this.errors = const <ValidationIssue>[],
     this.warnings = const <ValidationIssue>[],
-  /// Public API documentation.
   });
 
-  /// Public API documentation.
+  /// Blocking issues.
   final List<ValidationIssue> errors;
-  /// Public API documentation.
+
+  /// Non‑blocking advisory issues.
   final List<ValidationIssue> warnings;
 
-  /// Public API documentation.
+  /// Whether the report contains any errors.
   bool get hasErrors => errors.isNotEmpty;
-  /// Public API documentation.
+
+  /// Whether the report contains any warnings.
   bool get hasWarnings => warnings.isNotEmpty;
 }
 
-/// Public API documentation.
+/// Result of a write operation that may have validation side‑effects.
 class WriteResult<T> {
   const WriteResult._({
     required this.isSuccess,
     this.data,
-    /// Public API documentation.
     this.errors = const <ValidationIssue>[],
-    /// Public API documentation.
     this.warnings = const <ValidationIssue>[],
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Successful write with optional [data] and [warnings].
   const WriteResult.success({
     T? data,
     List<ValidationIssue> warnings = const [],
   }) : this._(isSuccess: true, data: data, warnings: warnings);
 
-  /// Public API documentation.
+  /// Failed write with one or more [errors] (and optional [warnings]).
   const WriteResult.failure({
     List<ValidationIssue> errors = const [],
     List<ValidationIssue> warnings = const [],
   }) : this._(isSuccess: false, errors: errors, warnings: warnings);
 
-  /// Public API documentation.
+  /// Indicates whether the operation completed successfully.
   final bool isSuccess;
-  /// Public API documentation.
+
+  /// Optional payload returned from the operation.
   final T? data;
-  /// Public API documentation.
+
+  /// Errors that caused the operation to fail.
   final List<ValidationIssue> errors;
-  /// Public API documentation.
+
+  /// Non‑blocking warnings encountered during the operation.
   final List<ValidationIssue> warnings;
 }

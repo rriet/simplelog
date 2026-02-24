@@ -5,115 +5,85 @@ import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_list_item.dart';
 import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
-/// Public API documentation.
+/// Common interface implemented by all items that 
+/// can appear in the logbook list.
 abstract class LogbookListItemModel {
-  /// Public API documentation.
+  /// Const constructor for subclasses.
   const LogbookListItemModel();
 
-  /// Public API documentation.
+  /// Date used to order items chronologically.
   DateTime get sortDate;
-
-  /// Public API documentation.
 }
 
-/// Public API documentation.
+/// Concrete list item that wraps a full [LogbookEntry].
 class LogbookEntryItem extends LogbookListItemModel {
-  /// Public API documentation.
+  /// Creates a list item from a [LogbookEntry].
   const LogbookEntryItem(this.entry);
 
-  /// Public API documentation.
+  /// Underlying entry displayed in the list.
   final LogbookEntry entry;
-
-  /// Public API documentation.
 
   @override
   DateTime get sortDate => entry.timeLine.eventDateTime;
 }
 
-/// Public API documentation.
+/// List item that groups all entries belonging to a single duty period.
 class LogbookDutyGroupItem extends LogbookListItemModel {
-  /// Public API documentation.
+  /// Creates a duty group from its metadata and containing [entries].
   const LogbookDutyGroupItem({
     required this.dutyId,
-
-    /// Public API documentation.
     required this.start,
-
-    /// Public API documentation.
     required this.end,
-
-    /// Public API documentation.
     required this.entries,
-
-    /// Public API documentation.
     required this.isLocked,
-
-    /// Public API documentation.
     required this.dutyMinutes,
-
-    /// Public API documentation.
     required this.factoredMinutes,
-
-    /// Public API documentation.
   });
 
-  /// Public API documentation.
+  /// Identifier of the duty period.
   final int dutyId;
 
-  /// Public API documentation.
+  /// Start of the duty period.
   final DateTime start;
 
-  /// Public API documentation.
+  /// End of the duty period.
   final DateTime end;
 
-  /// Public API documentation.
+  /// Entries that fall within the duty period.
   final List<LogbookEntry> entries;
 
-  /// Public API documentation.
+  /// Whether the duty group is locked.
   final bool isLocked;
 
-  /// Public API documentation.
+  /// Raw duty duration in minutes.
   final int dutyMinutes;
 
-  /// Public API documentation.
+  /// Factored duty duration in minutes.
   final int factoredMinutes;
 
-  /// Public API documentation.
-
-  /// Public API documentation.
   @override
   DateTime get sortDate => start;
 }
 
-/// Public API documentation.
+/// Header item that separates logbook entries by year.
 class LogbookYearHeaderItem extends LogbookListItemModel {
-  /// Public API documentation.
+  /// Creates a header for [year], using [date] for chronological position.
   const LogbookYearHeaderItem(this.year, DateTime date) : _date = date;
 
-  /// Public API documentation.
+  /// The year this header represents.
   final int year;
   final DateTime _date;
 
   @override
-  /// Public API documentation.
   DateTime get sortDate => _date;
-
-  /// Public API documentation.
 }
 
-/// Public API documentation.
-
-/// Public API documentation.
+/// Scrollable logbook list that supports sticky year headers and grouped duties
 class LogbookList extends StatefulWidget {
-  /// Public API documentation.
+  /// Creates a logbook list from a sequence of [items].
   const LogbookList({
-    /// Public API documentation.
     required this.onOpenEntry,
-
-    /// Public API documentation.
     required this.items,
-
-    /// Public API documentation.
     required this.onEditEntry,
     required this.onDeleteEntry,
     required this.onToggleLockEntry,
@@ -125,34 +95,34 @@ class LogbookList extends StatefulWidget {
     this.controller,
   });
 
-  /// Public API documentation.
+  /// Backing list of items (entries and headers) to display.
   final List<LogbookListItemModel> items;
 
-  /// Public API documentation.
+  /// Called when an entry is opened (e.g. tapped).
   final ValueChanged<LogbookEntry> onOpenEntry;
 
-  /// Public API documentation.
+  /// Called when an entry should be edited.
   final ValueChanged<LogbookEntry> onEditEntry;
 
-  /// Public API documentation.
+  /// Called when an entry should be deleted.
   final ValueChanged<LogbookEntry> onDeleteEntry;
 
-  /// Public API documentation.
+  /// Called when an entry lock should be toggled.
   final ValueChanged<LogbookEntry> onToggleLockEntry;
 
-  /// Public API documentation.
+  /// Called when a duty group should be edited.
   final ValueChanged<LogbookDutyGroupItem> onEditDuty;
 
-  /// Public API documentation.
+  /// Called when a duty group should be deleted.
   final ValueChanged<LogbookDutyGroupItem> onDeleteDuty;
 
-  /// Public API documentation.
+  /// Called when a duty group lock should be toggled.
   final ValueChanged<LogbookDutyGroupItem> onToggleLockDuty;
 
-  /// Public API documentation.
+  /// Notified when the sticky header year changes as the user scrolls.
   final ValueChanged<int?> onYearChange;
 
-  /// Public API documentation.
+  /// Optional external scroll controller; when omitted an internal one is used.
   final ScrollController? controller;
 
   @override

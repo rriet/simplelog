@@ -1,21 +1,21 @@
-/// Public API documentation.
+/// Supported paper sizes for generated PDF reports.
 enum ReportPdfPageSize {
-  /// Public API documentation.
+  /// ISO A4 size.
   a4,
 
-  /// Public API documentation.
+  /// North‑American Letter size.
   letter,
 
-  /// Public API documentation.
+  /// North‑American Legal size.
   legal,
 
-  /// Public API documentation.
+  /// ISO A5 size.
   a5,
 }
 
-/// Public API documentation.
+/// Convenience helpers for working with [ReportPdfPageSize] values.
 extension ReportPdfPageSizeMeta on ReportPdfPageSize {
-  /// Public API documentation.
+  /// Human‑readable label used in the UI.
   String get label {
     switch (this) {
       case ReportPdfPageSize.a4:
@@ -23,50 +23,40 @@ extension ReportPdfPageSizeMeta on ReportPdfPageSize {
       case ReportPdfPageSize.letter:
         return 'Letter';
       case ReportPdfPageSize.legal:
-
-        /// Public API documentation.
         return 'Legal';
-
-      /// Public API documentation.
       case ReportPdfPageSize.a5:
-
-        /// Public API documentation.
         return 'A5';
-
-      /// Public API documentation.
     }
   }
 }
 
-/// Public API documentation.
-
-/// Public API documentation.
+/// Horizontal alignment for text inside a report column or cell.
 enum ReportPdfColumnAlignment {
-  /// Public API documentation.
+  /// Align content to the left.
   left,
 
-  /// Public API documentation.
+  /// Align content in the center.
   center,
 
-  /// Public API documentation.
+  /// Align content to the right.
   right,
 }
 
-/// Public API documentation.
+/// Vertical alignment for text inside a report cell.
 enum ReportPdfVerticalAlignment {
-  /// Public API documentation.
+  /// Align content to the top of the cell.
   top,
 
-  /// Public API documentation.
+  /// Center content vertically.
   middle,
 
-  /// Public API documentation.
+  /// Align content to the bottom of the cell.
   bottom,
 }
 
-/// Public API documentation.
+/// Text styling options for a single cell.
 class ReportPdfCellTextStyle {
-  /// Public API documentation.
+  /// Creates a new cell text style.
   const ReportPdfCellTextStyle({
     this.fontSize,
     this.bold = false,
@@ -74,36 +64,34 @@ class ReportPdfCellTextStyle {
     this.colorHex,
   });
 
-  /// Public API documentation.
+  /// Optional font size override for the cell.
   final double? fontSize;
 
-  /// Public API documentation.
+  /// Whether the text should be rendered bold.
   final bool bold;
 
-  /// Public API documentation.
+  /// Whether the text should be rendered italic.
   final bool italic;
 
-  /// Public API documentation.
+  /// Optional text color specified as a hex string.
   final String? colorHex;
 }
 
-/// Public API documentation.
+/// Indicates where a summary row derives its values from.
 enum ReportPdfSummarySource {
-  /// Public API documentation.
+  /// Values are calculated from the current page totals.
   pageTotals,
 
-  /// Public API documentation.
+  /// Values represent totals before the current page.
   totalsBefore,
 
-  /// Public API documentation.
+  /// Values represent totals after the current page.
   totalsAfter,
 }
 
-/// Public API documentation.
-
-/// Public API documentation.
+/// Configuration of a single column within a report table.
 class ReportPdfColumnConfig {
-  /// Public API documentation.
+  /// Creates a new column configuration.
   const ReportPdfColumnConfig({
     required this.key,
     this.header,
@@ -111,34 +99,30 @@ class ReportPdfColumnConfig {
     this.alignment = ReportPdfColumnAlignment.center,
     this.verticalAlignment = ReportPdfVerticalAlignment.middle,
     this.textStyle = const ReportPdfCellTextStyle(),
-
-    /// Public API documentation.
   });
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Unique key used to identify the column and map values.
   final String key;
 
-  /// Public API documentation.
+  /// Optional header text shown for this column.
   final String? header;
 
-  /// Public API documentation.
+  /// Relative width factor for the column.
   final double width;
 
-  /// Public API documentation.
+  /// Horizontal alignment used for cells in this column.
   final ReportPdfColumnAlignment alignment;
 
-  /// Public API documentation.
+  /// Vertical alignment used for cells in this column.
   final ReportPdfVerticalAlignment verticalAlignment;
 
-  /// Public API documentation.
+  /// Default text style applied to cells in this column.
   final ReportPdfCellTextStyle textStyle;
 }
 
-/// Public API documentation.
+/// Configuration for a single data cell within a table row.
 class ReportPdfCellConfig {
-  /// Public API documentation.
+  /// Creates a new cell configuration.
   const ReportPdfCellConfig({
     this.text,
     this.valueToken,
@@ -149,86 +133,86 @@ class ReportPdfCellConfig {
     this.textStyle = const ReportPdfCellTextStyle(),
   });
 
-  /// Public API documentation.
+  /// Literal text to display in the cell, if any.
   final String? text;
 
-  /// Public API documentation.
+  /// Token used to look up a value from the row data.
   final String? valueToken;
 
-  /// Public API documentation.
+  /// Number of columns this cell should span.
   final int hspan;
 
-  /// Public API documentation.
+  /// Number of rows this cell should span.
   final int vspan;
 
-  /// Public API documentation.
+  /// Horizontal alignment override for this cell.
   final ReportPdfColumnAlignment? alignment;
 
-  /// Public API documentation.
+  /// Vertical alignment override for this cell.
   final ReportPdfVerticalAlignment? verticalAlignment;
 
-  /// Public API documentation.
+  /// Text style override for this cell.
   final ReportPdfCellTextStyle textStyle;
 }
 
-/// Public API documentation.
+/// Configuration for a header row shown above table data.
 class ReportPdfHeaderRowConfig {
-  /// Public API documentation.
+  /// Creates a header row with a list of cells.
   const ReportPdfHeaderRowConfig({
     required this.cells,
     this.rowHeight,
   });
 
-  /// Public API documentation.
+  /// Cells that make up the header row.
   final List<ReportPdfCellConfig> cells;
 
-  /// Public API documentation.
+  /// Optional explicit row height.
   final double? rowHeight;
 }
 
-/// Public API documentation.
+/// Configuration for a footer row that summarizes totals.
 class ReportPdfFooterRowConfig {
-  /// Public API documentation.
+  /// Creates a footer row bound to a [source] and [values].
   const ReportPdfFooterRowConfig({
-    /// Public API documentation.
+    /// Where summary values should be taken from.
     required this.source,
     required this.values,
     this.cells = const [],
     this.rowHeight,
     this.labelToken,
 
-    /// Public API documentation.
+    /// Literal label to display instead of a token.
     this.literalLabel,
 
-    /// Public API documentation.
+    /// Whether to draw a line above the footer row.
     this.showTopBorder = false,
   });
 
-  /// Public API documentation.
+  /// Source used when computing summary values.
   final ReportPdfSummarySource source;
 
-  /// Public API documentation.
+  /// Optional localization token for the footer label.
   final String? labelToken;
 
-  /// Public API documentation.
+  /// Optional literal label text, used when [labelToken] is not.
   final String? literalLabel;
 
-  /// Public API documentation.
+  /// Map of value keys to formatted strings for this footer.
   final Map<String, String> values;
 
-  /// Public API documentation.
+  /// Additional cells displayed in the footer row.
   final List<ReportPdfCellConfig> cells;
 
-  /// Public API documentation.
+  /// Optional explicit row height.
   final double? rowHeight;
 
-  /// Public API documentation.
+  /// Whether a border should be drawn at the top of the row.
   final bool showTopBorder;
 }
 
-/// Public API documentation.
+/// High‑level configuration for a single report table.
 class ReportPdfTableConfig {
-  /// Public API documentation.
+  /// Creates a table definition for a specific report section.
   const ReportPdfTableConfig({
     required this.pageSuffix,
     required this.columns,
@@ -237,50 +221,46 @@ class ReportPdfTableConfig {
     this.footerRows = const [],
   });
 
-  /// Public API documentation.
+  /// Suffix used to distinguish pages created for this table.
   final String pageSuffix;
 
-  /// Public API documentation.
+  /// Header rows displayed at the top of each page.
   final List<ReportPdfHeaderRowConfig> header;
 
-  /// Public API documentation.
+  /// Rows displayed at the bottom of each page.
   final List<ReportPdfHeaderRowConfig> footer;
 
-  /// Public API documentation.
+  /// Column definitions used by this table.
   final List<ReportPdfColumnConfig> columns;
 
-  /// Public API documentation.
+  /// Additional summary rows shown below the main table.
   final List<ReportPdfFooterRowConfig> footerRows;
 }
 
-/// Public API documentation.
+/// Labels and tokens used across all PDF report templates.
 class ReportPdfLabels {
-  /// Public API documentation.
+  /// Creates the set of default labels.
   const ReportPdfLabels({
-    /// Public API documentation.
+    /// Label used for per‑page totals.
     this.pageTotal = 'PAGE TOTAL',
 
-    /// Public API documentation.
+    /// Label used when carrying forward amounts.
     this.amountForward = 'AMT. FORWARD',
 
-    /// Public API documentation.
+    /// Label used for totals across the whole logbook.
     this.totalToDate = 'TOTAL TO DATE',
-
-    /// Public API documentation.
   });
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Label used for per‑page totals.
   final String pageTotal;
 
-  /// Public API documentation.
+  /// Label used when carrying forward amounts.
   final String amountForward;
 
-  /// Public API documentation.
+  /// Label used for totals across the whole logbook.
   final String totalToDate;
 
-  /// Public API documentation.
+  /// Resolves a token name into the corresponding label text.
   String resolveToken(String token) {
     switch (token) {
       case 'pageTotal':
@@ -295,9 +275,9 @@ class ReportPdfLabels {
   }
 }
 
-/// Public API documentation.
+/// Complete configuration for a logbook PDF template.
 class ReportPdfTemplate {
-  /// Public API documentation.
+  /// Creates a new report template.
   const ReportPdfTemplate({
     required this.fileName,
     required this.displayName,
@@ -310,46 +290,46 @@ class ReportPdfTemplate {
     this.labels = const ReportPdfLabels(),
   });
 
-  /// Public API documentation.
+  /// Base file name (without extension) used when exporting.
   final String fileName;
 
-  /// Public API documentation.
+  /// Human‑readable name shown in the UI.
   final String displayName;
 
-  /// Public API documentation.
+  /// Maximum number of data rows per page.
   final int rowsPerPage;
 
-  /// Public API documentation.
+  /// Optional configuration for a cover page.
   final ReportPdfCoverPageConfig? coverPage;
 
-  /// Public API documentation.
+  /// Forces landscape orientation when `true`.
   final bool forceLandscape;
 
-  /// Public API documentation.
+  /// Default paper size for the report.
   final ReportPdfPageSize defaultPageSize;
 
-  /// Public API documentation.
+  /// Default row height used in tables.
   final double rowHeight;
 
-  /// Public API documentation.
+  /// Labels used when rendering this template.
   final ReportPdfLabels labels;
 
-  /// Public API documentation.
+  /// Tables that make up the body of the report.
   final List<ReportPdfTableConfig> tables;
 }
 
-/// Public API documentation.
+/// Types of content blocks that can appear on a cover page.
 enum ReportPdfCoverBlockType {
-  /// Public API documentation.
+  /// Key‑value grid block.
   kvGrid,
 
-  /// Public API documentation.
+  /// Multiline text block.
   multiline,
 }
 
-/// Public API documentation.
+/// Configuration for a single item within a cover block.
 class ReportPdfCoverItemConfig {
-  /// Public API documentation.
+  /// Creates an item with label and value key.
   const ReportPdfCoverItemConfig({
     required this.label,
     required this.valueKey,
@@ -359,31 +339,31 @@ class ReportPdfCoverItemConfig {
     this.height,
   });
 
-  /// Public API documentation.
+  /// Label shown next to the value.
   final String label;
 
-  /// Public API documentation.
+  /// Key used to resolve the value from the data set.
   final String valueKey;
 
-  /// Public API documentation.
+  /// Optional absolute X coordinate on the page.
   final double? x;
 
-  /// Public API documentation.
+  /// Optional absolute Y coordinate on the page.
   final double? y;
 
-  /// Public API documentation.
+  /// Optional explicit width of the item area.
   final double? width;
 
-  /// Public API documentation.
+  /// Optional explicit height of the item area.
   final double? height;
 
-  /// Public API documentation.
+  /// Whether both [x] and [y] are set for absolute positioning.
   bool get hasAbsolutePosition => x != null && y != null;
 }
 
-/// Public API documentation.
+/// Configuration for a logical block on the cover page.
 class ReportPdfCoverBlockConfig {
-  /// Public API documentation.
+  /// Creates a cover block of a given [type].
   const ReportPdfCoverBlockConfig({
     required this.type,
     this.title = '',
@@ -392,37 +372,37 @@ class ReportPdfCoverBlockConfig {
     this.valueKey,
   });
 
-  /// Public API documentation.
+  /// Type of cover block (layout and behavior).
   final ReportPdfCoverBlockType type;
 
-  /// Public API documentation.
+  /// Block title shown above its contents.
   final String title;
 
-  /// Public API documentation.
+  /// Number of columns used when laying out items.
   final int columns;
 
-  /// Public API documentation.
+  /// Items contained within this block.
   final List<ReportPdfCoverItemConfig> items;
 
-  /// Public API documentation.
+  /// Optional key used to resolve a multiline value.
   final String? valueKey;
 }
 
-/// Public API documentation.
+/// Configuration for an optional cover page shown before the tables.
 class ReportPdfCoverPageConfig {
-  /// Public API documentation.
+  /// Creates a cover page configuration.
   const ReportPdfCoverPageConfig({
     this.enabled = false,
     this.title = '',
     this.blocks = const [],
   });
 
-  /// Public API documentation.
+  /// Whether the cover page should be generated.
   final bool enabled;
 
-  /// Public API documentation.
+  /// Title shown on the cover page.
   final String title;
 
-  /// Public API documentation.
+  /// Blocks that make up the content of the cover page.
   final List<ReportPdfCoverBlockConfig> blocks;
 }

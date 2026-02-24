@@ -1,16 +1,15 @@
-/// Public API documentation.
+/// Simple latitude/longitude pair in decimal degrees.
 class CoordinatePair {
-  /// Public API documentation.
+  /// Creates a coordinate pair with [latitude] and [longitude].
   const CoordinatePair({
     required this.latitude,
     required this.longitude,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Latitude in decimal degrees.
   final double latitude;
-  /// Public API documentation.
+
+  /// Longitude in decimal degrees.
   final double longitude;
 }
 
@@ -18,34 +17,32 @@ class CoordinatePair {
 class CoordinateParser {
   const CoordinateParser._();
 
-  /// Public API documentation.
+  /// Formats a decimal degree [latitude] / [longitude] pair as `"lat, lon"`.
   static String formatDecimalPair(
     double latitude,
     double longitude, {
     int precision = 6,
-  /// Public API documentation.
   }) {
     return '${latitude.toStringAsFixed(precision)}, '
         '${longitude.toStringAsFixed(precision)}';
   }
 
-  /// Public API documentation.
+  /// Formats coordinates as degrees / minutes / seconds with hemisphere suffix.
   static String formatDmsPair(double latitude, double longitude) {
-    /// Public API documentation.
     final lat = _toDms(latitude, isLatitude: true);
     final lon = _toDms(longitude, isLatitude: false);
     return '${lat.hemisphere}${lat.degrees} ${lat.minutes} ${lat.seconds} '
         '${lon.hemisphere}${lon.degrees} ${lon.minutes} ${lon.seconds}';
   }
 
-  /// Public API documentation.
+  /// Formats coordinates as degrees and decimal minutes with hemisphere suffix.
   static String formatDegMinPair(double latitude, double longitude) {
     final lat = _toDegMin(latitude, isLatitude: true);
     final lon = _toDegMin(longitude, isLatitude: false);
     return '${lat.hemisphere}${lat.degrees}°${lat.minutesDecimal}/${lon.hemisphere}${lon.degrees}°${lon.minutesDecimal}';
   }
 
-  /// Public API documentation.
+  /// Tries to parse a latitude/longitude pair from a free‑form [input] string.
   static CoordinatePair? parsePair(String input) {
     final normalized = input.trim();
     if (normalized.isEmpty) return null;
@@ -70,7 +67,6 @@ class CoordinateParser {
       final right = tokens.skip(i).join(' ');
       final lat = parseSingle(left, isLatitude: true);
       final lon = parseSingle(right, isLatitude: false);
-      /// Public API documentation.
       if (lat != null && lon != null) {
         return CoordinatePair(latitude: lat, longitude: lon);
       }
@@ -79,7 +75,7 @@ class CoordinateParser {
     return null;
   }
 
-  /// Public API documentation.
+  /// Parses a single latitude or longitude value from [input].
   static double? parseSingle(String input, {required bool isLatitude}) {
     var clean = input.trim().toUpperCase();
     if (clean.isEmpty) return null;

@@ -11,26 +11,26 @@ import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_fi
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
 
-/// Public API documentation.
+/// Screen for creating or editing a duty period entry.
 class DutyEditScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates a duty edit screen for an existing [dutyId] or a new duty.
   const DutyEditScreen({
     super.key,
     this.dutyId,
     this.initialStart,
     this.initialEnd,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Identifier of the duty period being edited, if any.
   final int? dutyId;
-  /// Public API documentation.
+
+  /// Initial start date/time used to seed the form when creating.
   final DateTime? initialStart;
-  /// Public API documentation.
+
+  /// Initial end date/time used to seed the form when creating.
   final DateTime? initialEnd;
 
-  /// Public API documentation.
+  /// Whether this instance represents a create operation.
   bool get isCreate => dutyId == null;
 
   @override

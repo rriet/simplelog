@@ -1,8 +1,8 @@
 import 'package:simplelog/data/database/enums/crew_position.dart';
 
-/// Public API documentation.
+/// Tuning options used when importing Southwest CSV exports.
 class SouthwestImportOptions {
-  /// Public API documentation.
+  /// Creates a new set of import options.
   const SouthwestImportOptions({
     this.defaultSelfPosition = CrewPosition.sic,
     this.recalculateBlockTime = true,
@@ -14,32 +14,39 @@ class SouthwestImportOptions {
     this.overrideExistingData = false,
     this.addCopilotStaffNumberToNotes = true,
     this.addFlightNumberToNotes = true,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Default crew position used when deriving "self" crew.
   final CrewPosition defaultSelfPosition;
-  /// Public API documentation.
+
+  /// Whether to recompute block time from departure/arrival instead of CSV.
   final bool recalculateBlockTime;
-  /// Public API documentation.
+
+  /// Whether to recompute night time using sun position instead of CSV.
   final bool recalculateNightTime;
-  /// Public API documentation.
+
+  /// Whether to recompute IFR time from block time.
   final bool recalculateIfrTime;
-  /// Public API documentation.
+
+  /// Whether to recompute cross‑country time from leg distance.
   final bool recalculateCrossCountry;
-  /// Public API documentation.
+
+  /// Minimum NM distance to consider a flight cross‑country.
   final int crossCountryThresholdNm;
-  /// Public API documentation.
+
+  /// Whether to recompute instrument time from block time.
   final bool recalculateInstrumentTime;
-  /// Public API documentation.
+
+  /// Whether to overwrite existing imported entities with new values.
   final bool overrideExistingData;
-  /// Public API documentation.
+
+  /// Whether copilot staff number should be appended to notes.
   final bool addCopilotStaffNumberToNotes;
-  /// Public API documentation.
+
+  /// Whether flight number should be appended to notes.
   final bool addFlightNumberToNotes;
 
-  /// Public API documentation.
+  /// Returns a copy of this options object with some values changed.
   SouthwestImportOptions copyWith({
     CrewPosition? defaultSelfPosition,
     bool? recalculateBlockTime,

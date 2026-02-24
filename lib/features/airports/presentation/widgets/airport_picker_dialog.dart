@@ -5,24 +5,20 @@ import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/features/airports/application/providers/airports_feature_providers.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_filters_dialog.dart';
-/// Public API documentation.
 import 'package:simplelog/presentation/shared/widgets/entity_picker_dialog.dart';
-/// Public API documentation.
 
-/// Public API documentation.
+/// Generic dialog used to search and pick an airport from the database.
 class AirportPickerDialog extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates a dialog with the given [title] text.
   const AirportPickerDialog({
-    /// Public API documentation.
     required this.title,
     super.key,
-  /// Public API documentation.
   });
 
-  /// Public API documentation.
+  /// Title shown at the top of the dialog.
   final String title;
 
-  /// Public API documentation.
+  /// Shows the picker and returns the selected [Airport], if any.
   static Future<Airport?> show(
     BuildContext context, {
     required String title,

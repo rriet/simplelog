@@ -13,29 +13,25 @@ const _selectedReportTemplateFileNameKey = 'selectedReportTemplateFileName';
 const _openPdfAfterSavingKey = 'openPdfAfterSaving';
 const _reportPilotInfoKey = 'reportPilotInfo';
 
-/// Public API documentation.
+/// Whether reports should include previous experience totals.
 final includePreviousExperienceProvider =
     NotifierProvider<IncludePreviousExperienceNotifier, bool>(
       IncludePreviousExperienceNotifier.new,
     );
 
-/// Public API documentation.
-
-/// Public API documentation.
+/// Whether to include hours before the report range when computing totals.
 final includeHoursBeforeProvider =
     NotifierProvider<IncludeHoursBeforeNotifier, bool>(
       IncludeHoursBeforeNotifier.new,
-
-      /// Public API documentation.
     );
 
-/// Public API documentation.
+/// Name of the last selected PDF template file.
 final selectedReportTemplateFileNameProvider =
     NotifierProvider<SelectedReportTemplateFileNameNotifier, String?>(
       SelectedReportTemplateFileNameNotifier.new,
     );
 
-/// Public API documentation.
+/// Whether a generated PDF should be opened automatically after saving.
 final openPdfAfterSavingProvider =
     NotifierProvider<OpenPdfAfterSavingNotifier, bool>(
       OpenPdfAfterSavingNotifier.new,
@@ -47,16 +43,16 @@ final reportPilotInfoProvider =
       ReportPilotInfoNotifier.new,
     );
 
-/// Public API documentation.
+/// Pilot details printed on some report templates.
 class ReportPilotInfo {
-  /// Public API documentation.
+  /// Creates pilot information with optional default‑empty values.
   const ReportPilotInfo({
     this.name = '',
     this.licenceNumber = '',
     this.address = '',
   });
 
-  /// Public API documentation.
+  /// Builds a [ReportPilotInfo] instance from a JSON map.
   factory ReportPilotInfo.fromJson(Map<String, dynamic> json) {
     return ReportPilotInfo(
       name: (json['name'] ?? '').toString(),
@@ -65,14 +61,16 @@ class ReportPilotInfo {
     );
   }
 
-  /// Public API documentation.
+  /// Pilot name printed on reports.
   final String name;
-  /// Public API documentation.
+
+  /// Licence number printed on reports.
   final String licenceNumber;
-  /// Public API documentation.
+
+  /// Postal address printed on reports.
   final String address;
 
-  /// Public API documentation.
+  /// Returns a copy with some fields replaced.
   ReportPilotInfo copyWith({
     String? name,
     String? licenceNumber,
@@ -85,7 +83,7 @@ class ReportPilotInfo {
     );
   }
 
-  /// Public API documentation.
+  /// Serializes the pilot info to JSON.
   Map<String, dynamic> toJson() {
     return {
       'name': name,
@@ -95,7 +93,7 @@ class ReportPilotInfo {
   }
 }
 
-/// Public API documentation.
+/// Persists and exposes [ReportPilotInfo] via Riverpod.
 class ReportPilotInfoNotifier extends Notifier<ReportPilotInfo> {
   @override
   ReportPilotInfo build() {
@@ -103,7 +101,7 @@ class ReportPilotInfoNotifier extends Notifier<ReportPilotInfo> {
     return const ReportPilotInfo();
   }
 
-  /// Public API documentation.
+  /// Updates the current state and writes it to disk.
   Future<void> setValue({required ReportPilotInfo value}) async {
     state = value;
     await _save(value);
@@ -162,17 +160,15 @@ class ReportPilotInfoNotifier extends Notifier<ReportPilotInfo> {
   }
 }
 
-/// Public API documentation.
+/// Notifier controlling whether previous experience is included in totals.
 class IncludePreviousExperienceNotifier extends Notifier<bool> {
   @override
   bool build() {
     unawaited(_load());
-
-    /// Public API documentation.
     return true;
   }
 
-  /// Public API documentation.
+  /// Updates the current state and persists it.
   Future<void> setValue({required bool value}) async {
     state = value;
     await _save(value);
@@ -220,22 +216,19 @@ class IncludePreviousExperienceNotifier extends Notifier<bool> {
 
   Future<File> _file() async {
     final dir = await getApplicationDocumentsDirectory();
-
-    /// Public API documentation.
     return File('${dir.path}/$_reportsPreferencesFileName');
   }
 }
 
-/// Public API documentation.
+/// Notifier controlling whether hours before the query range are included.
 class IncludeHoursBeforeNotifier extends Notifier<bool> {
   @override
-  /// Public API documentation.
   bool build() {
     unawaited(_load());
     return true;
   }
 
-  /// Public API documentation.
+  /// Updates the current state and persists it.
   Future<void> setValue({required bool value}) async {
     state = value;
     await _save(value);
@@ -281,16 +274,13 @@ class IncludeHoursBeforeNotifier extends Notifier<bool> {
     }
   }
 
-  /// Public API documentation.
   Future<File> _file() async {
     final dir = await getApplicationDocumentsDirectory();
     return File('${dir.path}/$_reportsPreferencesFileName');
   }
 }
 
-/// Public API documentation.
-
-/// Public API documentation.
+/// Notifier storing the name of the last selected report template file.
 class SelectedReportTemplateFileNameNotifier extends Notifier<String?> {
   @override
   String? build() {
@@ -298,7 +288,7 @@ class SelectedReportTemplateFileNameNotifier extends Notifier<String?> {
     return null;
   }
 
-  /// Public API documentation.
+  /// Updates the current state and persists the value.
   Future<void> setValue({required String? value}) async {
     state = value;
     await _save(value);
@@ -356,7 +346,7 @@ class SelectedReportTemplateFileNameNotifier extends Notifier<String?> {
   }
 }
 
-/// Public API documentation.
+/// Notifier controlling whether the PDF viewer is opened automatically.
 class OpenPdfAfterSavingNotifier extends Notifier<bool> {
   @override
   bool build() {
@@ -364,7 +354,7 @@ class OpenPdfAfterSavingNotifier extends Notifier<bool> {
     return true;
   }
 
-  /// Public API documentation.
+  /// Updates the current state and persists the value.
   Future<void> setValue({required bool value}) async {
     state = value;
     await _save(value);
@@ -418,13 +408,13 @@ class OpenPdfAfterSavingNotifier extends Notifier<bool> {
   }
 }
 
-/// Public API documentation.
+/// List of saved report queries created by the user.
 final savedReportsQueriesProvider =
     NotifierProvider<SavedReportsQueriesNotifier, List<SavedReportsQuery>>(
       SavedReportsQueriesNotifier.new,
     );
 
-/// Public API documentation.
+/// Manages the list of named report queries stored on disk.
 class SavedReportsQueriesNotifier extends Notifier<List<SavedReportsQuery>> {
   @override
   List<SavedReportsQuery> build() {
@@ -432,12 +422,10 @@ class SavedReportsQueriesNotifier extends Notifier<List<SavedReportsQuery>> {
     return const [];
   }
 
-  /// Public API documentation.
+  /// Inserts or replaces a saved [query] with the same id.
   Future<void> addQuery(SavedReportsQuery query) async {
     final current = [...state];
     final index = current.indexWhere((item) => item.id == query.id);
-
-    /// Public API documentation.
     if (index >= 0) {
       current[index] = query;
     } else {
@@ -447,7 +435,7 @@ class SavedReportsQueriesNotifier extends Notifier<List<SavedReportsQuery>> {
     await _save(current);
   }
 
-  /// Public API documentation.
+  /// Removes a saved query by [id].
   Future<void> removeQuery(String id) async {
     final current = state
         .where((item) => item.id != id)
@@ -482,50 +470,39 @@ class SavedReportsQueriesNotifier extends Notifier<List<SavedReportsQuery>> {
         flush: true,
       );
     } on Object catch (_) {
-      /// Public API documentation.
       // Best effort persistence.
     }
   }
 
   Future<File> _file() async {
-    /// Public API documentation.
     final dir = await getApplicationDocumentsDirectory();
     return File('${dir.path}/$_savedReportsQueriesFileName');
   }
 }
 
-/// Public API documentation.
+/// Selection of event types that should appear in reports.
 final reportsEventTypesProvider =
     NotifierProvider<ReportsEventTypesNotifier, ReportsEventTypesSelection>(
       ReportsEventTypesNotifier.new,
     );
 
-/// Public API documentation.
+/// Riverpod provider for the in‑memory reports query being edited.
 final reportsRuntimeQueryProvider =
-    /// Public API documentation.
     NotifierProvider<ReportsRuntimeQueryNotifier, ReportsRuntimeQueryState>(
       ReportsRuntimeQueryNotifier.new,
     );
 
-/// Public API documentation.
+/// Which types of logbook events are included when generating reports.
 class ReportsEventTypesSelection {
-  /// Public API documentation.
+  /// Creates a new selection; all fields default to `true` except [positioning]
   const ReportsEventTypesSelection({
     this.flights = true,
-
-    /// Public API documentation.
     this.simulator = true,
-
-    /// Public API documentation.
     this.duty = true,
-
-    /// Public API documentation.
     this.positioning = false,
-
-    /// Public API documentation.
   });
 
-  /// Public API documentation.
+  /// Builds a selection from a JSON map.
   factory ReportsEventTypesSelection.fromJson(Map<String, dynamic> json) {
     return ReportsEventTypesSelection(
       flights: json['flights'] != false,
@@ -535,25 +512,23 @@ class ReportsEventTypesSelection {
     );
   }
 
-  /// Public API documentation.
+  /// Whether flights should be included.
   final bool flights;
 
-  /// Public API documentation.
+  /// Whether simulator training should be included.
   final bool simulator;
 
-  /// Public API documentation.
+  /// Whether duty periods should be included.
   final bool duty;
 
-  /// Public API documentation.
+  /// Whether positioning segments should be included.
   final bool positioning;
 
-  /// Public API documentation.
+  /// Returns a copy with some flags replaced.
   ReportsEventTypesSelection copyWith({
     bool? flights,
     bool? simulator,
     bool? duty,
-
-    /// Public API documentation.
     bool? positioning,
   }) {
     return ReportsEventTypesSelection(
@@ -561,12 +536,10 @@ class ReportsEventTypesSelection {
       simulator: simulator ?? this.simulator,
       duty: duty ?? this.duty,
       positioning: positioning ?? this.positioning,
-
-      /// Public API documentation.
     );
   }
 
-  /// Public API documentation.
+  /// Serializes the selection to JSON.
   Map<String, dynamic> toJson() {
     return {
       'flights': flights,
@@ -577,7 +550,7 @@ class ReportsEventTypesSelection {
   }
 }
 
-/// Public API documentation.
+/// Notifier that persists [ReportsEventTypesSelection] to disk.
 class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
   @override
   ReportsEventTypesSelection build() {
@@ -585,7 +558,7 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
     return const ReportsEventTypesSelection();
   }
 
-  /// Public API documentation.
+  /// Updates [state] and saves it.
   Future<void> setValue(ReportsEventTypesSelection value) async {
     state = value;
     await _save(value);
@@ -601,10 +574,7 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
       state = ReportsEventTypesSelection.fromJson(
         Map<String, dynamic>.from(decoded),
       );
-
-      /// Public API documentation.
     } on Object catch (_) {
-      /// Public API documentation.
       // Keep defaults.
     }
   }
@@ -612,20 +582,12 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
   Future<void> _save(ReportsEventTypesSelection value) async {
     try {
       final file = await _file();
-
-      /// Public API documentation.
       await file.writeAsString(
-        /// Public API documentation.
         jsonEncode(value.toJson()),
-
-        /// Public API documentation.
         flush: true,
-
-        /// Public API documentation.
       );
     } on Object catch (_) {
       // Best effort persistence.
-      /// Public API documentation.
     }
   }
 
@@ -635,40 +597,34 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
   }
 }
 
-/// Public API documentation.
+/// Runtime state for the report query editor UI.
 class ReportsRuntimeQueryState {
-  /// Public API documentation.
+  /// Creates a runtime query state object.
   const ReportsRuntimeQueryState({
     required this.from,
     required this.to,
     required this.selectedPreset,
     required this.matchMode,
     required this.filters,
-
-    /// Public API documentation.
   });
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Start of the query date range (inclusive).
   final DateTime from;
 
-  /// Public API documentation.
+  /// End of the query date range (inclusive).
   final DateTime to;
 
-  /// Public API documentation.
+  /// Identifier for the currently active preset (if any).
   final String selectedPreset;
 
-  /// Public API documentation.
+  /// How filters are combined when querying.
   final ReportsFilterMatchMode matchMode;
 
-  /// Public API documentation.
+  /// Runtime filter conditions applied by the user.
   final List<ReportsFilterCondition> filters;
 }
 
-/// Public API documentation.
-
-/// Public API documentation.
+/// Notifier that holds query values while the reports UI is open.
 class ReportsRuntimeQueryNotifier extends Notifier<ReportsRuntimeQueryState> {
   @override
   ReportsRuntimeQueryState build() {
@@ -682,44 +638,42 @@ class ReportsRuntimeQueryNotifier extends Notifier<ReportsRuntimeQueryState> {
   }
 
   // explicit mutation API for persisted runtime query state.
-  /// Public API documentation.
+  /// Current query state.
   ReportsRuntimeQueryState get value => state;
 
-  /// Public API documentation.
+  /// Replaces the current query state.
   set value(ReportsRuntimeQueryState value) {
     state = value;
   }
 }
 
-/// Public API documentation.
+/// Serializable representation of a saved report query.
 class SavedReportsQuery {
-  /// Public API documentation.
+  /// Creates a new saved query description.
   const SavedReportsQuery({
-    /// Public API documentation.
+    /// Unique identifier used to update or remove this query.
     required this.id,
 
-    /// Public API documentation.
+    /// User‑visible query name.
     required this.name,
 
-    /// Public API documentation.
+    /// Start of the date range.
     required this.from,
 
-    /// Public API documentation.
+    /// End of the date range.
     required this.to,
 
-    /// Public API documentation.
+    /// Whether previous experience is included.
     required this.includePreviousExperience,
 
-    /// Public API documentation.
+    /// Filter match mode for this query.
     required this.filterMatchMode,
 
-    /// Public API documentation.
+    /// Filters applied when this query is executed.
     required this.filters,
   });
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Unique id of the query.
   factory SavedReportsQuery.fromJson(Map<String, dynamic> json) {
     final filtersRaw = json['filters'];
     return SavedReportsQuery(
@@ -744,28 +698,28 @@ class SavedReportsQuery {
     );
   }
 
-  /// Public API documentation.
+  /// Unique identifier for the saved query.
   final String id;
 
-  /// Public API documentation.
+  /// Human‑friendly name of the query.
   final String name;
 
-  /// Public API documentation.
+  /// Start date/time of the range.
   final DateTime from;
 
-  /// Public API documentation.
+  /// End date/time of the range.
   final DateTime to;
 
-  /// Public API documentation.
+  /// Whether previous experience is included in totals.
   final bool includePreviousExperience;
 
-  /// Public API documentation.
+  /// Filter match mode.
   final ReportsFilterMatchMode filterMatchMode;
 
-  /// Public API documentation.
+  /// Filter conditions stored with the query.
   final List<ReportsFilterCondition> filters;
 
-  /// Public API documentation.
+  /// Serializes this query to JSON.
   Map<String, dynamic> toJson() {
     return {
       'id': id,

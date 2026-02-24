@@ -5,21 +5,20 @@ import 'package:simplelog/domain/repositories/crew_repository_contract.dart';
 import 'package:simplelog/domain/usecases/crew_use_cases.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
-/// Public API documentation.
+/// Provides the concrete [CrewRepositoryContract] backed by Drift.
 final crewRepositoryProvider = Provider<CrewRepositoryContract>((ref) {
   final db = ref.watch(databaseProvider);
   return CrewRepository(db);
 });
-/// Public API documentation.
 
-/// Public API documentation.
+
+/// Provides high‑level crew use cases built on top of the repository.
 final crewUseCasesProvider = Provider<CrewUseCases>((ref) {
   final repo = ref.watch(crewRepositoryProvider);
   return CrewUseCases(repo);
-/// Public API documentation.
 });
 
-/// Public API documentation.
+/// Stream provider factory to watch crew lists filtered by [String] query.
 final StreamProvider<List<CrewRow>> Function(String) crewProvider =
     StreamProvider.autoDispose
         .family<List<CrewRow>, String>((ref, query) {

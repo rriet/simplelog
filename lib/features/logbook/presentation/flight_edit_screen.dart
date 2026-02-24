@@ -45,18 +45,19 @@ import 'package:simplelog/state/providers/flight_form_settings_provider.dart';
 import 'package:simplelog/state/providers/flight_time_fields_visibility_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
-/// Public API documentation.
+/// Screen for creating a new flight or editing an existing logbook entry.
 class FlightEditScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates a flight edit screen. 
+  /// When [flightId] is `null`, a new flight is created.
   const FlightEditScreen({super.key, this.flightId, this.prefill});
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Id of the flight being edited, or `null` when creating.
   final int? flightId;
-  /// Public API documentation.
+
+  /// Optional values used to pre‑populate the form.
   final FlightPrefill? prefill;
 
-  /// Public API documentation.
+  /// Whether this instance is in create (as opposed to edit) mode.
   bool get isCreate => flightId == null;
 
   @override

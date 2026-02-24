@@ -4,9 +4,9 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/state/providers/settings_controller_provider.dart';
 import 'package:simplelog/state/providers/theme_mode_provider.dart';
 
-/// Public API documentation.
+/// Control that lets the user choose between system, light and dark themes.
 class ThemeModeSelector extends ConsumerWidget {
-  /// Public API documentation.
+  /// Creates a theme mode selector.
   const ThemeModeSelector({super.key});
 
   @override

@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Public API documentation.
+/// Backport of `valueOrNull` for `AsyncValue` until it lands upstream.
 extension AsyncValueCompatValueOrNullX<T> on AsyncValue<T> {
-  /// Public API documentation.
+  /// Returns the value when this is [AsyncData], otherwise `null`.
   T? get valueOrNull {
     return switch (this) {
       AsyncData(:final value) => value,

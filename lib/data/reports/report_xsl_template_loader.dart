@@ -3,13 +3,11 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:simplelog/data/models/report_pdf_models.dart';
 
-/// Public API documentation.
+/// Loads PDF report templates from JSON assets in `assets/reports/templates`.
 class ReportPdfTemplateLoader {
   static const _indexAssetPath = 'assets/reports/templates/index.json';
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Loads all templates listed in the index file.
   Future<List<ReportPdfTemplate>> load() async {
     final indexRaw = await rootBundle.loadString(_indexAssetPath);
     final indexJson = jsonDecode(indexRaw);
@@ -334,8 +332,7 @@ class ReportPdfTemplateLoader {
     }
   }
 
-  /// Public API documentation.
 }
 
-/// Public API documentation.
+/// Legacy alias kept for backwards compatibility with older code.
 class ReportXslTemplateLoader extends ReportPdfTemplateLoader {}

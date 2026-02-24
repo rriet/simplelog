@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/presentation/shared/widgets/collapsible_scaffold.dart';
 import 'package:simplelog/presentation/shared/widgets/large_scaffold.dart';
 
-/// Public API documentation.
+/// Chooses between compact and large layouts for the main home screen.
 class MyHomePage extends ConsumerWidget {
-  /// Public API documentation.
+  /// Creates the responsive home page.
   const MyHomePage({super.key});
 
   @override

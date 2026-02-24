@@ -4,9 +4,9 @@ import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/features/aircraft_types/presentation/widgets/family_group.dart';
 import 'package:simplelog/features/aircraft_types/presentation/widgets/family_section.dart';
 
-/// Public API documentation.
+/// Scrollable list of aircraft types grouped by family.
 class AircraftTypesList extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates a list from [groups] with callbacks for type actions.
   const AircraftTypesList({
     required this.groups,
     required this.isCompact,
@@ -16,23 +16,27 @@ class AircraftTypesList extends StatelessWidget {
     required this.onOpenDetails,
     required this.onOpenFamilyDetails,
     super.key,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Families and their associated aircraft types.
   final List<FamilyGroup> groups;
-  /// Public API documentation.
+
+  /// Whether to render a more compact layout.
   final bool isCompact;
-  /// Public API documentation.
+
+  /// Called when lock is toggled for a specific type.
   final ValueChanged<AircraftTypeRow> onToggleLock;
-  /// Public API documentation.
+
+  /// Called when the user chooses to edit a type.
   final ValueChanged<AircraftTypeRow> onEdit;
-  /// Public API documentation.
+
+  /// Called when the user chooses to delete a type.
   final ValueChanged<AircraftTypeRow> onDelete;
-  /// Public API documentation.
+
+  /// Opens detailed info for a specific type.
   final ValueChanged<AircraftTypeRow> onOpenDetails;
-  /// Public API documentation.
+
+  /// Opens detailed info for an entire family.
   final ValueChanged<FamilyGroup> onOpenFamilyDetails;
 
   @override

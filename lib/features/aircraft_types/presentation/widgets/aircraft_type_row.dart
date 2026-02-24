@@ -4,9 +4,9 @@ import 'package:simplelog/data/models/aircraft_type_extensions.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
-/// Public API documentation.
+/// List tile for a single aircraft type with slide actions on compact layouts.
 class AircraftTypeRowTile extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates a tile for [row] with callbacks for actions.
   const AircraftTypeRowTile({
     required this.row,
     required this.isCompact,
@@ -15,21 +15,24 @@ class AircraftTypeRowTile extends StatelessWidget {
     required this.onDelete,
     required this.onOpenDetails,
     super.key,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Backing aircraft type row.
   final AircraftTypeRow row;
-  /// Public API documentation.
+
+  /// Whether to render a compact layout.
   final bool isCompact;
-  /// Public API documentation.
+
+  /// Called when the lock state of [row] should be toggled.
   final ValueChanged<AircraftTypeRow> onToggleLock;
-  /// Public API documentation.
+
+  /// Called when [row] should be edited.
   final ValueChanged<AircraftTypeRow> onEdit;
-  /// Public API documentation.
+
+  /// Called when [row] should be deleted.
   final ValueChanged<AircraftTypeRow> onDelete;
-  /// Public API documentation.
+
+  /// Called when the user taps the row to open more details.
   final ValueChanged<AircraftTypeRow> onOpenDetails;
 
   @override
@@ -51,9 +54,7 @@ class AircraftTypeRowTile extends StatelessWidget {
       onToggleLock: () => onToggleLock(row),
       onEdit: () => onEdit(row),
       onDelete: () => onDelete(row),
-      /// Public API documentation.
       lockLabel: l10n.lockAction,
-      /// Public API documentation.
       editLabel: l10n.editAction,
       deleteLabel: l10n.deleteAction,
       child: content,
@@ -61,35 +62,35 @@ class AircraftTypeRowTile extends StatelessWidget {
   }
 }
 
-/// Public API documentation.
+/// Detailed content layout for an aircraft type row.
 class AircraftTypeRowContent extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates a content widget for the given [row].
   const AircraftTypeRowContent({
-    /// Public API documentation.
     required this.row,
-    /// Public API documentation.
     required this.isCompact,
-    /// Public API documentation.
     required this.onToggleLock,
-    /// Public API documentation.
     required this.onEdit,
-    /// Public API documentation.
     required this.onDelete,
     required this.onOpenDetails,
     super.key,
   });
 
-  /// Public API documentation.
+  /// Backing aircraft type row.
   final AircraftTypeRow row;
-  /// Public API documentation.
+
+  /// Whether to render a compact layout.
   final bool isCompact;
-  /// Public API documentation.
+
+  /// Called when the lock state of [row] should be toggled.
   final ValueChanged<AircraftTypeRow> onToggleLock;
-  /// Public API documentation.
+
+  /// Called when [row] should be edited.
   final ValueChanged<AircraftTypeRow> onEdit;
-  /// Public API documentation.
+
+  /// Called when [row] should be deleted.
   final ValueChanged<AircraftTypeRow> onDelete;
-  /// Public API documentation.
+
+  /// Called when the user taps to open the details view.
   final ValueChanged<AircraftTypeRow> onOpenDetails;
 
   @override
@@ -190,9 +191,7 @@ class AircraftTypeRowContent extends StatelessWidget {
         ],
       ),
     );
-  /// Public API documentation.
   }
-/// Public API documentation.
 
   Widget _flagText(BuildContext context, String label, bool isOn) {
     final color = isOn
@@ -201,20 +200,16 @@ class AircraftTypeRowContent extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: Text(
-        /// Public API documentation.
         label,
-        /// Public API documentation.
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: color),
-      /// Public API documentation.
       ),
-    /// Public API documentation.
     );
   }
 }
 
-/// Public API documentation.
+/// Column of icon buttons used for lock/edit/delete actions on a row.
 class RowActions extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates a vertical action strip bound to [row].
   const RowActions({
     required this.row,
     required this.onToggleLock,
@@ -223,13 +218,16 @@ class RowActions extends StatelessWidget {
     super.key,
   });
 
-  /// Public API documentation.
+  /// Backing row that actions operate on.
   final AircraftTypeRow row;
-  /// Public API documentation.
+
+  /// Called when the lock state of [row] should be toggled.
   final ValueChanged<AircraftTypeRow> onToggleLock;
-  /// Public API documentation.
+
+  /// Called when [row] should be edited.
   final ValueChanged<AircraftTypeRow> onEdit;
-  /// Public API documentation.
+
+  /// Called when [row] should be deleted.
   final ValueChanged<AircraftTypeRow> onDelete;
 
   @override

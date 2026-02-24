@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Public API documentation.
+/// Dropdown field that binds to integer ids while displaying typed models.
 class FormDropdownIdField<T> extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates a dropdown mapping [items] to integer ids via [itemValue].
   const FormDropdownIdField({
     required this.label,
     required this.value,
@@ -14,27 +14,33 @@ class FormDropdownIdField<T> extends StatelessWidget {
     this.isRequired = false,
     this.showRequiredError = true,
     this.isDense = false,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Localized label shown above the dropdown.
   final String label;
-  /// Public API documentation.
+
+  /// Currently selected id, if any.
   final int? value;
-  /// Public API documentation.
+
+  /// Full list of items that can be selected.
   final List<T> items;
-  /// Public API documentation.
+
+  /// Returns the label used to represent [value] in the UI.
   final String Function(T value) itemLabel;
-  /// Public API documentation.
+
+  /// Returns the integer id that uniquely identifies [value].
   final int Function(T value) itemValue;
-  /// Public API documentation.
+
+  /// Notified when the selected id changes.
   final ValueChanged<int?> onChanged;
-  /// Public API documentation.
+
+  /// Whether the field is required to have a non‑null value.
   final bool isRequired;
-  /// Public API documentation.
+
+  /// Whether to show an error border when [isRequired] and [value] is `null`.
   final bool showRequiredError;
-  /// Public API documentation.
+
+  /// Whether to use a more compact visual density.
   final bool isDense;
 
   @override

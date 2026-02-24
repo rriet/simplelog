@@ -3,9 +3,9 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 
 import 'package:simplelog/state/aircraft_state.dart';
 
-/// Public API documentation.
+/// Main navigation drawer listing all top-level app screens.
 class AppDrawer extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates an app drawer with the current [selected] screen.
   const AppDrawer({
     required this.selected,
     required this.onSelected,
@@ -20,13 +20,12 @@ class AppDrawer extends StatelessWidget {
     AppScreen.crew,
     AppScreen.dashboard,
     AppScreen.settings,
-  /// Public API documentation.
   ];
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Currently selected screen.
   final AppScreen selected;
-  /// Public API documentation.
+
+  /// Called when the user taps a destination.
   final ValueChanged<AppScreen> onSelected;
 
   @override

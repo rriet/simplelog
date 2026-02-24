@@ -1,18 +1,17 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Convenience extensions for formatting airport information.
 extension AirportExtensions on Airport {
-  /// Public API documentation.
+  /// Returns IATA code when available, otherwise falls back to ICAO.
   String get shortCode {
     final trimmedIata = iata?.trim();
     if (trimmedIata != null && trimmedIata.isNotEmpty) {
       return trimmedIata;
     }
     return icao;
-  /// Public API documentation.
   }
 
-  /// Public API documentation.
+  /// Returns a combined ICAO / IATA representation suitable for UI labels.
   String get displayCode {
     final trimmedIata = iata?.trim();
     if (trimmedIata == null || trimmedIata.isEmpty) {

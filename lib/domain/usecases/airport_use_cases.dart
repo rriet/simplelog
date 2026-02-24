@@ -4,51 +4,54 @@ import 'package:simplelog/data/models/airport_row.dart';
 import 'package:simplelog/domain/common/domain_validation.dart';
 import 'package:simplelog/domain/repositories/airport_repository_contract.dart';
 
-/// Public API documentation.
+/// High‑level operations and validation rules for managing airports.
 class AirportUseCases {
-  /// Public API documentation.
+  /// Creates a new set of airport use cases backed by [_repository].
   AirportUseCases(this._repository);
 
-  /// Public API documentation.
+  /// Repository used to read and persist airport data.
   final AirportRepositoryContract _repository;
 
-  /// Public API documentation.
+  /// Watches airports matching [query] and [filters].
   Stream<List<AirportRow>> watchAirports(
     String query,
     AirportFilters filters,
   ) {
-    /// Public API documentation.
     return _repository.watchAirports(query, filters);
-  /// Public API documentation.
   }
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Toggles the locked state of [item].
   Future<void> toggleLock(Airport item) => _repository.toggleLock(item);
-  /// Public API documentation.
+
+  /// Toggles the favorite state of [item].
   Future<void> toggleFavorite(Airport item) => _repository.toggleFavorite(item);
-  /// Public API documentation.
+
+  /// Deletes [item] if allowed.
   Future<void> delete(Airport item) => _repository.delete(item);
-  /// Public API documentation.
+
+  /// Creates a new airport from [companion].
   Future<int> create(AirportsCompanion companion) =>
       _repository.create(companion);
-  /// Public API documentation.
+
+  /// Persists updates to [item].
   Future<void> update(Airport item) => _repository.update(item);
-  /// Public API documentation.
+
+  /// Counts how many airports share the same ICAO code.
   Future<int> countDuplicateIcao(String icao, int currentId) =>
       _repository.countDuplicateIcao(icao, currentId);
-  /// Public API documentation.
+
+  /// Counts flights that reference [airportId].
   Future<int> countFlightsUsingAirport(int airportId) =>
       _repository.countFlightsUsingAirport(airportId);
-  /// Public API documentation.
+
+  /// Counts positioning legs that reference [airportId].
   Future<int> countPositioningsUsingAirport(int airportId) =>
       _repository.countPositioningsUsingAirport(airportId);
 
-  /// Public API documentation.
+  /// Validates whether [companion] contains a unique, non‑empty ICAO code.
   Future<DomainValidation> validateCreate(AirportsCompanion companion) async {
     final icao = companion.icao.value.trim();
     if (icao.isEmpty) {
-      /// Public API documentation.
       return const DomainValidation.error('ICAO code is required.');
     }
     if (icao.length != 4) {
@@ -61,10 +64,9 @@ class AirportUseCases {
     return const DomainValidation.ok();
   }
 
-  /// Public API documentation.
+  /// Validates whether [item] can be updated without violating constraints.
   Future<DomainValidation> validateUpdate(Airport item) async {
     final icao = item.icao.trim();
-    /// Public API documentation.
     if (icao.isEmpty) {
       return const DomainValidation.error('ICAO code is required.');
     }
@@ -78,7 +80,7 @@ class AirportUseCases {
     return const DomainValidation.ok();
   }
 
-  /// Public API documentation.
+  /// Validates whether [item] can be safely deleted.
   Future<DomainValidation> validateDelete(Airport item) async {
     if (item.isLocked) {
       return const DomainValidation.error('This airport is locked.');

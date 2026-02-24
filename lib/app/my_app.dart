@@ -8,9 +8,9 @@ import 'package:simplelog/state/providers/initial_data_provider.dart';
 import 'package:simplelog/state/providers/locale_provider.dart';
 import 'package:simplelog/state/providers/theme_mode_provider.dart';
 
-/// Public API documentation.
+/// Root widget that wires theming, localization and the home page together.
 class MyApp extends ConsumerWidget {
-  /// Public API documentation.
+  /// Creates the top‑level application widget.
   const MyApp({super.key});
 
   @override

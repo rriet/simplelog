@@ -4,15 +4,15 @@ import 'package:drift/drift.dart';
 import 'package:flutter/services.dart';
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Loads an initial list of airports from an embedded JSON asset when empty.
 class AirportSeedImporter {
-  /// Public API documentation.
+  /// Creates an importer instance.
   const AirportSeedImporter();
 
-  /// Public API documentation.
+  /// Asset path for the bundled airports JSON data.
   static const _assetPath = 'assets/data/airports.json';
 
-  /// Public API documentation.
+  /// Imports seed airports into [db] when the airports table is empty.
   Future<int> importIfEmpty(AppDatabase db) async {
     final countExpr = db.airports.id.count();
     final query = db.selectOnly(db.airports)..addColumns([countExpr]);

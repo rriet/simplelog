@@ -1,8 +1,8 @@
 import 'package:simplelog/data/models/simulator_crew_assignment_input.dart';
 
-/// Public API documentation.
+/// Input data used when creating or updating a flight log entry.
 class FlightWriteInput {
-  /// Public API documentation.
+  /// Creates a new payload with all values required to persist a flight.
   const FlightWriteInput({
     required this.aircraftId,
     required this.departureAirportId,
@@ -39,78 +39,110 @@ class FlightWriteInput {
     required this.remarks,
     required this.notes,
     required this.crewAssignments,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Identifier of the aircraft used for this flight.
   final int aircraftId;
-  /// Public API documentation.
+
+  /// Identifier of the departure airport.
   final int departureAirportId;
-  /// Public API documentation.
+
+  /// Identifier of the arrival airport.
   final int arrivalAirportId;
-  /// Public API documentation.
+
+  /// Scheduled departure date and time (block off).
   final DateTime departureDateTime;
-  /// Public API documentation.
+
+  /// Actual take‑off time, if known.
   final DateTime? takeOffDateTime;
-  /// Public API documentation.
+
+  /// Actual landing time, if known.
   final DateTime? landingDateTime;
-  /// Public API documentation.
+
+  /// Time of block‑on / arrival at the stand, if known.
   final DateTime? arrivalDateTime;
-  /// Public API documentation.
+
+  /// Pilot function for this leg (e.g. PIC, SIC, dual).
   final String pilotFunction;
-  /// Public API documentation.
+
+  /// Number of instrument approaches flown.
   final int ifrApproaches;
-  /// Public API documentation.
+
+  /// Type of approach flown (e.g. ILS, RNAV).
   final String approachType;
-  /// Public API documentation.
+
+  /// Number of day take‑offs.
   final int takeOffsDays;
-  /// Public API documentation.
+
+  /// Number of night take‑offs.
   final int takeOffsNight;
-  /// Public API documentation.
+
+  /// Number of day landings.
   final int landingsDay;
-  /// Public API documentation.
+
+  /// Number of night landings.
   final int landingsNight;
-  /// Public API documentation.
+
+  /// Block time for the leg in minutes.
   final int timeBlockMinutes;
-  /// Public API documentation.
+
+  /// Cumulative block time including previous legs in minutes.
   final int timeTotalBlockMinutes;
-  /// Public API documentation.
+
+  /// Airborne flight time (take‑off to landing) in minutes.
   final int timeFlightMinutes;
-  /// Public API documentation.
+
+  /// PIC (pilot‑in‑command) time in minutes.
   final int timePICMinutes;
-  /// Public API documentation.
+
+  /// PICUS (pilot‑in‑command under supervision) time in minutes.
   final int timePICUSMinutes;
-  /// Public API documentation.
+
+  /// SIC (second‑in‑command) time in minutes.
   final int timeSICMinutes;
-  /// Public API documentation.
+
+  /// Dual instruction time in minutes.
   final int timeDualMinutes;
-  /// Public API documentation.
+
+  /// Time logged as instructor in minutes.
   final int timeInstructorMinutes;
-  /// Public API documentation.
+
+  /// IFR time in minutes.
   final int timeIFRMinutes;
-  /// Public API documentation.
+
+  /// Time in actual or simulated instruments in minutes.
   final int timeInstrumentMinutes;
-  /// Public API documentation.
+
+  /// Time flown in simulated instruments in minutes.
   final int timeSimulatedInstrumentMinutes;
-  /// Public API documentation.
+
+  /// Night time in minutes.
   final int timeNightMinutes;
-  /// Public API documentation.
+
+  /// Cross‑country time in minutes.
   final int timeCrossCountryMinutes;
-  /// Public API documentation.
+
+  /// Custom time bucket 1 in minutes.
   final int timeCustom1Minutes;
-  /// Public API documentation.
+
+  /// Custom time bucket 2 in minutes.
   final int timeCustom2Minutes;
-  /// Public API documentation.
+
+  /// Custom time bucket 3 in minutes.
   final int timeCustom3Minutes;
-  /// Public API documentation.
+
+  /// Custom time bucket 4 in minutes.
   final int timeCustom4Minutes;
-  /// Public API documentation.
+
+  /// Distance flown for the leg in nautical miles.
   final int distanceNM;
-  /// Public API documentation.
+
+  /// Free‑form remarks about the leg.
   final String remarks;
-  /// Public API documentation.
+
+  /// Private notes that are not printed in reports.
   final String notes;
-  /// Public API documentation.
+
+  /// Crew assignments associated with this flight.
   final List<SimulatorCrewAssignmentInput> crewAssignments;
 }

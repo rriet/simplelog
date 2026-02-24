@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
 
-/// Public API documentation.
+/// Simple reusable dialog asking the user to confirm a delete action.
 class DeleteConfirmationDialog extends StatelessWidget {
-  /// Public API documentation.
+  /// Builds a confirmation dialog with [title], [content] and button labels.
   const DeleteConfirmationDialog({
     required this.title,
     required this.content,
     required this.cancelLabel,
     required this.deleteLabel,
     super.key,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Title text displayed at the top of the dialog.
   final String title;
-  /// Public API documentation.
+
+  /// Body content explaining what will be deleted.
   final String content;
-  /// Public API documentation.
+
+  /// Label for the cancel button.
   final String cancelLabel;
-  /// Public API documentation.
+
+  /// Label for the delete/confirm button.
   final String deleteLabel;
 
   @override
@@ -34,14 +35,13 @@ class DeleteConfirmationDialog extends StatelessWidget {
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
-          /// Public API documentation.
           child: Text(deleteLabel),
         ),
       ],
     );
   }
 
-  /// Public API documentation.
+  /// Shows the dialog and resolves to `true` when the user confirms deletion.
   static Future<bool> show(
     BuildContext context, {
     required String title,
