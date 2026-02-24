@@ -976,7 +976,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       final includePreviousExperience = ref.read(
         includePreviousExperienceProvider,
       );
-      final crewMaps = await _loadReportCrewNames(_entries);
+      final needsCrewNames = _templateUsesCrewColumns(templateConfig);
+      final crewMaps = needsCrewNames
+          ? await _loadReportCrewNames(_entries)
+          : const (
+              <int, ReportEntryCrewNames>{},
+              <int, ReportEntryCrewNames>{},
+            );
       final startingTotals = includeHoursBefore
           ? await _loadStandardStartingTotals(pdfService)
           : includePreviousExperience
@@ -1024,6 +1030,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         });
       }
     }
+  }
+
+  bool _templateUsesCrewColumns(ReportPdfTemplate template) {
+    for (final table in template.tables) {
+      for (final column in table.columns) {
+        final key = column.key;
+        if (key == 'picCrewName' ||
+            key == 'sicCrewName' ||
+            key == 'pilotPicName' ||
+            key == 'pilotSicName') {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   Future<void> _setPdfGenerationProgress(
@@ -1136,8 +1157,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       from: firstDate,
       to: cutoff,
     );
-    final rows = service.buildRows(beforeEntries);
-    var startingTotals = service.sumTotals(rows);
+    var startingTotals = service.sumTotalsFromEntries(beforeEntries);
     if (ref.read(includePreviousExperienceProvider)) {
       final previousTotals = await repo.loadAllPreviousExperienceTotals();
       startingTotals = startingTotals.addTotals(
@@ -1226,16 +1246,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     }
 
     if (simulatorIds.isNotEmpty) {
-      final rows = await (db.select(db.simulatorCrewAssignments).join([
-        d.innerJoin(
-          db.crew,
-          db.crew.id.equalsExp(db.simulatorCrewAssignments.crewId),
-        ),
-      ])
-            ..where(
-              db.simulatorCrewAssignments.simulatorId.isIn(simulatorIds),
-            ))
-          .get();
+      final rows =
+          await (db.select(db.simulatorCrewAssignments).join([
+                d.innerJoin(
+                  db.crew,
+                  db.crew.id.equalsExp(db.simulatorCrewAssignments.crewId),
+                ),
+              ])..where(
+                db.simulatorCrewAssignments.simulatorId.isIn(simulatorIds),
+              ))
+              .get();
       for (final row in rows) {
         final assignment = row.readTable(db.simulatorCrewAssignments);
         final crew = row.readTable(db.crew);

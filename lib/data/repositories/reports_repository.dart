@@ -235,6 +235,217 @@ class ReportsRepository {
           ..where(depTimeLines.eventDateTime.isSmallerOrEqualValue(query.to))
           ..orderBy([OrderingTerm.desc(depTimeLines.eventDateTime)]);
 
+    Expression<bool>? buildSqlFilterExpr(ReportsFilterCondition filter) {
+      Expression<bool>? buildTextExpression(Expression<String> column) {
+        final value = (filter.textValue ?? '').trim().toLowerCase();
+        if (value.isEmpty) {
+          return const Constant(true);
+        }
+        final normalized = column.lower();
+        switch (filter.operator) {
+          case ReportsFilterOperator.contains:
+            return normalized.like('%$value%');
+          case ReportsFilterOperator.startsWith:
+            return normalized.like('$value%');
+          case ReportsFilterOperator.endsWith:
+            return normalized.like('%$value');
+          case ReportsFilterOperator.isExactly:
+            return normalized.equals(value);
+          case ReportsFilterOperator.doesNotContain:
+          case ReportsFilterOperator.doesNotStartWith:
+          case ReportsFilterOperator.doesNotEndWith:
+          case ReportsFilterOperator.isNot:
+          case ReportsFilterOperator.greaterThan:
+          case ReportsFilterOperator.lessThan:
+          case ReportsFilterOperator.equals:
+          case ReportsFilterOperator.isTrue:
+          case ReportsFilterOperator.isFalse:
+            return null;
+        }
+      }
+
+      Expression<bool>? buildNumberExpression(Expression<int> column) {
+        final value = filter.numberValue;
+        if (value == null) {
+          return const Constant(true);
+        }
+        switch (filter.operator) {
+          case ReportsFilterOperator.greaterThan:
+            return column.isBiggerThanValue(value);
+          case ReportsFilterOperator.lessThan:
+            return column.isSmallerThanValue(value);
+          case ReportsFilterOperator.equals:
+            return column.equals(value);
+          case ReportsFilterOperator.contains:
+          case ReportsFilterOperator.doesNotContain:
+          case ReportsFilterOperator.startsWith:
+          case ReportsFilterOperator.doesNotStartWith:
+          case ReportsFilterOperator.endsWith:
+          case ReportsFilterOperator.doesNotEndWith:
+          case ReportsFilterOperator.isExactly:
+          case ReportsFilterOperator.isNot:
+          case ReportsFilterOperator.isTrue:
+          case ReportsFilterOperator.isFalse:
+            return null;
+        }
+      }
+
+      switch (filter.field) {
+        case ReportsFilterField.departureIcao:
+          return buildTextExpression(depAirports.icao);
+        case ReportsFilterField.arrivalIcao:
+          return buildTextExpression(arrAirports.icao);
+        case ReportsFilterField.aircraftTail:
+          return buildTextExpression(_db.aircrafts.registration);
+        case ReportsFilterField.aircraftTypeCode:
+          return buildTextExpression(_db.aircraftTypes.code);
+        case ReportsFilterField.aircraftTypeFamily:
+          return buildTextExpression(_db.aircraftTypes.family);
+        case ReportsFilterField.aircraftTypeName:
+          return buildTextExpression(_db.aircraftTypes.longName);
+        case ReportsFilterField.approachType:
+          return buildTextExpression(_db.flights.approachType);
+        case ReportsFilterField.remarks:
+          return buildTextExpression(_db.flights.remarks);
+        case ReportsFilterField.notes:
+          return buildTextExpression(_db.flights.notes);
+        case ReportsFilterField.blockTime:
+        case ReportsFilterField.totalTime:
+          return buildNumberExpression(_db.flights.timeBlockMinutes);
+        case ReportsFilterField.flightTime:
+          return buildNumberExpression(_db.flights.timeFlightMinutes);
+        case ReportsFilterField.nightTime:
+          return buildNumberExpression(_db.flights.timeNightMinutes);
+        case ReportsFilterField.ifrTime:
+          return buildNumberExpression(_db.flights.timeIFRMinutes);
+        case ReportsFilterField.instrumentTime:
+          return buildNumberExpression(_db.flights.timeInstrumentMinutes);
+        case ReportsFilterField.simulatedInstrumentTime:
+          return buildNumberExpression(
+            _db.flights.timeSimulatedInstrumentMinutes,
+          );
+        case ReportsFilterField.picTime:
+          return buildNumberExpression(_db.flights.timePICMinutes);
+        case ReportsFilterField.picusTime:
+          return buildNumberExpression(_db.flights.timePICUSMinutes);
+        case ReportsFilterField.sicTime:
+          return buildNumberExpression(_db.flights.timeSICMinutes);
+        case ReportsFilterField.dualTime:
+          return buildNumberExpression(_db.flights.timeDualMinutes);
+        case ReportsFilterField.instructorTime:
+          return buildNumberExpression(_db.flights.timeInstructorMinutes);
+        case ReportsFilterField.crossCountryTime:
+          return buildNumberExpression(_db.flights.timeCrossCountryMinutes);
+        case ReportsFilterField.custom1Time:
+          return buildNumberExpression(_db.flights.timeCustom1Minutes);
+        case ReportsFilterField.custom2Time:
+          return buildNumberExpression(_db.flights.timeCustom2Minutes);
+        case ReportsFilterField.custom3Time:
+          return buildNumberExpression(_db.flights.timeCustom3Minutes);
+        case ReportsFilterField.custom4Time:
+          return buildNumberExpression(_db.flights.timeCustom4Minutes);
+        case ReportsFilterField.distanceNm:
+          return buildNumberExpression(_db.flights.distanceNM);
+        case ReportsFilterField.takeoffs:
+          return buildNumberExpression(
+            _db.flights.takeOffsDays + _db.flights.takeOffsNight,
+          );
+        case ReportsFilterField.takeoffsDay:
+          return buildNumberExpression(_db.flights.takeOffsDays);
+        case ReportsFilterField.takeoffsNight:
+          return buildNumberExpression(_db.flights.takeOffsNight);
+        case ReportsFilterField.landings:
+          return buildNumberExpression(
+            _db.flights.landingsDay + _db.flights.landingsNight,
+          );
+        case ReportsFilterField.landingsDay:
+          return buildNumberExpression(_db.flights.landingsDay);
+        case ReportsFilterField.landingsNight:
+          return buildNumberExpression(_db.flights.landingsNight);
+        case ReportsFilterField.ifrApproaches:
+          return buildNumberExpression(_db.flights.ifrApproaches);
+        case ReportsFilterField.isMultiPilot:
+          switch (filter.operator) {
+            case ReportsFilterOperator.isTrue:
+              return _db.aircraftTypes.multiPilot.equals(true);
+            case ReportsFilterOperator.isFalse:
+              return _db.aircraftTypes.multiPilot.equals(false) |
+                  _db.aircraftTypes.multiPilot.isNull();
+            case ReportsFilterOperator.contains:
+            case ReportsFilterOperator.doesNotContain:
+            case ReportsFilterOperator.startsWith:
+            case ReportsFilterOperator.doesNotStartWith:
+            case ReportsFilterOperator.endsWith:
+            case ReportsFilterOperator.doesNotEndWith:
+            case ReportsFilterOperator.isExactly:
+            case ReportsFilterOperator.isNot:
+            case ReportsFilterOperator.greaterThan:
+            case ReportsFilterOperator.lessThan:
+            case ReportsFilterOperator.equals:
+              return null;
+          }
+        case ReportsFilterField.isSimulator:
+          switch (filter.operator) {
+            case ReportsFilterOperator.isTrue:
+              return _db.aircrafts.isSimulator.equals(true);
+            case ReportsFilterOperator.isFalse:
+              return _db.aircrafts.isSimulator.equals(false);
+            case ReportsFilterOperator.contains:
+            case ReportsFilterOperator.doesNotContain:
+            case ReportsFilterOperator.startsWith:
+            case ReportsFilterOperator.doesNotStartWith:
+            case ReportsFilterOperator.endsWith:
+            case ReportsFilterOperator.doesNotEndWith:
+            case ReportsFilterOperator.isExactly:
+            case ReportsFilterOperator.isNot:
+            case ReportsFilterOperator.greaterThan:
+            case ReportsFilterOperator.lessThan:
+            case ReportsFilterOperator.equals:
+              return null;
+          }
+        case ReportsFilterField.departureIata:
+        case ReportsFilterField.departureName:
+        case ReportsFilterField.departureCity:
+        case ReportsFilterField.departureCountry:
+        case ReportsFilterField.arrivalIata:
+        case ReportsFilterField.arrivalName:
+        case ReportsFilterField.arrivalCity:
+        case ReportsFilterField.arrivalCountry:
+        case ReportsFilterField.pilotName:
+        case ReportsFilterField.pilotOnBoard:
+        case ReportsFilterField.pilotPic:
+        case ReportsFilterField.pilotSic:
+        case ReportsFilterField.pilotTrainee:
+          return null;
+      }
+    }
+
+    var residualFilters = query.filters;
+    if (query.filters.isNotEmpty) {
+      final sqlExpressions = <Expression<bool>>[];
+      final unsupportedFilters = <ReportsFilterCondition>[];
+      for (final filter in query.filters) {
+        final expression = buildSqlFilterExpr(filter);
+        if (expression == null) {
+          unsupportedFilters.add(filter);
+          continue;
+        }
+        sqlExpressions.add(expression);
+      }
+
+      if (query.filterMatchMode == ReportsFilterMatchMode.all) {
+        sqlExpressions.forEach(flightsQuery.where);
+        residualFilters = unsupportedFilters;
+      } else if (unsupportedFilters.isEmpty && sqlExpressions.isNotEmpty) {
+        var combined = sqlExpressions.first;
+        for (var i = 1; i < sqlExpressions.length; i++) {
+          combined = combined | sqlExpressions[i];
+        }
+        flightsQuery.where(combined);
+        residualFilters = const [];
+      }
+    }
+
     final rows = await flightsQuery.get();
     final pilotNamesByFlight = includePilotNames
         ? await _fetchPilotNamesByFlight(
@@ -309,11 +520,13 @@ class ReportsRepository {
         })
         .toList(growable: false);
 
-    final filteredFlightData = _applyFilters(
-      flightData,
-      query.filters,
-      query.filterMatchMode,
-    );
+    final filteredFlightData = residualFilters.isEmpty
+        ? flightData
+        : _applyFilters(
+            flightData,
+            residualFilters,
+            query.filterMatchMode,
+          );
     final simulatorMinutes = await _sumSimulatorMinutes(
       from: query.from,
       to: query.to,

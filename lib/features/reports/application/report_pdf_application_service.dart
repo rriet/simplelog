@@ -306,6 +306,37 @@ class ReportPdfApplicationService {
   /// Public API documentation.
   const ReportPdfApplicationService();
 
+  static final DateFormat _dateCellFormat = DateFormat('dd-MM-yyyy');
+  static final DateFormat _hmTimeFormat = DateFormat('HH:mm');
+  static const Set<String> _baseRowKeys = <String>{
+    'date',
+    'aircraftModel',
+    'aircraftRegistration',
+    'fromIcao',
+    'toIcao',
+    'remarks',
+    'ifrApproaches',
+    'landingsTotal',
+    'takeoffs',
+    'takeoffDay',
+    'takeoffNight',
+    'landingDay',
+    'landingNight',
+    'sel',
+    'mel',
+    'xc',
+    'day',
+    'night',
+    'ifr',
+    'simInst',
+    'fstd',
+    'dual',
+    'picPicus',
+    'sic',
+    'instructor',
+    'total',
+  };
+
   /// Public API documentation.
   Future<Uint8List> generateFromTemplate({
     required ReportPdfTemplate template,
@@ -316,10 +347,14 @@ class ReportPdfApplicationService {
     Map<int, ReportEntryCrewNames> simulatorCrewById = const {},
   }) async {
     final pageFormat = _resolvePageFormat(template);
+    final requiredRowKeys = _collectRequiredRowKeys(template);
     final rows = buildRows(
       entries,
       flightCrewById: flightCrewById,
       simulatorCrewById: simulatorCrewById,
+      requiredExtraKeys: requiredRowKeys
+          .where((key) => !_baseRowKeys.contains(key))
+          .toSet(),
     );
     return _generatePdf(
       template: template,
@@ -328,6 +363,19 @@ class ReportPdfApplicationService {
       coverValues: coverValues,
       pageFormat: pageFormat,
     );
+  }
+
+  Set<String> _collectRequiredRowKeys(ReportPdfTemplate template) {
+    final keys = <String>{};
+    for (final table in template.tables) {
+      for (final column in table.columns) {
+        final key = column.key.trim();
+        if (key.isNotEmpty) {
+          keys.add(key);
+        }
+      }
+    }
+    return keys;
   }
 
   Future<Uint8List> _generatePdf({
@@ -691,6 +739,7 @@ class ReportPdfApplicationService {
     List<LogbookEntry> entries, {
     Map<int, ReportEntryCrewNames> flightCrewById = const {},
     Map<int, ReportEntryCrewNames> simulatorCrewById = const {},
+    Set<String> requiredExtraKeys = const <String>{},
   }) {
     final sortedEntries = [...entries]
       ..sort(
@@ -759,9 +808,7 @@ class ReportPdfApplicationService {
               : 0;
 
           return ReportTemplateRow(
-            date: DateFormat(
-              'dd-MM-yyyy',
-            ).format(entry.timeLine.eventDateTime.toUtc()),
+            date: _dateCellFormat.format(entry.timeLine.eventDateTime.toUtc()),
             aircraftModel: type?.code ?? '',
             aircraftRegistration: entry.aircraft?.registration ?? '',
             fromIcao:
@@ -811,6 +858,7 @@ class ReportPdfApplicationService {
               complexMinutes: complexMinutes,
               efisMinutes: efisMinutes,
               highPerformanceMinutes: highPerformanceMinutes,
+              requiredExtraKeys: requiredExtraKeys,
             ),
           );
         })
@@ -832,6 +880,7 @@ class ReportPdfApplicationService {
     required int complexMinutes,
     required int efisMinutes,
     required int highPerformanceMinutes,
+    required Set<String> requiredExtraKeys,
   }) {
     final flight = entry.flight;
     final sim = entry.simulatorTraining;
@@ -841,88 +890,121 @@ class ReportPdfApplicationService {
     final arrTime = flight?.arrivalDateTime?.toUtc();
     final takeoffTime = flight?.takeOffDateTime?.toUtc();
     final landingTime = flight?.landingDateTime?.toUtc();
-    final map = <String, String>{
-      'eventType': entry.type.name,
-      'departureTime': _formatHm(depTime),
-      'arrivalTime': _formatHm(arrTime),
-      'depTime': _formatHm(depTime),
-      'arrTime': _formatHm(arrTime),
-      'takeoffTime': _formatHm(takeoffTime),
-      'landingTime': _formatHm(landingTime),
-      'picCrewName': crew.pic,
-      'sicCrewName': crew.sic,
-      'pilotPicName': crew.pic,
-      'pilotSicName': crew.sic,
-      'takeoffDay': _emptyIfZeroInt(takeoffDay),
-      'takeoffNight': _emptyIfZeroInt(takeoffNight),
-      'takeoffs': _emptyIfZeroInt(takeoffsTotal),
-      'landingDay': _emptyIfZeroInt(landingDay),
-      'landingNight': _emptyIfZeroInt(landingNight),
-      'landings': _emptyIfZeroInt(landingsTotal),
-      'singlePilotSel': _emptyIfZeroTime(singlePilotSelMinutes),
-      'singlePilotMel': _emptyIfZeroTime(singlePilotMelMinutes),
-      'multiPilotTime': _emptyIfZeroTime(multiPilotMinutes),
-      'complexTime': _emptyIfZeroTime(complexMinutes),
-      'efisTime': _emptyIfZeroTime(efisMinutes),
-      'highPerformanceTime': _emptyIfZeroTime(highPerformanceMinutes),
-      'picPlusPicus': _emptyIfZeroTime(
+    final map = <String, String>{};
+    void put(String key, String value) {
+      if (requiredExtraKeys.contains(key)) {
+        map[key] = value;
+      }
+    }
+
+    put('eventType', entry.type.name);
+    put('departureTime', _formatHm(depTime));
+    put('arrivalTime', _formatHm(arrTime));
+    put('depTime', _formatHm(depTime));
+    put('arrTime', _formatHm(arrTime));
+    put('takeoffTime', _formatHm(takeoffTime));
+    put('landingTime', _formatHm(landingTime));
+    put('picCrewName', crew.pic);
+    put('sicCrewName', crew.sic);
+    put('pilotPicName', crew.pic);
+    put('pilotSicName', crew.sic);
+    put('takeoffDay', _emptyIfZeroInt(takeoffDay));
+    put('takeoffNight', _emptyIfZeroInt(takeoffNight));
+    put('takeoffs', _emptyIfZeroInt(takeoffsTotal));
+    put('landingDay', _emptyIfZeroInt(landingDay));
+    put('landingNight', _emptyIfZeroInt(landingNight));
+    put('landings', _emptyIfZeroInt(landingsTotal));
+    put('singlePilotSel', _emptyIfZeroTime(singlePilotSelMinutes));
+    put('singlePilotMel', _emptyIfZeroTime(singlePilotMelMinutes));
+    put('multiPilotTime', _emptyIfZeroTime(multiPilotMinutes));
+    put('complexTime', _emptyIfZeroTime(complexMinutes));
+    put('efisTime', _emptyIfZeroTime(efisMinutes));
+    put('highPerformanceTime', _emptyIfZeroTime(highPerformanceMinutes));
+    put(
+      'picPlusPicus',
+      _emptyIfZeroTime(
         (flight?.timePICMinutes ?? 0) + (flight?.timePICUSMinutes ?? 0),
       ),
-      'picWithoutPicus': _emptyIfZeroTime(flight?.timePICMinutes ?? 0),
-      'picus': _emptyIfZeroTime(flight?.timePICUSMinutes ?? 0),
-      'isMultiPilot': (type?.multiPilot ?? false).toString(),
-      'isComplex': (type?.complex ?? false).toString(),
-      'isEfis': (type?.efis ?? false).toString(),
-      'isHighPerformance': (type?.highPerformance ?? false).toString(),
-      'engineCount': (type?.engineCount ?? 0).toString(),
-      'aircraftCategory': type?.category.name ?? '',
-      'aircraftEngineType': type?.engineType.name ?? '',
-      'flightId': (flight?.id ?? '').toString(),
-      'simulatorId': (sim?.id ?? '').toString(),
-      'flight.timePICMinutes': (flight?.timePICMinutes ?? 0).toString(),
-      'flight.timePICUSMinutes': (flight?.timePICUSMinutes ?? 0).toString(),
-      'flight.timeSICMinutes': (flight?.timeSICMinutes ?? 0).toString(),
-      'flight.timeDualMinutes': (flight?.timeDualMinutes ?? 0).toString(),
-      'flight.timeInstructorMinutes': (flight?.timeInstructorMinutes ?? 0)
-          .toString(),
-      'flight.timeIFRMinutes': (flight?.timeIFRMinutes ?? 0).toString(),
-      'flight.timeInstrumentMinutes': (flight?.timeInstrumentMinutes ?? 0)
-          .toString(),
-      'flight.timeSimulatedInstrumentMinutes':
-          (flight?.timeSimulatedInstrumentMinutes ?? 0).toString(),
-      'flight.timeNightMinutes': (flight?.timeNightMinutes ?? 0).toString(),
-      'flight.timeCrossCountryMinutes': (flight?.timeCrossCountryMinutes ?? 0)
-          .toString(),
-      'flight.timeCustom1Minutes': (flight?.timeCustom1Minutes ?? 0).toString(),
-      'flight.timeCustom2Minutes': (flight?.timeCustom2Minutes ?? 0).toString(),
-      'flight.timeCustom3Minutes': (flight?.timeCustom3Minutes ?? 0).toString(),
-      'flight.timeCustom4Minutes': (flight?.timeCustom4Minutes ?? 0).toString(),
-      'flight.timeFlightMinutes': (flight?.timeFlightMinutes ?? 0).toString(),
-      'flight.timeBlockMinutes': (flight?.timeBlockMinutes ?? 0).toString(),
-      'flight.timeTotalBlockMinutes': (flight?.timeTotalBlockMinutes ?? 0)
-          .toString(),
-      'flight.distanceNM': (flight?.distanceNM ?? 0).toString(),
-      'flight.ifrApproaches': (flight?.ifrApproaches ?? 0).toString(),
-      'flight.takeOffsDays': (flight?.takeOffsDays ?? 0).toString(),
-      'flight.takeOffsNight': (flight?.takeOffsNight ?? 0).toString(),
-      'flight.landingsDay': (flight?.landingsDay ?? 0).toString(),
-      'flight.landingsNight': (flight?.landingsNight ?? 0).toString(),
-      'flight.pilotFunction': flight?.pilotFunction ?? '',
-      'flight.approachType': flight?.approachType ?? '',
-      'flight.remarks': flight?.remarks ?? '',
-      'flight.notes': flight?.notes ?? '',
-      'flight.isLocked': (flight?.isLocked ?? false).toString(),
-      'simulator.timeTotal': (sim?.timeTotal ?? 0).toString(),
-      'simulator.remarks': sim?.remarks ?? '',
-      'simulator.notes': sim?.notes ?? '',
-      'simulator.isLocked': (sim?.isLocked ?? false).toString(),
-    };
+    );
+    put('picWithoutPicus', _emptyIfZeroTime(flight?.timePICMinutes ?? 0));
+    put('picus', _emptyIfZeroTime(flight?.timePICUSMinutes ?? 0));
+    put('isMultiPilot', (type?.multiPilot ?? false).toString());
+    put('isComplex', (type?.complex ?? false).toString());
+    put('isEfis', (type?.efis ?? false).toString());
+    put('isHighPerformance', (type?.highPerformance ?? false).toString());
+    put('engineCount', (type?.engineCount ?? 0).toString());
+    put('aircraftCategory', type?.category.name ?? '');
+    put('aircraftEngineType', type?.engineType.name ?? '');
+    put('flightId', (flight?.id ?? '').toString());
+    put('simulatorId', (sim?.id ?? '').toString());
+    put('flight.timePICMinutes', (flight?.timePICMinutes ?? 0).toString());
+    put('flight.timePICUSMinutes', (flight?.timePICUSMinutes ?? 0).toString());
+    put('flight.timeSICMinutes', (flight?.timeSICMinutes ?? 0).toString());
+    put('flight.timeDualMinutes', (flight?.timeDualMinutes ?? 0).toString());
+    put(
+      'flight.timeInstructorMinutes',
+      (flight?.timeInstructorMinutes ?? 0).toString(),
+    );
+    put('flight.timeIFRMinutes', (flight?.timeIFRMinutes ?? 0).toString());
+    put(
+      'flight.timeInstrumentMinutes',
+      (flight?.timeInstrumentMinutes ?? 0).toString(),
+    );
+    put(
+      'flight.timeSimulatedInstrumentMinutes',
+      (flight?.timeSimulatedInstrumentMinutes ?? 0).toString(),
+    );
+    put('flight.timeNightMinutes', (flight?.timeNightMinutes ?? 0).toString());
+    put(
+      'flight.timeCrossCountryMinutes',
+      (flight?.timeCrossCountryMinutes ?? 0).toString(),
+    );
+    put(
+      'flight.timeCustom1Minutes',
+      (flight?.timeCustom1Minutes ?? 0).toString(),
+    );
+    put(
+      'flight.timeCustom2Minutes',
+      (flight?.timeCustom2Minutes ?? 0).toString(),
+    );
+    put(
+      'flight.timeCustom3Minutes',
+      (flight?.timeCustom3Minutes ?? 0).toString(),
+    );
+    put(
+      'flight.timeCustom4Minutes',
+      (flight?.timeCustom4Minutes ?? 0).toString(),
+    );
+    put(
+      'flight.timeFlightMinutes',
+      (flight?.timeFlightMinutes ?? 0).toString(),
+    );
+    put('flight.timeBlockMinutes', (flight?.timeBlockMinutes ?? 0).toString());
+    put(
+      'flight.timeTotalBlockMinutes',
+      (flight?.timeTotalBlockMinutes ?? 0).toString(),
+    );
+    put('flight.distanceNM', (flight?.distanceNM ?? 0).toString());
+    put('flight.ifrApproaches', (flight?.ifrApproaches ?? 0).toString());
+    put('flight.takeOffsDays', (flight?.takeOffsDays ?? 0).toString());
+    put('flight.takeOffsNight', (flight?.takeOffsNight ?? 0).toString());
+    put('flight.landingsDay', (flight?.landingsDay ?? 0).toString());
+    put('flight.landingsNight', (flight?.landingsNight ?? 0).toString());
+    put('flight.pilotFunction', flight?.pilotFunction ?? '');
+    put('flight.approachType', flight?.approachType ?? '');
+    put('flight.remarks', flight?.remarks ?? '');
+    put('flight.notes', flight?.notes ?? '');
+    put('flight.isLocked', (flight?.isLocked ?? false).toString());
+    put('simulator.timeTotal', (sim?.timeTotal ?? 0).toString());
+    put('simulator.remarks', sim?.remarks ?? '');
+    put('simulator.notes', sim?.notes ?? '');
+    put('simulator.isLocked', (sim?.isLocked ?? false).toString());
     return map;
   }
 
   String _formatHm(DateTime? value) {
     if (value == null) return '';
-    return DateFormat('HH:mm').format(value.toUtc());
+    return _hmTimeFormat.format(value.toUtc());
   }
 
   /// Public API documentation.
@@ -934,36 +1016,162 @@ class ReportPdfApplicationService {
     return totals;
   }
 
-  Map<String, dynamic> _rowToMap(ReportTemplateRow row) {
-    return {
-      'date': row.date,
-      'aircraftModel': row.aircraftModel,
-      'aircraftRegistration': row.aircraftRegistration,
-      'fromIcao': row.fromIcao,
-      'toIcao': row.toIcao,
-      'remarks': row.remarks,
-      'ifrApproaches': _emptyIfZeroInt(row.ifrApproaches),
-      'landingsTotal': _emptyIfZeroInt(row.landingsTotal),
-      'takeoffs': _emptyIfZeroInt(row.takeoffsTotal),
-      'takeoffDay': _emptyIfZeroInt(row.takeoffsDay),
-      'takeoffNight': _emptyIfZeroInt(row.takeoffsNight),
-      'landingDay': _emptyIfZeroInt(row.landingsDay),
-      'landingNight': _emptyIfZeroInt(row.landingsNight),
-      'sel': _emptyIfZeroTime(row.selMinutes),
-      'mel': _emptyIfZeroTime(row.melMinutes),
-      'xc': _emptyIfZeroTime(row.xcMinutes),
-      'day': _emptyIfZeroTime(row.dayMinutes),
-      'night': _emptyIfZeroTime(row.nightMinutes),
-      'ifr': _emptyIfZeroTime(row.ifrMinutes),
-      'simInst': _emptyIfZeroTime(row.simInstMinutes),
-      'fstd': _emptyIfZeroTime(row.fstdMinutes),
-      'dual': _emptyIfZeroTime(row.dualMinutes),
-      'picPicus': _emptyIfZeroTime(row.picPicusMinutes),
-      'sic': _emptyIfZeroTime(row.sicMinutes),
-      'instructor': _emptyIfZeroTime(row.instructorMinutes),
-      'total': _emptyIfZeroTime(row.totalMinutes),
-      ...row.extra,
-    };
+  /// Public API documentation.
+  ReportTemplateTotals sumTotalsFromEntries(List<LogbookEntry> entries) {
+    var ifrApproaches = 0;
+    var landingsTotal = 0;
+    var takeoffsTotal = 0;
+    var takeoffsDay = 0;
+    var takeoffsNight = 0;
+    var landingsDay = 0;
+    var landingsNight = 0;
+    var selMinutes = 0;
+    var melMinutes = 0;
+    var xcMinutes = 0;
+    var dayMinutes = 0;
+    var nightMinutes = 0;
+    var ifrMinutes = 0;
+    var simInstMinutes = 0;
+    var fstdMinutes = 0;
+    var dualMinutes = 0;
+    var picPicusMinutes = 0;
+    var sicMinutes = 0;
+    var instructorMinutes = 0;
+    var totalMinutes = 0;
+
+    for (final entry in entries) {
+      final flight = entry.flight;
+      final sim = entry.simulatorTraining;
+      final pos = entry.positioning;
+      final type = entry.aircraftType;
+
+      final rowTotalMinutes =
+          flight?.timeBlockMinutes ??
+          pos?.timeTotalMinutes ??
+          sim?.timeTotal ??
+          0;
+      final rowNightMinutes = flight?.timeNightMinutes ?? 0;
+      final rowDayMinutes = math.max(0, rowTotalMinutes - rowNightMinutes);
+      final isSeaplane = type?.category.name == 'seaplane';
+      final isMultiEngine = (type?.engineCount ?? 0) > 1;
+      final rowSelMinutes = (!isSeaplane && !isMultiEngine)
+          ? rowTotalMinutes
+          : 0;
+      final rowMelMinutes = (!isSeaplane && isMultiEngine)
+          ? rowTotalMinutes
+          : 0;
+      final rowTakeoffDay = flight?.takeOffsDays ?? 0;
+      final rowTakeoffNight = flight?.takeOffsNight ?? 0;
+      final rowLandingDay = flight?.landingsDay ?? 0;
+      final rowLandingNight = flight?.landingsNight ?? 0;
+
+      ifrApproaches += flight?.ifrApproaches ?? 0;
+      landingsTotal += rowLandingDay + rowLandingNight;
+      takeoffsTotal += rowTakeoffDay + rowTakeoffNight;
+      takeoffsDay += rowTakeoffDay;
+      takeoffsNight += rowTakeoffNight;
+      landingsDay += rowLandingDay;
+      landingsNight += rowLandingNight;
+      selMinutes += rowSelMinutes;
+      melMinutes += rowMelMinutes;
+      xcMinutes += flight?.timeCrossCountryMinutes ?? 0;
+      dayMinutes += rowDayMinutes;
+      nightMinutes += rowNightMinutes;
+      ifrMinutes += flight?.timeIFRMinutes ?? 0;
+      simInstMinutes +=
+          (flight?.timeInstrumentMinutes ?? 0) +
+          (flight?.timeSimulatedInstrumentMinutes ?? 0);
+      fstdMinutes += sim?.timeTotal ?? 0;
+      dualMinutes += flight?.timeDualMinutes ?? 0;
+      picPicusMinutes +=
+          (flight?.timePICMinutes ?? 0) + (flight?.timePICUSMinutes ?? 0);
+      sicMinutes += flight?.timeSICMinutes ?? 0;
+      instructorMinutes += flight?.timeInstructorMinutes ?? 0;
+      totalMinutes += rowTotalMinutes;
+    }
+
+    return ReportTemplateTotals(
+      ifrApproaches: ifrApproaches,
+      landingsTotal: landingsTotal,
+      takeoffsTotal: takeoffsTotal,
+      takeoffsDay: takeoffsDay,
+      takeoffsNight: takeoffsNight,
+      landingsDay: landingsDay,
+      landingsNight: landingsNight,
+      selMinutes: selMinutes,
+      melMinutes: melMinutes,
+      xcMinutes: xcMinutes,
+      dayMinutes: dayMinutes,
+      nightMinutes: nightMinutes,
+      ifrMinutes: ifrMinutes,
+      simInstMinutes: simInstMinutes,
+      fstdMinutes: fstdMinutes,
+      dualMinutes: dualMinutes,
+      picPicusMinutes: picPicusMinutes,
+      sicMinutes: sicMinutes,
+      instructorMinutes: instructorMinutes,
+      totalMinutes: totalMinutes,
+    );
+  }
+
+  String _rowValueForKey(ReportTemplateRow row, String key) {
+    switch (key) {
+      case 'date':
+        return row.date;
+      case 'aircraftModel':
+        return row.aircraftModel;
+      case 'aircraftRegistration':
+        return row.aircraftRegistration;
+      case 'fromIcao':
+        return row.fromIcao;
+      case 'toIcao':
+        return row.toIcao;
+      case 'remarks':
+        return row.remarks;
+      case 'ifrApproaches':
+        return _emptyIfZeroInt(row.ifrApproaches);
+      case 'landings':
+      case 'landingsTotal':
+        return _emptyIfZeroInt(row.landingsTotal);
+      case 'takeoffs':
+        return _emptyIfZeroInt(row.takeoffsTotal);
+      case 'takeoffDay':
+        return _emptyIfZeroInt(row.takeoffsDay);
+      case 'takeoffNight':
+        return _emptyIfZeroInt(row.takeoffsNight);
+      case 'landingDay':
+        return _emptyIfZeroInt(row.landingsDay);
+      case 'landingNight':
+        return _emptyIfZeroInt(row.landingsNight);
+      case 'sel':
+        return _emptyIfZeroTime(row.selMinutes);
+      case 'mel':
+        return _emptyIfZeroTime(row.melMinutes);
+      case 'xc':
+        return _emptyIfZeroTime(row.xcMinutes);
+      case 'day':
+        return _emptyIfZeroTime(row.dayMinutes);
+      case 'night':
+        return _emptyIfZeroTime(row.nightMinutes);
+      case 'ifr':
+        return _emptyIfZeroTime(row.ifrMinutes);
+      case 'simInst':
+        return _emptyIfZeroTime(row.simInstMinutes);
+      case 'fstd':
+        return _emptyIfZeroTime(row.fstdMinutes);
+      case 'dual':
+        return _emptyIfZeroTime(row.dualMinutes);
+      case 'picPicus':
+        return _emptyIfZeroTime(row.picPicusMinutes);
+      case 'sic':
+        return _emptyIfZeroTime(row.sicMinutes);
+      case 'instructor':
+        return _emptyIfZeroTime(row.instructorMinutes);
+      case 'total':
+        return _emptyIfZeroTime(row.totalMinutes);
+      default:
+        return row.extra[key] ?? '';
+    }
   }
 
   Map<String, String> _totalsToMap(ReportTemplateTotals totals) {
@@ -1149,11 +1357,10 @@ class ReportPdfApplicationService {
     }
 
     for (final row in pageRows) {
-      final rowMap = _rowToMap(row);
       final rowCells = table.columns
           .map(
             (column) => ReportPdfCellConfig(
-              text: (rowMap[column.key] ?? '').toString(),
+              text: _rowValueForKey(row, column.key),
               alignment: column.alignment,
               verticalAlignment: column.verticalAlignment,
               textStyle: column.textStyle,

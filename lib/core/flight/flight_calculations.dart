@@ -21,43 +21,60 @@ class FlightCalculations {
 
     flightTimeMinutes = flightTime(depTimeEpochSeconds, arrTimeEpochSeconds);
     flightDistanceNm = flightDistance(latDep, longDep, latArr, longArr);
-
-    nightTimeMinutes = _calculatePreciseNightTime();
   }
-/// Public API documentation.
+
+  /// Public API documentation.
 
   /// Public API documentation.
   final double latDep;
+
   /// Public API documentation.
   final double longDep;
+
   /// Public API documentation.
   final double latArr;
+
   /// Public API documentation.
   final double longArr;
+
   /// Public API documentation.
   final int depTimeEpochSeconds;
+
   /// Public API documentation.
   final int arrTimeEpochSeconds;
-/// Public API documentation.
+
+  /// Public API documentation.
 
   /// Public API documentation.
   late final int sunriseDep;
+
   /// Public API documentation.
   late final int sunsetDep;
+
   /// Public API documentation.
   late final int sunriseArr;
+
   /// Public API documentation.
   late final int sunsetArr;
+
   /// Public API documentation.
   late final int flightTimeMinutes;
+
   /// Public API documentation.
   late final double flightDistanceNm;
+
   /// Public API documentation.
   late final bool dayTakeOff;
+
   /// Public API documentation.
   late final bool dayLanding;
+
   /// Public API documentation.
-  late final int nightTimeMinutes;
+  int? _nightTimeMinutes;
+
+  /// Lazily calculated to avoid unnecessary expensive work.
+  int get nightTimeMinutes =>
+      _nightTimeMinutes ??= _calculatePreciseNightTime();
 
   // Cached constants for performance
   static const double _sunsetAngleDeg = 90.833;
@@ -65,6 +82,7 @@ class FlightCalculations {
 
   /// Public API documentation.
   String get sunriseTime => _formatMinutes(sunriseDep);
+
   /// Public API documentation.
   String get sunsetTime => _formatMinutes(sunsetDep);
 
@@ -215,29 +233,86 @@ class FlightCalculations {
     var longNow = longDep;
     final milesPerMinute = flightDistanceNm / flightTimeMinutes;
     var isDayState = dayTakeOff;
+    const coarseStepMinutes = 5;
 
     while (now.isBefore(arr)) {
-      now = now.add(const Duration(minutes: 1));
+      final remainingMinutes = arr.difference(now).inMinutes;
+      final stepMinutes = min(coarseStepMinutes, remainingMinutes);
+      final startNow = now;
+      final startLat = latNow;
+      final startLon = longNow;
+      final startIsDay = isDayState;
 
-      final bearing = flightBearing(latNow, longNow, latArr, longArr);
-      final (nextLat, nextLon) = flightNextWaypoint(
+      final coarseBearing = flightBearing(latNow, longNow, latArr, longArr);
+      final (coarseLat, coarseLon) = flightNextWaypoint(
         latNow,
         longNow,
-        bearing,
-        milesPerMinute,
+        coarseBearing,
+        milesPerMinute * stepMinutes,
       );
-      latNow = nextLat;
-      longNow = nextLon;
+      final coarseNow = now.add(Duration(minutes: stepMinutes));
+      final coarseEpochSeconds = coarseNow.millisecondsSinceEpoch ~/ 1000;
+      final coarseSunrise = calcSunriseUTC(
+        coarseEpochSeconds,
+        coarseLat,
+        coarseLon,
+      );
+      final coarseSunset = calcSunsetUTC(
+        coarseEpochSeconds,
+        coarseLat,
+        coarseLon,
+      );
+      final coarseIsDay = isDay(
+        coarseEpochSeconds,
+        coarseSunrise,
+        coarseSunset,
+        coarseLat,
+      );
 
-      final epochSeconds = now.millisecondsSinceEpoch ~/ 1000;
-      final sunriseNow = calcSunriseUTC(epochSeconds, latNow, longNow);
-      final sunsetNow = calcSunsetUTC(epochSeconds, latNow, longNow);
-      final isDayNow = isDay(epochSeconds, sunriseNow, sunsetNow, latNow);
-
-      if (isDayState == isDayNow && !isDayState && now.isBefore(arr)) {
-        nightTime += 1;
+      if (coarseIsDay == startIsDay) {
+        if (!startIsDay) {
+          final nightDelta = coarseNow.isBefore(arr)
+              ? stepMinutes
+              : max(0, stepMinutes - 1);
+          nightTime += nightDelta;
+        }
+        now = coarseNow;
+        latNow = coarseLat;
+        longNow = coarseLon;
+        isDayState = coarseIsDay;
+        continue;
       }
-      isDayState = isDayNow;
+
+      // Transition detected in this coarse window.
+      // Re-run minute-by-minute and recompute bearing each minute to keep
+      // long-haul transition timing stable.
+      now = startNow;
+      latNow = startLat;
+      longNow = startLon;
+      isDayState = startIsDay;
+      for (var minute = 0; minute < stepMinutes; minute++) {
+        now = now.add(const Duration(minutes: 1));
+
+        final bearing = flightBearing(latNow, longNow, latArr, longArr);
+        final (nextLat, nextLon) = flightNextWaypoint(
+          latNow,
+          longNow,
+          bearing,
+          milesPerMinute,
+        );
+        latNow = nextLat;
+        longNow = nextLon;
+
+        final epochSeconds = now.millisecondsSinceEpoch ~/ 1000;
+        final sunriseNow = calcSunriseUTC(epochSeconds, latNow, longNow);
+        final sunsetNow = calcSunsetUTC(epochSeconds, latNow, longNow);
+        final isDayNow = isDay(epochSeconds, sunriseNow, sunsetNow, latNow);
+
+        if (isDayState == isDayNow && !isDayState && now.isBefore(arr)) {
+          nightTime += 1;
+        }
+        isDayState = isDayNow;
+      }
     }
 
     return nightTime;
