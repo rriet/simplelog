@@ -33,12 +33,7 @@ class DateSelectorInputField extends StatelessWidget {
           labelText: label,
           border: const OutlineInputBorder(),
           errorText: errorText,
-          contentPadding: const EdgeInsetsDirectional.fromSTEB(
-            12,
-            10,
-            6,
-            10,
-          ),
+          contentPadding: const EdgeInsetsDirectional.fromSTEB(12, 12, 0, 12),
         ),
         child: Text(
           valueText,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/theme/app_form_controls_theme.dart';
+import 'package:simplelog/presentation/shared/widgets/square_outline_button.dart';
 
 /// Public API documentation.
 class AppTheme {
@@ -9,7 +10,8 @@ class AppTheme {
   static const _navy = Color(0xFF0B2D5C);
   static const _red = Color(0xFFE31837);
   static const _yellow = Color(0xFFF9C80E);
-/// Public API documentation.
+
+  /// Public API documentation.
 
   /// Public API documentation.
   static ThemeData light() {
@@ -58,12 +60,22 @@ class AppTheme {
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
       ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: SquareOutlineButton.outlinedStyle(colorScheme),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: SquareOutlineButton.filledStyle(colorScheme),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: SquareOutlineButton.elevatedStyle(colorScheme),
+      ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
       ),
     );
-  /// Public API documentation.
+
+    /// Public API documentation.
   }
 
   /// Public API documentation.
@@ -113,6 +125,15 @@ class AppTheme {
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: SquareOutlineButton.outlinedStyle(colorScheme),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: SquareOutlineButton.filledStyle(colorScheme),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: SquareOutlineButton.elevatedStyle(colorScheme),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: colorScheme.primary,

@@ -18,6 +18,11 @@ class ReportTemplateRow {
     required this.remarks,
     required this.ifrApproaches,
     required this.landingsTotal,
+    required this.takeoffsTotal,
+    required this.takeoffsDay,
+    required this.takeoffsNight,
+    required this.landingsDay,
+    required this.landingsNight,
     required this.selMinutes,
     required this.melMinutes,
     required this.xcMinutes,
@@ -31,54 +36,112 @@ class ReportTemplateRow {
     required this.sicMinutes,
     required this.instructorMinutes,
     required this.totalMinutes,
-  /// Public API documentation.
+    this.extra = const <String, String>{},
+
+    /// Public API documentation.
   });
-/// Public API documentation.
+
+  /// Public API documentation.
 
   /// Public API documentation.
   final String date;
+
   /// Public API documentation.
   final String aircraftModel;
+
   /// Public API documentation.
   final String aircraftRegistration;
+
   /// Public API documentation.
   final String fromIcao;
+
   /// Public API documentation.
   final String toIcao;
+
   /// Public API documentation.
   final String remarks;
+
   /// Public API documentation.
   final int ifrApproaches;
+
   /// Public API documentation.
   final int landingsTotal;
+
+  /// Public API documentation.
+  final int takeoffsTotal;
+
+  /// Public API documentation.
+  final int takeoffsDay;
+
+  /// Public API documentation.
+  final int takeoffsNight;
+
+  /// Public API documentation.
+  final int landingsDay;
+
+  /// Public API documentation.
+  final int landingsNight;
+
   /// Public API documentation.
   final int selMinutes;
+
   /// Public API documentation.
   final int melMinutes;
+
   /// Public API documentation.
   final int xcMinutes;
+
   /// Public API documentation.
   final int dayMinutes;
+
   /// Public API documentation.
   final int nightMinutes;
+
   /// Public API documentation.
   final int ifrMinutes;
+
   /// Public API documentation.
   final int simInstMinutes;
+
   /// Public API documentation.
   final int fstdMinutes;
+
   /// Public API documentation.
   final int dualMinutes;
+
   /// Public API documentation.
   final int picPicusMinutes;
+
   /// Public API documentation.
   final int sicMinutes;
+
   /// Public API documentation.
   final int instructorMinutes;
+
   /// Public API documentation.
   final int totalMinutes;
-/// Public API documentation.
+
+  /// Public API documentation.
+  final Map<String, String> extra;
+
+  /// Public API documentation.
 }
+
+/// Public API documentation.
+class ReportEntryCrewNames {
+  /// Public API documentation.
+  const ReportEntryCrewNames({
+    this.pic = '',
+    this.sic = '',
+  });
+
+  /// Public API documentation.
+  final String pic;
+
+  /// Public API documentation.
+  final String sic;
+}
+
 /// Public API documentation.
 
 /// Public API documentation.
@@ -87,19 +150,31 @@ class ReportTemplateTotals {
   const ReportTemplateTotals({
     /// Public API documentation.
     this.ifrApproaches = 0,
+
     /// Public API documentation.
     this.landingsTotal = 0,
+    this.takeoffsTotal = 0,
+    this.takeoffsDay = 0,
+    this.takeoffsNight = 0,
+    this.landingsDay = 0,
+    this.landingsNight = 0,
+
     /// Public API documentation.
     this.selMinutes = 0,
+
     /// Public API documentation.
     this.melMinutes = 0,
+
     /// Public API documentation.
     this.xcMinutes = 0,
+
     /// Public API documentation.
     this.dayMinutes = 0,
+
     /// Public API documentation.
     this.nightMinutes = 0,
     this.ifrMinutes = 0,
+
     /// Public API documentation.
     this.simInstMinutes = 0,
     this.fstdMinutes = 0,
@@ -112,32 +187,61 @@ class ReportTemplateTotals {
 
   /// Public API documentation.
   final int ifrApproaches;
+
   /// Public API documentation.
   final int landingsTotal;
+
+  /// Public API documentation.
+  final int takeoffsTotal;
+
+  /// Public API documentation.
+  final int takeoffsDay;
+
+  /// Public API documentation.
+  final int takeoffsNight;
+
+  /// Public API documentation.
+  final int landingsDay;
+
+  /// Public API documentation.
+  final int landingsNight;
+
   /// Public API documentation.
   final int selMinutes;
+
   /// Public API documentation.
   final int melMinutes;
+
   /// Public API documentation.
   final int xcMinutes;
+
   /// Public API documentation.
   final int dayMinutes;
+
   /// Public API documentation.
   final int nightMinutes;
+
   /// Public API documentation.
   final int ifrMinutes;
+
   /// Public API documentation.
   final int simInstMinutes;
+
   /// Public API documentation.
   final int fstdMinutes;
+
   /// Public API documentation.
   final int dualMinutes;
+
   /// Public API documentation.
   final int picPicusMinutes;
+
   /// Public API documentation.
   final int sicMinutes;
+
   /// Public API documentation.
   final int instructorMinutes;
+
   /// Public API documentation.
   final int totalMinutes;
 
@@ -146,8 +250,14 @@ class ReportTemplateTotals {
     /// Public API documentation.
     return ReportTemplateTotals(
       ifrApproaches: ifrApproaches + row.ifrApproaches,
+
       /// Public API documentation.
       landingsTotal: landingsTotal + row.landingsTotal,
+      takeoffsTotal: takeoffsTotal + row.takeoffsTotal,
+      takeoffsDay: takeoffsDay + row.takeoffsDay,
+      takeoffsNight: takeoffsNight + row.takeoffsNight,
+      landingsDay: landingsDay + row.landingsDay,
+      landingsNight: landingsNight + row.landingsNight,
       selMinutes: selMinutes + row.selMinutes,
       melMinutes: melMinutes + row.melMinutes,
       xcMinutes: xcMinutes + row.xcMinutes,
@@ -169,6 +279,11 @@ class ReportTemplateTotals {
     return ReportTemplateTotals(
       ifrApproaches: ifrApproaches + other.ifrApproaches,
       landingsTotal: landingsTotal + other.landingsTotal,
+      takeoffsTotal: takeoffsTotal + other.takeoffsTotal,
+      takeoffsDay: takeoffsDay + other.takeoffsDay,
+      takeoffsNight: takeoffsNight + other.takeoffsNight,
+      landingsDay: landingsDay + other.landingsDay,
+      landingsNight: landingsNight + other.landingsNight,
       selMinutes: selMinutes + other.selMinutes,
       melMinutes: melMinutes + other.melMinutes,
       xcMinutes: xcMinutes + other.xcMinutes,
@@ -196,13 +311,21 @@ class ReportPdfApplicationService {
     required ReportPdfTemplate template,
     required List<LogbookEntry> entries,
     required ReportTemplateTotals startingTotals,
+    Map<String, String> coverValues = const <String, String>{},
+    Map<int, ReportEntryCrewNames> flightCrewById = const {},
+    Map<int, ReportEntryCrewNames> simulatorCrewById = const {},
   }) async {
     final pageFormat = _resolvePageFormat(template);
-    final rows = buildRows(entries);
+    final rows = buildRows(
+      entries,
+      flightCrewById: flightCrewById,
+      simulatorCrewById: simulatorCrewById,
+    );
     return _generatePdf(
       template: template,
       rows: rows,
       startingTotals: startingTotals,
+      coverValues: coverValues,
       pageFormat: pageFormat,
     );
   }
@@ -211,9 +334,23 @@ class ReportPdfApplicationService {
     required ReportPdfTemplate template,
     required List<ReportTemplateRow> rows,
     required ReportTemplateTotals startingTotals,
+    required Map<String, String> coverValues,
     required PdfPageFormat pageFormat,
   }) async {
     final document = pw.Document();
+    final coverPage = template.coverPage;
+    if (coverPage != null && coverPage.enabled) {
+      document.addPage(
+        pw.Page(
+          pageFormat: pageFormat,
+          margin: const pw.EdgeInsets.all(20),
+          build: (context) => _buildCoverPage(
+            coverPage: coverPage,
+            coverValues: coverValues,
+          ),
+        ),
+      );
+    }
     final rowsPerPage = template.rowsPerPage <= 0 ? 26 : template.rowsPerPage;
     final pages = <List<ReportTemplateRow>>[];
     for (var i = 0; i < rows.length; i += rowsPerPage) {
@@ -244,6 +381,11 @@ class ReportPdfApplicationService {
             remarks: '',
             ifrApproaches: 0,
             landingsTotal: 0,
+            takeoffsTotal: 0,
+            takeoffsDay: 0,
+            takeoffsNight: 0,
+            landingsDay: 0,
+            landingsNight: 0,
             selMinutes: 0,
             melMinutes: 0,
             xcMinutes: 0,
@@ -258,7 +400,8 @@ class ReportPdfApplicationService {
             instructorMinutes: 0,
             totalMinutes: 0,
           ),
-        /// Public API documentation.
+
+          /// Public API documentation.
         );
       }
       final after = carry.addTotals(pageTotals);
@@ -304,8 +447,251 @@ class ReportPdfApplicationService {
     return document.save();
   }
 
+  pw.Widget _buildCoverPage({
+    required ReportPdfCoverPageConfig coverPage,
+    required Map<String, String> coverValues,
+  }) {
+    final children = <pw.Widget>[];
+    final title = coverPage.title.trim();
+    if (title.isNotEmpty) {
+      children
+        ..add(
+          pw.Text(
+            title,
+            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+          ),
+        )
+        ..add(pw.SizedBox(height: 14));
+    }
+
+    for (final block in coverPage.blocks) {
+      switch (block.type) {
+        case ReportPdfCoverBlockType.kvGrid:
+          children.add(
+            _buildCoverKvGrid(
+              block: block,
+              coverValues: coverValues,
+            ),
+          );
+        case ReportPdfCoverBlockType.multiline:
+          children.add(
+            _buildCoverMultiline(
+              block: block,
+              coverValues: coverValues,
+            ),
+          );
+      }
+      children.add(pw.SizedBox(height: 10));
+    }
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: children,
+    );
+  }
+
+  pw.Widget _buildCoverKvGrid({
+    required ReportPdfCoverBlockConfig block,
+    required Map<String, String> coverValues,
+  }) {
+    final children = <pw.Widget>[];
+    final title = block.title.trim();
+    if (title.isNotEmpty) {
+      children
+        ..add(
+          pw.Text(
+            title,
+            style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+          ),
+        )
+        ..add(pw.SizedBox(height: 6));
+    }
+    final absoluteItems = block.items
+        .where((item) => item.hasAbsolutePosition)
+        .toList(growable: false);
+    final relativeItems = block.items
+        .where((item) => !item.hasAbsolutePosition)
+        .toList(growable: false);
+
+    if (relativeItems.isNotEmpty) {
+      final columns = block.columns < 1 ? 1 : block.columns;
+      children.add(
+        pw.LayoutBuilder(
+          builder: (context, constraints) {
+            final maxWidth = constraints?.maxWidth;
+            final width = (maxWidth == null || maxWidth.isInfinite)
+                ? 500.0
+                : maxWidth;
+            final itemWidth = (width - (columns - 1) * 10) / columns;
+            final labelWidth = _estimateCoverLabelWidth(
+              items: block.items,
+              maxWidth: itemWidth,
+            );
+            return pw.Wrap(
+              spacing: 10,
+              runSpacing: 6,
+              children: relativeItems
+                  .map(
+                    (item) => pw.SizedBox(
+                      width: itemWidth,
+                      child: _buildCoverKeyValueLine(
+                        item: item,
+                        coverValues: coverValues,
+                        labelWidth: labelWidth,
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+            );
+          },
+        ),
+      );
+    }
+
+    if (absoluteItems.isNotEmpty) {
+      if (relativeItems.isNotEmpty) {
+        children.add(pw.SizedBox(height: 8));
+      }
+      children.add(
+        pw.LayoutBuilder(
+          builder: (context, constraints) {
+            final maxWidth = constraints?.maxWidth;
+            final width = (maxWidth == null || maxWidth.isInfinite)
+                ? 500.0
+                : maxWidth;
+            var maxBottom = 0.0;
+            for (final item in absoluteItems) {
+              final itemTop = item.y ?? 0;
+              final itemHeight = item.height ?? 24;
+              final bottom = itemTop + itemHeight;
+              if (bottom > maxBottom) {
+                maxBottom = bottom;
+              }
+            }
+            final stackHeight = maxBottom + 2;
+            final labelWidth = _estimateCoverLabelWidth(
+              items: block.items,
+              maxWidth: width,
+            );
+            final widgets = absoluteItems
+                .map((item) {
+                  final x = item.x ?? 0;
+                  final y = item.y ?? 0;
+                  final itemWidth = item.width ?? (width - x).clamp(40, width);
+                  final itemHeight = item.height ?? 24;
+                  return pw.Positioned(
+                    left: x,
+                    top: y,
+                    child: pw.SizedBox(
+                      width: itemWidth,
+                      height: itemHeight,
+                      child: _buildCoverKeyValueLine(
+                        item: item,
+                        coverValues: coverValues,
+                        labelWidth: labelWidth,
+                      ),
+                    ),
+                  );
+                })
+                .toList(growable: false);
+            return pw.SizedBox(
+              width: width,
+              height: stackHeight,
+              child: pw.Stack(children: widgets),
+            );
+          },
+        ),
+      );
+    }
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+
+  pw.Widget _buildCoverKeyValueLine({
+    required ReportPdfCoverItemConfig item,
+    required Map<String, String> coverValues,
+    required double labelWidth,
+  }) {
+    final value = coverValues[item.valueKey] ?? '';
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(
+          width: labelWidth,
+          child: pw.Text(
+            '${item.label}:',
+            style: const pw.TextStyle(fontSize: 10),
+          ),
+        ),
+        pw.SizedBox(width: 4),
+        pw.Expanded(
+          child: pw.Text(
+            value,
+            style: const pw.TextStyle(fontSize: 10),
+          ),
+        ),
+      ],
+    );
+  }
+
+  double _estimateCoverLabelWidth({
+    required List<ReportPdfCoverItemConfig> items,
+    required double maxWidth,
+  }) {
+    var maxChars = 0;
+    for (final item in items) {
+      if (item.label.length > maxChars) {
+        maxChars = item.label.length;
+      }
+    }
+    final estimated = maxChars * 5.2 + 10;
+    final upperBound = maxWidth * 0.42;
+    return estimated.clamp(60, upperBound);
+  }
+
+  pw.Widget _buildCoverMultiline({
+    required ReportPdfCoverBlockConfig block,
+    required Map<String, String> coverValues,
+  }) {
+    final children = <pw.Widget>[];
+    final title = block.title.trim();
+    if (title.isNotEmpty) {
+      children
+        ..add(
+          pw.Text(
+            title,
+            style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+          ),
+        )
+        ..add(pw.SizedBox(height: 6));
+    }
+    final value = (block.valueKey == null || block.valueKey!.isEmpty)
+        ? ''
+        : (coverValues[block.valueKey!] ?? '');
+    children.add(
+      pw.Container(
+        width: double.infinity,
+        constraints: const pw.BoxConstraints(minHeight: 70),
+        padding: const pw.EdgeInsets.all(8),
+        decoration: pw.BoxDecoration(border: pw.Border.all()),
+        child: pw.Text(value, style: const pw.TextStyle(fontSize: 10)),
+      ),
+    );
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+
   /// Public API documentation.
-  List<ReportTemplateRow> buildRows(List<LogbookEntry> entries) {
+  List<ReportTemplateRow> buildRows(
+    List<LogbookEntry> entries, {
+    Map<int, ReportEntryCrewNames> flightCrewById = const {},
+    Map<int, ReportEntryCrewNames> simulatorCrewById = const {},
+  }) {
     final sortedEntries = [...entries]
       ..sort(
         (a, b) => a.timeLine.eventDateTime.compareTo(b.timeLine.eventDateTime),
@@ -316,12 +702,24 @@ class ReportPdfApplicationService {
           final sim = entry.simulatorTraining;
           final pos = entry.positioning;
           final type = entry.aircraftType;
+          final crew = switch (entry.type) {
+            LogbookEventType.flight =>
+              flight == null
+                  ? const ReportEntryCrewNames()
+                  : (flightCrewById[flight.id] ?? const ReportEntryCrewNames()),
+            LogbookEventType.simulatorTraining =>
+              sim == null
+                  ? const ReportEntryCrewNames()
+                  : (simulatorCrewById[sim.id] ?? const ReportEntryCrewNames()),
+            _ => const ReportEntryCrewNames(),
+          };
 
           final totalMinutes =
               flight?.timeBlockMinutes ??
               pos?.timeTotalMinutes ??
               sim?.timeTotal ??
               0;
+
           /// Public API documentation.
           final nightMinutes = flight?.timeNightMinutes ?? 0;
           final dayMinutes = math.max(0, totalMinutes - nightMinutes);
@@ -329,6 +727,36 @@ class ReportPdfApplicationService {
           final isMultiEngine = (type?.engineCount ?? 0) > 1;
           final selMinutes = (!isSeaplane && !isMultiEngine) ? totalMinutes : 0;
           final melMinutes = (!isSeaplane && isMultiEngine) ? totalMinutes : 0;
+
+          final takeoffDay = flight?.takeOffsDays ?? 0;
+          final takeoffNight = flight?.takeOffsNight ?? 0;
+          final landingDay = flight?.landingsDay ?? 0;
+          final landingNight = flight?.landingsNight ?? 0;
+          final takeoffsTotal = takeoffDay + takeoffNight;
+          final landingsTotal = landingDay + landingNight;
+          final blockMinutes = flight?.timeBlockMinutes ?? 0;
+          final singlePilotSelMinutes =
+              type != null &&
+                  type.engineCount == 1 &&
+                  !type.multiPilot &&
+                  type.category.name == 'landplane'
+              ? blockMinutes
+              : 0;
+          final singlePilotMelMinutes =
+              type != null &&
+                  type.engineCount > 1 &&
+                  !type.multiPilot &&
+                  type.category.name == 'landplane'
+              ? blockMinutes
+              : 0;
+          final complexMinutes = (type?.complex ?? false) ? blockMinutes : 0;
+          final efisMinutes = (type?.efis ?? false) ? blockMinutes : 0;
+          final highPerformanceMinutes = (type?.highPerformance ?? false)
+              ? blockMinutes
+              : 0;
+          final multiPilotMinutes = (type?.multiPilot ?? false)
+              ? blockMinutes
+              : 0;
 
           return ReportTemplateRow(
             date: DateFormat(
@@ -346,8 +774,12 @@ class ReportPdfApplicationService {
                 '',
             remarks: (flight?.remarks ?? sim?.remarks ?? '').trim(),
             ifrApproaches: flight?.ifrApproaches ?? 0,
-            landingsTotal:
-                (flight?.landingsDay ?? 0) + (flight?.landingsNight ?? 0),
+            landingsTotal: landingsTotal,
+            takeoffsTotal: takeoffsTotal,
+            takeoffsDay: takeoffDay,
+            takeoffsNight: takeoffNight,
+            landingsDay: landingDay,
+            landingsNight: landingNight,
             selMinutes: selMinutes,
             melMinutes: melMinutes,
             xcMinutes: flight?.timeCrossCountryMinutes ?? 0,
@@ -364,9 +796,133 @@ class ReportPdfApplicationService {
             sicMinutes: flight?.timeSICMinutes ?? 0,
             instructorMinutes: flight?.timeInstructorMinutes ?? 0,
             totalMinutes: totalMinutes,
+            extra: _buildExtraRowValues(
+              entry: entry,
+              crew: crew,
+              takeoffDay: takeoffDay,
+              takeoffNight: takeoffNight,
+              takeoffsTotal: takeoffsTotal,
+              landingDay: landingDay,
+              landingNight: landingNight,
+              landingsTotal: landingsTotal,
+              singlePilotSelMinutes: singlePilotSelMinutes,
+              singlePilotMelMinutes: singlePilotMelMinutes,
+              multiPilotMinutes: multiPilotMinutes,
+              complexMinutes: complexMinutes,
+              efisMinutes: efisMinutes,
+              highPerformanceMinutes: highPerformanceMinutes,
+            ),
           );
         })
         .toList(growable: false);
+  }
+
+  Map<String, String> _buildExtraRowValues({
+    required LogbookEntry entry,
+    required ReportEntryCrewNames crew,
+    required int takeoffDay,
+    required int takeoffNight,
+    required int takeoffsTotal,
+    required int landingDay,
+    required int landingNight,
+    required int landingsTotal,
+    required int singlePilotSelMinutes,
+    required int singlePilotMelMinutes,
+    required int multiPilotMinutes,
+    required int complexMinutes,
+    required int efisMinutes,
+    required int highPerformanceMinutes,
+  }) {
+    final flight = entry.flight;
+    final sim = entry.simulatorTraining;
+    final type = entry.aircraftType;
+    final timeline = entry.timeLine.eventDateTime.toUtc();
+    final depTime = timeline;
+    final arrTime = flight?.arrivalDateTime?.toUtc();
+    final takeoffTime = flight?.takeOffDateTime?.toUtc();
+    final landingTime = flight?.landingDateTime?.toUtc();
+    final map = <String, String>{
+      'eventType': entry.type.name,
+      'departureTime': _formatHm(depTime),
+      'arrivalTime': _formatHm(arrTime),
+      'depTime': _formatHm(depTime),
+      'arrTime': _formatHm(arrTime),
+      'takeoffTime': _formatHm(takeoffTime),
+      'landingTime': _formatHm(landingTime),
+      'picCrewName': crew.pic,
+      'sicCrewName': crew.sic,
+      'pilotPicName': crew.pic,
+      'pilotSicName': crew.sic,
+      'takeoffDay': _emptyIfZeroInt(takeoffDay),
+      'takeoffNight': _emptyIfZeroInt(takeoffNight),
+      'takeoffs': _emptyIfZeroInt(takeoffsTotal),
+      'landingDay': _emptyIfZeroInt(landingDay),
+      'landingNight': _emptyIfZeroInt(landingNight),
+      'landings': _emptyIfZeroInt(landingsTotal),
+      'singlePilotSel': _emptyIfZeroTime(singlePilotSelMinutes),
+      'singlePilotMel': _emptyIfZeroTime(singlePilotMelMinutes),
+      'multiPilotTime': _emptyIfZeroTime(multiPilotMinutes),
+      'complexTime': _emptyIfZeroTime(complexMinutes),
+      'efisTime': _emptyIfZeroTime(efisMinutes),
+      'highPerformanceTime': _emptyIfZeroTime(highPerformanceMinutes),
+      'picPlusPicus': _emptyIfZeroTime(
+        (flight?.timePICMinutes ?? 0) + (flight?.timePICUSMinutes ?? 0),
+      ),
+      'picWithoutPicus': _emptyIfZeroTime(flight?.timePICMinutes ?? 0),
+      'picus': _emptyIfZeroTime(flight?.timePICUSMinutes ?? 0),
+      'isMultiPilot': (type?.multiPilot ?? false).toString(),
+      'isComplex': (type?.complex ?? false).toString(),
+      'isEfis': (type?.efis ?? false).toString(),
+      'isHighPerformance': (type?.highPerformance ?? false).toString(),
+      'engineCount': (type?.engineCount ?? 0).toString(),
+      'aircraftCategory': type?.category.name ?? '',
+      'aircraftEngineType': type?.engineType.name ?? '',
+      'flightId': (flight?.id ?? '').toString(),
+      'simulatorId': (sim?.id ?? '').toString(),
+      'flight.timePICMinutes': (flight?.timePICMinutes ?? 0).toString(),
+      'flight.timePICUSMinutes': (flight?.timePICUSMinutes ?? 0).toString(),
+      'flight.timeSICMinutes': (flight?.timeSICMinutes ?? 0).toString(),
+      'flight.timeDualMinutes': (flight?.timeDualMinutes ?? 0).toString(),
+      'flight.timeInstructorMinutes': (flight?.timeInstructorMinutes ?? 0)
+          .toString(),
+      'flight.timeIFRMinutes': (flight?.timeIFRMinutes ?? 0).toString(),
+      'flight.timeInstrumentMinutes': (flight?.timeInstrumentMinutes ?? 0)
+          .toString(),
+      'flight.timeSimulatedInstrumentMinutes':
+          (flight?.timeSimulatedInstrumentMinutes ?? 0).toString(),
+      'flight.timeNightMinutes': (flight?.timeNightMinutes ?? 0).toString(),
+      'flight.timeCrossCountryMinutes': (flight?.timeCrossCountryMinutes ?? 0)
+          .toString(),
+      'flight.timeCustom1Minutes': (flight?.timeCustom1Minutes ?? 0).toString(),
+      'flight.timeCustom2Minutes': (flight?.timeCustom2Minutes ?? 0).toString(),
+      'flight.timeCustom3Minutes': (flight?.timeCustom3Minutes ?? 0).toString(),
+      'flight.timeCustom4Minutes': (flight?.timeCustom4Minutes ?? 0).toString(),
+      'flight.timeFlightMinutes': (flight?.timeFlightMinutes ?? 0).toString(),
+      'flight.timeBlockMinutes': (flight?.timeBlockMinutes ?? 0).toString(),
+      'flight.timeTotalBlockMinutes': (flight?.timeTotalBlockMinutes ?? 0)
+          .toString(),
+      'flight.distanceNM': (flight?.distanceNM ?? 0).toString(),
+      'flight.ifrApproaches': (flight?.ifrApproaches ?? 0).toString(),
+      'flight.takeOffsDays': (flight?.takeOffsDays ?? 0).toString(),
+      'flight.takeOffsNight': (flight?.takeOffsNight ?? 0).toString(),
+      'flight.landingsDay': (flight?.landingsDay ?? 0).toString(),
+      'flight.landingsNight': (flight?.landingsNight ?? 0).toString(),
+      'flight.pilotFunction': flight?.pilotFunction ?? '',
+      'flight.approachType': flight?.approachType ?? '',
+      'flight.remarks': flight?.remarks ?? '',
+      'flight.notes': flight?.notes ?? '',
+      'flight.isLocked': (flight?.isLocked ?? false).toString(),
+      'simulator.timeTotal': (sim?.timeTotal ?? 0).toString(),
+      'simulator.remarks': sim?.remarks ?? '',
+      'simulator.notes': sim?.notes ?? '',
+      'simulator.isLocked': (sim?.isLocked ?? false).toString(),
+    };
+    return map;
+  }
+
+  String _formatHm(DateTime? value) {
+    if (value == null) return '';
+    return DateFormat('HH:mm').format(value.toUtc());
   }
 
   /// Public API documentation.
@@ -388,6 +944,11 @@ class ReportPdfApplicationService {
       'remarks': row.remarks,
       'ifrApproaches': _emptyIfZeroInt(row.ifrApproaches),
       'landingsTotal': _emptyIfZeroInt(row.landingsTotal),
+      'takeoffs': _emptyIfZeroInt(row.takeoffsTotal),
+      'takeoffDay': _emptyIfZeroInt(row.takeoffsDay),
+      'takeoffNight': _emptyIfZeroInt(row.takeoffsNight),
+      'landingDay': _emptyIfZeroInt(row.landingsDay),
+      'landingNight': _emptyIfZeroInt(row.landingsNight),
       'sel': _emptyIfZeroTime(row.selMinutes),
       'mel': _emptyIfZeroTime(row.melMinutes),
       'xc': _emptyIfZeroTime(row.xcMinutes),
@@ -401,6 +962,7 @@ class ReportPdfApplicationService {
       'sic': _emptyIfZeroTime(row.sicMinutes),
       'instructor': _emptyIfZeroTime(row.instructorMinutes),
       'total': _emptyIfZeroTime(row.totalMinutes),
+      ...row.extra,
     };
   }
 
@@ -408,6 +970,11 @@ class ReportPdfApplicationService {
     return {
       'ifrApproaches': _emptyIfZeroInt(totals.ifrApproaches),
       'landings': _emptyIfZeroInt(totals.landingsTotal),
+      'takeoffs': _emptyIfZeroInt(totals.takeoffsTotal),
+      'landingDay': _emptyIfZeroInt(totals.landingsDay),
+      'landingNight': _emptyIfZeroInt(totals.landingsNight),
+      'takeoffDay': _emptyIfZeroInt(totals.takeoffsDay),
+      'takeoffNight': _emptyIfZeroInt(totals.takeoffsNight),
       'sel': _emptyIfZeroTime(totals.selMinutes),
       'mel': _emptyIfZeroTime(totals.melMinutes),
       'xc': _emptyIfZeroTime(totals.xcMinutes),
@@ -418,6 +985,7 @@ class ReportPdfApplicationService {
       'fstd': _emptyIfZeroTime(totals.fstdMinutes),
       'dual': _emptyIfZeroTime(totals.dualMinutes),
       'picPicus': _emptyIfZeroTime(totals.picPicusMinutes),
+      'picPlusPicus': _emptyIfZeroTime(totals.picPicusMinutes),
       'sic': _emptyIfZeroTime(totals.sicMinutes),
       'instructor': _emptyIfZeroTime(totals.instructorMinutes),
       'total': _emptyIfZeroTime(totals.totalMinutes),
@@ -442,77 +1010,437 @@ class ReportPdfApplicationService {
     required Map<String, String> totalsBefore,
     required Map<String, String> totalsAfter,
   }) {
+    final layout = _buildTableLayout(
+      table: table,
+      template: template,
+      pageRows: pageRows,
+      pageTotals: pageTotals,
+      totalsBefore: totalsBefore,
+      totalsAfter: totalsAfter,
+    );
+    return pw.LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints?.maxWidth;
+        final baseWidth = (maxWidth == null || maxWidth.isInfinite)
+            ? 500.0
+            : maxWidth;
+        final totalWeight = layout.columnWeights.fold<double>(
+          0,
+          (sum, value) => sum + value,
+        );
+        final safeTotalWeight = totalWeight <= 0 ? 1.0 : totalWeight;
+        final columnWidths = layout.columnWeights
+            .map((weight) => baseWidth * (weight / safeTotalWeight))
+            .toList(growable: false);
+        final columnOffsets = <double>[];
+        var x = 0.0;
+        for (final width in columnWidths) {
+          columnOffsets.add(x);
+          x += width;
+        }
+
+        final children = <pw.Widget>[];
+        for (final cell in layout.cells) {
+          final left = columnOffsets[cell.startCol];
+          final width = _columnSpanWidth(
+            widths: columnWidths,
+            start: cell.startCol,
+            span: cell.colSpan,
+          );
+          final top = _rowOffset(
+            rowHeights: layout.rowHeights,
+            start: 0,
+            span: cell.startRow,
+          );
+          final height = _rowOffset(
+            rowHeights: layout.rowHeights,
+            start: cell.startRow,
+            span: cell.rowSpan,
+          );
+          children.add(
+            pw.Positioned(
+              left: left,
+              top: top,
+              child: pw.SizedBox(
+                width: width,
+                height: height,
+                child: pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 2,
+                    vertical: 1,
+                  ),
+                  alignment: _alignmentFor(
+                    horizontal: cell.alignment,
+                    vertical: cell.verticalAlignment,
+                  ),
+                  decoration: const pw.BoxDecoration(
+                    border: pw.Border(
+                      left: pw.BorderSide(),
+                      right: pw.BorderSide(),
+                      top: pw.BorderSide(),
+                      bottom: pw.BorderSide(),
+                    ),
+                  ),
+                  child: pw.Text(cell.text, style: cell.style),
+                ),
+              ),
+            ),
+          );
+        }
+
+        return pw.Container(
+          height: _rowOffset(
+            rowHeights: layout.rowHeights,
+            start: 0,
+            span: layout.rowHeights.length,
+          ),
+          child: pw.Stack(children: children),
+        );
+      },
+    );
+  }
+
+  _BuiltTableLayout _buildTableLayout({
+    required ReportPdfTableConfig table,
+    required ReportPdfTemplate template,
+    required List<ReportTemplateRow> pageRows,
+    required Map<String, String> pageTotals,
+    required Map<String, String> totalsBefore,
+    required Map<String, String> totalsAfter,
+  }) {
+    final cells = <_PlacedPdfCell>[];
+    final columnCount = table.columns.length;
+    final carry = List<int>.filled(columnCount, 0);
+    final rowHeights = <double>[];
+    var rowIndex = 0;
+
+    final headerRows = table.header.isEmpty
+        ? [
+            ReportPdfHeaderRowConfig(
+              cells: table.columns
+                  .map(
+                    (column) => ReportPdfCellConfig(
+                      text: column.header ?? column.key,
+                      textStyle: const ReportPdfCellTextStyle(
+                        bold: true,
+                        fontSize: 6.2,
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ]
+        : table.header;
+
+    for (final header in headerRows) {
+      rowIndex = _placeSpanRow(
+        rowIndex: rowIndex,
+        rowCells: header.cells,
+        columns: table.columns,
+        carry: carry,
+        sourceMap: const {},
+        out: cells,
+        outRowHeights: rowHeights,
+        rowHeight: _normalizeRowHeight(
+          rowHeight: header.rowHeight,
+          fallback: template.rowHeight,
+        ),
+      );
+    }
+
+    for (final row in pageRows) {
+      final rowMap = _rowToMap(row);
+      final rowCells = table.columns
+          .map(
+            (column) => ReportPdfCellConfig(
+              text: (rowMap[column.key] ?? '').toString(),
+              alignment: column.alignment,
+              verticalAlignment: column.verticalAlignment,
+              textStyle: column.textStyle,
+            ),
+          )
+          .toList(growable: false);
+      rowIndex = _placeSpanRow(
+        rowIndex: rowIndex,
+        rowCells: rowCells,
+        columns: table.columns,
+        carry: carry,
+        sourceMap: const {},
+        out: cells,
+        outRowHeights: rowHeights,
+        rowHeight: template.rowHeight,
+      );
+    }
+
     final columnIndexByKey = <String, int>{};
     for (var i = 0; i < table.columns.length; i++) {
       columnIndexByKey[table.columns[i].key] = i;
     }
-
-    final headers = table.columns
-        .map((column) => column.header)
-        .toList(growable: false);
-    final data = <List<String>>[
-      ...pageRows.map(
-        (row) {
-          final rowMap = _rowToMap(row);
-          return table.columns
-              .map((column) => (rowMap[column.key] ?? '').toString())
-              .toList(growable: false);
-        },
-      ),
-    ];
+    final footerTokenMap = _buildFooterTokenMap(
+      template: template,
+      pageTotals: pageTotals,
+      totalsBefore: totalsBefore,
+      totalsAfter: totalsAfter,
+    );
+    for (final footer in table.footer) {
+      rowIndex = _placeSpanRow(
+        rowIndex: rowIndex,
+        rowCells: footer.cells,
+        columns: table.columns,
+        carry: carry,
+        sourceMap: footerTokenMap,
+        out: cells,
+        outRowHeights: rowHeights,
+        rowHeight: _normalizeRowHeight(
+          rowHeight: footer.rowHeight,
+          fallback: template.rowHeight,
+        ),
+      );
+    }
 
     for (final footerRow in table.footerRows) {
-      final row = List<String>.filled(table.columns.length, '');
-      final label =
-          footerRow.literalLabel ??
-          (footerRow.labelToken == null
-              ? ''
-              : template.labels.resolveToken(footerRow.labelToken!));
-      if (label.isNotEmpty && row.isNotEmpty) {
-        row[0] = label;
-      }
       final sourceMap = switch (footerRow.source) {
         ReportPdfSummarySource.pageTotals => pageTotals,
         ReportPdfSummarySource.totalsBefore => totalsBefore,
         ReportPdfSummarySource.totalsAfter => totalsAfter,
       };
+      if (footerRow.cells.isNotEmpty) {
+        rowIndex = _placeSpanRow(
+          rowIndex: rowIndex,
+          rowCells: footerRow.cells,
+          columns: table.columns,
+          carry: carry,
+          sourceMap: sourceMap,
+          out: cells,
+          outRowHeights: rowHeights,
+          rowHeight: _normalizeRowHeight(
+            rowHeight: footerRow.rowHeight,
+            fallback: template.rowHeight,
+          ),
+        );
+        continue;
+      }
+
+      final rowCells = List<ReportPdfCellConfig>.generate(
+        table.columns.length,
+        (index) => ReportPdfCellConfig(
+          text: '',
+          alignment: table.columns[index].alignment,
+          verticalAlignment: table.columns[index].verticalAlignment,
+          textStyle: table.columns[index].textStyle,
+        ),
+      );
+      final label =
+          footerRow.literalLabel ??
+          (footerRow.labelToken == null
+              ? ''
+              : template.labels.resolveToken(footerRow.labelToken!));
+      if (label.isNotEmpty && rowCells.isNotEmpty) {
+        rowCells[0] = ReportPdfCellConfig(
+          text: label,
+          alignment: ReportPdfColumnAlignment.left,
+          verticalAlignment: ReportPdfVerticalAlignment.middle,
+          textStyle: const ReportPdfCellTextStyle(bold: true, fontSize: 6.2),
+        );
+      }
       for (final entry in footerRow.values.entries) {
         final columnIndex = columnIndexByKey[entry.key];
         if (columnIndex == null) continue;
-        row[columnIndex] = sourceMap[entry.value] ?? '';
+        rowCells[columnIndex] = ReportPdfCellConfig(
+          text: sourceMap[entry.value] ?? '',
+          alignment: table.columns[columnIndex].alignment,
+          verticalAlignment: table.columns[columnIndex].verticalAlignment,
+          textStyle: const ReportPdfCellTextStyle(bold: true, fontSize: 6.2),
+        );
       }
-      data.add(row);
-    }
-
-    final columnWidths = <int, pw.TableColumnWidth>{};
-    final cellAlignments = <int, pw.Alignment>{};
-    for (var index = 0; index < table.columns.length; index++) {
-      final column = table.columns[index];
-      columnWidths[index] = pw.FlexColumnWidth(
-        column.width <= 0 ? 1 : column.width,
+      rowIndex = _placeSpanRow(
+        rowIndex: rowIndex,
+        rowCells: rowCells,
+        columns: table.columns,
+        carry: carry,
+        sourceMap: sourceMap,
+        out: cells,
+        outRowHeights: rowHeights,
+        rowHeight: _normalizeRowHeight(
+          rowHeight: footerRow.rowHeight,
+          fallback: template.rowHeight,
+        ),
       );
-      cellAlignments[index] = _alignmentFor(column.alignment);
     }
 
-    return pw.TableHelper.fromTextArray(
-      headers: headers,
-      data: data,
-      columnWidths: columnWidths,
-      cellAlignments: cellAlignments,
-      headerStyle: pw.TextStyle(fontSize: 6.2, fontWeight: pw.FontWeight.bold),
-      cellStyle: const pw.TextStyle(fontSize: 6.2),
+    return _BuiltTableLayout(
+      cells: cells,
+      rowHeights: rowHeights,
+      columnWeights: table.columns
+          .map((column) => column.width <= 0 ? 1.0 : column.width)
+          .toList(growable: false),
     );
   }
 
-  pw.Alignment _alignmentFor(ReportPdfColumnAlignment alignment) {
-    switch (alignment) {
-      case ReportPdfColumnAlignment.left:
-        return pw.Alignment.centerLeft;
-      case ReportPdfColumnAlignment.right:
-        return pw.Alignment.centerRight;
-      case ReportPdfColumnAlignment.center:
-        return pw.Alignment.center;
+  Map<String, String> _buildFooterTokenMap({
+    required ReportPdfTemplate template,
+    required Map<String, String> pageTotals,
+    required Map<String, String> totalsBefore,
+    required Map<String, String> totalsAfter,
+  }) {
+    final map = <String, String>{
+      'pageTotalLabel': template.labels.pageTotal,
+      'amountForwardLabel': template.labels.amountForward,
+      'totalToDateLabel': template.labels.totalToDate,
+    };
+    for (final entry in pageTotals.entries) {
+      map['${entry.key}PageTotal'] = entry.value;
     }
+    for (final entry in totalsBefore.entries) {
+      map['${entry.key}PreviousTotal'] = entry.value;
+    }
+    for (final entry in totalsAfter.entries) {
+      map['${entry.key}NewTotal'] = entry.value;
+      map['${entry.key}TotalToDate'] = entry.value;
+    }
+    return map;
+  }
+
+  int _placeSpanRow({
+    required int rowIndex,
+    required List<ReportPdfCellConfig> rowCells,
+    required List<ReportPdfColumnConfig> columns,
+    required List<int> carry,
+    required Map<String, String> sourceMap,
+    required List<_PlacedPdfCell> out,
+    required List<double> outRowHeights,
+    required double rowHeight,
+  }) {
+    final totalColumns = columns.length;
+    var cursor = 0;
+    for (final cell in rowCells) {
+      while (cursor < totalColumns && carry[cursor] > 0) {
+        cursor++;
+      }
+      if (cursor >= totalColumns) break;
+
+      final maxSpan = _contiguousFreeColumns(carry, cursor);
+      if (maxSpan <= 0) break;
+      final hspan = math.min(math.max(1, cell.hspan), maxSpan);
+      final vspan = math.max(1, cell.vspan);
+      final text = cell.valueToken == null
+          ? (cell.text ?? '')
+          : (sourceMap[cell.valueToken!] ?? '');
+      final alignment = cell.alignment ?? columns[cursor].alignment;
+      final verticalAlignment =
+          cell.verticalAlignment ?? columns[cursor].verticalAlignment;
+      out.add(
+        _PlacedPdfCell(
+          startRow: rowIndex,
+          startCol: cursor,
+          rowSpan: vspan,
+          colSpan: hspan,
+          text: text,
+          alignment: alignment,
+          verticalAlignment: verticalAlignment,
+          style: _textStyleFrom(cell.textStyle, fallbackSize: 6.2),
+        ),
+      );
+      for (var index = cursor; index < cursor + hspan; index++) {
+        carry[index] = math.max(carry[index], vspan);
+      }
+      cursor += hspan;
+    }
+
+    for (var index = 0; index < totalColumns; index++) {
+      if (carry[index] > 0) {
+        carry[index]--;
+      }
+    }
+    outRowHeights.add(rowHeight);
+    return rowIndex + 1;
+  }
+
+  int _contiguousFreeColumns(List<int> carry, int start) {
+    var count = 0;
+    for (var index = start; index < carry.length; index++) {
+      if (carry[index] > 0) {
+        break;
+      }
+      count++;
+    }
+    return count;
+  }
+
+  double _columnSpanWidth({
+    required List<double> widths,
+    required int start,
+    required int span,
+  }) {
+    var sum = 0.0;
+    final end = math.min(widths.length, start + span);
+    for (var index = start; index < end; index++) {
+      sum += widths[index];
+    }
+    return sum;
+  }
+
+  double _normalizeRowHeight({
+    required double? rowHeight,
+    required double fallback,
+  }) {
+    final value = rowHeight ?? fallback;
+    if (value <= 0) {
+      return fallback > 0 ? fallback : 11;
+    }
+    return value;
+  }
+
+  double _rowOffset({
+    required List<double> rowHeights,
+    required int start,
+    required int span,
+  }) {
+    var sum = 0.0;
+    final safeStart = math.max(0, start);
+    final end = math.min(rowHeights.length, safeStart + math.max(0, span));
+    for (var index = safeStart; index < end; index++) {
+      sum += rowHeights[index];
+    }
+    return sum;
+  }
+
+  pw.TextStyle _textStyleFrom(
+    ReportPdfCellTextStyle style, {
+    required double fallbackSize,
+  }) {
+    return pw.TextStyle(
+      fontSize: style.fontSize ?? fallbackSize,
+      fontWeight: style.bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+      fontStyle: style.italic ? pw.FontStyle.italic : pw.FontStyle.normal,
+      color: _parsePdfColor(style.colorHex),
+    );
+  }
+
+  PdfColor? _parsePdfColor(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    try {
+      return PdfColor.fromHex(raw.trim());
+    } on Object {
+      return null;
+    }
+  }
+
+  pw.Alignment _alignmentFor({
+    required ReportPdfColumnAlignment horizontal,
+    required ReportPdfVerticalAlignment vertical,
+  }) {
+    final x = switch (horizontal) {
+      ReportPdfColumnAlignment.left => -1.0,
+      ReportPdfColumnAlignment.center => 0.0,
+      ReportPdfColumnAlignment.right => 1.0,
+    };
+    final y = switch (vertical) {
+      ReportPdfVerticalAlignment.top => 1.0,
+      ReportPdfVerticalAlignment.middle => 0.0,
+      ReportPdfVerticalAlignment.bottom => -1.0,
+    };
+    return pw.Alignment(x, y);
   }
 
   PdfPageFormat _resolvePageFormat(
@@ -534,4 +1462,38 @@ class ReportPdfApplicationService {
         return PdfPageFormat.a5;
     }
   }
+}
+
+class _BuiltTableLayout {
+  const _BuiltTableLayout({
+    required this.cells,
+    required this.rowHeights,
+    required this.columnWeights,
+  });
+
+  final List<_PlacedPdfCell> cells;
+  final List<double> rowHeights;
+  final List<double> columnWeights;
+}
+
+class _PlacedPdfCell {
+  const _PlacedPdfCell({
+    required this.startRow,
+    required this.startCol,
+    required this.rowSpan,
+    required this.colSpan,
+    required this.text,
+    required this.alignment,
+    required this.verticalAlignment,
+    required this.style,
+  });
+
+  final int startRow;
+  final int startCol;
+  final int rowSpan;
+  final int colSpan;
+  final String text;
+  final ReportPdfColumnAlignment alignment;
+  final ReportPdfVerticalAlignment verticalAlignment;
+  final pw.TextStyle style;
 }

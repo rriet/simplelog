@@ -8,6 +8,7 @@ class SquareOutlineButton extends StatelessWidget {
     required this.onPressed,
     super.key,
     this.icon,
+    this.height = 40,
   });
 
   /// Button label.
@@ -18,6 +19,42 @@ class SquareOutlineButton extends StatelessWidget {
 
   /// Optional leading icon.
   final IconData? icon;
+  /// Explicit button height. Defaults to 40.
+  final double height;
+
+  /// Shared outlined style used by form buttons across the app.
+  static ButtonStyle outlinedStyle(ColorScheme colorScheme) {
+    return OutlinedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      minimumSize: const Size(0, 40),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+      side: BorderSide(color: colorScheme.outlineVariant),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    );
+  }
+
+  /// Shared filled style used by form buttons across the app.
+  static ButtonStyle filledStyle(ColorScheme colorScheme) {
+    return FilledButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      minimumSize: const Size(0, 40),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    );
+  }
+
+  /// Shared elevated style used by form buttons across the app.
+  static ButtonStyle elevatedStyle(ColorScheme colorScheme) {
+    return ElevatedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      minimumSize: const Size(0, 40),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,15 +73,11 @@ class SquareOutlineButton extends StatelessWidget {
           );
 
     return SizedBox(
-      height: 40,
+      height: height,
       child: OutlinedButton(
         onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          visualDensity: VisualDensity.compact,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          side: BorderSide(color: colorScheme.outlineVariant),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        style: outlinedStyle(colorScheme).copyWith(
+          minimumSize: WidgetStatePropertyAll<Size>(Size(0, height)),
         ),
         child: child,
       ),

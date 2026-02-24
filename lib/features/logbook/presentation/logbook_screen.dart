@@ -1192,15 +1192,21 @@ class _GlobalFilterBar extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final showTypeChips = constraints.maxWidth >= 1020;
+        const dateFieldWidth = 128.0;
         return Material(
           color: colorScheme.surfaceContainerHighest,
           child: Padding(
-            padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+            padding: const EdgeInsets.only(
+              left: 8,
+              top: 4,
+              right: 8,
+              bottom: 8,
+            ),
             child: showTypeChips
                 ? Row(
                     children: [
                       SizedBox(
-                        width: 150,
+                        width: dateFieldWidth,
                         child: DateSelectorInputField(
                           label: 'From',
                           valueText: fromDateLabel,
@@ -1209,7 +1215,7 @@ class _GlobalFilterBar extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       SizedBox(
-                        width: 150,
+                        width: dateFieldWidth,
                         child: DateSelectorInputField(
                           label: 'To',
                           valueText: toDateLabel,
@@ -1262,6 +1268,7 @@ class _GlobalFilterBar extends StatelessWidget {
                       SquareOutlineButton(
                         onPressed: onMoreFilters,
                         icon: Icons.filter_list,
+                        height: 34,
                         label: filtersCount > 0
                             ? '${l10n.reportsTabFilters} ($filtersCount)'
                             : l10n.reportsTabFilters,
@@ -1273,7 +1280,7 @@ class _GlobalFilterBar extends StatelessWidget {
                     child: Row(
                       children: [
                         SizedBox(
-                          width: 150,
+                          width: dateFieldWidth,
                           child: DateSelectorInputField(
                             label: 'From',
                             valueText: fromDateLabel,
@@ -1282,7 +1289,7 @@ class _GlobalFilterBar extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         SizedBox(
-                          width: 150,
+                          width: dateFieldWidth,
                           child: DateSelectorInputField(
                             label: 'To',
                             valueText: toDateLabel,
@@ -1293,6 +1300,7 @@ class _GlobalFilterBar extends StatelessWidget {
                         SquareOutlineButton(
                           onPressed: onMoreFilters,
                           icon: Icons.filter_list,
+                          height: 34,
                           label: filtersCount > 0
                               ? '${l10n.reportsTabFilters} ($filtersCount)'
                               : l10n.reportsTabFilters,

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:drift/drift.dart' as d;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -13,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/maps/map_tile_caching.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
+import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
 import 'package:simplelog/data/models/report_pdf_models.dart';
@@ -32,6 +34,7 @@ import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_fi
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/time_input_field.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
+import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Public API documentation.
@@ -122,9 +125,20 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   bool _analysisLoading = false;
   int _analysisBuildToken = 0;
   List<_AnalysisGroup> _analysisGroups = const [];
+  String _analysisBaseBucketsKey = '';
+  String _analysisPreviousBucketsKey = '';
+  Map<String, _AnalysisGroupAccumulator> _analysisBaseBuckets = const {};
+  Map<String, _AnalysisGroupAccumulator> _analysisPreviousBuckets = const {};
   ProviderSubscription<String?>? _selectedTemplateSubscription;
   final _fromTimeController = TextEditingController();
   final _toTimeController = TextEditingController();
+  final _pilotNameController = TextEditingController();
+  final _pilotLicenceController = TextEditingController();
+  final _pilotAddressController = TextEditingController();
+  final _pilotNameFocusNode = FocusNode();
+  final _pilotLicenceFocusNode = FocusNode();
+  final _pilotAddressFocusNode = FocusNode();
+  Timer? _pilotInfoSaveDebounce;
 
   ReportsData _data = const ReportsData(
     totals: ReportsTotals.zero(),
@@ -160,6 +174,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         setState(() => _selectedTemplate = template);
       },
     );
+    _syncPilotInfoControllers(ref.read(reportPilotInfoProvider), force: true);
     _tabController = TabController(length: 3, vsync: this);
     unawaited(_loadTemplateOptions());
     if (_shouldPreloadOverview(widget.section)) {
@@ -255,13 +270,70 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     return widget.section == null && _tabController.index == 1;
   }
 
+  bool get _analysisSupportsPreviousExperience =>
+      _analysisGroupBy == _AnalysisGroupBy.type ||
+      _analysisGroupBy == _AnalysisGroupBy.family;
+
+  String _analysisBucketsKey() {
+    return '${_analysisGroupBy.name}|${_from.millisecondsSinceEpoch}|'
+        '${_to.millisecondsSinceEpoch}|${_data.flights.length}|'
+        '${_data.flights.isEmpty ? 0 : _data.flights.first.flightId}|'
+        '${_data.flights.isEmpty ? 0 : _data.flights.last.flightId}';
+  }
+
+  void _invalidateAnalysisCache() {
+    _analysisBaseBucketsKey = '';
+    _analysisPreviousBucketsKey = '';
+    _analysisBaseBuckets = const {};
+    _analysisPreviousBuckets = const {};
+  }
+
   @override
   void dispose() {
     _fromTimeController.dispose();
     _toTimeController.dispose();
     _selectedTemplateSubscription?.close();
+    _pilotInfoSaveDebounce?.cancel();
+    _pilotNameController.dispose();
+    _pilotLicenceController.dispose();
+    _pilotAddressController.dispose();
+    _pilotNameFocusNode.dispose();
+    _pilotLicenceFocusNode.dispose();
+    _pilotAddressFocusNode.dispose();
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _syncPilotInfoControllers(ReportPilotInfo info, {bool force = false}) {
+    if (!force &&
+        (_pilotNameFocusNode.hasFocus ||
+            _pilotLicenceFocusNode.hasFocus ||
+            _pilotAddressFocusNode.hasFocus)) {
+      return;
+    }
+    if (_pilotNameController.text != info.name) {
+      _pilotNameController.text = info.name;
+    }
+    if (_pilotLicenceController.text != info.licenceNumber) {
+      _pilotLicenceController.text = info.licenceNumber;
+    }
+    if (_pilotAddressController.text != info.address) {
+      _pilotAddressController.text = info.address;
+    }
+  }
+
+  void _schedulePilotInfoSave() {
+    _pilotInfoSaveDebounce?.cancel();
+    _pilotInfoSaveDebounce = Timer(const Duration(milliseconds: 300), () {
+      final value = ReportPilotInfo(
+        name: _pilotNameController.text,
+        licenceNumber: _pilotLicenceController.text,
+        address: _pilotAddressController.text,
+      );
+      unawaited(
+        ref.read(reportPilotInfoProvider.notifier).setValue(value: value),
+      );
+    });
   }
 
   Future<void> _loadOverviewData() async {
@@ -309,6 +381,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _pilotNamesLoaded = false;
           _analysisGroups = const [];
           _analysisLoading = false;
+          _invalidateAnalysisCache();
           _firstFlightDate = range.$1;
           _lastFlightDate = range.$2;
         });
@@ -342,6 +415,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _detailsLoaded = true;
           _entriesLoaded = false;
           _pilotNamesLoaded = includePilotNames;
+          _invalidateAnalysisCache();
           _firstFlightDate = range.$1;
           _lastFlightDate = range.$2;
         });
@@ -449,6 +523,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _detailsLoaded = true;
           _entriesLoaded = false;
           _pilotNamesLoaded = includePilotNames;
+          _invalidateAnalysisCache();
           _firstFlightDate = range.$1;
           _lastFlightDate = range.$2;
         });
@@ -485,6 +560,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _detailsLoaded = true;
           _entriesLoaded = includeEntries;
           _pilotNamesLoaded = includePilotNames;
+          _invalidateAnalysisCache();
           _firstFlightDate = range.$1;
           _lastFlightDate = range.$2;
         });
@@ -505,7 +581,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     ReportsEventTypesSelection eventTypes,
   ) async {
     return _fetchEntriesForRange(
-      flights: flights,
+      includedFlightIds: flights.map((flight) => flight.flightId).toSet(),
       eventTypes: eventTypes,
       from: _from,
       to: _to,
@@ -547,7 +623,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<List<LogbookEntry>> _fetchEntriesForRange({
-    required List<ReportsFlightRow> flights,
+    required Set<int>? includedFlightIds,
     required ReportsEventTypesSelection eventTypes,
     required DateTime from,
     required DateTime to,
@@ -567,11 +643,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       limit: 10000,
       offset: 0,
     );
-    final flightIds = flights.map((flight) => flight.flightId).toSet();
     return logbookEntries
         .where((entry) {
           if (entry.flight != null) {
-            return eventTypes.flights && flightIds.contains(entry.flight!.id);
+            if (!eventTypes.flights) {
+              return false;
+            }
+            if (includedFlightIds == null) {
+              return true;
+            }
+            return includedFlightIds.contains(entry.flight!.id);
           }
           if (entry.simulatorTraining != null) {
             return eventTypes.simulator;
@@ -771,6 +852,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         .read(includePreviousExperienceProvider.notifier)
         .setValue(value: value);
     if (!mounted) return;
+    if (_isAnalysesVisible && _analysisSupportsPreviousExperience) {
+      if (_detailsLoaded) {
+        await _refreshAnalysisGroups();
+      } else {
+        await _ensureDetailsLoaded(
+          includeEntries: false,
+          includePilotNames: _needsPilotNamesForFilters(),
+        );
+      }
+      return;
+    }
     if (!_isFiltersOnlySection) {
       await _loadOverviewData();
       if (!mounted) return;
@@ -881,13 +973,26 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
       await _setPdfGenerationProgress(l10n.reportsPdfGenerating, progress: 0.5);
       final includeHoursBefore = ref.read(includeHoursBeforeProvider);
+      final includePreviousExperience = ref.read(
+        includePreviousExperienceProvider,
+      );
+      final crewMaps = await _loadReportCrewNames(_entries);
       final startingTotals = includeHoursBefore
           ? await _loadStandardStartingTotals(pdfService)
+          : includePreviousExperience
+          ? _templateTotalsFromReportsTotals(
+              await ref
+                  .read(reportsRepositoryProvider)
+                  .loadAllPreviousExperienceTotals(),
+            )
           : const ReportTemplateTotals();
       final bytes = await pdfService.generateFromTemplate(
         template: templateConfig,
         entries: _entries,
         startingTotals: startingTotals,
+        coverValues: _buildCoverValues(),
+        flightCrewById: crewMaps.$1,
+        simulatorCrewById: crewMaps.$2,
       );
 
       await _setPdfGenerationProgress(l10n.reportsPdfSaving, progress: 0.85);
@@ -1007,27 +1112,152 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
     final repo = ref.read(reportsRepositoryProvider);
     final eventTypes = ref.read(reportsEventTypesProvider);
-    final beforeResult = await repo.load(
-      ReportsQuery(
-        from: firstDate,
-        to: cutoff,
-        includePreviousExperience: false,
-        filterMatchMode: _filterMatchMode,
-        filters: _filters,
-      ),
-    );
+    Set<int>? includedFlightIds;
+    if (_filters.isNotEmpty && eventTypes.flights) {
+      final beforeResult = await repo.load(
+        ReportsQuery(
+          from: firstDate,
+          to: cutoff,
+          includePreviousExperience: ref.read(
+            includePreviousExperienceProvider,
+          ),
+          filterMatchMode: _filterMatchMode,
+          filters: _filters,
+        ),
+      );
+      includedFlightIds = beforeResult.flights
+          .map((flight) => flight.flightId)
+          .toSet();
+    }
 
-    final flights = eventTypes.flights
-        ? beforeResult.flights
-        : const <ReportsFlightRow>[];
     final beforeEntries = await _fetchEntriesForRange(
-      flights: flights,
+      includedFlightIds: includedFlightIds,
       eventTypes: eventTypes,
       from: firstDate,
       to: cutoff,
     );
     final rows = service.buildRows(beforeEntries);
-    return service.sumTotals(rows);
+    var startingTotals = service.sumTotals(rows);
+    if (ref.read(includePreviousExperienceProvider)) {
+      final previousTotals = await repo.loadAllPreviousExperienceTotals();
+      startingTotals = startingTotals.addTotals(
+        _templateTotalsFromReportsTotals(previousTotals),
+      );
+    }
+    return startingTotals;
+  }
+
+  ReportTemplateTotals _templateTotalsFromReportsTotals(ReportsTotals totals) {
+    final totalMinutes = totals.totalMinutes;
+    final nightMinutes = totals.nightMinutes;
+    final dayMinutes = math.max(0, totalMinutes - nightMinutes);
+    return ReportTemplateTotals(
+      ifrApproaches: totals.ifrApproaches,
+      landingsTotal: totals.landingsDay + totals.landingsNight,
+      xcMinutes: totals.crossCountryMinutes,
+      dayMinutes: dayMinutes,
+      nightMinutes: nightMinutes,
+      ifrMinutes: totals.ifrMinutes,
+      simInstMinutes:
+          totals.instrumentMinutes + totals.simulatedInstrumentMinutes,
+      fstdMinutes: totals.simulatorMinutes,
+      dualMinutes: totals.dualMinutes,
+      picPicusMinutes: totals.picMinutes + totals.picusMinutes,
+      sicMinutes: totals.sicMinutes,
+      instructorMinutes: totals.instructorMinutes,
+      totalMinutes: totalMinutes,
+    );
+  }
+
+  Map<String, String> _buildCoverValues() {
+    final pilotInfo = ref.read(reportPilotInfoProvider);
+    final dateFormat = DateFormat('yyyy-MM-dd');
+    return {
+      'pilot.name': pilotInfo.name,
+      'pilot.licenceNumber': pilotInfo.licenceNumber,
+      'pilot.address': pilotInfo.address,
+      'report.fromDate': dateFormat.format(_from.toUtc()),
+      'report.toDate': dateFormat.format(_to.toUtc()),
+    };
+  }
+
+  Future<(Map<int, ReportEntryCrewNames>, Map<int, ReportEntryCrewNames>)>
+  _loadReportCrewNames(List<LogbookEntry> entries) async {
+    final flightIds = entries
+        .map((entry) => entry.flight?.id)
+        .whereType<int>()
+        .toSet()
+        .toList(growable: false);
+    final simulatorIds = entries
+        .map((entry) => entry.simulatorTraining?.id)
+        .whereType<int>()
+        .toSet()
+        .toList(growable: false);
+
+    final db = ref.read(databaseProvider);
+    final flightMap = <int, ReportEntryCrewNames>{};
+    final simulatorMap = <int, ReportEntryCrewNames>{};
+
+    if (flightIds.isNotEmpty) {
+      final rows = await (db.select(db.flightCrewAssignments).join([
+        d.innerJoin(
+          db.crew,
+          db.crew.id.equalsExp(db.flightCrewAssignments.crewId),
+        ),
+      ])..where(db.flightCrewAssignments.flightId.isIn(flightIds))).get();
+      for (final row in rows) {
+        final assignment = row.readTable(db.flightCrewAssignments);
+        final crew = row.readTable(db.crew);
+        final current =
+            flightMap[assignment.flightId] ?? const ReportEntryCrewNames();
+        if (assignment.position == CrewPosition.pic && current.pic.isEmpty) {
+          flightMap[assignment.flightId] = ReportEntryCrewNames(
+            pic: crew.name,
+            sic: current.sic,
+          );
+        } else if (assignment.position == CrewPosition.sic &&
+            current.sic.isEmpty) {
+          flightMap[assignment.flightId] = ReportEntryCrewNames(
+            pic: current.pic,
+            sic: crew.name,
+          );
+        }
+      }
+    }
+
+    if (simulatorIds.isNotEmpty) {
+      final rows = await (db.select(db.simulatorCrewAssignments).join([
+        d.innerJoin(
+          db.crew,
+          db.crew.id.equalsExp(db.simulatorCrewAssignments.crewId),
+        ),
+      ])
+            ..where(
+              db.simulatorCrewAssignments.simulatorId.isIn(simulatorIds),
+            ))
+          .get();
+      for (final row in rows) {
+        final assignment = row.readTable(db.simulatorCrewAssignments);
+        final crew = row.readTable(db.crew);
+        final current =
+            simulatorMap[assignment.simulatorId] ??
+            const ReportEntryCrewNames();
+        if (assignment.position == CrewPosition.pic && current.pic.isEmpty) {
+          simulatorMap[assignment.simulatorId] = ReportEntryCrewNames(
+            pic: crew.name,
+            sic: current.sic,
+          );
+        } else if (assignment.position == CrewPosition.sic &&
+            current.sic.isEmpty) {
+          simulatorMap[assignment.simulatorId] = ReportEntryCrewNames(
+            pic: current.pic,
+            sic: crew.name,
+          );
+        }
+      }
+    }
+
+    return (flightMap, simulatorMap);
   }
 
   String _buildPdfFileName(_XslTemplateOption selectedTemplate) {
@@ -1100,46 +1330,69 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final l10n = AppLocalizations.of(context)!;
     final token = ++_analysisBuildToken;
     setState(() => _analysisLoading = true);
-
-    final groups = <String, _AnalysisGroupAccumulator>{};
     final includePreviousExperience = ref.read(
       includePreviousExperienceProvider,
     );
+    final bucketsKey = _analysisBucketsKey();
 
-    for (var i = 0; i < _data.flights.length; i++) {
-      final flight = _data.flights[i];
-      final keys = _analysisGroupKeysForFlight(flight, l10n);
-      for (final key in keys) {
-        final bucket = groups.putIfAbsent(key, _AnalysisGroupAccumulator.new);
-        if (_analysisGroupBy == _AnalysisGroupBy.airport) {
-          bucket.addForAirport(
-            flight,
-            airportIcao: key,
-            unknownAirportLabel: l10n.reportsUnknownAirport,
-          );
-        } else {
-          bucket.add(flight);
+    if (_analysisBaseBucketsKey != bucketsKey) {
+      final groups = <String, _AnalysisGroupAccumulator>{};
+      for (var i = 0; i < _data.flights.length; i++) {
+        final flight = _data.flights[i];
+        final keys = _analysisGroupKeysForFlight(flight, l10n);
+        for (final key in keys) {
+          final bucket = groups.putIfAbsent(key, _AnalysisGroupAccumulator.new);
+          if (_analysisGroupBy == _AnalysisGroupBy.airport) {
+            bucket.addForAirport(
+              flight,
+              airportIcao: key,
+              unknownAirportLabel: l10n.reportsUnknownAirport,
+            );
+          } else {
+            bucket.add(flight);
+          }
+        }
+
+        if (i % 250 == 0) {
+          await Future<void>.delayed(Duration.zero);
+          if (!mounted || token != _analysisBuildToken) return;
         }
       }
+      _analysisBaseBuckets = groups;
+      _analysisBaseBucketsKey = bucketsKey;
+      _analysisPreviousBuckets = const {};
+      _analysisPreviousBucketsKey = '';
+    }
 
-      if (i % 250 == 0) {
-        await Future<void>.delayed(Duration.zero);
+    if (includePreviousExperience && _analysisSupportsPreviousExperience) {
+      if (_analysisPreviousBucketsKey != bucketsKey) {
+        final previousRows = await ref
+            .read(reportsRepositoryProvider)
+            .loadPreviousExperienceForAnalysis(from: _from, to: _to);
         if (!mounted || token != _analysisBuildToken) return;
+        final previousGroups = <String, _AnalysisGroupAccumulator>{};
+        for (final row in previousRows) {
+          final keys = _analysisGroupKeysForPreviousExperience(row, l10n);
+          for (final key in keys) {
+            previousGroups
+                .putIfAbsent(key, _AnalysisGroupAccumulator.new)
+                .addPreviousExperience(row);
+          }
+        }
+        _analysisPreviousBuckets = previousGroups;
+        _analysisPreviousBucketsKey = bucketsKey;
       }
     }
 
-    if (includePreviousExperience) {
-      final previousRows = await ref
-          .read(reportsRepositoryProvider)
-          .loadPreviousExperienceForAnalysis(from: _from, to: _to);
-      if (!mounted || token != _analysisBuildToken) return;
-      for (final row in previousRows) {
-        final keys = _analysisGroupKeysForPreviousExperience(row, l10n);
-        for (final key in keys) {
-          groups
-              .putIfAbsent(key, _AnalysisGroupAccumulator.new)
-              .addPreviousExperience(row);
-        }
+    final groups = <String, _AnalysisGroupAccumulator>{
+      for (final entry in _analysisBaseBuckets.entries)
+        entry.key: entry.value.copy(),
+    };
+    if (includePreviousExperience && _analysisSupportsPreviousExperience) {
+      for (final entry in _analysisPreviousBuckets.entries) {
+        groups
+            .putIfAbsent(entry.key, _AnalysisGroupAccumulator.new)
+            .addAll(entry.value);
       }
     }
 
@@ -1552,6 +1805,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final l10n = AppLocalizations.of(context)!;
     final inlinePreviousExperienceButton =
         MediaQuery.sizeOf(context).width >= 760;
+    final showPreviousExperienceToggle =
+        _analysisGroupBy == _AnalysisGroupBy.type ||
+        _analysisGroupBy == _AnalysisGroupBy.family;
     return Column(
       children: [
         Row(
@@ -1634,7 +1890,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 },
               ),
             ),
-            if (inlinePreviousExperienceButton) ...[
+            if (inlinePreviousExperienceButton &&
+                showPreviousExperienceToggle) ...[
               const SizedBox(width: 8),
               _previousExperienceToggle(
                 includePreviousExperience: includePreviousExperience,
@@ -1648,7 +1905,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             ],
           ],
         ),
-        if (!inlinePreviousExperienceButton) ...[
+        if (!inlinePreviousExperienceButton &&
+            showPreviousExperienceToggle) ...[
           const SizedBox(height: 10),
           Align(
             alignment: Alignment.centerLeft,
@@ -1676,7 +1934,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Widget _buildReportsSection({required bool compact}) {
-    return Column(children: [_buildReportsControls(compact: compact)]);
+    return SingleChildScrollView(
+      child: _buildReportsControls(compact: compact),
+    );
   }
 
   Widget _previousExperienceToggle({
@@ -1702,6 +1962,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
     final includeHoursBefore = ref.watch(includeHoursBeforeProvider);
     final openPdfAfterSaving = ref.watch(openPdfAfterSavingProvider);
+    final pilotInfo = ref.watch(reportPilotInfoProvider);
+    _syncPilotInfoControllers(pilotInfo);
     return Align(
       alignment: Alignment.centerLeft,
       child: Column(
@@ -1717,45 +1979,20 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 icon: const Icon(Icons.map_outlined),
                 label: Text(l10n.reportsShowMap),
               ),
-              _previousExperienceToggle(
-                includePreviousExperience: includePreviousExperience,
-                onToggle: () {
-                  if (_isGeneratingPdf) return;
-                  unawaited(
-                    _setIncludePreviousExperience(!includePreviousExperience),
-                  );
-                },
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(l10n.reportsShowPath),
-                  const SizedBox(width: 6),
-                  Switch(
-                    value: _showPathOnMap,
-                    onChanged: _isGeneratingPdf
-                        ? null
-                        : (value) => setState(() => _showPathOnMap = value),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(l10n.reportsIncludeHoursBefore),
-                  const SizedBox(width: 6),
-                  Switch(
-                    value: includeHoursBefore,
-                    onChanged: _isGeneratingPdf
-                        ? null
-                        : (value) => ref
-                              .read(includeHoursBeforeProvider.notifier)
-                              .setValue(value: value),
-                  ),
-                ],
+              SizedBox(
+                width: compact ? 160 : 180,
+                child: EventTypeToggleButton(
+                  label: l10n.reportsShowPath,
+                  selected: _showPathOnMap,
+                  onTap: _isGeneratingPdf
+                      ? () {}
+                      : () => setState(() => _showPathOnMap = !_showPathOnMap),
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          const Divider(height: 1),
           if (_isGeneratingPdf) ...[
             const SizedBox(height: 8),
             Row(
@@ -1851,6 +2088,90 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                               .setValue(value: value),
                   ),
                 ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Divider(height: 1),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              SizedBox(
+                width: compact ? 190 : 220,
+                child: EventTypeToggleButton(
+                  label: l10n.reportsIncludeHoursBefore,
+                  selected: includeHoursBefore,
+                  onTap: _isGeneratingPdf
+                      ? () {}
+                      : () => ref
+                            .read(includeHoursBeforeProvider.notifier)
+                            .setValue(value: !includeHoursBefore),
+                ),
+              ),
+              SizedBox(
+                width: compact ? 190 : 220,
+                child: EventTypeToggleButton(
+                  label: l10n.reportsPreviousExperienceLabel,
+                  selected: includePreviousExperience,
+                  onTap: _isGeneratingPdf
+                      ? () {}
+                      : () => unawaited(
+                          _setIncludePreviousExperience(
+                            !includePreviousExperience,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Divider(height: 1),
+          const SizedBox(height: 8),
+          Text(
+            'Pilot information',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _pilotNameController,
+                focusNode: _pilotNameFocusNode,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                onChanged: (_) => _schedulePilotInfoSave(),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _pilotLicenceController,
+                focusNode: _pilotLicenceFocusNode,
+                minLines: 2,
+                maxLines: null,
+                decoration: const InputDecoration(
+                  labelText: 'Licence number',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                onChanged: (_) => _schedulePilotInfoSave(),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _pilotAddressController,
+                focusNode: _pilotAddressFocusNode,
+                minLines: 2,
+                maxLines: null,
+                decoration: const InputDecoration(
+                  labelText: 'Address',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                onChanged: (_) => _schedulePilotInfoSave(),
               ),
             ],
           ),
@@ -2101,6 +2422,47 @@ class _AnalysisGroupAccumulator {
   DateTime? firstFlightUtc;
   DateTime? lastFlightUtc;
 
+  _AnalysisGroupAccumulator copy() {
+    return _AnalysisGroupAccumulator()
+      ..totalMinutes = totalMinutes
+      ..picMinutes = picMinutes
+      ..picusMinutes = picusMinutes
+      ..sicMinutes = sicMinutes
+      ..dualMinutes = dualMinutes
+      ..ifrMinutes = ifrMinutes
+      ..instrumentMinutes = instrumentMinutes
+      ..nightMinutes = nightMinutes
+      ..takeoffs = takeoffs
+      ..landings = landings
+      ..operations = operations
+      ..firstFlightUtc = firstFlightUtc
+      ..lastFlightUtc = lastFlightUtc;
+  }
+
+  void addAll(_AnalysisGroupAccumulator other) {
+    totalMinutes += other.totalMinutes;
+    picMinutes += other.picMinutes;
+    picusMinutes += other.picusMinutes;
+    sicMinutes += other.sicMinutes;
+    dualMinutes += other.dualMinutes;
+    ifrMinutes += other.ifrMinutes;
+    instrumentMinutes += other.instrumentMinutes;
+    nightMinutes += other.nightMinutes;
+    takeoffs += other.takeoffs;
+    landings += other.landings;
+    operations += other.operations;
+    if (other.firstFlightUtc != null &&
+        (firstFlightUtc == null ||
+            other.firstFlightUtc!.isBefore(firstFlightUtc!))) {
+      firstFlightUtc = other.firstFlightUtc;
+    }
+    if (other.lastFlightUtc != null &&
+        (lastFlightUtc == null ||
+            other.lastFlightUtc!.isAfter(lastFlightUtc!))) {
+      lastFlightUtc = other.lastFlightUtc;
+    }
+  }
+
   void add(ReportsFlightRow row) {
     _addBase(row);
     takeoffs += row.takeoffs;
@@ -2251,366 +2613,369 @@ class _FiltersCard extends StatelessWidget {
         return Card(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          labelText: l10n.reportsSavedQueriesLabel,
-                          border: const OutlineInputBorder(),
-                          isDense: true,
-                        ),
-                        items: savedQueries
-                            .map(
-                              (query) => DropdownMenuItem(
-                                value: query.id,
-                                child: _overflowText(query.name),
-                              ),
-                            )
-                            .toList(growable: false),
-                        selectedItemBuilder: (context) => savedQueries
-                            .map((query) => _dropdownSelectedItem(query.name))
-                            .toList(growable: false),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          final query = savedQueries.firstWhere(
-                            (item) => item.id == value,
-                          );
-                          unawaited(onApplySavedQuery(query));
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      height: compact ? 36 : 40,
-                      child: FilledButton(
-                        onPressed: onSaveQuery,
-                        style: FilledButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: compact ? 8 : 10,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                            labelText: l10n.reportsSavedQueriesLabel,
+                            border: const OutlineInputBorder(),
+                            isDense: true,
                           ),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
+                          items: savedQueries
+                              .map(
+                                (query) => DropdownMenuItem(
+                                  value: query.id,
+                                  child: _overflowText(query.name),
+                                ),
+                              )
+                              .toList(growable: false),
+                          selectedItemBuilder: (context) => savedQueries
+                              .map((query) => _dropdownSelectedItem(query.name))
+                              .toList(growable: false),
+                          onChanged: (value) {
+                            if (value == null) return;
+                            final query = savedQueries.firstWhere(
+                              (item) => item.id == value,
+                            );
+                            unawaited(onApplySavedQuery(query));
+                          },
                         ),
-                        child: Text(l10n.saveAction),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      height: compact ? 36 : 40,
-                      child: savedQueries.isNotEmpty
-                          ? PopupMenuButton<String>(
-                              onSelected: onDeleteSavedQuery,
-                              itemBuilder: (context) => savedQueries
-                                  .map(
-                                    (query) => PopupMenuItem(
-                                      value: query.id,
-                                      child: Text(
-                                        l10n.reportsDeleteSavedQuery(
-                                          query.name,
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        height: compact ? 36 : 40,
+                        child: FilledButton(
+                          onPressed: onSaveQuery,
+                          style: FilledButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: compact ? 8 : 10,
+                            ),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          child: Text(l10n.saveAction),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        height: compact ? 36 : 40,
+                        child: savedQueries.isNotEmpty
+                            ? PopupMenuButton<String>(
+                                onSelected: onDeleteSavedQuery,
+                                itemBuilder: (context) => savedQueries
+                                    .map(
+                                      (query) => PopupMenuItem(
+                                        value: query.id,
+                                        child: Text(
+                                          l10n.reportsDeleteSavedQuery(
+                                            query.name,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  )
-                                  .toList(growable: false),
-                              child: Container(
-                                height: compact ? 36 : 40,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: compact ? 8 : 12,
-                                ),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Theme.of(context).dividerColor,
+                                    )
+                                    .toList(growable: false),
+                                child: Container(
+                                  height: compact ? 36 : 40,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: compact ? 8 : 12,
                                   ),
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Theme.of(context).dividerColor,
+                                    ),
+                                  ),
+                                  child: Text(l10n.deleteAction),
+                                ),
+                              )
+                            : OutlinedButton(
+                                onPressed: null,
+                                style: OutlinedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: compact ? 8 : 10,
+                                  ),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
                                 ),
                                 child: Text(l10n.deleteAction),
                               ),
-                            )
-                          : OutlinedButton(
-                              onPressed: null,
-                              style: OutlinedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: compact ? 8 : 10,
-                                ),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              child: Text(l10n.deleteAction),
-                            ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                const Divider(height: 1),
-                const SizedBox(height: 10),
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: math.min(
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  const Divider(height: 1),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: math.min(
                       availableScrollableHeight,
                       compact ? 460 : 520,
                     ),
-                  ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Wrap(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: EventTypeToggleButton(
-                                    label: l10n.logbookEventFlight,
-                                    selected: eventTypes.flights,
-                                    onTap: () => onEventTypesChanged(
-                                      eventTypes.copyWith(
-                                        flights: !eventTypes.flights,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: EventTypeToggleButton(
+                                      label: l10n.logbookEventFlight,
+                                      selected: eventTypes.flights,
+                                      onTap: () => onEventTypesChanged(
+                                        eventTypes.copyWith(
+                                          flights: !eventTypes.flights,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: EventTypeToggleButton(
-                                    label: l10n.fieldIsSimulator,
-                                    selected: eventTypes.simulator,
-                                    onTap: () => onEventTypesChanged(
-                                      eventTypes.copyWith(
-                                        simulator: !eventTypes.simulator,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: EventTypeToggleButton(
+                                      label: l10n.fieldIsSimulator,
+                                      selected: eventTypes.simulator,
+                                      onTap: () => onEventTypesChanged(
+                                        eventTypes.copyWith(
+                                          simulator: !eventTypes.simulator,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: EventTypeToggleButton(
-                                    label: l10n.reportsMetricDuty,
-                                    selected: eventTypes.duty,
-                                    onTap: () => onEventTypesChanged(
-                                      eventTypes.copyWith(
-                                        duty: !eventTypes.duty,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: EventTypeToggleButton(
+                                      label: l10n.reportsMetricDuty,
+                                      selected: eventTypes.duty,
+                                      onTap: () => onEventTypesChanged(
+                                        eventTypes.copyWith(
+                                          duty: !eventTypes.duty,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: EventTypeToggleButton(
-                                    label: l10n.logbookEventPositioning,
-                                    selected: eventTypes.positioning,
-                                    onTap: () => onEventTypesChanged(
-                                      eventTypes.copyWith(
-                                        positioning: !eventTypes.positioning,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: EventTypeToggleButton(
+                                      label: l10n.logbookEventPositioning,
+                                      selected: eventTypes.positioning,
+                                      onTap: () => onEventTypesChanged(
+                                        eventTypes.copyWith(
+                                          positioning: !eventTypes.positioning,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            SizedBox(
-                              width: maxFieldWidth,
-                              child:
-                                  DropdownButtonFormField<
-                                    _ReportDateRangePreset
-                                  >(
-                                    initialValue: preset,
-                                    isExpanded: true,
-                                    decoration: InputDecoration(
-                                      labelText: l10n.logbookFilterRange,
-                                      border: const OutlineInputBorder(),
-                                      isDense: true,
-                                    ),
-                                    items: _ReportDateRangePreset.values
-                                        .map(
-                                          (value) => DropdownMenuItem(
-                                            value: value,
-                                            child: _overflowText(
-                                              _reportDateRangePresetLabel(
-                                                l10n,
-                                                value,
-                                              ),
-                                            ),
-                                          ),
-                                        )
-                                        .toList(growable: false),
-                                    selectedItemBuilder: (context) =>
-                                        _ReportDateRangePreset.values
-                                            .map(
-                                              (value) => _dropdownSelectedItem(
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              SizedBox(
+                                width: maxFieldWidth,
+                                child:
+                                    DropdownButtonFormField<
+                                      _ReportDateRangePreset
+                                    >(
+                                      initialValue: preset,
+                                      isExpanded: true,
+                                      decoration: InputDecoration(
+                                        labelText: l10n.logbookFilterRange,
+                                        border: const OutlineInputBorder(),
+                                        isDense: true,
+                                      ),
+                                      items: _ReportDateRangePreset.values
+                                          .map(
+                                            (value) => DropdownMenuItem(
+                                              value: value,
+                                              child: _overflowText(
                                                 _reportDateRangePresetLabel(
                                                   l10n,
                                                   value,
                                                 ),
                                               ),
-                                            )
-                                            .toList(growable: false),
-                                    onChanged: (value) {
-                                      if (value != null) {
-                                        unawaited(onPresetChanged(value));
-                                      }
-                                    },
-                                  ),
-                            ),
-                            SizedBox(
-                              width: maxFieldWidth * 2 + 8,
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: DateSelectorInputField(
-                                      label: l10n.logbookFilterFromDate,
-                                      valueText: DateFormat(
-                                        'dd/MMM yyyy',
-                                        locale,
-                                      ).format(from),
-                                      onTap: onPickStart,
+                                            ),
+                                          )
+                                          .toList(growable: false),
+                                      selectedItemBuilder: (context) =>
+                                          _ReportDateRangePreset.values
+                                              .map(
+                                                (
+                                                  value,
+                                                ) => _dropdownSelectedItem(
+                                                  _reportDateRangePresetLabel(
+                                                    l10n,
+                                                    value,
+                                                  ),
+                                                ),
+                                              )
+                                              .toList(growable: false),
+                                      onChanged: (value) {
+                                        if (value != null) {
+                                          unawaited(onPresetChanged(value));
+                                        }
+                                      },
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: ClockTimeInputField(
-                                      controller: fromTimeController,
-                                      label: 'Hour',
-                                      onChangedMinutes: onFromTimeChanged,
-                                    ),
-                                  ),
-                                ],
                               ),
-                            ),
-                            SizedBox(
-                              width: maxFieldWidth * 2 + 8,
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: DateSelectorInputField(
-                                      label: l10n.logbookFilterToDate,
-                                      valueText: DateFormat(
-                                        'dd/MMM yyyy',
-                                        locale,
-                                      ).format(to),
-                                      onTap: onPickEnd,
+                              SizedBox(
+                                width: maxFieldWidth * 2 + 8,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: DateSelectorInputField(
+                                        label: l10n.logbookFilterFromDate,
+                                        valueText: DateFormat(
+                                          'dd/MMM yyyy',
+                                          locale,
+                                        ).format(from),
+                                        onTap: onPickStart,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: ClockTimeInputField(
-                                      controller: toTimeController,
-                                      label: 'Hour',
-                                      onChangedMinutes: onToTimeChanged,
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: ClockTimeInputField(
+                                        controller: fromTimeController,
+                                        label: 'Hour',
+                                        onChangedMinutes: onFromTimeChanged,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            SizedBox(
-                              width: compact ? maxFieldWidth : 150,
-                              child:
-                                  DropdownButtonFormField<
-                                    ReportsFilterMatchMode
-                                  >(
-                                    initialValue: matchMode,
-                                    isExpanded: true,
-                                    decoration: InputDecoration(
-                                      labelText: l10n.reportsMatchModeLabel,
-                                      border: const OutlineInputBorder(),
-                                      isDense: true,
+                              SizedBox(
+                                width: maxFieldWidth * 2 + 8,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: DateSelectorInputField(
+                                        label: l10n.logbookFilterToDate,
+                                        valueText: DateFormat(
+                                          'dd/MMM yyyy',
+                                          locale,
+                                        ).format(to),
+                                        onTap: onPickEnd,
+                                      ),
                                     ),
-                                    items: [
-                                      DropdownMenuItem(
-                                        value: ReportsFilterMatchMode.all,
-                                        child: _overflowText(
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: ClockTimeInputField(
+                                        controller: toTimeController,
+                                        label: 'Hour',
+                                        onChangedMinutes: onToTimeChanged,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                width: compact ? maxFieldWidth : 150,
+                                child:
+                                    DropdownButtonFormField<
+                                      ReportsFilterMatchMode
+                                    >(
+                                      initialValue: matchMode,
+                                      isExpanded: true,
+                                      decoration: InputDecoration(
+                                        labelText: l10n.reportsMatchModeLabel,
+                                        border: const OutlineInputBorder(),
+                                        isDense: true,
+                                      ),
+                                      items: [
+                                        DropdownMenuItem(
+                                          value: ReportsFilterMatchMode.all,
+                                          child: _overflowText(
+                                            l10n.reportsMatchAll,
+                                          ),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: ReportsFilterMatchMode.any,
+                                          child: _overflowText(
+                                            l10n.reportsMatchAny,
+                                          ),
+                                        ),
+                                      ],
+                                      selectedItemBuilder: (context) => [
+                                        _dropdownSelectedItem(
                                           l10n.reportsMatchAll,
                                         ),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: ReportsFilterMatchMode.any,
-                                        child: _overflowText(
+                                        _dropdownSelectedItem(
                                           l10n.reportsMatchAny,
                                         ),
-                                      ),
-                                    ],
-                                    selectedItemBuilder: (context) => [
-                                      _dropdownSelectedItem(
-                                        l10n.reportsMatchAll,
-                                      ),
-                                      _dropdownSelectedItem(
-                                        l10n.reportsMatchAny,
-                                      ),
-                                    ],
-                                    onChanged: (value) {
-                                      if (value != null) {
-                                        unawaited(onMatchModeChanged(value));
-                                      }
-                                    },
+                                      ],
+                                      onChanged: (value) {
+                                        if (value != null) {
+                                          unawaited(onMatchModeChanged(value));
+                                        }
+                                      },
+                                    ),
+                              ),
+                              SizedBox(
+                                height: compact ? 36 : 40,
+                                child: FilledButton.icon(
+                                  onPressed: onAddFilter,
+                                  icon: const Icon(Icons.add),
+                                  label: Text(
+                                    compact
+                                        ? l10n.addAction
+                                        : l10n.reportsAddFilter,
                                   ),
-                            ),
-                            SizedBox(
-                              height: compact ? 36 : 40,
-                              child: FilledButton.icon(
-                                onPressed: onAddFilter,
-                                icon: const Icon(Icons.add),
-                                label: Text(
-                                  compact
-                                      ? l10n.addAction
-                                      : l10n.reportsAddFilter,
-                                ),
-                                style: FilledButton.styleFrom(
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
+                                  style: FilledButton.styleFrom(
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    visualDensity: VisualDensity.compact,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        if (filters.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              for (
-                                var index = 0;
-                                index < filters.length;
-                                index++
-                              )
-                                InputChip(
-                                  visualDensity: VisualDensity.compact,
-                                  label: Text(
-                                    l10n.reportsFilterChipLabel(
-                                      _reportFilterFieldLabel(
-                                        l10n,
-                                        filters[index].field,
-                                      ),
-                                      _reportFilterOperatorLabel(
-                                        l10n,
-                                        filters[index].operator,
-                                      ),
-                                      filters[index].displayValue,
-                                    ),
-                                  ),
-                                  onDeleted: () => onRemoveFilter(index),
-                                ),
                             ],
                           ),
+                          if (filters.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: [
+                                for (
+                                  var index = 0;
+                                  index < filters.length;
+                                  index++
+                                )
+                                  InputChip(
+                                    visualDensity: VisualDensity.compact,
+                                    label: Text(
+                                      l10n.reportsFilterChipLabel(
+                                        _reportFilterFieldLabel(
+                                          l10n,
+                                          filters[index].field,
+                                        ),
+                                        _reportFilterOperatorLabel(
+                                          l10n,
+                                          filters[index].operator,
+                                        ),
+                                        filters[index].displayValue,
+                                      ),
+                                    ),
+                                    onDeleted: () => onRemoveFilter(index),
+                                  ),
+                              ],
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -2702,9 +3067,7 @@ class _TotalsCard extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                l10n.reportsFlightCount(
-                                  _formatCount(totals.sectors),
-                                ),
+                                'Count: ${_formatCount(totals.sectors)}',
                                 style: Theme.of(context).textTheme.titleSmall
                                     ?.copyWith(fontWeight: FontWeight.w700),
                                 maxLines: 1,
@@ -2713,7 +3076,7 @@ class _TotalsCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             SizedBox(
-                              width: 190,
+                              width: 168,
                               child: EventTypeToggleButton(
                                 label: l10n.reportsPreviousExperienceLabel,
                                 selected: includePreviousExperience,
@@ -2757,7 +3120,7 @@ class _TotalsCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         SizedBox(
-                          width: 190,
+                          width: 180,
                           child: EventTypeToggleButton(
                             label: l10n.reportsPreviousExperienceLabel,
                             selected: includePreviousExperience,

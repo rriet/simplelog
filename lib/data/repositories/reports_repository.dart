@@ -964,6 +964,61 @@ class ReportsRepository {
     return totals;
   }
 
+  /// Sums Previous Experience totals included in the provided date range.
+  Future<ReportsTotals> loadPreviousExperienceTotals({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    return _sumPreviousExperience(
+      ReportsQuery(
+        from: from,
+        to: to,
+        includePreviousExperience: true,
+        filterMatchMode: ReportsFilterMatchMode.all,
+        filters: const [],
+      ),
+    );
+  }
+
+  /// Sums all Previous Experience rows without applying any date filtering.
+  Future<ReportsTotals> loadAllPreviousExperienceTotals() async {
+    final rows = await _db.select(_db.previousExperiences).get();
+    var totals = const ReportsTotals.zero();
+    for (final exp in rows) {
+      totals =
+          totals +
+          ReportsTotals(
+            sectors: exp.flightCount,
+            takeoffsDay: exp.takeOffsDays,
+            takeoffsNight: exp.takeOffsNight,
+            landingsDay: exp.landingsDay,
+            landingsNight: exp.landingsNight,
+            ifrApproaches: exp.ifrApproaches,
+            distanceNM: exp.distanceNM,
+            totalMinutes: exp.timeBlockMinutes,
+            flightMinutes: exp.timeFlightMinutes,
+            nightMinutes: exp.timeNightMinutes,
+            ifrMinutes: exp.timeIFRMinutes,
+            instrumentMinutes: exp.timeInstrumentMinutes,
+            simulatedInstrumentMinutes: exp.timeSimulatedInstrumentMinutes,
+            picMinutes: exp.timePICMinutes,
+            picusMinutes: exp.timePICUSMinutes,
+            sicMinutes: exp.timeSICMinutes,
+            dualMinutes: exp.timeDualMinutes,
+            instructorMinutes: exp.timeInstructorMinutes,
+            crossCountryMinutes: exp.timeCrossCountryMinutes,
+            simulatorMinutes: exp.timeSimulatorMinutes,
+            dutyMinutes: 0,
+            custom1Minutes: exp.timeCustom1Minutes,
+            custom2Minutes: exp.timeCustom2Minutes,
+            custom3Minutes: exp.timeCustom3Minutes,
+            custom4Minutes: exp.timeCustom4Minutes,
+            multiPilotMinutes: 0,
+          );
+    }
+    return totals;
+  }
+
   bool _isBeforeOrEqual(DateTime left, DateTime right) {
     return left.isBefore(right) || left.isAtSameMomentAs(right);
   }

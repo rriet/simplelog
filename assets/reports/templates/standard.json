@@ -3,6 +3,25 @@
   "rowsPerPage": 27,
   "forceLandscape": true,
   "defaultPageSize": "letter",
+  "rowHeight": 11,
+  "coverPage": {
+    "enabled": true,
+    "title": "Pilot Logbook Summary",
+    "blocks": [
+      {
+        "type": "kvGrid",
+        "title": "Pilot details",
+        "columns": 2,
+        "items": [
+          { "label": "Name", "valueKey": "pilot.name" },
+          { "label": "Licence number", "valueKey": "pilot.licenceNumber" },
+          { "label": "Address", "valueKey": "pilot.address" },
+          { "label": "From", "valueKey": "report.fromDate" },
+          { "label": "To", "valueKey": "report.toDate" }
+        ]
+      }
+    ]
+  },
   "labels": {
     "pageTotal": "PAGE TOTAL",
     "amountForward": "AMT. FORWARD",
@@ -11,16 +30,29 @@
   "tables": [
     {
       "pageSuffix": "A",
+      "header": [
+        [
+          { "text": "Date", "weight": "bold" },
+          { "text": "Model", "weight": "bold" },
+          { "text": "Reg", "weight": "bold" },
+          { "text": "From", "weight": "bold" },
+          { "text": "To", "weight": "bold" },
+          { "text": "Remarks", "weight": "bold", "align": "TopLeft" },
+          { "text": "APP", "weight": "bold" },
+          { "text": "LDG", "weight": "bold" },
+          { "text": "XC", "weight": "bold" }
+        ]
+      ],
       "columns": [
-        { "key": "date", "header": "Date", "width": 1.1 },
-        { "key": "aircraftModel", "header": "Model", "width": 1.2 },
-        { "key": "aircraftRegistration", "header": "Reg", "width": 1.1 },
-        { "key": "fromIcao", "header": "From", "width": 0.9 },
-        { "key": "toIcao", "header": "To", "width": 0.9 },
-        { "key": "remarks", "header": "Remarks", "width": 2.6, "alignment": "left" },
-        { "key": "ifrApproaches", "header": "APP", "width": 0.8 },
-        { "key": "landingsTotal", "header": "LDG", "width": 0.8 },
-        { "key": "xc", "header": "XC", "width": 0.9 }
+        { "key": "date", "width": 1.1 },
+        { "key": "aircraftModel", "width": 1.2 },
+        { "key": "aircraftRegistration", "width": 1.1 },
+        { "key": "fromIcao", "width": 0.9 },
+        { "key": "toIcao", "width": 0.9 },
+        { "key": "remarks", "width": 2.6, "alignment": "left" },
+        { "key": "ifrApproaches", "width": 0.8 },
+        { "key": "landingsTotal", "width": 0.8 },
+        { "key": "xc", "width": 0.9 }
       ],
       "footerRows": [
         {
@@ -48,20 +80,51 @@
     },
     {
       "pageSuffix": "B",
+      "header": [
+        [
+          {
+            "text": "PILOT FUNCTION TIME",
+            "hspan": 9,
+            "align": "TopCenter",
+            "weight": "bold"
+          },
+          {
+            "text": "TOTAL",
+            "hspan": 4,
+            "align": "TopCenter",
+            "weight": "bold"
+          }
+        ],
+        [
+          { "text": "SEL", "weight": "bold" },
+          { "text": "MEL", "weight": "bold" },
+          { "text": "XC", "weight": "bold" },
+          { "text": "Day", "weight": "bold" },
+          { "text": "Night", "weight": "bold" },
+          { "text": "IFR", "weight": "bold" },
+          { "text": "Sim Inst", "weight": "bold" },
+          { "text": "FSTD", "weight": "bold" },
+          { "text": "Dual", "weight": "bold" },
+          { "text": "PIC+US", "weight": "bold" },
+          { "text": "SIC", "weight": "bold" },
+          { "text": "Instr", "weight": "bold" },
+          { "text": "Total", "weight": "bold" }
+        ]
+      ],
       "columns": [
-        { "key": "sel", "header": "SEL" },
-        { "key": "mel", "header": "MEL" },
-        { "key": "xc", "header": "XC" },
-        { "key": "day", "header": "Day" },
-        { "key": "night", "header": "Night" },
-        { "key": "ifr", "header": "IFR" },
-        { "key": "simInst", "header": "Sim Inst" },
-        { "key": "fstd", "header": "FSTD" },
-        { "key": "dual", "header": "Dual" },
-        { "key": "picPicus", "header": "PIC+US" },
-        { "key": "sic", "header": "SIC" },
-        { "key": "instructor", "header": "Instr" },
-        { "key": "total", "header": "Total" }
+        { "key": "sel" },
+        { "key": "mel" },
+        { "key": "xc" },
+        { "key": "day" },
+        { "key": "night" },
+        { "key": "ifr" },
+        { "key": "simInst" },
+        { "key": "fstd" },
+        { "key": "dual" },
+        { "key": "picPicus" },
+        { "key": "sic" },
+        { "key": "instructor" },
+        { "key": "total" }
       ],
       "footerRows": [
         {

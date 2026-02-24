@@ -11,6 +11,7 @@ const _savedReportsQueriesFileName = 'saved_reports_queries.json';
 const _reportsEventTypesFileName = 'reports_event_types.json';
 const _selectedReportTemplateFileNameKey = 'selectedReportTemplateFileName';
 const _openPdfAfterSavingKey = 'openPdfAfterSaving';
+const _reportPilotInfoKey = 'reportPilotInfo';
 
 /// Public API documentation.
 final includePreviousExperienceProvider =
@@ -39,6 +40,127 @@ final openPdfAfterSavingProvider =
     NotifierProvider<OpenPdfAfterSavingNotifier, bool>(
       OpenPdfAfterSavingNotifier.new,
     );
+
+/// Public API documentation.
+final reportPilotInfoProvider =
+    NotifierProvider<ReportPilotInfoNotifier, ReportPilotInfo>(
+      ReportPilotInfoNotifier.new,
+    );
+
+/// Public API documentation.
+class ReportPilotInfo {
+  /// Public API documentation.
+  const ReportPilotInfo({
+    this.name = '',
+    this.licenceNumber = '',
+    this.address = '',
+  });
+
+  /// Public API documentation.
+  factory ReportPilotInfo.fromJson(Map<String, dynamic> json) {
+    return ReportPilotInfo(
+      name: (json['name'] ?? '').toString(),
+      licenceNumber: (json['licenceNumber'] ?? '').toString(),
+      address: (json['address'] ?? '').toString(),
+    );
+  }
+
+  /// Public API documentation.
+  final String name;
+  /// Public API documentation.
+  final String licenceNumber;
+  /// Public API documentation.
+  final String address;
+
+  /// Public API documentation.
+  ReportPilotInfo copyWith({
+    String? name,
+    String? licenceNumber,
+    String? address,
+  }) {
+    return ReportPilotInfo(
+      name: name ?? this.name,
+      licenceNumber: licenceNumber ?? this.licenceNumber,
+      address: address ?? this.address,
+    );
+  }
+
+  /// Public API documentation.
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'licenceNumber': licenceNumber,
+      'address': address,
+    };
+  }
+}
+
+/// Public API documentation.
+class ReportPilotInfoNotifier extends Notifier<ReportPilotInfo> {
+  @override
+  ReportPilotInfo build() {
+    unawaited(_load());
+    return const ReportPilotInfo();
+  }
+
+  /// Public API documentation.
+  Future<void> setValue({required ReportPilotInfo value}) async {
+    state = value;
+    await _save(value);
+  }
+
+  Future<void> _load() async {
+    try {
+      final file = await _file();
+      if (!file.existsSync()) return;
+      final raw = file.readAsStringSync();
+      final data = jsonDecode(raw);
+      if (data is! Map<String, dynamic>) return;
+      final rawPilot = data[_reportPilotInfoKey];
+      if (rawPilot is Map<String, dynamic>) {
+        state = ReportPilotInfo.fromJson(rawPilot);
+      } else if (rawPilot is Map) {
+        state = ReportPilotInfo.fromJson(
+          Map<String, dynamic>.from(rawPilot),
+        );
+      }
+    } on Object catch (_) {
+      // Keep default value.
+    }
+  }
+
+  Future<void> _save(ReportPilotInfo value) async {
+    try {
+      final file = await _file();
+      var current = <String, dynamic>{};
+      if (file.existsSync()) {
+        try {
+          final raw = file.readAsStringSync();
+          final decoded = jsonDecode(raw);
+          if (decoded is Map<String, dynamic>) {
+            current = decoded;
+          } else if (decoded is Map) {
+            current = Map<String, dynamic>.from(decoded);
+          }
+        } on Object catch (_) {
+          current = <String, dynamic>{};
+        }
+      }
+      current[_reportPilotInfoKey] = value.toJson();
+      await file.writeAsString(
+        jsonEncode(current),
+        flush: true,
+      );
+    } on Object catch (_) {
+      // Best effort persistence.
+    }
+  }
+
+  Future<File> _file() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File('${dir.path}/$_reportsPreferencesFileName');
+  }
+}
 
 /// Public API documentation.
 class IncludePreviousExperienceNotifier extends Notifier<bool> {
