@@ -1,7 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simplelog/data/database/user_settings_json.dart';
+import 'package:simplelog/state/providers/database_provider.dart';
 
 const _flightTimeFieldsVisibilityKey = 'flight_time_fields_visibility';
 
@@ -161,18 +162,30 @@ class FlightTimeFieldsVisibilityNotifier
     extends AsyncNotifier<FlightTimeFieldsVisibility> {
   @override
   Future<FlightTimeFieldsVisibility> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    return FlightTimeFieldsVisibility.fromJson(
-      prefs.getString(_flightTimeFieldsVisibilityKey),
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    return loadSettingWithLegacy<FlightTimeFieldsVisibility>(
+      store: store,
+      key: _flightTimeFieldsVisibilityKey,
+      fallback: const FlightTimeFieldsVisibility(),
+      parse: (raw) {
+        if (raw is String && raw.isNotEmpty) {
+          return FlightTimeFieldsVisibility.fromJson(raw);
+        }
+        return null;
+      },
+      encode: (value) => jsonEncode(value.toJson()),
     );
   }
 
   /// Updates and saves the current visibility preferences.
   Future<void> setValue(FlightTimeFieldsVisibility value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _flightTimeFieldsVisibilityKey,
-      jsonEncode(value.toJson()),
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    await store.patch(
+      (json) => json[_flightTimeFieldsVisibilityKey] = jsonEncode(
+        value.toJson(),
+      ),
     );
     state = AsyncData(value);
   }

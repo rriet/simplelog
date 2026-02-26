@@ -7885,6 +7885,279 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
   }
 }
 
+class $ReportTemplatesTable extends ReportTemplates
+    with TableInfo<$ReportTemplatesTable, ReportTemplate> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReportTemplatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _templateNameMeta = const VerificationMeta(
+    'templateName',
+  );
+  @override
+  late final GeneratedColumn<String> templateName = GeneratedColumn<String>(
+    'template_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _templateJsonMeta = const VerificationMeta(
+    'templateJson',
+  );
+  @override
+  late final GeneratedColumn<String> templateJson = GeneratedColumn<String>(
+    'template_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, templateName, templateJson];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'report_templates';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReportTemplate> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('template_name')) {
+      context.handle(
+        _templateNameMeta,
+        templateName.isAcceptableOrUnknown(
+          data['template_name']!,
+          _templateNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_templateNameMeta);
+    }
+    if (data.containsKey('template_json')) {
+      context.handle(
+        _templateJsonMeta,
+        templateJson.isAcceptableOrUnknown(
+          data['template_json']!,
+          _templateJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_templateJsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {templateName},
+  ];
+  @override
+  ReportTemplate map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReportTemplate(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      templateName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}template_name'],
+      )!,
+      templateJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}template_json'],
+      )!,
+    );
+  }
+
+  @override
+  $ReportTemplatesTable createAlias(String alias) {
+    return $ReportTemplatesTable(attachedDatabase, alias);
+  }
+}
+
+class ReportTemplate extends DataClass implements Insertable<ReportTemplate> {
+  /// Surrogate primary key.
+  final int id;
+
+  /// Stable template identifier, e.g. `standard` or `easa`.
+  final String templateName;
+
+  /// Full template JSON payload.
+  final String templateJson;
+  const ReportTemplate({
+    required this.id,
+    required this.templateName,
+    required this.templateJson,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['template_name'] = Variable<String>(templateName);
+    map['template_json'] = Variable<String>(templateJson);
+    return map;
+  }
+
+  ReportTemplatesCompanion toCompanion(bool nullToAbsent) {
+    return ReportTemplatesCompanion(
+      id: Value(id),
+      templateName: Value(templateName),
+      templateJson: Value(templateJson),
+    );
+  }
+
+  factory ReportTemplate.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReportTemplate(
+      id: serializer.fromJson<int>(json['id']),
+      templateName: serializer.fromJson<String>(json['templateName']),
+      templateJson: serializer.fromJson<String>(json['templateJson']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'templateName': serializer.toJson<String>(templateName),
+      'templateJson': serializer.toJson<String>(templateJson),
+    };
+  }
+
+  ReportTemplate copyWith({
+    int? id,
+    String? templateName,
+    String? templateJson,
+  }) => ReportTemplate(
+    id: id ?? this.id,
+    templateName: templateName ?? this.templateName,
+    templateJson: templateJson ?? this.templateJson,
+  );
+  ReportTemplate copyWithCompanion(ReportTemplatesCompanion data) {
+    return ReportTemplate(
+      id: data.id.present ? data.id.value : this.id,
+      templateName: data.templateName.present
+          ? data.templateName.value
+          : this.templateName,
+      templateJson: data.templateJson.present
+          ? data.templateJson.value
+          : this.templateJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReportTemplate(')
+          ..write('id: $id, ')
+          ..write('templateName: $templateName, ')
+          ..write('templateJson: $templateJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, templateName, templateJson);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReportTemplate &&
+          other.id == this.id &&
+          other.templateName == this.templateName &&
+          other.templateJson == this.templateJson);
+}
+
+class ReportTemplatesCompanion extends UpdateCompanion<ReportTemplate> {
+  final Value<int> id;
+  final Value<String> templateName;
+  final Value<String> templateJson;
+  const ReportTemplatesCompanion({
+    this.id = const Value.absent(),
+    this.templateName = const Value.absent(),
+    this.templateJson = const Value.absent(),
+  });
+  ReportTemplatesCompanion.insert({
+    this.id = const Value.absent(),
+    required String templateName,
+    required String templateJson,
+  }) : templateName = Value(templateName),
+       templateJson = Value(templateJson);
+  static Insertable<ReportTemplate> custom({
+    Expression<int>? id,
+    Expression<String>? templateName,
+    Expression<String>? templateJson,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (templateName != null) 'template_name': templateName,
+      if (templateJson != null) 'template_json': templateJson,
+    });
+  }
+
+  ReportTemplatesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? templateName,
+    Value<String>? templateJson,
+  }) {
+    return ReportTemplatesCompanion(
+      id: id ?? this.id,
+      templateName: templateName ?? this.templateName,
+      templateJson: templateJson ?? this.templateJson,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (templateName.present) {
+      map['template_name'] = Variable<String>(templateName.value);
+    }
+    if (templateJson.present) {
+      map['template_json'] = Variable<String>(templateJson.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReportTemplatesCompanion(')
+          ..write('id: $id, ')
+          ..write('templateName: $templateName, ')
+          ..write('templateJson: $templateJson')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $DutyPeriodsTable extends DutyPeriods
     with TableInfo<$DutyPeriodsTable, DutyPeriod> {
   @override
@@ -10205,6 +10478,281 @@ class SimulatorCrewAssignmentsCompanion
   }
 }
 
+class $UserProfilesTable extends UserProfiles
+    with TableInfo<$UserProfilesTable, UserProfile> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserProfilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Map<String, dynamic>, String>
+  settingsJson =
+      GeneratedColumn<String>(
+        'settings_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('{}'),
+      ).withConverter<Map<String, dynamic>>(
+        $UserProfilesTable.$convertersettingsJson,
+      );
+  static const VerificationMeta _signatureImageMeta = const VerificationMeta(
+    'signatureImage',
+  );
+  @override
+  late final GeneratedColumn<Uint8List> signatureImage =
+      GeneratedColumn<Uint8List>(
+        'signature_image',
+        aliasedName,
+        true,
+        type: DriftSqlType.blob,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [id, settingsJson, signatureImage];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'user_profiles';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UserProfile> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('signature_image')) {
+      context.handle(
+        _signatureImageMeta,
+        signatureImage.isAcceptableOrUnknown(
+          data['signature_image']!,
+          _signatureImageMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UserProfile map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserProfile(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      settingsJson: $UserProfilesTable.$convertersettingsJson.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}settings_json'],
+        )!,
+      ),
+      signatureImage: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}signature_image'],
+      ),
+    );
+  }
+
+  @override
+  $UserProfilesTable createAlias(String alias) {
+    return $UserProfilesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Map<String, dynamic>, String> $convertersettingsJson =
+      const JsonMapConverter();
+}
+
+class UserProfile extends DataClass implements Insertable<UserProfile> {
+  /// Single-row identifier (always `1`).
+  final int id;
+
+  /// User profile and preferences serialized as JSON.
+  final Map<String, dynamic> settingsJson;
+
+  /// Drawn pilot signature image (PNG bytes).
+  final Uint8List? signatureImage;
+  const UserProfile({
+    required this.id,
+    required this.settingsJson,
+    this.signatureImage,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    {
+      map['settings_json'] = Variable<String>(
+        $UserProfilesTable.$convertersettingsJson.toSql(settingsJson),
+      );
+    }
+    if (!nullToAbsent || signatureImage != null) {
+      map['signature_image'] = Variable<Uint8List>(signatureImage);
+    }
+    return map;
+  }
+
+  UserProfilesCompanion toCompanion(bool nullToAbsent) {
+    return UserProfilesCompanion(
+      id: Value(id),
+      settingsJson: Value(settingsJson),
+      signatureImage: signatureImage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(signatureImage),
+    );
+  }
+
+  factory UserProfile.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserProfile(
+      id: serializer.fromJson<int>(json['id']),
+      settingsJson: serializer.fromJson<Map<String, dynamic>>(
+        json['settingsJson'],
+      ),
+      signatureImage: serializer.fromJson<Uint8List?>(json['signatureImage']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'settingsJson': serializer.toJson<Map<String, dynamic>>(settingsJson),
+      'signatureImage': serializer.toJson<Uint8List?>(signatureImage),
+    };
+  }
+
+  UserProfile copyWith({
+    int? id,
+    Map<String, dynamic>? settingsJson,
+    Value<Uint8List?> signatureImage = const Value.absent(),
+  }) => UserProfile(
+    id: id ?? this.id,
+    settingsJson: settingsJson ?? this.settingsJson,
+    signatureImage: signatureImage.present
+        ? signatureImage.value
+        : this.signatureImage,
+  );
+  UserProfile copyWithCompanion(UserProfilesCompanion data) {
+    return UserProfile(
+      id: data.id.present ? data.id.value : this.id,
+      settingsJson: data.settingsJson.present
+          ? data.settingsJson.value
+          : this.settingsJson,
+      signatureImage: data.signatureImage.present
+          ? data.signatureImage.value
+          : this.signatureImage,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserProfile(')
+          ..write('id: $id, ')
+          ..write('settingsJson: $settingsJson, ')
+          ..write('signatureImage: $signatureImage')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, settingsJson, $driftBlobEquality.hash(signatureImage));
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserProfile &&
+          other.id == this.id &&
+          other.settingsJson == this.settingsJson &&
+          $driftBlobEquality.equals(other.signatureImage, this.signatureImage));
+}
+
+class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
+  final Value<int> id;
+  final Value<Map<String, dynamic>> settingsJson;
+  final Value<Uint8List?> signatureImage;
+  const UserProfilesCompanion({
+    this.id = const Value.absent(),
+    this.settingsJson = const Value.absent(),
+    this.signatureImage = const Value.absent(),
+  });
+  UserProfilesCompanion.insert({
+    this.id = const Value.absent(),
+    this.settingsJson = const Value.absent(),
+    this.signatureImage = const Value.absent(),
+  });
+  static Insertable<UserProfile> custom({
+    Expression<int>? id,
+    Expression<String>? settingsJson,
+    Expression<Uint8List>? signatureImage,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (settingsJson != null) 'settings_json': settingsJson,
+      if (signatureImage != null) 'signature_image': signatureImage,
+    });
+  }
+
+  UserProfilesCompanion copyWith({
+    Value<int>? id,
+    Value<Map<String, dynamic>>? settingsJson,
+    Value<Uint8List?>? signatureImage,
+  }) {
+    return UserProfilesCompanion(
+      id: id ?? this.id,
+      settingsJson: settingsJson ?? this.settingsJson,
+      signatureImage: signatureImage ?? this.signatureImage,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (settingsJson.present) {
+      map['settings_json'] = Variable<String>(
+        $UserProfilesTable.$convertersettingsJson.toSql(settingsJson.value),
+      );
+    }
+    if (signatureImage.present) {
+      map['signature_image'] = Variable<Uint8List>(signatureImage.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserProfilesCompanion(')
+          ..write('id: $id, ')
+          ..write('settingsJson: $settingsJson, ')
+          ..write('signatureImage: $signatureImage')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -10218,6 +10766,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PositioningsTable positionings = $PositioningsTable(this);
   late final $PreviousExperiencesTable previousExperiences =
       $PreviousExperiencesTable(this);
+  late final $ReportTemplatesTable reportTemplates = $ReportTemplatesTable(
+    this,
+  );
   late final $DutyPeriodsTable dutyPeriods = $DutyPeriodsTable(this);
   late final $CrewTable crew = $CrewTable(this);
   late final $FlightCrewAssignmentsTable flightCrewAssignments =
@@ -10226,6 +10777,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $SimulatorTrainingsTable(this);
   late final $SimulatorCrewAssignmentsTable simulatorCrewAssignments =
       $SimulatorCrewAssignmentsTable(this);
+  late final $UserProfilesTable userProfiles = $UserProfilesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -10240,11 +10792,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     ruleSnapshots,
     positionings,
     previousExperiences,
+    reportTemplates,
     dutyPeriods,
     crew,
     flightCrewAssignments,
     simulatorTrainings,
     simulatorCrewAssignments,
+    userProfiles,
   ];
 }
 
@@ -15722,6 +16276,172 @@ typedef $$PreviousExperiencesTableProcessedTableManager =
       PreviousExperience,
       PrefetchHooks Function({bool aircraftTypeId})
     >;
+typedef $$ReportTemplatesTableCreateCompanionBuilder =
+    ReportTemplatesCompanion Function({
+      Value<int> id,
+      required String templateName,
+      required String templateJson,
+    });
+typedef $$ReportTemplatesTableUpdateCompanionBuilder =
+    ReportTemplatesCompanion Function({
+      Value<int> id,
+      Value<String> templateName,
+      Value<String> templateJson,
+    });
+
+class $$ReportTemplatesTableFilterComposer
+    extends Composer<_$AppDatabase, $ReportTemplatesTable> {
+  $$ReportTemplatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get templateName => $composableBuilder(
+    column: $table.templateName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get templateJson => $composableBuilder(
+    column: $table.templateJson,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ReportTemplatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReportTemplatesTable> {
+  $$ReportTemplatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get templateName => $composableBuilder(
+    column: $table.templateName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get templateJson => $composableBuilder(
+    column: $table.templateJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ReportTemplatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReportTemplatesTable> {
+  $$ReportTemplatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get templateName => $composableBuilder(
+    column: $table.templateName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get templateJson => $composableBuilder(
+    column: $table.templateJson,
+    builder: (column) => column,
+  );
+}
+
+class $$ReportTemplatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReportTemplatesTable,
+          ReportTemplate,
+          $$ReportTemplatesTableFilterComposer,
+          $$ReportTemplatesTableOrderingComposer,
+          $$ReportTemplatesTableAnnotationComposer,
+          $$ReportTemplatesTableCreateCompanionBuilder,
+          $$ReportTemplatesTableUpdateCompanionBuilder,
+          (
+            ReportTemplate,
+            BaseReferences<
+              _$AppDatabase,
+              $ReportTemplatesTable,
+              ReportTemplate
+            >,
+          ),
+          ReportTemplate,
+          PrefetchHooks Function()
+        > {
+  $$ReportTemplatesTableTableManager(
+    _$AppDatabase db,
+    $ReportTemplatesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReportTemplatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReportTemplatesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReportTemplatesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> templateName = const Value.absent(),
+                Value<String> templateJson = const Value.absent(),
+              }) => ReportTemplatesCompanion(
+                id: id,
+                templateName: templateName,
+                templateJson: templateJson,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String templateName,
+                required String templateJson,
+              }) => ReportTemplatesCompanion.insert(
+                id: id,
+                templateName: templateName,
+                templateJson: templateJson,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ReportTemplatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReportTemplatesTable,
+      ReportTemplate,
+      $$ReportTemplatesTableFilterComposer,
+      $$ReportTemplatesTableOrderingComposer,
+      $$ReportTemplatesTableAnnotationComposer,
+      $$ReportTemplatesTableCreateCompanionBuilder,
+      $$ReportTemplatesTableUpdateCompanionBuilder,
+      (
+        ReportTemplate,
+        BaseReferences<_$AppDatabase, $ReportTemplatesTable, ReportTemplate>,
+      ),
+      ReportTemplate,
+      PrefetchHooks Function()
+    >;
 typedef $$DutyPeriodsTableCreateCompanionBuilder =
     DutyPeriodsCompanion Function({
       Value<int> id,
@@ -18114,6 +18834,172 @@ typedef $$SimulatorCrewAssignmentsTableProcessedTableManager =
       SimulatorCrewAssignment,
       PrefetchHooks Function({bool simulatorId, bool crewId})
     >;
+typedef $$UserProfilesTableCreateCompanionBuilder =
+    UserProfilesCompanion Function({
+      Value<int> id,
+      Value<Map<String, dynamic>> settingsJson,
+      Value<Uint8List?> signatureImage,
+    });
+typedef $$UserProfilesTableUpdateCompanionBuilder =
+    UserProfilesCompanion Function({
+      Value<int> id,
+      Value<Map<String, dynamic>> settingsJson,
+      Value<Uint8List?> signatureImage,
+    });
+
+class $$UserProfilesTableFilterComposer
+    extends Composer<_$AppDatabase, $UserProfilesTable> {
+  $$UserProfilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<
+    Map<String, dynamic>,
+    Map<String, dynamic>,
+    String
+  >
+  get settingsJson => $composableBuilder(
+    column: $table.settingsJson,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get signatureImage => $composableBuilder(
+    column: $table.signatureImage,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UserProfilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserProfilesTable> {
+  $$UserProfilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get settingsJson => $composableBuilder(
+    column: $table.settingsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<Uint8List> get signatureImage => $composableBuilder(
+    column: $table.signatureImage,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UserProfilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserProfilesTable> {
+  $$UserProfilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Map<String, dynamic>, String>
+  get settingsJson => $composableBuilder(
+    column: $table.settingsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<Uint8List> get signatureImage => $composableBuilder(
+    column: $table.signatureImage,
+    builder: (column) => column,
+  );
+}
+
+class $$UserProfilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UserProfilesTable,
+          UserProfile,
+          $$UserProfilesTableFilterComposer,
+          $$UserProfilesTableOrderingComposer,
+          $$UserProfilesTableAnnotationComposer,
+          $$UserProfilesTableCreateCompanionBuilder,
+          $$UserProfilesTableUpdateCompanionBuilder,
+          (
+            UserProfile,
+            BaseReferences<_$AppDatabase, $UserProfilesTable, UserProfile>,
+          ),
+          UserProfile,
+          PrefetchHooks Function()
+        > {
+  $$UserProfilesTableTableManager(_$AppDatabase db, $UserProfilesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserProfilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UserProfilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UserProfilesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<Map<String, dynamic>> settingsJson = const Value.absent(),
+                Value<Uint8List?> signatureImage = const Value.absent(),
+              }) => UserProfilesCompanion(
+                id: id,
+                settingsJson: settingsJson,
+                signatureImage: signatureImage,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<Map<String, dynamic>> settingsJson = const Value.absent(),
+                Value<Uint8List?> signatureImage = const Value.absent(),
+              }) => UserProfilesCompanion.insert(
+                id: id,
+                settingsJson: settingsJson,
+                signatureImage: signatureImage,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UserProfilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UserProfilesTable,
+      UserProfile,
+      $$UserProfilesTableFilterComposer,
+      $$UserProfilesTableOrderingComposer,
+      $$UserProfilesTableAnnotationComposer,
+      $$UserProfilesTableCreateCompanionBuilder,
+      $$UserProfilesTableUpdateCompanionBuilder,
+      (
+        UserProfile,
+        BaseReferences<_$AppDatabase, $UserProfilesTable, UserProfile>,
+      ),
+      UserProfile,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -18136,6 +19022,8 @@ class $AppDatabaseManager {
       $$PositioningsTableTableManager(_db, _db.positionings);
   $$PreviousExperiencesTableTableManager get previousExperiences =>
       $$PreviousExperiencesTableTableManager(_db, _db.previousExperiences);
+  $$ReportTemplatesTableTableManager get reportTemplates =>
+      $$ReportTemplatesTableTableManager(_db, _db.reportTemplates);
   $$DutyPeriodsTableTableManager get dutyPeriods =>
       $$DutyPeriodsTableTableManager(_db, _db.dutyPeriods);
   $$CrewTableTableManager get crew => $$CrewTableTableManager(_db, _db.crew);
@@ -18148,4 +19036,6 @@ class $AppDatabaseManager {
         _db,
         _db.simulatorCrewAssignments,
       );
+  $$UserProfilesTableTableManager get userProfiles =>
+      $$UserProfilesTableTableManager(_db, _db.userProfiles);
 }

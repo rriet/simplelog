@@ -1,7 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simplelog/data/database/user_settings_json.dart';
+import 'package:simplelog/state/providers/database_provider.dart';
 
 const _logTkLdKey = 'flight_form_log_takeoff_landing';
 const _timeChecksKey = 'flight_form_time_checks';
@@ -159,14 +160,22 @@ class FlightFormTimeChecks {
 class FlightFormTakeoffLandingLogNotifier extends AsyncNotifier<bool> {
   @override
   Future<bool> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_logTkLdKey) ?? true;
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    return loadSettingWithLegacy<bool>(
+      store: store,
+      key: _logTkLdKey,
+      fallback: true,
+      parse: (raw) => raw is bool ? raw : null,
+      encode: (value) => value,
+    );
   }
 
   /// Saves the takeoff/landing logging flag.
   Future<void> setValue({required bool enabled}) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_logTkLdKey, enabled);
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    await store.patch((json) => json[_logTkLdKey] = enabled);
     state = AsyncData(enabled);
   }
 }
@@ -175,14 +184,29 @@ class FlightFormTakeoffLandingLogNotifier extends AsyncNotifier<bool> {
 class FlightFormTimeChecksNotifier extends AsyncNotifier<FlightFormTimeChecks> {
   @override
   Future<FlightFormTimeChecks> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    return FlightFormTimeChecks.fromJson(prefs.getString(_timeChecksKey));
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    return loadSettingWithLegacy<FlightFormTimeChecks>(
+      store: store,
+      key: _timeChecksKey,
+      fallback: const FlightFormTimeChecks(),
+      parse: (raw) {
+        if (raw is String && raw.isNotEmpty) {
+          return FlightFormTimeChecks.fromJson(raw);
+        }
+        return null;
+      },
+      encode: (value) => jsonEncode(value.toJson()),
+    );
   }
 
   /// Saves checkbox defaults and updates state.
   Future<void> setValue(FlightFormTimeChecks value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_timeChecksKey, jsonEncode(value.toJson()));
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    await store.patch(
+      (json) => json[_timeChecksKey] = jsonEncode(value.toJson()),
+    );
     state = AsyncData(value);
   }
 }

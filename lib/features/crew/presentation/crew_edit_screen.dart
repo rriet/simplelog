@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
+import 'package:croppy/croppy.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
@@ -422,58 +423,45 @@ class _PhotoPickRouteState extends State<_PhotoPickRoute> {
     }
 
     final sourcePath = await _prepareSourcePath(file.path);
-    if (widget.source == ImageSource.camera &&
-        defaultTargetPlatform == TargetPlatform.iOS) {
-      final bytes = await File(sourcePath).readAsBytes();
-      if (!mounted) {
-        return;
-      }
-      Navigator.of(context).pop(bytes);
+    if (!mounted) {
       return;
     }
-    CroppedFile? cropped;
     try {
-      cropped = await ImageCropper()
-          .cropImage(
-            sourcePath: sourcePath,
-            uiSettings: [
-              AndroidUiSettings(
-                toolbarTitle: widget.title,
-                lockAspectRatio: false,
-              ),
-              IOSUiSettings(title: widget.title),
-            ],
-          )
-          .timeout(const Duration(seconds: 30));
-    } on TimeoutException {
-      final bytes = await File(sourcePath).readAsBytes();
+      final result = await showAdaptiveImageCropper(
+        context,
+        imageProvider: FileImage(File(sourcePath)),
+        allowedAspectRatios: const [
+          null,
+          CropAspectRatio(width: 1, height: 1),
+          CropAspectRatio(width: 4, height: 3),
+          CropAspectRatio(width: 16, height: 9),
+        ],
+      );
       if (!mounted) {
         return;
       }
-      Navigator.of(context).pop(bytes);
-      return;
+      if (result == null) {
+        Navigator.of(context).pop();
+        return;
+      }
+      final byteData = await result.uiImage.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      result.uiImage.dispose();
+      if (!mounted) {
+        return;
+      }
+      if (byteData == null) {
+        Navigator.of(context).pop();
+        return;
+      }
+      Navigator.of(context).pop(byteData.buffer.asUint8List());
     } on Object catch (_) {
       if (!mounted) {
         return;
       }
       Navigator.of(context).pop();
-      return;
     }
-
-    if (!mounted) {
-      return;
-    }
-
-    if (cropped == null) {
-      Navigator.of(context).pop();
-      return;
-    }
-
-    final bytes = await cropped.readAsBytes();
-    if (!mounted) {
-      return;
-    }
-    Navigator.of(context).pop(bytes);
   }
 
   Future<String> _prepareSourcePath(String path) async {

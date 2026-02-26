@@ -1,17 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/reports_models.dart';
+import 'package:simplelog/state/providers/database_provider.dart';
 
 const _reportsPreferencesFileName = 'reports_preferences.json';
 const _savedReportsQueriesFileName = 'saved_reports_queries.json';
 const _reportsEventTypesFileName = 'reports_event_types.json';
 const _selectedReportTemplateFileNameKey = 'selectedReportTemplateFileName';
 const _openPdfAfterSavingKey = 'openPdfAfterSaving';
-const _reportPilotInfoKey = 'reportPilotInfo';
 
 /// Whether reports should include previous experience totals.
 final includePreviousExperienceProvider =
@@ -48,55 +51,61 @@ class ReportPilotInfo {
   /// Creates pilot information with optional default‑empty values.
   const ReportPilotInfo({
     this.name = '',
-    this.licenceNumber = '',
+    this.licenses = '',
     this.address = '',
+    this.signatureImage,
   });
 
-  /// Builds a [ReportPilotInfo] instance from a JSON map.
-  factory ReportPilotInfo.fromJson(Map<String, dynamic> json) {
+  /// Builds a [ReportPilotInfo] instance from a database row.
+  factory ReportPilotInfo.fromDatabaseRow(UserProfile row) {
+    final settings = row.settingsJson;
     return ReportPilotInfo(
-      name: (json['name'] ?? '').toString(),
-      licenceNumber: (json['licenceNumber'] ?? '').toString(),
-      address: (json['address'] ?? '').toString(),
+      name: (settings['name'] ?? '').toString(),
+      licenses: (settings['licenses'] ?? '').toString(),
+      address: (settings['address'] ?? '').toString(),
+      signatureImage: row.signatureImage,
     );
   }
 
   /// Pilot name printed on reports.
   final String name;
 
-  /// Licence number printed on reports.
-  final String licenceNumber;
+  /// Licences printed on reports.
+  final String licenses;
 
   /// Postal address printed on reports.
   final String address;
 
+  /// Optional signature image bytes (PNG).
+  final Uint8List? signatureImage;
+
   /// Returns a copy with some fields replaced.
   ReportPilotInfo copyWith({
     String? name,
-    String? licenceNumber,
+    String? licenses,
     String? address,
+    Uint8List? signatureImage,
+    bool clearSignature = false,
   }) {
     return ReportPilotInfo(
       name: name ?? this.name,
-      licenceNumber: licenceNumber ?? this.licenceNumber,
+      licenses: licenses ?? this.licenses,
       address: address ?? this.address,
+      signatureImage: clearSignature
+          ? null
+          : (signatureImage ?? this.signatureImage),
     );
   }
 
-  /// Serializes the pilot info to JSON.
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'licenceNumber': licenceNumber,
-      'address': address,
-    };
-  }
+  /// Backwards-compatible alias for old key names.
+  String get licenceNumber => licenses;
 }
 
 /// Persists and exposes [ReportPilotInfo] via Riverpod.
 class ReportPilotInfoNotifier extends Notifier<ReportPilotInfo> {
   @override
   ReportPilotInfo build() {
+    unawaited(_ReportPilotInfoMigrationHelper.migrateIfNeeded(ref));
     unawaited(_load());
     return const ReportPilotInfo();
   }
@@ -104,57 +113,108 @@ class ReportPilotInfoNotifier extends Notifier<ReportPilotInfo> {
   /// Updates the current state and writes it to disk.
   Future<void> setValue({required ReportPilotInfo value}) async {
     state = value;
-    await _save(value);
+    await _saveToDatabase(value);
+  }
+
+  /// Updates only the stored signature image.
+  Future<void> setSignature(Uint8List? imageBytes) async {
+    final next = state.copyWith(
+      signatureImage: imageBytes,
+      clearSignature: imageBytes == null,
+    );
+    state = next;
+    await _saveToDatabase(next);
   }
 
   Future<void> _load() async {
     try {
-      final file = await _file();
-      if (!file.existsSync()) return;
-      final raw = file.readAsStringSync();
-      final data = jsonDecode(raw);
-      if (data is! Map<String, dynamic>) return;
-      final rawPilot = data[_reportPilotInfoKey];
-      if (rawPilot is Map<String, dynamic>) {
-        state = ReportPilotInfo.fromJson(rawPilot);
-      } else if (rawPilot is Map) {
-        state = ReportPilotInfo.fromJson(
-          Map<String, dynamic>.from(rawPilot),
-        );
+      final db = ref.read(databaseProvider);
+      final row = await db.select(db.userProfiles).getSingleOrNull();
+      if (row != null) {
+        state = ReportPilotInfo.fromDatabaseRow(row);
       }
     } on Object catch (_) {
       // Keep default value.
     }
   }
 
-  Future<void> _save(ReportPilotInfo value) async {
+  Future<void> _saveToDatabase(ReportPilotInfo value) async {
+    try {
+      final db = ref.read(databaseProvider);
+      final existing = await db.select(db.userProfiles).getSingleOrNull();
+      final existingSettings = existing?.settingsJson ?? <String, dynamic>{};
+      final mergedSettings = Map<String, dynamic>.from(existingSettings)
+        ..['name'] = value.name
+        ..['address'] = value.address
+        ..['licenses'] = value.licenses;
+      await db
+          .into(db.userProfiles)
+          .insertOnConflictUpdate(
+            UserProfilesCompanion(
+              id: const Value(1),
+              settingsJson: Value(mergedSettings),
+              signatureImage: Value(value.signatureImage),
+            ),
+          );
+    } on Object catch (_) {
+      // Best effort persistence.
+    }
+  }
+}
+
+/// Legacy in-file migration to move old pilot info prefs into database once.
+class _ReportPilotInfoMigrationHelper {
+  const _ReportPilotInfoMigrationHelper._();
+
+  static Future<void> migrateIfNeeded(Ref ref) async {
     try {
       final file = await _file();
-      var current = <String, dynamic>{};
-      if (file.existsSync()) {
-        try {
-          final raw = file.readAsStringSync();
-          final decoded = jsonDecode(raw);
-          if (decoded is Map<String, dynamic>) {
-            current = decoded;
-          } else if (decoded is Map) {
-            current = Map<String, dynamic>.from(decoded);
-          }
-        } on Object catch (_) {
-          current = <String, dynamic>{};
-        }
+      if (!file.existsSync()) {
+        return;
       }
-      current[_reportPilotInfoKey] = value.toJson();
-      await file.writeAsString(
-        jsonEncode(current),
-        flush: true,
+      final raw = file.readAsStringSync();
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) {
+        return;
+      }
+      final data = Map<String, dynamic>.from(decoded);
+      final rawPilot = data['reportPilotInfo'];
+      if (rawPilot is! Map) {
+        return;
+      }
+      final pilot = Map<String, dynamic>.from(rawPilot);
+      final migrated = ReportPilotInfo(
+        name: (pilot['name'] ?? '').toString(),
+        licenses: (pilot['licenceNumber'] ?? '').toString(),
+        address: (pilot['address'] ?? '').toString(),
       );
+      final db = ref.read(databaseProvider);
+      final existing = await db.select(db.userProfiles).getSingleOrNull();
+      final existingSettings = existing?.settingsJson ?? <String, dynamic>{};
+      if (existing == null ||
+          ((existingSettings['name'] ?? '').toString().isEmpty &&
+              (existingSettings['address'] ?? '').toString().isEmpty &&
+              (existingSettings['licenses'] ?? '').toString().isEmpty)) {
+        await db
+            .into(db.userProfiles)
+            .insertOnConflictUpdate(
+              UserProfilesCompanion(
+                id: const Value(1),
+                settingsJson: Value(<String, dynamic>{
+                  ...existingSettings,
+                  'name': migrated.name,
+                  'address': migrated.address,
+                  'licenses': migrated.licenses,
+                }),
+              ),
+            );
+      }
     } on Object catch (_) {
       // Best effort persistence.
     }
   }
 
-  Future<File> _file() async {
+  static Future<File> _file() async {
     final dir = await getApplicationDocumentsDirectory();
     return File('${dir.path}/$_reportsPreferencesFileName');
   }

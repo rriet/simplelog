@@ -1,9 +1,9 @@
 {
-  "displayName": "Standard - Jeppesen",
   "rowsPerPage": 27,
   "forceLandscape": true,
   "defaultPageSize": "letter",
-  "rowHeight": 11,
+  "rowHeight": 16,
+  "alternateRowBackgroundColor": "#E6E8EB",
   "coverPage": {
     "enabled": true,
     "title": "Pilot Logbook Summary",
@@ -14,11 +14,18 @@
         "columns": 2,
         "items": [
           { "label": "Name", "valueKey": "pilot.name" },
-          { "label": "Licence number", "valueKey": "pilot.licenceNumber" },
+          { "label": "Licenses", "valueKey": "pilot.licenses" },
           { "label": "Address", "valueKey": "pilot.address" },
           { "label": "From", "valueKey": "report.fromDate" },
           { "label": "To", "valueKey": "report.toDate" }
         ]
+      },
+      {
+        "type": "signature",
+        "title": "Signature",
+        "valueKey": "pilot.signatureImage",
+        "width": 220,
+        "height": 90
       }
     ]
   },
@@ -31,34 +38,50 @@
     {
       "pageSuffix": "A",
       "header": [
-        [
-          { "text": "Date", "weight": "bold" },
-          { "text": "Model", "weight": "bold" },
-          { "text": "Reg", "weight": "bold" },
-          { "text": "From", "weight": "bold" },
-          { "text": "To", "weight": "bold" },
-          { "text": "Remarks", "weight": "bold", "align": "TopLeft" },
-          { "text": "APP", "weight": "bold" },
-          { "text": "LDG", "weight": "bold" },
-          { "text": "XC", "weight": "bold" }
-        ]
+        {
+          "rowHeight": 14,
+          "cells": [
+            { "text": "DATE\n(DD/MM/YYYY)", "vspan": 2, "weight": "bold" },
+            { "text": "AIRCRAFT\nMAKE AND MODEL", "vspan": 2, "weight": "bold" },
+            { "text": "AIRCRAFT\nIDENT", "vspan": 2, "weight": "bold" },
+            {
+              "text": "POINTS OF DEPARTURE AND ARRIVAL",
+              "hspan": 2,
+              "weight": "bold"
+            },
+            {
+              "text": "REMARKS, PROCEDURES, MANEUVERS",
+              "vspan": 2,
+              "weight": "bold"
+            },
+            { "text": "NO.\nINSTR.\nAPP.", "vspan": 2, "weight": "bold" },
+            { "text": "NO.\nLDG.", "vspan": 2, "weight": "bold" }
+          ]
+        },
+        {
+          "rowHeight": 12,
+          "cells": [
+            { "text": "FROM", "weight": "bold" },
+            { "text": "TO", "weight": "bold" }
+          ]
+        }
       ],
       "columns": [
-        { "key": "date", "width": 1.1 },
-        { "key": "aircraftModel", "width": 1.2 },
-        { "key": "aircraftRegistration", "width": 1.1 },
-        { "key": "fromIcao", "width": 0.9 },
-        { "key": "toIcao", "width": 0.9 },
-        { "key": "remarks", "width": 2.6, "alignment": "left" },
-        { "key": "ifrApproaches", "width": 0.8 },
-        { "key": "landingsTotal", "width": 0.8 },
-        { "key": "xc", "width": 0.9 }
+        { "key": "entryDate", "width": 1.0 },
+        { "key": "entryType", "width": 1.2 },
+        { "key": "entryRegistration", "width": 1.25 },
+        { "key": "fromIcao", "width": 1.25 },
+        { "key": "toIcao", "width": 1.25 },
+        { "key": "entryRemarks", "width": 5.5, "alignment": "left" },
+        { "key": "ifrApproaches", "width": 0.75 },
+        { "key": "landingsTotal", "width": 0.75 }
       ],
       "footerRows": [
         {
           "labelToken": "pageTotal",
           "source": "pageTotals",
           "values": {
+            "ifrApproaches": "ifrApproaches",
             "landingsTotal": "landings"
           }
         },
@@ -66,6 +89,7 @@
           "labelToken": "amountForward",
           "source": "totalsBefore",
           "values": {
+            "ifrApproaches": "ifrApproaches",
             "landingsTotal": "landings"
           }
         },
@@ -73,6 +97,7 @@
           "labelToken": "totalToDate",
           "source": "totalsAfter",
           "values": {
+            "ifrApproaches": "ifrApproaches",
             "landingsTotal": "landings"
           }
         }
@@ -81,50 +106,47 @@
     {
       "pageSuffix": "B",
       "header": [
-        [
-          {
-            "text": "PILOT FUNCTION TIME",
-            "hspan": 9,
-            "align": "TopCenter",
-            "weight": "bold"
-          },
-          {
-            "text": "TOTAL",
-            "hspan": 4,
-            "align": "TopCenter",
-            "weight": "bold"
-          }
-        ],
-        [
-          { "text": "SEL", "weight": "bold" },
-          { "text": "MEL", "weight": "bold" },
-          { "text": "XC", "weight": "bold" },
-          { "text": "Day", "weight": "bold" },
-          { "text": "Night", "weight": "bold" },
-          { "text": "IFR", "weight": "bold" },
-          { "text": "Sim Inst", "weight": "bold" },
-          { "text": "FSTD", "weight": "bold" },
-          { "text": "Dual", "weight": "bold" },
-          { "text": "PIC+US", "weight": "bold" },
-          { "text": "SIC", "weight": "bold" },
-          { "text": "Instr", "weight": "bold" },
-          { "text": "Total", "weight": "bold" }
-        ]
+        {
+          "rowHeight": 10,
+          "cells": [
+            { "text": "AIRCRAFT CATEGORY", "hspan": 2, "weight": "bold" },
+            { "text": "CROSS-\nCOUNTRY", "vspan": 2, "weight": "bold" },
+            { "text": "CONDITIONS OF FLIGHT", "hspan": 5, "weight": "bold" },
+            { "text": "TYPE OF PILOTING TIME", "hspan": 4, "weight": "bold" },
+            { "text": "TOTAL\nDURATION\nOF FLIGHT", "vspan": 2, "weight": "bold" }
+          ]
+        },
+        {
+          "rowHeight": 16,
+          "cells": [
+            { "text": "AIRPLANE\nSEL", "weight": "bold" },
+            { "text": "AIRPLANE\nMEL", "weight": "bold" },
+            { "text": "DAY", "weight": "bold" },
+            { "text": "NIGHT", "weight": "bold" },
+            { "text": "ACTUAL\nINSTRUMENT", "weight": "bold" },
+            { "text": "SIMULATED\nINSTRUMENT", "weight": "bold" },
+            { "text": "SIMULATOR", "weight": "bold" },
+            { "text": "DUAL\nRECEIVED", "weight": "bold" },
+            { "text": "PILOT-IN-\nCOMMAND", "weight": "bold" },
+            { "text": "SECOND-IN-\nCOMMAND", "weight": "bold" },
+            { "text": "FLIGHT\nINSTRUCTOR", "weight": "bold" }
+          ]
+        }
       ],
       "columns": [
-        { "key": "sel" },
-        { "key": "mel" },
-        { "key": "xc" },
-        { "key": "day" },
-        { "key": "night" },
-        { "key": "ifr" },
-        { "key": "simInst" },
-        { "key": "fstd" },
-        { "key": "dual" },
-        { "key": "picPicus" },
-        { "key": "sic" },
-        { "key": "instructor" },
-        { "key": "total" }
+        { "key": "sel", "width": 0.9 },
+        { "key": "mel", "width": 0.9 },
+        { "key": "xc", "width": 0.9 },
+        { "key": "day", "width": 0.9 },
+        { "key": "night", "width": 0.9 },
+        { "key": "ifr", "width": 0.9 },
+        { "key": "simInst", "width": 0.9 },
+        { "key": "fstd", "width": 0.9 },
+        { "key": "dual", "width": 0.9 },
+        { "key": "pic", "width": 0.9 },
+        { "key": "sic", "width": 0.9 },
+        { "key": "instructor", "width": 0.9 },
+        { "key": "total", "width": 0.9 }
       ],
       "footerRows": [
         {
@@ -140,7 +162,7 @@
             "simInst": "simInst",
             "fstd": "fstd",
             "dual": "dual",
-            "picPicus": "picPicus",
+            "pic": "pic",
             "sic": "sic",
             "instructor": "instructor",
             "total": "total"
@@ -159,7 +181,7 @@
             "simInst": "simInst",
             "fstd": "fstd",
             "dual": "dual",
-            "picPicus": "picPicus",
+            "pic": "pic",
             "sic": "sic",
             "instructor": "instructor",
             "total": "total"
@@ -178,7 +200,7 @@
             "simInst": "simInst",
             "fstd": "fstd",
             "dual": "dual",
-            "picPicus": "picPicus",
+            "pic": "pic",
             "sic": "sic",
             "instructor": "instructor",
             "total": "total"

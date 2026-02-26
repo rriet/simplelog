@@ -3,6 +3,7 @@ import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/import/airport_seed_importer.dart';
 import 'package:simplelog/data/import/crew_seed_importer.dart';
 import 'package:simplelog/data/import/dashboard_rules_seed_importer.dart';
+import 'package:simplelog/data/import/report_templates_seed_importer.dart';
 
 /// Seeds initial app data only when the whole database is effectively empty.
 ///
@@ -11,7 +12,8 @@ import 'package:simplelog/data/import/dashboard_rules_seed_importer.dart';
 class InitialDataBootstrapper {
   /// Public API documentation.
   const InitialDataBootstrapper();
-/// Public API documentation.
+
+  /// Public API documentation.
 
   /// Public API documentation.
   Future<void> bootstrapIfDatabaseEmpty(AppDatabase db) async {
@@ -23,11 +25,14 @@ class InitialDataBootstrapper {
     const airportImporter = AirportSeedImporter();
     await airportImporter.importIfEmpty(db);
 
+    const templatesImporter = ReportTemplatesSeedImporter();
+    await templatesImporter.importIfEmpty(db);
+
     const crewImporter = CrewSeedImporter();
     await crewImporter.importIfEmpty(db);
 
     // If DB is empty, rules should be seeded regardless of stale prefs.
-    await DashboardRulesSeedImporter.clearSeedFlag();
+    await DashboardRulesSeedImporter.clearSeedFlag(db);
     const dashboardRulesImporter = DashboardRulesSeedImporter();
     await dashboardRulesImporter.importOnFirstOpen(db);
   }

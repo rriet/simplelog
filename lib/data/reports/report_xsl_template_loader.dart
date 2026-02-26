@@ -1,14 +1,32 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart';
 import 'package:flutter/services.dart';
+import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/import/report_templates_seed_importer.dart';
 import 'package:simplelog/data/models/report_pdf_models.dart';
 
 /// Loads PDF report templates from JSON assets in `assets/reports/templates`.
 class ReportPdfTemplateLoader {
+  /// Creates a loader that reads report templates from local database.
+  const ReportPdfTemplateLoader(this.db);
+
+  /// Application database used to load persisted templates.
+  final AppDatabase db;
+
   static const _indexAssetPath = 'assets/reports/templates/index.json';
 
   /// Loads all templates listed in the index file.
   Future<List<ReportPdfTemplate>> load() async {
+    const seedImporter = ReportTemplatesSeedImporter();
+    await seedImporter.importIfEmpty(db);
+
+    final fromDatabase = await _loadFromDatabase();
+    if (fromDatabase.isNotEmpty) {
+      return fromDatabase;
+    }
+
+    // Fallback path if DB rows are empty/corrupted.
     final indexRaw = await rootBundle.loadString(_indexAssetPath);
     final indexJson = jsonDecode(indexRaw);
     if (indexJson is! Map<String, dynamic>) {
@@ -24,12 +42,38 @@ class ReportPdfTemplateLoader {
       if (item is! Map<String, dynamic>) continue;
       final fileName = (item['fileName'] ?? '').toString().trim();
       if (fileName.isEmpty) continue;
-      templates.add(await _loadTemplate(fileName));
+      templates.add(await _loadTemplateFromAssets(fileName));
     }
     return templates;
   }
 
-  Future<ReportPdfTemplate> _loadTemplate(String fileName) async {
+  Future<List<ReportPdfTemplate>> _loadFromDatabase() async {
+    final rows = await (db.select(db.reportTemplates)
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.templateName),
+          ]))
+        .get();
+    final templates = <ReportPdfTemplate>[];
+    for (final row in rows) {
+      final fileName = row.templateName.trim();
+      final raw = row.templateJson;
+      if (fileName.isEmpty || raw.trim().isEmpty) {
+        continue;
+      }
+      try {
+        final json = jsonDecode(raw);
+        if (json is! Map<String, dynamic>) {
+          continue;
+        }
+        templates.add(_parseTemplate(fileName, json));
+      } on Object {
+        continue;
+      }
+    }
+    return templates;
+  }
+
+  Future<ReportPdfTemplate> _loadTemplateFromAssets(String fileName) async {
     final raw = await rootBundle.loadString(
       'assets/reports/templates/$fileName.json',
     );
@@ -37,7 +81,10 @@ class ReportPdfTemplateLoader {
     if (json is! Map<String, dynamic>) {
       throw FormatException('Template $fileName is invalid.');
     }
+    return _parseTemplate(fileName, json);
+  }
 
+  ReportPdfTemplate _parseTemplate(String fileName, Map<String, dynamic> json) {
     final rowsPerPage = (json['rowsPerPage'] as num?)?.toInt() ?? 26;
     final defaultPageSize = _parsePageSize(json['defaultPageSize']?.toString());
     final rowHeight = (json['rowHeight'] as num?)?.toDouble() ?? 11;
@@ -48,12 +95,14 @@ class ReportPdfTemplateLoader {
 
     return ReportPdfTemplate(
       fileName: fileName,
-      displayName: (json['displayName'] ?? fileName).toString(),
+      displayName: fileName,
       rowsPerPage: rowsPerPage <= 0 ? 26 : rowsPerPage,
       coverPage: _parseCoverPage(json['coverPage']),
       forceLandscape: json['forceLandscape'] == true,
       defaultPageSize: defaultPageSize,
       rowHeight: rowHeight <= 0 ? 11 : rowHeight,
+      alternateRowBackgroundColorHex: json['alternateRowBackgroundColor']
+          ?.toString(),
       labels: _parseLabels(json['labels']),
       tables: tablesJson
           .whereType<Map<String, dynamic>>()
@@ -103,6 +152,8 @@ class ReportPdfTemplateLoader {
       columns: (json['columns'] as num?)?.toInt() ?? 1,
       items: items,
       valueKey: json['valueKey']?.toString(),
+      width: (json['width'] as num?)?.toDouble(),
+      height: (json['height'] as num?)?.toDouble(),
     );
   }
 
@@ -110,6 +161,8 @@ class ReportPdfTemplateLoader {
     switch ((raw ?? '').toLowerCase()) {
       case 'multiline':
         return ReportPdfCoverBlockType.multiline;
+      case 'signature':
+        return ReportPdfCoverBlockType.signature;
       case 'kvgrid':
       default:
         return ReportPdfCoverBlockType.kvGrid;
@@ -331,8 +384,10 @@ class ReportPdfTemplateLoader {
         return ReportPdfPageSize.letter;
     }
   }
-
 }
 
 /// Legacy alias kept for backwards compatibility with older code.
-class ReportXslTemplateLoader extends ReportPdfTemplateLoader {}
+class ReportXslTemplateLoader extends ReportPdfTemplateLoader {
+  /// Creates the legacy loader alias.
+  const ReportXslTemplateLoader(super.db);
+}

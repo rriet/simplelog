@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
+import 'package:simplelog/data/database/user_settings_json.dart';
+import 'package:simplelog/state/providers/database_provider.dart';
 
 const _defaultCrewPositionKey = 'simulator_default_crew_position';
 
@@ -8,16 +9,30 @@ const _defaultCrewPositionKey = 'simulator_default_crew_position';
 class SimulatorDefaultCrewPositionNotifier extends AsyncNotifier<CrewPosition> {
   @override
   Future<CrewPosition> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_defaultCrewPositionKey);
-    return _normalizeDefaultPosition(_parseCrewPosition(raw));
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    return loadSettingWithLegacy<CrewPosition>(
+      store: store,
+      key: _defaultCrewPositionKey,
+      fallback: _normalizeDefaultPosition(null),
+      parse: (raw) {
+        if (raw is String && raw.isNotEmpty) {
+          return _normalizeDefaultPosition(_parseCrewPosition(raw));
+        }
+        return null;
+      },
+      encode: (value) => value.name,
+    );
   }
 
   /// Updates and saves the default simulator crew position.
   Future<void> setPosition(CrewPosition position) async {
     final normalized = _normalizeDefaultPosition(position);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_defaultCrewPositionKey, normalized.name);
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    await store.patch(
+      (json) => json[_defaultCrewPositionKey] = normalized.name,
+    );
     state = AsyncData(normalized);
   }
 }

@@ -1,6 +1,5 @@
 {
-  "displayName": "EASA",
-  "rowsPerPage": 26,
+  "rowsPerPage": 20,
   "forceLandscape": true,
   "defaultPageSize": "a4",
   "rowHeight": 17,
@@ -14,11 +13,18 @@
         "columns": 1,
         "items": [
           { "label": "Name", "valueKey": "pilot.name" },
-          { "label": "Licence number", "valueKey": "pilot.licenceNumber" },
+          { "label": "Licenses", "valueKey": "pilot.licenses" },
           { "label": "Address", "valueKey": "pilot.address" },
           { "label": "From", "valueKey": "report.fromDate" },
           { "label": "To", "valueKey": "report.toDate" }
         ]
+      },
+      {
+        "type": "signature",
+        "title": "Signature",
+        "valueKey": "pilot.signatureImage",
+        "width": 220,
+        "height": 90
       }
     ]
   },
@@ -44,36 +50,38 @@
           { "text": "8", "hspan": 4}
         ]
       },
-        
       {
-        "rowHeight": 18,
+        "rowHeight": 10,
         "cells":[
-          { "text": "Date", "vspan": 2, "weight": "bold" },
-          { "text": "Departure", "hspan": 2, "weight": "bold" },
-          { "text": "Arrival", "hspan": 2, "weight": "bold" },
-          { "text": "Aircraft", "hspan": 2, "weight": "bold" },
-          { "text": "Single Pilot Time", "hspan": 2, "weight": "bold" },
-          { "text": "Multi-Pilot\nTime", "vspan": 2, "weight": "bold" },
+          { "text": "DATE", "vspan": 2, "weight": "bold" },
+          { "text": "DEPARTURE", "hspan": 2, "weight": "bold" },
+          { "text": "ARRIVAL", "hspan": 2, "weight": "bold" },
+          { "text": "AIRCRAFT", "hspan": 2, "weight": "bold" },
+          { "text": "SINGLE PILOT TIME", "hspan": 2, "weight": "bold" },
+          { "text": "MULTI-PILOT\nTIME", "vspan": 2, "weight": "bold" },
           { "text": "TOTAL TIME\nOF FLIGHT", "vspan": 2, "weight": "bold" },
-          { "text": "TakeOffs", "hspan": 2, "weight": "bold" },
-          { "text": "Landings", "hspan": 2, "weight": "bold" }
+          { "text": "TAKEOFFS", "hspan": 2, "weight": "bold" },
+          { "text": "LANDINGS", "hspan": 2, "weight": "bold" }
         ]
       },
-        [
-          { "text": "Place", "weight": "bold" },
-          { "text": "Time", "weight": "bold" },
-          { "text": "Place", "weight": "bold" },
-          { "text": "Time", "weight": "bold" },
+      {
+        "rowHeight": 30,
+        "cells":[
+          { "text": "PLACE", "weight": "bold" },
+          { "text": "TIME", "weight": "bold" },
+          { "text": "PLACE", "weight": "bold" },
+          { "text": "TIME", "weight": "bold" },
           { "text": "MAKE, MODEL,\nVARIANT ", "weight": "bold" },
           { "text": "REGISTRATION", "weight": "bold" },
           { "text": "SEL", "weight": "bold" },
           { "text": "MEL", "weight": "bold" },
-          { "text": "D\nA\nY", "weight": "bold" },
-          { "text": "N\nI\nG\nH\nT", "weight": "bold" },
-          { "text": "D\nA\nY", "weight": "bold" },
-          { "text": "N\nI\nG\nH\nT", "weight": "bold" }
+          { "text": "D\nA\nY", "weight": "bold", "align": "center" },
+          { "text": "N\nI\nG\nH\nT", "weight": "bold", "align": "center" },
+          { "text": "D\nA\nY", "weight": "bold", "align": "center" },
+          { "text": "N\nI\nG\nH\nT", "weight": "bold", "align": "center" }
         ]
-      ],
+      }
+    ],
       "columns": [
   { "key": "date", "width": 1.0 },
 
@@ -154,40 +162,62 @@
     {
       "pageSuffix": "B",
       "header": [
-        [
-          { 
-            "text": "Night",
-            "vspan": 2,
-            "weight": "bold" 
-          },
-          {
-            "text": "PILOT FUNCTION TIME",
-            "hspan": 6,
-            "align": "TopCenter",
-            "weight": "bold"
-          },
-          { "text": "teste", "hspan": 1 }
-        ],
-        [
-          
-          { "text": "IFR", "weight": "bold" },
-          { "text": "PIC+US", "weight": "bold" },
-          { "text": "Co-Pilot", "weight": "bold" },
-          { "text": "Dual", "weight": "bold" },
-          { "text": "Instructor", "weight": "bold" },
-          { "text": "Sim", "weight": "bold" },
-          { "text": "Remarks", "weight": "bold", "align": "TopLeft" }
+      {
+        "rowHeight": 8,
+        "cells":[
+          { "text": "9", "hspan": 2},
+          { "text": "10", "hspan": 5},
+          { "text": "11", "hspan": 3},
+          { "text": "12"}
         ]
-      ],
+      },
+      {
+        "rowHeight": 20,
+        "cells":[
+          { "text": "OPERATIONAL\nCONDITION TIME", "hspan": 2, "weight": "bold" },
+          { "text": "PILOT FUNCTION TIME", "hspan": 5, "weight": "bold" },
+          { "text": "SYNTETIC TRAINING DEVICES SESSION", "hspan": 3, "weight": "bold" },
+          { "text": "REMARKS\nAND ENDORSEMENTS", "vspan": 3, "weight": "bold" }
+        ]
+      },
+      {
+        "rowHeight": 10,
+        "cells":[
+          { "text": "NIGHT", "vspan": 2, "weight": "bold" },
+          { "text": "IFR", "vspan": 2, "weight": "bold" },
+          { "text": "PILOT IN COMMAND", "hspan": 2, "weight": "bold" },
+          { "text": "CO-PILOT", "vspan": 2, "weight": "bold" },
+          { "text": "DUAL", "vspan": 2, "weight": "bold" },
+          { "text": "INSTRUCTOR", "vspan": 2, "weight": "bold" },
+          { "text": "DATE\n(DD/MM/YYYY) ", "vspan": 2, "weight": "bold" },
+          { "text": "TYPE", "vspan": 2, "weight": "bold" },
+          { "text": "TOTAL TIME\nOF SESSION", "vspan": 2, "weight": "bold"}
+        ]
+      },
+      {
+        "rowHeight": 12,
+        "cells":[
+          { "text": "P1", "weight": "bold" },
+          { "text": "P1 U/S", "weight": "bold" }
+        ]
+      }
+    ],
       "columns": [
-        { "key": "night" },
-        { "key": "ifr" },
-        { "key": "picPicus" },
-        { "key": "sic" },
-        { "key": "dual" },
-        { "key": "instructor" },
-        { "key": "fstd" },
-        { "key": "remarks", "width": 2.2, "alignment": "left" }
+        { "key": "night", "width": 0.4},
+        { "key": "ifr", "width": 0.4},
+        { "key": "pic", "width": 0.4 },
+        { "key": "picus", "width": 0.4 },
+        { "key": "sic", "width": 0.4 },
+        { "key": "dual", "width": 0.4 },
+        { "key": "instructor", "width": 0.4 },
+        { "key": "simDate", "width": 0.55 },
+        { "key": "simTypeRegistration", "width": 0.9 },
+        { "key": "simSessionTotal", "width": 0.55 },
+        {
+          "key": "simRemarks",
+          "width": 2.05,
+          "alignment": "left"
+        }
       ],
       "footerRows": [
         {
@@ -196,11 +226,12 @@
           "values": {
             "night": "night",
             "ifr": "ifr",
-            "picPicus": "picPicus",
+            "pic": "pic",
+            "picus": "picus",
             "sic": "sic",
             "dual": "dual",
             "instructor": "instructor",
-            "fstd": "fstd"
+            "simSessionTotal": "simSessionTotal"
           }
         },
         {
@@ -209,11 +240,12 @@
           "values": {
             "night": "night",
             "ifr": "ifr",
-            "picPicus": "picPicus",
+            "pic": "pic",
+            "picus": "picus",
             "sic": "sic",
             "dual": "dual",
             "instructor": "instructor",
-            "fstd": "fstd"
+            "simSessionTotal": "simSessionTotal"
           }
         },
         {
@@ -222,11 +254,12 @@
           "values": {
             "night": "night",
             "ifr": "ifr",
-            "picPicus": "picPicus",
+            "pic": "pic",
+            "picus": "picus",
             "sic": "sic",
             "dual": "dual",
             "instructor": "instructor",
-            "fstd": "fstd"
+            "simSessionTotal": "simSessionTotal"
           }
         }
       ]

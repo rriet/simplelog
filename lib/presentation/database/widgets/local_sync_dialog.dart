@@ -9,11 +9,14 @@ import 'package:http/http.dart' as http;
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/sync/local_sync_discovery.dart';
 import 'package:simplelog/data/sync/local_sync_server.dart';
+import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/database_sync_controller_provider.dart';
+import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 
 /// TCP port used for local peer‑to‑peer sync.
 const int syncPort = 54742;
@@ -45,6 +48,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   int? _schemaVersion;
   int _disconnectFailures = 0;
   bool _disconnectProbeInFlight = false;
+  final Map<String, String> _resolvedHostCache = {};
 
   @override
   void initState() {
@@ -112,11 +116,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
         });
       }
       _devicesSub = _discovery!.devices.listen((devices) {
-        if (!mounted) return;
-        for (final device in devices) {
-          _devices['${device.host}:${device.port}'] = device;
-        }
-        setState(() {});
+        unawaited(_mergeDiscoveredDevices(devices));
       });
 
       await _startFallbackScan();
@@ -191,6 +191,88 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     }
   }
 
+  Future<String> _resolveHostCached(String host) async {
+    final cached = _resolvedHostCache[host];
+    if (cached != null && cached.isNotEmpty) {
+      return cached;
+    }
+    final resolved = await _resolveHost(host);
+    _resolvedHostCache[host] = resolved;
+    return resolved;
+  }
+
+  Future<void> _mergeDiscoveredDevices(List<DiscoveredDevice> devices) async {
+    if (!mounted) return;
+    final next = Map<String, DiscoveredDevice>.from(_devices);
+    for (final device in devices) {
+      final resolvedHost = await _resolveHostCached(device.host);
+      if (_isSelfDevice(device, resolvedHost: resolvedHost)) {
+        continue;
+      }
+      final key = '$resolvedHost:${device.port}';
+      final existing = next[key];
+      final sameNameKey = next.entries
+          .where((entry) {
+            return entry.value.port == device.port &&
+                entry.value.name.toLowerCase() == device.name.toLowerCase();
+          })
+          .map((entry) => entry.key)
+          .firstOrNull;
+      if (sameNameKey != null && sameNameKey != key) {
+        final existingByName = next[sameNameKey]!;
+        final keepExisting =
+            _isIpv4Literal(existingByName.host) &&
+            !_isIpv4Literal(resolvedHost);
+        if (keepExisting) {
+          continue;
+        }
+        next.remove(sameNameKey);
+      }
+      if (existing == null || existing.host.endsWith('.local')) {
+        next[key] = DiscoveredDevice(
+          name: device.name,
+          host: resolvedHost,
+          port: device.port,
+        );
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _devices
+        ..clear()
+        ..addAll(next);
+    });
+  }
+
+  bool _isSelfDevice(DiscoveredDevice device, {String? resolvedHost}) {
+    final trimmedHost = device.host.endsWith('.')
+        ? device.host.substring(0, device.host.length - 1)
+        : device.host;
+    final host = resolvedHost ?? trimmedHost;
+    final normalizedLocalName = _normalizedServiceName(_localDeviceName ?? '');
+    final isSelfByName =
+        _localDeviceName != null &&
+        (device.name == _localDeviceName ||
+            device.name == normalizedLocalName);
+    final isSelfByIp =
+        _localIps.contains(trimmedHost) || _localIps.contains(host);
+    return isSelfByName || isSelfByIp;
+  }
+
+  bool _isIpv4Literal(String host) =>
+      RegExp(r'^\d{1,3}(?:\.\d{1,3}){3}$').hasMatch(host);
+
+  String _normalizedServiceName(String raw) {
+    final normalized = raw
+        .replaceAll(RegExp(r'[^\x20-\x7E]'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (normalized.isEmpty) {
+      return 'SimpleLog';
+    }
+    return normalized.length > 63 ? normalized.substring(0, 63) : normalized;
+  }
+
   Future<void> _probeHost(String host) async {
     final uri = Uri.parse('http://$host:$syncPort/info');
     try {
@@ -200,13 +282,13 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
       if (response.statusCode == HttpStatus.ok && mounted) {
         final payload = jsonDecode(response.body) as Map<String, dynamic>?;
         final name = payload?['name']?.toString() ?? host;
-        setState(() {
-          _devices['$host:$syncPort'] = DiscoveredDevice(
+        await _mergeDiscoveredDevices([
+          DiscoveredDevice(
             name: name,
             host: host,
             port: syncPort,
-          );
-        });
+          ),
+        ]);
       }
     } on Object catch (_) {
       // ignore
@@ -633,6 +715,9 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   }
 
   Future<Uint8List> _readDatabaseBytes() async {
+    // Flush WAL changes into the main sqlite file before reading bytes.
+    final db = ref.read(databaseProvider);
+    await db.customStatement('PRAGMA wal_checkpoint(TRUNCATE)');
     final path = await _databasePath();
     final file = File(path);
     return file.readAsBytes();
@@ -644,12 +729,23 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     final path = await _databasePath();
     final file = File(path);
     await file.writeAsBytes(bytes, flush: true);
-    ref.invalidate(databaseProvider);
+    ref
+      ..invalidate(databaseProvider)
+      ..invalidate(flightFactoringSettingsProvider)
+      ..invalidate(reportPilotInfoProvider);
   }
 
   Future<String> _databasePath() async {
     final dir = await getApplicationDocumentsDirectory();
-    return '${dir.path}/simplelog.sqlite';
+    final currentPath = '${dir.path}/$appDatabaseFileName.sqlite';
+    final legacyPath = '${dir.path}/simplelog.sqlite';
+    if (File(currentPath).existsSync()) {
+      return currentPath;
+    }
+    if (File(legacyPath).existsSync()) {
+      return legacyPath;
+    }
+    return currentPath;
   }
 
   @override

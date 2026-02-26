@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -14,6 +15,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/maps/map_tile_caching.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
+import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
@@ -28,11 +30,13 @@ import 'package:simplelog/features/reports/application/report_pdf_application_se
 import 'package:simplelog/presentation/reports/providers/report_pdf_application_service_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
+import 'package:simplelog/presentation/settings/widgets/pilot_profile_settings_card.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/event_type_toggle_button.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/time_input_field.dart';
+import 'package:simplelog/presentation/shared/widgets/square_outline_button.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -85,6 +89,13 @@ class _XslTemplateOption {
   final ReportPdfTemplate template;
 }
 
+String _sanitizeTemplateName(String raw) {
+  return raw
+      .trim()
+      .replaceAll(RegExp('[^A-Za-z0-9_-]'), '_')
+      .replaceAll(RegExp('_+'), '_');
+}
+
 /// Public API documentation.
 class ReportsScreen extends ConsumerStatefulWidget {
   /// Public API documentation.
@@ -104,7 +115,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   _ReportDateRangePreset _preset = _ReportDateRangePreset.sinceBeginning;
   ReportsFilterMatchMode _filterMatchMode = ReportsFilterMatchMode.all;
   final List<ReportsFilterCondition> _filters = [];
-  _AnalysisGroupBy _analysisGroupBy = _AnalysisGroupBy.aircraft;
+  _AnalysisGroupBy _analysisGroupBy = _AnalysisGroupBy.family;
   _AnalysisOrderBy _analysisOrderBy = _AnalysisOrderBy.hours;
   late final TabController _tabController;
   List<_XslTemplateOption> _xslTemplateOptions = const [];
@@ -129,16 +140,18 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   String _analysisPreviousBucketsKey = '';
   Map<String, _AnalysisGroupAccumulator> _analysisBaseBuckets = const {};
   Map<String, _AnalysisGroupAccumulator> _analysisPreviousBuckets = const {};
+  static const List<_AnalysisGroupBy> _analysisGroupByOptions =
+      <_AnalysisGroupBy>[
+        _AnalysisGroupBy.family,
+        _AnalysisGroupBy.type,
+        _AnalysisGroupBy.aircraft,
+        _AnalysisGroupBy.airport,
+        _AnalysisGroupBy.year,
+        _AnalysisGroupBy.month,
+      ];
   ProviderSubscription<String?>? _selectedTemplateSubscription;
   final _fromTimeController = TextEditingController();
   final _toTimeController = TextEditingController();
-  final _pilotNameController = TextEditingController();
-  final _pilotLicenceController = TextEditingController();
-  final _pilotAddressController = TextEditingController();
-  final _pilotNameFocusNode = FocusNode();
-  final _pilotLicenceFocusNode = FocusNode();
-  final _pilotAddressFocusNode = FocusNode();
-  Timer? _pilotInfoSaveDebounce;
 
   ReportsData _data = const ReportsData(
     totals: ReportsTotals.zero(),
@@ -174,7 +187,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         setState(() => _selectedTemplate = template);
       },
     );
-    _syncPilotInfoControllers(ref.read(reportPilotInfoProvider), force: true);
     _tabController = TabController(length: 3, vsync: this);
     unawaited(_loadTemplateOptions());
     if (_shouldPreloadOverview(widget.section)) {
@@ -195,7 +207,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<void> _loadTemplateOptions() async {
-    final templates = await ReportXslTemplateLoader().load();
+    final db = ref.read(databaseProvider);
+    final templates = await ReportXslTemplateLoader(db).load();
     if (!mounted) {
       return;
     }
@@ -224,6 +237,41 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           ? preferred.first
           : (_selectedTemplate ?? options.first);
     });
+  }
+
+  Future<void> _openTemplateEditorDialog() async {
+    final db = ref.read(databaseProvider);
+    final changed = await showDialog<bool>(
+      context: context,
+      builder: (_) => _EditTemplatesDialog(
+        db: db,
+        initialReportName: _selectedTemplate?.fileName,
+      ),
+    );
+    if (!mounted || changed != true) {
+      return;
+    }
+    final previouslySelected = _selectedTemplate?.fileName;
+    await _loadTemplateOptions();
+    if (!mounted) {
+      return;
+    }
+    if (_xslTemplateOptions.isEmpty) {
+      setState(() => _selectedTemplate = null);
+      return;
+    }
+    final preferredName =
+        previouslySelected ?? _xslTemplateOptions.first.fileName;
+    final matched = _xslTemplateOptions.where(
+      (option) => option.fileName == preferredName,
+    );
+    final next = matched.isNotEmpty
+        ? matched.first
+        : _xslTemplateOptions.first;
+    setState(() => _selectedTemplate = next);
+    await ref
+        .read(selectedReportTemplateFileNameProvider.notifier)
+        .setValue(value: next.fileName);
   }
 
   @override
@@ -293,47 +341,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     _fromTimeController.dispose();
     _toTimeController.dispose();
     _selectedTemplateSubscription?.close();
-    _pilotInfoSaveDebounce?.cancel();
-    _pilotNameController.dispose();
-    _pilotLicenceController.dispose();
-    _pilotAddressController.dispose();
-    _pilotNameFocusNode.dispose();
-    _pilotLicenceFocusNode.dispose();
-    _pilotAddressFocusNode.dispose();
     _tabController.dispose();
     super.dispose();
-  }
-
-  void _syncPilotInfoControllers(ReportPilotInfo info, {bool force = false}) {
-    if (!force &&
-        (_pilotNameFocusNode.hasFocus ||
-            _pilotLicenceFocusNode.hasFocus ||
-            _pilotAddressFocusNode.hasFocus)) {
-      return;
-    }
-    if (_pilotNameController.text != info.name) {
-      _pilotNameController.text = info.name;
-    }
-    if (_pilotLicenceController.text != info.licenceNumber) {
-      _pilotLicenceController.text = info.licenceNumber;
-    }
-    if (_pilotAddressController.text != info.address) {
-      _pilotAddressController.text = info.address;
-    }
-  }
-
-  void _schedulePilotInfoSave() {
-    _pilotInfoSaveDebounce?.cancel();
-    _pilotInfoSaveDebounce = Timer(const Duration(milliseconds: 300), () {
-      final value = ReportPilotInfo(
-        name: _pilotNameController.text,
-        licenceNumber: _pilotLicenceController.text,
-        address: _pilotAddressController.text,
-      );
-      unawaited(
-        ref.read(reportPilotInfoProvider.notifier).setValue(value: value),
-      );
-    });
   }
 
   Future<void> _loadOverviewData() async {
@@ -997,6 +1006,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         entries: _entries,
         startingTotals: startingTotals,
         coverValues: _buildCoverValues(),
+        coverImages: _buildCoverImages(),
         flightCrewById: crewMaps.$1,
         simulatorCrewById: crewMaps.$2,
       );
@@ -1182,6 +1192,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           totals.instrumentMinutes + totals.simulatedInstrumentMinutes,
       fstdMinutes: totals.simulatorMinutes,
       dualMinutes: totals.dualMinutes,
+      picMinutes: totals.picMinutes,
+      picusMinutes: totals.picusMinutes,
       picPicusMinutes: totals.picMinutes + totals.picusMinutes,
       sicMinutes: totals.sicMinutes,
       instructorMinutes: totals.instructorMinutes,
@@ -1194,11 +1206,20 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final dateFormat = DateFormat('yyyy-MM-dd');
     return {
       'pilot.name': pilotInfo.name,
-      'pilot.licenceNumber': pilotInfo.licenceNumber,
+      'pilot.licenses': pilotInfo.licenses,
+      'pilot.licenceNumber': pilotInfo.licenses,
       'pilot.address': pilotInfo.address,
       'report.fromDate': dateFormat.format(_from.toUtc()),
       'report.toDate': dateFormat.format(_to.toUtc()),
     };
+  }
+
+  Map<String, Uint8List> _buildCoverImages() {
+    final signatureImage = ref.read(reportPilotInfoProvider).signatureImage;
+    if (signatureImage == null || signatureImage.isEmpty) {
+      return const <String, Uint8List>{};
+    }
+    return <String, Uint8List>{'pilot.signatureImage': signatureImage};
   }
 
   Future<(Map<int, ReportEntryCrewNames>, Map<int, ReportEntryCrewNames>)>
@@ -1841,7 +1862,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                   border: const OutlineInputBorder(),
                   isDense: true,
                 ),
-                items: _AnalysisGroupBy.values
+                items: _analysisGroupByOptions
                     .map(
                       (value) => DropdownMenuItem(
                         value: value,
@@ -1851,7 +1872,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                       ),
                     )
                     .toList(growable: false),
-                selectedItemBuilder: (context) => _AnalysisGroupBy.values
+                selectedItemBuilder: (context) => _analysisGroupByOptions
                     .map(
                       (value) => _dropdownSelectedItem(
                         _analysisGroupByLabel(l10n, value),
@@ -1982,8 +2003,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
     final includeHoursBefore = ref.watch(includeHoursBeforeProvider);
     final openPdfAfterSaving = ref.watch(openPdfAfterSavingProvider);
-    final pilotInfo = ref.watch(reportPilotInfoProvider);
-    _syncPilotInfoControllers(pilotInfo);
     return Align(
       alignment: Alignment.centerLeft,
       child: Column(
@@ -2079,6 +2098,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                   },
                 ),
               ),
+              SquareOutlineButton(
+                onPressed: _isGeneratingPdf ? null : _openTemplateEditorDialog,
+                icon: Icons.edit_note_rounded,
+                label: 'Edit Templates',
+              ),
               FilledButton.icon(
                 onPressed: _isGeneratingPdf ? null : _generatePdf,
                 icon: _isGeneratingPdf
@@ -2144,57 +2168,18 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                         ),
                 ),
               ),
+              SizedBox(
+                width: compact ? 190 : 220,
+                child: EventTypeToggleButton(
+                  label: 'Pilot profile',
+                  selected: false,
+                  onTap: () => unawaited(showPilotProfileEditorDialog(context)),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           const Divider(height: 1),
-          const SizedBox(height: 8),
-          Text(
-            'Pilot information',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _pilotNameController,
-                focusNode: _pilotNameFocusNode,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
-                onChanged: (_) => _schedulePilotInfoSave(),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _pilotLicenceController,
-                focusNode: _pilotLicenceFocusNode,
-                minLines: 2,
-                maxLines: null,
-                decoration: const InputDecoration(
-                  labelText: 'Licence number',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
-                onChanged: (_) => _schedulePilotInfoSave(),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _pilotAddressController,
-                focusNode: _pilotAddressFocusNode,
-                minLines: 2,
-                maxLines: null,
-                decoration: const InputDecoration(
-                  labelText: 'Address',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
-                onChanged: (_) => _schedulePilotInfoSave(),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -4021,6 +4006,292 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
                         ),
                       ],
                     ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TemplateEntryItem {
+  const _TemplateEntryItem({
+    required this.templateName,
+    required this.templateJson,
+  });
+
+  final String templateName;
+  final String templateJson;
+}
+
+class _EditTemplatesDialog extends StatefulWidget {
+  const _EditTemplatesDialog({
+    required this.db,
+    required this.initialReportName,
+  });
+
+  final AppDatabase db;
+  final String? initialReportName;
+
+  @override
+  State<_EditTemplatesDialog> createState() => _EditTemplatesDialogState();
+}
+
+class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
+  final _templateNameController = TextEditingController();
+  List<_TemplateEntryItem> _items = const [];
+  bool _isBusy = false;
+  bool _changed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _templateNameController.text = widget.initialReportName ?? '';
+    unawaited(_loadItems());
+  }
+
+  @override
+  void dispose() {
+    _templateNameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadItems() async {
+    setState(() => _isBusy = true);
+    final rows = await (widget.db.select(widget.db.reportTemplates)
+          ..orderBy([(t) => d.OrderingTerm.asc(t.templateName)]))
+        .get();
+    if (!mounted) {
+      return;
+    }
+    final items = <_TemplateEntryItem>[];
+    for (final row in rows) {
+      items.add(
+        _TemplateEntryItem(
+          templateName: row.templateName,
+          templateJson: row.templateJson,
+        ),
+      );
+    }
+    setState(() {
+      _items = items;
+      _isBusy = false;
+    });
+  }
+
+  Future<void> _downloadTemplate(_TemplateEntryItem item) async {
+    final decoded = jsonDecode(item.templateJson);
+    if (decoded is! Map<String, dynamic>) {
+      if (!mounted) return;
+      await showAppMessageDialog(context, message: 'Template JSON is invalid.');
+      return;
+    }
+    decoded['templateName'] ??= item.templateName;
+    decoded
+      ..remove('reportName')
+      ..remove('displayName');
+    final outputPath = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save template JSON',
+      fileName: '${item.templateName}.json',
+      type: FileType.custom,
+      allowedExtensions: const ['json'],
+    );
+    if (outputPath == null || outputPath.isEmpty) {
+      return;
+    }
+    await File(outputPath).writeAsString(jsonEncode(decoded), flush: true);
+    if (!mounted) {
+      return;
+    }
+    await showAppMessageDialog(context, message: 'Template exported.');
+  }
+
+  Future<void> _deleteTemplate(_TemplateEntryItem item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete template?'),
+          content: Text(
+            'This will permanently delete "${item.templateName}".',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true) {
+      return;
+    }
+
+    await widget.db.customStatement(
+      'DELETE FROM report_templates WHERE template_name = ?',
+      [item.templateName],
+    );
+    _changed = true;
+    await _loadItems();
+  }
+
+  Future<void> _uploadAsNewTemplate() async {
+    final rawName = _templateNameController.text.trim();
+    final templateName = _sanitizeTemplateName(rawName);
+    if (templateName.isEmpty) {
+      await showAppMessageDialog(context, message: 'Type a template name.');
+      return;
+    }
+    final exists = _items.any((item) => item.templateName == templateName);
+    if (exists) {
+      await showAppMessageDialog(
+        context,
+        message: 'Template name already exists. Use a different name.',
+      );
+      return;
+    }
+
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['json'],
+      withData: true,
+    );
+    if (picked == null || picked.files.isEmpty) {
+      return;
+    }
+    final file = picked.files.single;
+    String? raw;
+    if (file.bytes != null && file.bytes!.isNotEmpty) {
+      raw = utf8.decode(file.bytes!);
+    } else if (file.path != null && file.path!.isNotEmpty) {
+      raw = await File(file.path!).readAsString();
+    }
+    if (raw == null || raw.trim().isEmpty) {
+      if (!mounted) return;
+      await showAppMessageDialog(context, message: 'Selected JSON is empty.');
+      return;
+    }
+
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) {
+      if (!mounted) return;
+      await showAppMessageDialog(context, message: 'Selected JSON is invalid.');
+      return;
+    }
+    decoded['templateName'] = templateName;
+    decoded
+      ..remove('reportName')
+      ..remove('displayName');
+    await widget.db.customStatement(
+      'INSERT INTO report_templates '
+      '(template_name, template_json) VALUES (?, ?)',
+      [templateName, jsonEncode(decoded)],
+    );
+    _changed = true;
+    _templateNameController.clear();
+    await _loadItems();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 620),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(_changed),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Edit Templates',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(_changed),
+                    child: const Text('Done'),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _templateNameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Template name',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SquareOutlineButton(
+                          onPressed: _uploadAsNewTemplate,
+                          icon: Icons.upload_file,
+                          label: 'Upload JSON',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(height: 1),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: _isBusy
+                          ? const Center(child: CircularProgressIndicator())
+                          : ListView.separated(
+                              itemCount: _items.length,
+                              separatorBuilder: (_, _) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final item = _items[index];
+                                return ListTile(
+                                  title: Text(item.templateName),
+                                  trailing: Wrap(
+                                    spacing: 8,
+                                    children: [
+                                      SquareOutlineButton(
+                                        onPressed: () =>
+                                            unawaited(_downloadTemplate(item)),
+                                        icon: Icons.download,
+                                        label: 'Download',
+                                      ),
+                                      SquareOutlineButton(
+                                        onPressed: () =>
+                                            unawaited(_deleteTemplate(item)),
+                                        icon: Icons.delete_outline,
+                                        label: 'Delete',
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

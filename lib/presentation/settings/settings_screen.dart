@@ -4,6 +4,7 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/presentation/database/database_screen.dart';
 import 'package:simplelog/presentation/settings/widgets/flight_factoring_settings_card.dart';
+import 'package:simplelog/presentation/settings/widgets/pilot_profile_settings_card.dart';
 import 'package:simplelog/presentation/settings/widgets/previous_experience_settings_tab.dart';
 import 'package:simplelog/presentation/settings/widgets/simulator_default_position_selector.dart';
 import 'package:simplelog/presentation/settings/widgets/theme_mode_selector.dart';
@@ -49,6 +50,8 @@ class SettingsScreen extends ConsumerWidget {
                     const SimulatorDefaultPositionSelector(),
                     const SizedBox(height: 12),
                     const FlightFactoringSettingsCard(),
+                    const SizedBox(height: 12),
+                    const PilotProfileSettingsCard(),
                   ],
                 ),
                 const DatabaseScreen(),

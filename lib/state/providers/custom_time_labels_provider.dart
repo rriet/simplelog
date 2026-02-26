@@ -1,7 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simplelog/data/database/user_settings_json.dart';
+import 'package:simplelog/state/providers/database_provider.dart';
 
 const _customTimeLabelsKey = 'custom_time_labels';
 
@@ -75,14 +76,29 @@ class CustomTimeLabels {
 class CustomTimeLabelsNotifier extends AsyncNotifier<CustomTimeLabels> {
   @override
   Future<CustomTimeLabels> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    return CustomTimeLabels.fromJson(prefs.getString(_customTimeLabelsKey));
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    return loadSettingWithLegacy<CustomTimeLabels>(
+      store: store,
+      key: _customTimeLabelsKey,
+      fallback: const CustomTimeLabels(),
+      parse: (raw) {
+        if (raw is String && raw.isNotEmpty) {
+          return CustomTimeLabels.fromJson(raw);
+        }
+        return null;
+      },
+      encode: (value) => jsonEncode(value.toJson()),
+    );
   }
 
   /// Saves new labels and updates in-memory state.
   Future<void> setLabels(CustomTimeLabels value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_customTimeLabelsKey, jsonEncode(value.toJson()));
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    await store.patch(
+      (json) => json[_customTimeLabelsKey] = jsonEncode(value.toJson()),
+    );
     state = AsyncData(value);
   }
 }

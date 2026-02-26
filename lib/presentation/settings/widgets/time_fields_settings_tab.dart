@@ -1,8 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/presentation/settings/widgets/flight_takeoff_landing_switch.dart';
-import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/flight_time_fields_visibility_provider.dart';
 
@@ -22,9 +23,11 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
   final _c3 = TextEditingController();
   final _c4 = TextEditingController();
   bool _loadedLabels = false;
+  Timer? _labelsSaveDebounce;
 
   @override
   void dispose() {
+    _labelsSaveDebounce?.cancel();
     _c1.dispose();
     _c2.dispose();
     _c3.dispose();
@@ -32,16 +35,33 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
     super.dispose();
   }
 
-  Future<void> _saveLabels() async {
-    final value = CustomTimeLabels(
+  CustomTimeLabels _labelsFromControllers() {
+    return CustomTimeLabels(
       custom1: _c1.text.trim().isEmpty ? 'Custom 1' : _c1.text.trim(),
       custom2: _c2.text.trim().isEmpty ? 'Custom 2' : _c2.text.trim(),
       custom3: _c3.text.trim().isEmpty ? 'Custom 3' : _c3.text.trim(),
       custom4: _c4.text.trim().isEmpty ? 'Custom 4' : _c4.text.trim(),
     );
+  }
+
+  Future<void> _saveLabelsNow() async {
+    final value = _labelsFromControllers();
+    final current = ref.read(customTimeLabelsProvider).valueOrNull;
+    if (current != null &&
+        current.custom1 == value.custom1 &&
+        current.custom2 == value.custom2 &&
+        current.custom3 == value.custom3 &&
+        current.custom4 == value.custom4) {
+      return;
+    }
     await ref.read(customTimeLabelsProvider.notifier).setLabels(value);
-    if (!mounted) return;
-    await showAppMessageDialog(context, message: 'Time field labels saved');
+  }
+
+  void _scheduleLabelsSave() {
+    _labelsSaveDebounce?.cancel();
+    _labelsSaveDebounce = Timer(const Duration(milliseconds: 500), () {
+      unawaited(_saveLabelsNow());
+    });
   }
 
   Future<void> _updateVisibility(
@@ -189,29 +209,34 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
         TextFormField(
           controller: _c1,
           decoration: const InputDecoration(labelText: 'Custom 1'),
+          onChanged: (_) => _scheduleLabelsSave(),
+          onEditingComplete: () => unawaited(_saveLabelsNow()),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _c2,
           decoration: const InputDecoration(labelText: 'Custom 2'),
+          onChanged: (_) => _scheduleLabelsSave(),
+          onEditingComplete: () => unawaited(_saveLabelsNow()),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _c3,
           decoration: const InputDecoration(labelText: 'Custom 3'),
+          onChanged: (_) => _scheduleLabelsSave(),
+          onEditingComplete: () => unawaited(_saveLabelsNow()),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _c4,
           decoration: const InputDecoration(labelText: 'Custom 4'),
+          onChanged: (_) => _scheduleLabelsSave(),
+          onEditingComplete: () => unawaited(_saveLabelsNow()),
         ),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerRight,
-          child: FilledButton(
-            onPressed: labelsAsync.isLoading ? null : _saveLabels,
-            child: const Text('Save Labels'),
-          ),
+        const SizedBox(height: 6),
+        Text(
+          'Labels are saved automatically.',
+          style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
     );

@@ -81,9 +81,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     final content = _decodeCsvBytes(bytes);
     final type = _detectCsvType(content);
     if (!context.mounted) return;
+    final db = ref.read(databaseProvider);
 
     if (type == _CsvImportType.simpleLogOld) {
-      final initialOptions = await ImportOptionsPreferences.loadSimpleLog();
+      final initialOptions = await ImportOptionsPreferences.loadSimpleLog(db);
       if (!context.mounted) return;
       final options = await SimpleLogImportOptionsDialog.show(
         context,
@@ -91,9 +92,8 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         initial: initialOptions,
       );
       if (options == null || !context.mounted) return;
-      await ImportOptionsPreferences.saveSimpleLog(options);
+      await ImportOptionsPreferences.saveSimpleLog(db, options);
       if (!context.mounted) return;
-      final db = ref.read(databaseProvider);
       final importer = SimpleLogCsvImporter(db);
       final progress = ValueNotifier<_ImportProgress>(
         const _ImportProgress(processed: 0, total: 0),
@@ -126,6 +126,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         simulatorDefaultCrewPositionProvider.future,
       );
       final initialOptions = await ImportOptionsPreferences.loadSouthwest(
+        db: db,
         fallbackPosition: defaultPosition == CrewPosition.unknown
             ? CrewPosition.sic
             : defaultPosition,
@@ -137,9 +138,8 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         initial: initialOptions,
       );
       if (options == null || !context.mounted) return;
-      await ImportOptionsPreferences.saveSouthwest(options);
+      await ImportOptionsPreferences.saveSouthwest(db, options);
       if (!context.mounted) return;
-      final db = ref.read(databaseProvider);
       final importer = SimpleLogCsvImporter(db);
       final progress = ValueNotifier<_ImportProgress>(
         const _ImportProgress(processed: 0, total: 0),
@@ -323,7 +323,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
     final db = ref.read(databaseProvider);
     await db.clearAllData();
-    await DashboardRulesSeedImporter.clearSeedFlag();
+    await DashboardRulesSeedImporter.clearSeedFlag(db);
     if (!context.mounted) return;
     await _showInfoDialog(context, 'Database cleared.');
   }

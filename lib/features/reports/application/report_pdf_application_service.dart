@@ -16,6 +16,7 @@ class ReportTemplateRow {
     required this.fromIcao,
     required this.toIcao,
     required this.remarks,
+    required this.isSimulatorEntry,
     required this.ifrApproaches,
     required this.landingsTotal,
     required this.takeoffsTotal,
@@ -32,6 +33,8 @@ class ReportTemplateRow {
     required this.simInstMinutes,
     required this.fstdMinutes,
     required this.dualMinutes,
+    required this.picMinutes,
+    required this.picusMinutes,
     required this.picPicusMinutes,
     required this.sicMinutes,
     required this.instructorMinutes,
@@ -56,6 +59,9 @@ class ReportTemplateRow {
 
   /// Free‑form remarks shown in the report.
   final String remarks;
+
+  /// Public API documentation.
+  final bool isSimulatorEntry;
 
   /// Number of instrument approaches flown on this row.
   final int ifrApproaches;
@@ -104,6 +110,12 @@ class ReportTemplateRow {
 
   /// Dual instruction time in minutes.
   final int dualMinutes;
+
+  /// Public API documentation.
+  final int picMinutes;
+
+  /// Public API documentation.
+  final int picusMinutes;
 
   /// PIC + PICUS time in minutes.
   final int picPicusMinutes;
@@ -171,6 +183,8 @@ class ReportTemplateTotals {
     this.simInstMinutes = 0,
     this.fstdMinutes = 0,
     this.dualMinutes = 0,
+    this.picMinutes = 0,
+    this.picusMinutes = 0,
     this.picPicusMinutes = 0,
     this.sicMinutes = 0,
     this.instructorMinutes = 0,
@@ -225,6 +239,12 @@ class ReportTemplateTotals {
   /// Dual instruction minutes.
   final int dualMinutes;
 
+  /// Public API documentation.
+  final int picMinutes;
+
+  /// Public API documentation.
+  final int picusMinutes;
+
   /// PIC + PICUS minutes.
   final int picPicusMinutes;
 
@@ -256,6 +276,8 @@ class ReportTemplateTotals {
       simInstMinutes: simInstMinutes + row.simInstMinutes,
       fstdMinutes: fstdMinutes + row.fstdMinutes,
       dualMinutes: dualMinutes + row.dualMinutes,
+      picMinutes: picMinutes + row.picMinutes,
+      picusMinutes: picusMinutes + row.picusMinutes,
       picPicusMinutes: picPicusMinutes + row.picPicusMinutes,
       sicMinutes: sicMinutes + row.sicMinutes,
       instructorMinutes: instructorMinutes + row.instructorMinutes,
@@ -282,6 +304,8 @@ class ReportTemplateTotals {
       simInstMinutes: simInstMinutes + other.simInstMinutes,
       fstdMinutes: fstdMinutes + other.fstdMinutes,
       dualMinutes: dualMinutes + other.dualMinutes,
+      picMinutes: picMinutes + other.picMinutes,
+      picusMinutes: picusMinutes + other.picusMinutes,
       picPicusMinutes: picPicusMinutes + other.picPicusMinutes,
       sicMinutes: sicMinutes + other.sicMinutes,
       instructorMinutes: instructorMinutes + other.instructorMinutes,
@@ -320,19 +344,22 @@ class ReportPdfApplicationService {
     'simInst',
     'fstd',
     'dual',
+    'pic',
+    'picus',
     'picPicus',
     'sic',
     'instructor',
     'total',
   };
 
-  /// Generates a PDF document based on the 
+  /// Generates a PDF document based on the
   /// given [template] and logbook [entries].
   Future<Uint8List> generateFromTemplate({
     required ReportPdfTemplate template,
     required List<LogbookEntry> entries,
     required ReportTemplateTotals startingTotals,
     Map<String, String> coverValues = const <String, String>{},
+    Map<String, Uint8List> coverImages = const <String, Uint8List>{},
     Map<int, ReportEntryCrewNames> flightCrewById = const {},
     Map<int, ReportEntryCrewNames> simulatorCrewById = const {},
   }) async {
@@ -351,6 +378,7 @@ class ReportPdfApplicationService {
       rows: rows,
       startingTotals: startingTotals,
       coverValues: coverValues,
+      coverImages: coverImages,
       pageFormat: pageFormat,
     );
   }
@@ -373,6 +401,7 @@ class ReportPdfApplicationService {
     required List<ReportTemplateRow> rows,
     required ReportTemplateTotals startingTotals,
     required Map<String, String> coverValues,
+    required Map<String, Uint8List> coverImages,
     required PdfPageFormat pageFormat,
   }) async {
     final document = pw.Document();
@@ -385,6 +414,7 @@ class ReportPdfApplicationService {
           build: (context) => _buildCoverPage(
             coverPage: coverPage,
             coverValues: coverValues,
+            coverImages: coverImages,
           ),
         ),
       );
@@ -417,6 +447,7 @@ class ReportPdfApplicationService {
             fromIcao: '',
             toIcao: '',
             remarks: '',
+            isSimulatorEntry: false,
             ifrApproaches: 0,
             landingsTotal: 0,
             takeoffsTotal: 0,
@@ -433,6 +464,8 @@ class ReportPdfApplicationService {
             simInstMinutes: 0,
             fstdMinutes: 0,
             dualMinutes: 0,
+            picMinutes: 0,
+            picusMinutes: 0,
             picPicusMinutes: 0,
             sicMinutes: 0,
             instructorMinutes: 0,
@@ -486,6 +519,7 @@ class ReportPdfApplicationService {
   pw.Widget _buildCoverPage({
     required ReportPdfCoverPageConfig coverPage,
     required Map<String, String> coverValues,
+    required Map<String, Uint8List> coverImages,
   }) {
     final children = <pw.Widget>[];
     final title = coverPage.title.trim();
@@ -514,6 +548,13 @@ class ReportPdfApplicationService {
             _buildCoverMultiline(
               block: block,
               coverValues: coverValues,
+            ),
+          );
+        case ReportPdfCoverBlockType.signature:
+          children.add(
+            _buildCoverSignature(
+              block: block,
+              coverImages: coverImages,
             ),
           );
       }
@@ -722,6 +763,45 @@ class ReportPdfApplicationService {
     );
   }
 
+  pw.Widget _buildCoverSignature({
+    required ReportPdfCoverBlockConfig block,
+    required Map<String, Uint8List> coverImages,
+  }) {
+    final children = <pw.Widget>[];
+    final title = block.title.trim();
+    if (title.isNotEmpty) {
+      children
+        ..add(
+          pw.Text(
+            title,
+            style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+          ),
+        )
+        ..add(pw.SizedBox(height: 6));
+    }
+    final key = (block.valueKey ?? '').trim();
+    final bytes = key.isEmpty ? null : coverImages[key];
+    final width = block.width ?? 170;
+    final height = block.height ?? 70;
+    children.add(
+      pw.Container(
+        width: width,
+        height: height,
+        decoration: pw.BoxDecoration(border: pw.Border.all()),
+        alignment: pw.Alignment.center,
+        child: (bytes == null || bytes.isEmpty)
+            ? pw.Text('-', style: const pw.TextStyle(fontSize: 10))
+            : pw.Image(
+                pw.MemoryImage(bytes),
+              ),
+      ),
+    );
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+
   /// Builds flattened rows from raw [entries] for use by report templates.
   List<ReportTemplateRow> buildRows(
     List<LogbookEntry> entries, {
@@ -739,6 +819,14 @@ class ReportPdfApplicationService {
           final sim = entry.simulatorTraining;
           final pos = entry.positioning;
           final type = entry.aircraftType;
+          final isFlight = entry.type == LogbookEventType.flight;
+          final isSimulator = entry.type == LogbookEventType.simulatorTraining;
+          final rowDate = _dateCellFormat.format(
+            entry.timeLine.eventDateTime.toUtc(),
+          );
+          final flightRemarks = (flight?.remarks ?? '').trim();
+          final simulatorRemarks = (sim?.remarks ?? '').trim();
+          final sharedRemarks = (flight?.remarks ?? sim?.remarks ?? '').trim();
           final crew = switch (entry.type) {
             LogbookEventType.flight =>
               flight == null
@@ -796,8 +884,8 @@ class ReportPdfApplicationService {
               : 0;
 
           return ReportTemplateRow(
-            date: _dateCellFormat.format(entry.timeLine.eventDateTime.toUtc()),
-            aircraftModel: type?.code ?? '',
+            date: isFlight ? rowDate : '',
+            aircraftModel: isFlight ? (type?.code ?? '') : '',
             aircraftRegistration: entry.aircraft?.registration ?? '',
             fromIcao:
                 entry.departureAirport?.icao ??
@@ -807,7 +895,8 @@ class ReportPdfApplicationService {
                 entry.arrivalAirport?.icao ??
                 entry.positioningArrivalAirport?.icao ??
                 '',
-            remarks: (flight?.remarks ?? sim?.remarks ?? '').trim(),
+            remarks: isFlight ? flightRemarks : '',
+            isSimulatorEntry: isSimulator,
             ifrApproaches: flight?.ifrApproaches ?? 0,
             landingsTotal: landingsTotal,
             takeoffsTotal: takeoffsTotal,
@@ -826,6 +915,8 @@ class ReportPdfApplicationService {
                 (flight?.timeSimulatedInstrumentMinutes ?? 0),
             fstdMinutes: sim?.timeTotal ?? 0,
             dualMinutes: flight?.timeDualMinutes ?? 0,
+            picMinutes: flight?.timePICMinutes ?? 0,
+            picusMinutes: flight?.timePICUSMinutes ?? 0,
             picPicusMinutes:
                 (flight?.timePICMinutes ?? 0) + (flight?.timePICUSMinutes ?? 0),
             sicMinutes: flight?.timeSICMinutes ?? 0,
@@ -847,6 +938,14 @@ class ReportPdfApplicationService {
               efisMinutes: efisMinutes,
               highPerformanceMinutes: highPerformanceMinutes,
               requiredExtraKeys: requiredExtraKeys,
+              rowDate: rowDate,
+              flightDate: isFlight ? rowDate : '',
+              simDate: isSimulator ? rowDate : '',
+              flightType: isFlight ? (type?.code ?? '') : '',
+              simType: type?.code ?? '',
+              isSimulator: isSimulator,
+              sharedRemarks: sharedRemarks,
+              simulatorRemarks: simulatorRemarks,
             ),
           );
         })
@@ -869,6 +968,14 @@ class ReportPdfApplicationService {
     required int efisMinutes,
     required int highPerformanceMinutes,
     required Set<String> requiredExtraKeys,
+    required String rowDate,
+    required String flightDate,
+    required String simDate,
+    required String flightType,
+    required String simType,
+    required bool isSimulator,
+    required String sharedRemarks,
+    required String simulatorRemarks,
   }) {
     final flight = entry.flight;
     final sim = entry.simulatorTraining;
@@ -886,6 +993,36 @@ class ReportPdfApplicationService {
     }
 
     put('eventType', entry.type.name);
+    put('entryDate', rowDate);
+    put('entryType', isSimulator ? simType : flightType);
+    put('entryRegistration', entry.aircraft?.registration ?? '');
+    put('entryRemarks', sharedRemarks);
+    put('flightDate', flightDate);
+    put('simDate', simDate);
+    put('flightType', flightType);
+    put('simType', isSimulator ? simType : '');
+    final simRegistration = isSimulator
+        ? (entry.aircraft?.registration ?? '')
+        : '';
+    put(
+      'simRegistration',
+      simRegistration,
+    );
+    put(
+      'simTypeRegistration',
+      isSimulator
+          ? [
+              simType.trim(),
+              simRegistration.trim(),
+            ].where((part) => part.isNotEmpty).join(' - ')
+          : '',
+    );
+    put(
+      'simSessionTotal',
+      isSimulator ? _emptyIfZeroTime(sim?.timeTotal ?? 0) : '',
+    );
+    put('simRemarks', isSimulator ? simulatorRemarks : '');
+    put('simRemarksPage2', simulatorRemarks);
     put('departureTime', _formatHm(depTime));
     put('arrivalTime', _formatHm(arrTime));
     put('depTime', _formatHm(depTime));
@@ -1022,6 +1159,8 @@ class ReportPdfApplicationService {
     var simInstMinutes = 0;
     var fstdMinutes = 0;
     var dualMinutes = 0;
+    var picMinutes = 0;
+    var picusMinutes = 0;
     var picPicusMinutes = 0;
     var sicMinutes = 0;
     var instructorMinutes = 0;
@@ -1071,6 +1210,8 @@ class ReportPdfApplicationService {
           (flight?.timeSimulatedInstrumentMinutes ?? 0);
       fstdMinutes += sim?.timeTotal ?? 0;
       dualMinutes += flight?.timeDualMinutes ?? 0;
+      picMinutes += flight?.timePICMinutes ?? 0;
+      picusMinutes += flight?.timePICUSMinutes ?? 0;
       picPicusMinutes +=
           (flight?.timePICMinutes ?? 0) + (flight?.timePICUSMinutes ?? 0);
       sicMinutes += flight?.timeSICMinutes ?? 0;
@@ -1095,6 +1236,8 @@ class ReportPdfApplicationService {
       simInstMinutes: simInstMinutes,
       fstdMinutes: fstdMinutes,
       dualMinutes: dualMinutes,
+      picMinutes: picMinutes,
+      picusMinutes: picusMinutes,
       picPicusMinutes: picPicusMinutes,
       sicMinutes: sicMinutes,
       instructorMinutes: instructorMinutes,
@@ -1103,6 +1246,27 @@ class ReportPdfApplicationService {
   }
 
   String _rowValueForKey(ReportTemplateRow row, String key) {
+    if (row.isSimulatorEntry) {
+      if (key == 'fstd') {
+        return _emptyIfZeroTime(row.fstdMinutes);
+      }
+      switch (key) {
+        case 'entryDate':
+        case 'entryType':
+        case 'entryRegistration':
+        case 'entryRemarks':
+        case 'simDate':
+        case 'simType':
+        case 'simSessionTotal':
+        case 'simRemarks':
+        case 'simRegistration':
+        case 'simTypeRegistration':
+          return row.extra[key] ?? '';
+        default:
+          return '';
+      }
+    }
+
     switch (key) {
       case 'date':
         return row.date;
@@ -1149,6 +1313,10 @@ class ReportPdfApplicationService {
         return _emptyIfZeroTime(row.fstdMinutes);
       case 'dual':
         return _emptyIfZeroTime(row.dualMinutes);
+      case 'pic':
+        return _emptyIfZeroTime(row.picMinutes);
+      case 'picus':
+        return _emptyIfZeroTime(row.picusMinutes);
       case 'picPicus':
         return _emptyIfZeroTime(row.picPicusMinutes);
       case 'sic':
@@ -1179,7 +1347,10 @@ class ReportPdfApplicationService {
       'ifr': _emptyIfZeroTime(totals.ifrMinutes),
       'simInst': _emptyIfZeroTime(totals.simInstMinutes),
       'fstd': _emptyIfZeroTime(totals.fstdMinutes),
+      'simSessionTotal': _emptyIfZeroTime(totals.fstdMinutes),
       'dual': _emptyIfZeroTime(totals.dualMinutes),
+      'pic': _emptyIfZeroTime(totals.picMinutes),
+      'picus': _emptyIfZeroTime(totals.picusMinutes),
       'picPicus': _emptyIfZeroTime(totals.picPicusMinutes),
       'picPlusPicus': _emptyIfZeroTime(totals.picPicusMinutes),
       'sic': _emptyIfZeroTime(totals.sicMinutes),
@@ -1236,6 +1407,9 @@ class ReportPdfApplicationService {
         }
 
         final children = <pw.Widget>[];
+        final alternateRowColor = _parsePdfColor(
+          template.alternateRowBackgroundColorHex,
+        );
         for (final cell in layout.cells) {
           final left = columnOffsets[cell.startCol];
           final width = _columnSpanWidth(
@@ -1253,6 +1427,12 @@ class ReportPdfApplicationService {
             start: cell.startRow,
             span: cell.rowSpan,
           );
+          final fillColor =
+              (alternateRowColor != null &&
+                  cell.dataRowIndex != null &&
+                  cell.dataRowIndex!.isOdd)
+              ? alternateRowColor
+              : null;
           children.add(
             pw.Positioned(
               left: left,
@@ -1269,8 +1449,9 @@ class ReportPdfApplicationService {
                     horizontal: cell.alignment,
                     vertical: cell.verticalAlignment,
                   ),
-                  decoration: const pw.BoxDecoration(
-                    border: pw.Border(
+                  decoration: pw.BoxDecoration(
+                    color: fillColor,
+                    border: const pw.Border(
                       left: pw.BorderSide(),
                       right: pw.BorderSide(),
                       top: pw.BorderSide(),
@@ -1309,6 +1490,7 @@ class ReportPdfApplicationService {
     final carry = List<int>.filled(columnCount, 0);
     final rowHeights = <double>[];
     var rowIndex = 0;
+    var dataRowIndex = 0;
 
     final headerRows = table.header.isEmpty
         ? [
@@ -1341,6 +1523,7 @@ class ReportPdfApplicationService {
           rowHeight: header.rowHeight,
           fallback: template.rowHeight,
         ),
+        dataRowIndex: null,
       );
     }
 
@@ -1364,7 +1547,9 @@ class ReportPdfApplicationService {
         out: cells,
         outRowHeights: rowHeights,
         rowHeight: template.rowHeight,
+        dataRowIndex: dataRowIndex,
       );
+      dataRowIndex++;
     }
 
     final columnIndexByKey = <String, int>{};
@@ -1390,6 +1575,7 @@ class ReportPdfApplicationService {
           rowHeight: footer.rowHeight,
           fallback: template.rowHeight,
         ),
+        dataRowIndex: null,
       );
     }
 
@@ -1412,6 +1598,7 @@ class ReportPdfApplicationService {
             rowHeight: footerRow.rowHeight,
             fallback: template.rowHeight,
           ),
+          dataRowIndex: null,
         );
         continue;
       }
@@ -1460,6 +1647,7 @@ class ReportPdfApplicationService {
           rowHeight: footerRow.rowHeight,
           fallback: template.rowHeight,
         ),
+        dataRowIndex: null,
       );
     }
 
@@ -1505,6 +1693,7 @@ class ReportPdfApplicationService {
     required List<_PlacedPdfCell> out,
     required List<double> outRowHeights,
     required double rowHeight,
+    required int? dataRowIndex,
   }) {
     final totalColumns = columns.length;
     var cursor = 0;
@@ -1534,6 +1723,7 @@ class ReportPdfApplicationService {
           alignment: alignment,
           verticalAlignment: verticalAlignment,
           style: _textStyleFrom(cell.textStyle, fallbackSize: 6.2),
+          dataRowIndex: dataRowIndex,
         ),
       );
       for (var index = cursor; index < cursor + hspan; index++) {
@@ -1681,6 +1871,7 @@ class _PlacedPdfCell {
     required this.alignment,
     required this.verticalAlignment,
     required this.style,
+    required this.dataRowIndex,
   });
 
   final int startRow;
@@ -1691,4 +1882,5 @@ class _PlacedPdfCell {
   final ReportPdfColumnAlignment alignment;
   final ReportPdfVerticalAlignment verticalAlignment;
   final pw.TextStyle style;
+  final int? dataRowIndex;
 }

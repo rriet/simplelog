@@ -1,6 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
@@ -30,9 +32,38 @@ class _FlightFactoringSettingsCardState
   final _irp4SubtractController = TextEditingController();
 
   bool _initialized = false;
+  bool _isHydrating = false;
+  Timer? _saveDebounce;
+  FlightFactoringSettings? _lastHydratedSettings;
+
+  List<TextEditingController> get _controllers => [
+    _crossCountryThresholdController,
+    _instrumentPercentController,
+    _instrumentMinController,
+    _instrumentSubtractController,
+    _ifrPercentController,
+    _ifrMinController,
+    _ifrSubtractController,
+    _irp3PercentController,
+    _irp3SubtractController,
+    _irp4PercentController,
+    _irp4SubtractController,
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    for (final controller in _controllers) {
+      controller.addListener(_onFieldChanged);
+    }
+  }
 
   @override
   void dispose() {
+    _saveDebounce?.cancel();
+    for (final controller in _controllers) {
+      controller.removeListener(_onFieldChanged);
+    }
     _crossCountryThresholdController.dispose();
     _instrumentPercentController.dispose();
     _instrumentMinController.dispose();
@@ -47,12 +78,29 @@ class _FlightFactoringSettingsCardState
     super.dispose();
   }
 
+  void _onFieldChanged() {
+    if (!_initialized || _isHydrating) return;
+    _scheduleSave();
+  }
+
+  void _scheduleSave() {
+    _saveDebounce?.cancel();
+    _saveDebounce = Timer(const Duration(milliseconds: 500), () {
+      unawaited(_saveNow());
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncValue = ref.watch(flightFactoringSettingsProvider);
     final settings = asyncValue.asData?.value;
-    if (settings != null && !_initialized) {
+    if (settings != null &&
+        !_isHydrating &&
+        (_lastHydratedSettings == null ||
+            !_sameSettings(_lastHydratedSettings!, settings))) {
+      _isHydrating = true;
       _initialized = true;
+      _lastHydratedSettings = settings;
       _crossCountryThresholdController.text = settings.crossCountryThresholdNm
           .toString();
       _instrumentPercentController.text = settings.instrumentPercent.toString();
@@ -77,6 +125,7 @@ class _FlightFactoringSettingsCardState
       _irp4SubtractController.text = HourInputField.formatHours(
         settings.irp4SubtractMinutes,
       );
+      _isHydrating = false;
     }
 
     return Card(
@@ -149,10 +198,13 @@ class _FlightFactoringSettingsCardState
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton(onPressed: _save, child: const Text('Save')),
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Calculation rules are saved automatically.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ),
         ],
       ),
@@ -194,12 +246,12 @@ class _FlightFactoringSettingsCardState
     );
   }
 
-  Future<void> _save() async {
+  FlightFactoringSettings _settingsFromControllers() {
     int percentValue(TextEditingController c, {required int fallback}) {
       return (int.tryParse(c.text.trim()) ?? fallback).clamp(0, 100);
     }
 
-    final next = FlightFactoringSettings(
+    return FlightFactoringSettings(
       crossCountryThresholdNm:
           int.tryParse(_crossCountryThresholdController.text.trim()) ?? 50,
       instrumentPercent: percentValue(
@@ -225,9 +277,45 @@ class _FlightFactoringSettingsCardState
       irp4SubtractMinutes:
           HourInputField.parseHours(_irp4SubtractController.text.trim()) ?? 0,
     );
+  }
+
+  Future<void> _saveNow() async {
+    final next = _settingsFromControllers();
+    final current = ref.read(flightFactoringSettingsProvider).valueOrNull;
+    if (current != null &&
+        current.crossCountryThresholdNm == next.crossCountryThresholdNm &&
+        current.instrumentPercent == next.instrumentPercent &&
+        current.instrumentMinimumMinutes == next.instrumentMinimumMinutes &&
+        current.instrumentSubtractMinutes == next.instrumentSubtractMinutes &&
+        current.ifrPercent == next.ifrPercent &&
+        current.ifrMinimumMinutes == next.ifrMinimumMinutes &&
+        current.ifrSubtractMinutes == next.ifrSubtractMinutes &&
+        current.irp3Percent == next.irp3Percent &&
+        current.irp3SubtractMinutes == next.irp3SubtractMinutes &&
+        current.irp4Percent == next.irp4Percent &&
+        current.irp4SubtractMinutes == next.irp4SubtractMinutes) {
+      return;
+    }
+
     await ref.read(flightFactoringSettingsProvider.notifier).setValue(next);
-    if (!mounted) return;
-    await showAppMessageDialog(context, message: 'Factoring settings saved.');
+    _lastHydratedSettings = next;
+  }
+
+  bool _sameSettings(
+    FlightFactoringSettings a,
+    FlightFactoringSettings b,
+  ) {
+    return a.crossCountryThresholdNm == b.crossCountryThresholdNm &&
+        a.instrumentPercent == b.instrumentPercent &&
+        a.instrumentMinimumMinutes == b.instrumentMinimumMinutes &&
+        a.instrumentSubtractMinutes == b.instrumentSubtractMinutes &&
+        a.ifrPercent == b.ifrPercent &&
+        a.ifrMinimumMinutes == b.ifrMinimumMinutes &&
+        a.ifrSubtractMinutes == b.ifrSubtractMinutes &&
+        a.irp3Percent == b.irp3Percent &&
+        a.irp3SubtractMinutes == b.irp3SubtractMinutes &&
+        a.irp4Percent == b.irp4Percent &&
+        a.irp4SubtractMinutes == b.irp4SubtractMinutes;
   }
 }
 

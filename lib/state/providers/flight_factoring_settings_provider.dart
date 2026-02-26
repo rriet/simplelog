@@ -1,7 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simplelog/data/database/user_settings_json.dart';
+import 'package:simplelog/state/providers/database_provider.dart';
 
 /// Public API documentation.
 const flightFactoringSettingsKey = 'flight_factoring_settings';
@@ -11,15 +12,15 @@ class FlightFactoringSettings {
   /// Creates factoring settings with defaults.
   const FlightFactoringSettings({
     this.crossCountryThresholdNm = 50,
-    this.instrumentPercent = 0,
+    this.instrumentPercent = 100,
     this.instrumentMinimumMinutes = 0,
     this.instrumentSubtractMinutes = 0,
-    this.ifrPercent = 0,
+    this.ifrPercent = 100,
     this.ifrMinimumMinutes = 0,
     this.ifrSubtractMinutes = 0,
-    this.irp3Percent = 100,
+    this.irp3Percent = 33,
     this.irp3SubtractMinutes = 0,
-    this.irp4Percent = 100,
+    this.irp4Percent = 50,
     this.irp4SubtractMinutes = 0,
   });
 
@@ -41,15 +42,15 @@ class FlightFactoringSettings {
 
     return FlightFactoringSettings(
       crossCountryThresholdNm: readInt('crossCountryThresholdNm', 50),
-      instrumentPercent: readInt('instrumentPercent', 0).clamp(0, 100),
+      instrumentPercent: readInt('instrumentPercent', 100).clamp(0, 100),
       instrumentMinimumMinutes: readInt('instrumentMinimumMinutes', 0),
       instrumentSubtractMinutes: readInt('instrumentSubtractMinutes', 0),
-      ifrPercent: readInt('ifrPercent', 0).clamp(0, 100),
+      ifrPercent: readInt('ifrPercent', 100).clamp(0, 100),
       ifrMinimumMinutes: readInt('ifrMinimumMinutes', 0),
       ifrSubtractMinutes: readInt('ifrSubtractMinutes', 0),
-      irp3Percent: readInt('irp3Percent', 100).clamp(0, 100),
+      irp3Percent: readInt('irp3Percent', 33).clamp(0, 100),
       irp3SubtractMinutes: readInt('irp3SubtractMinutes', 0),
-      irp4Percent: readInt('irp4Percent', 100).clamp(0, 100),
+      irp4Percent: readInt('irp4Percent', 50).clamp(0, 100),
       irp4SubtractMinutes: readInt('irp4SubtractMinutes', 0),
     );
   }
@@ -142,18 +143,30 @@ class FlightFactoringSettingsNotifier
     extends AsyncNotifier<FlightFactoringSettings> {
   @override
   Future<FlightFactoringSettings> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    return FlightFactoringSettings.fromJson(
-      prefs.getString(flightFactoringSettingsKey),
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    return loadSettingWithLegacy<FlightFactoringSettings>(
+      store: store,
+      key: flightFactoringSettingsKey,
+      fallback: const FlightFactoringSettings(),
+      parse: (raw) {
+        if (raw is String && raw.isNotEmpty) {
+          return FlightFactoringSettings.fromJson(raw);
+        }
+        return null;
+      },
+      encode: (value) => jsonEncode(value.toJson()),
     );
   }
 
   /// Saves new settings and updates state.
   Future<void> setValue(FlightFactoringSettings value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      flightFactoringSettingsKey,
-      jsonEncode(value.toJson()),
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    await store.patch(
+      (settings) => settings[flightFactoringSettingsKey] = jsonEncode(
+        value.toJson(),
+      ),
     );
     state = AsyncData(value);
   }

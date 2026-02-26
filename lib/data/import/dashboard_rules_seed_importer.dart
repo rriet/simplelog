@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/database/user_settings_json.dart';
 
 /// Public API documentation.
 class DashboardRulesSeedImporter {
@@ -11,16 +11,15 @@ class DashboardRulesSeedImporter {
   static const _prefsKey = 'dashboard_rules_seeded_v1';
 
   /// Public API documentation.
-  static Future<void> clearSeedFlag() async {
-    final prefs = await SharedPreferences.getInstance();
-    /// Public API documentation.
-    await prefs.remove(_prefsKey);
+  static Future<void> clearSeedFlag(AppDatabase db) async {
+    await UserSettingsJsonStore(db).patch((json) => json.remove(_prefsKey));
   }
 
   /// Public API documentation.
   Future<int> importOnFirstOpen(AppDatabase db) async {
-    final prefs = await SharedPreferences.getInstance();
-    final alreadySeeded = prefs.getBool(_prefsKey) ?? false;
+    final store = UserSettingsJsonStore(db);
+    final settings = await store.load();
+    final alreadySeeded = settings[_prefsKey] == true;
     if (alreadySeeded) {
       return 0;
     }
@@ -30,7 +29,7 @@ class DashboardRulesSeedImporter {
     final row = await query.getSingle();
     final count = row.read(countExpr) ?? 0;
     if (count > 0) {
-      await prefs.setBool(_prefsKey, true);
+      await store.patch((json) => json[_prefsKey] = true);
       return 0;
     }
 
@@ -109,7 +108,7 @@ class DashboardRulesSeedImporter {
       batch.insertAll(db.limitRules, defaults, mode: InsertMode.insertOrAbort);
     });
 
-    await prefs.setBool(_prefsKey, true);
+    await store.patch((json) => json[_prefsKey] = true);
     return defaults.length;
   }
 }

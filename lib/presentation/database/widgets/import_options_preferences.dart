@@ -1,40 +1,46 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
+import 'package:simplelog/data/database/user_settings_json.dart';
 import 'package:simplelog/data/import/simplelog_import_options.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 
-/// Public API documentation.
+/// Persists CSV import options in `user_profiles.settings_json`.
 class ImportOptionsPreferences {
   static const _simplePrefix = 'import.simplelog.';
   static const _swPrefix = 'import.southwest.';
-/// Public API documentation.
 
-  /// Public API documentation.
-  static Future<SimpleLogImportOptions> loadSimpleLog() async {
-    final prefs = await SharedPreferences.getInstance();
+  /// Loads import options used for legacy SimpleLog CSV files.
+  static Future<SimpleLogImportOptions> loadSimpleLog(AppDatabase db) async {
+    final store = UserSettingsJsonStore(db);
+    final settings = await store.load();
     final factoringSettings = FlightFactoringSettings.fromJson(
-      prefs.getString(flightFactoringSettingsKey),
+      settings[flightFactoringSettingsKey] as String?,
     );
+
+    bool boolSetting(String key, {bool fallback = false}) {
+      return (settings[key] as bool?) ?? fallback;
+    }
+
     return SimpleLogImportOptions(
-      recalculateNightTime:
-          prefs.getBool('${_simplePrefix}recalculateNightTime') ?? false,
-      recalculateTotalTime:
-          prefs.getBool('${_simplePrefix}recalculateTotalTime') ?? false,
-      recalculateTakeoffLanding:
-          prefs.getBool('${_simplePrefix}recalculateTakeoffLanding') ?? false,
-      recalculateCrossCountry:
-          prefs.getBool('${_simplePrefix}recalculateCrossCountry') ?? false,
+      recalculateNightTime: boolSetting('${_simplePrefix}recalculateNightTime'),
+      recalculateTotalTime: boolSetting('${_simplePrefix}recalculateTotalTime'),
+      recalculateTakeoffLanding: boolSetting(
+        '${_simplePrefix}recalculateTakeoffLanding',
+      ),
+      recalculateCrossCountry: boolSetting(
+        '${_simplePrefix}recalculateCrossCountry',
+      ),
       crossCountryThresholdNm: factoringSettings.crossCountryThresholdNm,
-      recalculateInstrument:
-          prefs.getBool('${_simplePrefix}recalculateInstrument') ?? false,
+      recalculateInstrument: boolSetting(
+        '${_simplePrefix}recalculateInstrument',
+      ),
       instrumentPercent: factoringSettings.instrumentPercent,
       instrumentMinimumMinutes: factoringSettings.instrumentMinimumMinutes,
       instrumentSubtractMinutes: factoringSettings.instrumentSubtractMinutes,
-      recalculateIfrTime:
-          prefs.getBool('${_simplePrefix}recalculateIfrTime') ?? false,
+      recalculateIfrTime: boolSetting('${_simplePrefix}recalculateIfrTime'),
       ifrPercent: factoringSettings.ifrPercent,
       ifrMinimumMinutes: factoringSettings.ifrMinimumMinutes,
       ifrSubtractMinutes: factoringSettings.ifrSubtractMinutes,
@@ -43,58 +49,25 @@ class ImportOptionsPreferences {
       irp4Percent: factoringSettings.irp4Percent,
       irp4SubtractMinutes: factoringSettings.irp4SubtractMinutes,
       overrideAirportValues:
-          prefs.getBool('${_simplePrefix}overrideAirportValues') ??
-          (prefs.getBool('${_simplePrefix}overrideExistingValues') ?? false),
+          (settings['${_simplePrefix}overrideAirportValues'] as bool?) ??
+          ((settings['${_simplePrefix}overrideExistingValues'] as bool?) ??
+              false),
       overrideAircraftValues:
-          prefs.getBool('${_simplePrefix}overrideAircraftValues') ??
-          (prefs.getBool('${_simplePrefix}overrideExistingValues') ?? false),
+          (settings['${_simplePrefix}overrideAircraftValues'] as bool?) ??
+          ((settings['${_simplePrefix}overrideExistingValues'] as bool?) ??
+              false),
       overrideAircraftTypeValues:
-          prefs.getBool('${_simplePrefix}overrideAircraftTypeValues') ??
-          (prefs.getBool('${_simplePrefix}overrideExistingValues') ?? false),
+          (settings['${_simplePrefix}overrideAircraftTypeValues'] as bool?) ??
+          ((settings['${_simplePrefix}overrideExistingValues'] as bool?) ??
+              false),
     );
-  /// Public API documentation.
   }
 
-  /// Public API documentation.
-  static Future<void> saveSimpleLog(SimpleLogImportOptions value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(
-      '${_simplePrefix}recalculateNightTime',
-      value.recalculateNightTime,
-    );
-    await prefs.setBool(
-      '${_simplePrefix}recalculateTotalTime',
-      value.recalculateTotalTime,
-    );
-    await prefs.setBool(
-      '${_simplePrefix}recalculateTakeoffLanding',
-      value.recalculateTakeoffLanding,
-    );
-    await prefs.setBool(
-      '${_simplePrefix}recalculateCrossCountry',
-      value.recalculateCrossCountry,
-    );
-    await prefs.setBool(
-      '${_simplePrefix}recalculateInstrument',
-      value.recalculateInstrument,
-    );
-    await prefs.setBool(
-      '${_simplePrefix}recalculateIfrTime',
-      value.recalculateIfrTime,
-    );
-    await prefs.setBool(
-      '${_simplePrefix}overrideAirportValues',
-      value.overrideAirportValues,
-    );
-    await prefs.setBool(
-      '${_simplePrefix}overrideAircraftValues',
-      value.overrideAircraftValues,
-    );
-    await prefs.setBool(
-      '${_simplePrefix}overrideAircraftTypeValues',
-      value.overrideAircraftTypeValues,
-    );
-
+  /// Saves import options used for legacy SimpleLog CSV files.
+  static Future<void> saveSimpleLog(
+    AppDatabase db,
+    SimpleLogImportOptions value,
+  ) async {
     final factoringSettings = FlightFactoringSettings(
       crossCountryThresholdNm: value.crossCountryThresholdNm,
       instrumentPercent: value.instrumentPercent,
@@ -108,89 +81,88 @@ class ImportOptionsPreferences {
       irp4Percent: value.irp4Percent,
       irp4SubtractMinutes: value.irp4SubtractMinutes,
     );
-    await prefs.setString(
-      flightFactoringSettingsKey,
-      jsonEncode(factoringSettings.toJson()),
-    /// Public API documentation.
-    );
+
+    await UserSettingsJsonStore(db).patch((settings) {
+      settings['${_simplePrefix}recalculateNightTime'] =
+          value.recalculateNightTime;
+      settings['${_simplePrefix}recalculateTotalTime'] =
+          value.recalculateTotalTime;
+      settings['${_simplePrefix}recalculateTakeoffLanding'] =
+          value.recalculateTakeoffLanding;
+      settings['${_simplePrefix}recalculateCrossCountry'] =
+          value.recalculateCrossCountry;
+      settings['${_simplePrefix}recalculateInstrument'] =
+          value.recalculateInstrument;
+      settings['${_simplePrefix}recalculateIfrTime'] = value.recalculateIfrTime;
+      settings['${_simplePrefix}overrideAirportValues'] =
+          value.overrideAirportValues;
+      settings['${_simplePrefix}overrideAircraftValues'] =
+          value.overrideAircraftValues;
+      settings['${_simplePrefix}overrideAircraftTypeValues'] =
+          value.overrideAircraftTypeValues;
+      settings[flightFactoringSettingsKey] = jsonEncode(
+        factoringSettings.toJson(),
+      );
+    });
   }
 
-  /// Public API documentation.
+  /// Loads import options used for Southwest CSV files.
   static Future<SouthwestImportOptions> loadSouthwest({
+    required AppDatabase db,
     CrewPosition fallbackPosition = CrewPosition.sic,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
+    final settings = await UserSettingsJsonStore(db).load();
     return SouthwestImportOptions(
       defaultSelfPosition:
           _parseCrewPosition(
-            prefs.getString('${_swPrefix}defaultSelfPosition'),
+            settings['${_swPrefix}defaultSelfPosition'] as String?,
           ) ??
           fallbackPosition,
       recalculateBlockTime:
-          prefs.getBool('${_swPrefix}recalculateBlockTime') ?? true,
+          (settings['${_swPrefix}recalculateBlockTime'] as bool?) ?? true,
       recalculateNightTime:
-          prefs.getBool('${_swPrefix}recalculateNightTime') ?? true,
+          (settings['${_swPrefix}recalculateNightTime'] as bool?) ?? true,
       recalculateIfrTime:
-          prefs.getBool('${_swPrefix}recalculateIfrTime') ?? true,
+          (settings['${_swPrefix}recalculateIfrTime'] as bool?) ?? true,
       recalculateCrossCountry:
-          prefs.getBool('${_swPrefix}recalculateCrossCountry') ?? true,
+          (settings['${_swPrefix}recalculateCrossCountry'] as bool?) ?? true,
       crossCountryThresholdNm:
-          prefs.getInt('${_swPrefix}crossCountryThresholdNm') ?? 50,
+          (settings['${_swPrefix}crossCountryThresholdNm'] as int?) ?? 50,
       recalculateInstrumentTime:
-          prefs.getBool('${_swPrefix}recalculateInstrumentTime') ?? false,
+          (settings['${_swPrefix}recalculateInstrumentTime'] as bool?) ?? false,
       overrideExistingData:
-          prefs.getBool('${_swPrefix}overrideExistingData') ?? false,
+          (settings['${_swPrefix}overrideExistingData'] as bool?) ?? false,
       addCopilotStaffNumberToNotes:
-          prefs.getBool('${_swPrefix}addCopilotStaffNumberToNotes') ?? true,
+          (settings['${_swPrefix}addCopilotStaffNumberToNotes'] as bool?) ??
+          true,
       addFlightNumberToNotes:
-          /// Public API documentation.
-          prefs.getBool('${_swPrefix}addFlightNumberToNotes') ?? true,
+          (settings['${_swPrefix}addFlightNumberToNotes'] as bool?) ?? true,
     );
   }
 
-  /// Public API documentation.
-  static Future<void> saveSouthwest(SouthwestImportOptions value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      '${_swPrefix}defaultSelfPosition',
-      value.defaultSelfPosition.name,
-    );
-    await prefs.setBool(
-      '${_swPrefix}recalculateBlockTime',
-      value.recalculateBlockTime,
-    );
-    await prefs.setBool(
-      '${_swPrefix}recalculateNightTime',
-      value.recalculateNightTime,
-    );
-    await prefs.setBool(
-      '${_swPrefix}recalculateIfrTime',
-      value.recalculateIfrTime,
-    );
-    await prefs.setBool(
-      '${_swPrefix}recalculateCrossCountry',
-      value.recalculateCrossCountry,
-    );
-    await prefs.setInt(
-      '${_swPrefix}crossCountryThresholdNm',
-      value.crossCountryThresholdNm,
-    );
-    await prefs.setBool(
-      '${_swPrefix}recalculateInstrumentTime',
-      value.recalculateInstrumentTime,
-    );
-    await prefs.setBool(
-      '${_swPrefix}overrideExistingData',
-      value.overrideExistingData,
-    );
-    await prefs.setBool(
-      '${_swPrefix}addCopilotStaffNumberToNotes',
-      value.addCopilotStaffNumberToNotes,
-    );
-    await prefs.setBool(
-      '${_swPrefix}addFlightNumberToNotes',
-      value.addFlightNumberToNotes,
-    );
+  /// Saves import options used for Southwest CSV files.
+  static Future<void> saveSouthwest(
+    AppDatabase db,
+    SouthwestImportOptions value,
+  ) async {
+    await UserSettingsJsonStore(db).patch((settings) {
+      settings['${_swPrefix}defaultSelfPosition'] =
+          value.defaultSelfPosition.name;
+      settings['${_swPrefix}recalculateBlockTime'] = value.recalculateBlockTime;
+      settings['${_swPrefix}recalculateNightTime'] = value.recalculateNightTime;
+      settings['${_swPrefix}recalculateIfrTime'] = value.recalculateIfrTime;
+      settings['${_swPrefix}recalculateCrossCountry'] =
+          value.recalculateCrossCountry;
+      settings['${_swPrefix}crossCountryThresholdNm'] =
+          value.crossCountryThresholdNm;
+      settings['${_swPrefix}recalculateInstrumentTime'] =
+          value.recalculateInstrumentTime;
+      settings['${_swPrefix}overrideExistingData'] = value.overrideExistingData;
+      settings['${_swPrefix}addCopilotStaffNumberToNotes'] =
+          value.addCopilotStaffNumberToNotes;
+      settings['${_swPrefix}addFlightNumberToNotes'] =
+          value.addFlightNumberToNotes;
+    });
   }
 }
 

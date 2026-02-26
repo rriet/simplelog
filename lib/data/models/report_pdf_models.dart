@@ -287,6 +287,7 @@ class ReportPdfTemplate {
     this.forceLandscape = false,
     this.defaultPageSize = ReportPdfPageSize.letter,
     this.rowHeight = 11,
+    this.alternateRowBackgroundColorHex,
     this.labels = const ReportPdfLabels(),
   });
 
@@ -311,6 +312,9 @@ class ReportPdfTemplate {
   /// Default row height used in tables.
   final double rowHeight;
 
+  /// Optional alternating data-row background color (hex).
+  final String? alternateRowBackgroundColorHex;
+
   /// Labels used when rendering this template.
   final ReportPdfLabels labels;
 
@@ -325,6 +329,9 @@ enum ReportPdfCoverBlockType {
 
   /// Multiline text block.
   multiline,
+
+  /// Signature image block.
+  signature,
 }
 
 /// Configuration for a single item within a cover block.
@@ -370,6 +377,8 @@ class ReportPdfCoverBlockConfig {
     this.columns = 1,
     this.items = const [],
     this.valueKey,
+    this.width,
+    this.height,
   });
 
   /// Type of cover block (layout and behavior).
@@ -386,6 +395,12 @@ class ReportPdfCoverBlockConfig {
 
   /// Optional key used to resolve a multiline value.
   final String? valueKey;
+
+  /// Optional width for image-like blocks.
+  final double? width;
+
+  /// Optional height for image-like blocks.
+  final double? height;
 }
 
 /// Configuration for an optional cover page shown before the tables.
