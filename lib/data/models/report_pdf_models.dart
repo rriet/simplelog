@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 /// Supported paper sizes for generated PDF reports.
 enum ReportPdfPageSize {
   /// ISO A4 size.
@@ -11,6 +13,30 @@ enum ReportPdfPageSize {
 
   /// ISO A5 size.
   a5,
+}
+
+/// Supported date formats for rendered report date values.
+enum ReportPdfDateFormat {
+  /// `dd-MM-yyyy` (example: `26-02-2026`).
+  ddMmYyyy,
+
+  /// `dd/MMM/yy` (example: `26/Feb/26`).
+  ddMmmYy,
+
+  /// `yyyy-MM-dd` (example: `2026-02-26`).
+  yyyyMmDd,
+}
+
+/// Supported time formats for rendered report time/duration values.
+enum ReportPdfTimeFormat {
+  /// `HH:mm` (zero-padded hours).
+  hhMm,
+
+  /// `H:mm` (non-padded hours).
+  hMm,
+
+  /// Decimal hours with two digits (example: `1.25`).
+  decimalHours,
 }
 
 /// Convenience helpers for working with [ReportPdfPageSize] values.
@@ -99,6 +125,9 @@ class ReportPdfColumnConfig {
     this.alignment = ReportPdfColumnAlignment.center,
     this.verticalAlignment = ReportPdfVerticalAlignment.middle,
     this.textStyle = const ReportPdfCellTextStyle(),
+    this.signatureWidth,
+    this.signatureHeight,
+    this.signatureShowBorder = false,
   });
 
   /// Unique key used to identify the column and map values.
@@ -118,6 +147,15 @@ class ReportPdfColumnConfig {
 
   /// Default text style applied to cells in this column.
   final ReportPdfCellTextStyle textStyle;
+
+  /// Optional signature image width for signature keys in this column.
+  final double? signatureWidth;
+
+  /// Optional signature image height for signature keys in this column.
+  final double? signatureHeight;
+
+  /// Whether signature image should draw an internal border.
+  final bool signatureShowBorder;
 }
 
 /// Configuration for a single data cell within a table row.
@@ -131,6 +169,10 @@ class ReportPdfCellConfig {
     this.alignment,
     this.verticalAlignment,
     this.textStyle = const ReportPdfCellTextStyle(),
+    this.imageBytes,
+    this.imageWidth,
+    this.imageHeight,
+    this.imageShowBorder = false,
   });
 
   /// Literal text to display in the cell, if any.
@@ -153,6 +195,18 @@ class ReportPdfCellConfig {
 
   /// Text style override for this cell.
   final ReportPdfCellTextStyle textStyle;
+
+  /// Optional image payload rendered in this cell.
+  final Uint8List? imageBytes;
+
+  /// Optional image width.
+  final double? imageWidth;
+
+  /// Optional image height.
+  final double? imageHeight;
+
+  /// Whether image should draw a border.
+  final bool imageShowBorder;
 }
 
 /// Configuration for a header row shown above table data.
@@ -286,6 +340,8 @@ class ReportPdfTemplate {
     this.coverPage,
     this.forceLandscape = false,
     this.defaultPageSize = ReportPdfPageSize.letter,
+    this.dateFormat = ReportPdfDateFormat.ddMmYyyy,
+    this.timeFormat = ReportPdfTimeFormat.hMm,
     this.rowHeight = 11,
     this.alternateRowBackgroundColorHex,
     this.labels = const ReportPdfLabels(),
@@ -308,6 +364,12 @@ class ReportPdfTemplate {
 
   /// Default paper size for the report.
   final ReportPdfPageSize defaultPageSize;
+
+  /// Date format used by rendered row date fields.
+  final ReportPdfDateFormat dateFormat;
+
+  /// Time format used by rendered time and duration fields.
+  final ReportPdfTimeFormat timeFormat;
 
   /// Default row height used in tables.
   final double rowHeight;
@@ -379,6 +441,7 @@ class ReportPdfCoverBlockConfig {
     this.valueKey,
     this.width,
     this.height,
+    this.showBorder = true,
   });
 
   /// Type of cover block (layout and behavior).
@@ -401,6 +464,9 @@ class ReportPdfCoverBlockConfig {
 
   /// Optional height for image-like blocks.
   final double? height;
+
+  /// Whether signature block should draw its own border.
+  final bool showBorder;
 }
 
 /// Configuration for an optional cover page shown before the tables.

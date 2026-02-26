@@ -265,9 +265,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final matched = _xslTemplateOptions.where(
       (option) => option.fileName == preferredName,
     );
-    final next = matched.isNotEmpty
-        ? matched.first
-        : _xslTemplateOptions.first;
+    final next = matched.isNotEmpty ? matched.first : _xslTemplateOptions.first;
     setState(() => _selectedTemplate = next);
     await ref
         .read(selectedReportTemplateFileNameProvider.notifier)
@@ -973,12 +971,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
     try {
       await _ensureDetailsLoaded(
-        includeEntries: true,
+        includeEntries: false,
         includePilotNames: _needsPilotNamesForFilters(),
       );
       if (!mounted) return;
       final templateConfig = selectedTemplate.template;
       final pdfService = ref.read(reportPdfApplicationServiceProvider);
+      final pdfEventTypes = _eventTypesForPdf(
+        ref.read(reportsEventTypesProvider),
+      );
+      final entriesForPdf = await _fetchEntriesForFlights(
+        _data.flights,
+        pdfEventTypes,
+      );
 
       await _setPdfGenerationProgress(l10n.reportsPdfGenerating, progress: 0.5);
       final includeHoursBefore = ref.read(includeHoursBeforeProvider);
@@ -987,13 +992,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       );
       final needsCrewNames = _templateUsesCrewColumns(templateConfig);
       final crewMaps = needsCrewNames
-          ? await _loadReportCrewNames(_entries)
+          ? await _loadReportCrewNames(entriesForPdf)
           : const (
               <int, ReportEntryCrewNames>{},
               <int, ReportEntryCrewNames>{},
             );
       final startingTotals = includeHoursBefore
-          ? await _loadStandardStartingTotals(pdfService)
+          ? await _loadStandardStartingTotals(
+              pdfService,
+              templateConfig.timeFormat,
+            )
           : includePreviousExperience
           ? _templateTotalsFromReportsTotals(
               await ref
@@ -1003,7 +1011,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           : const ReportTemplateTotals();
       final bytes = await pdfService.generateFromTemplate(
         template: templateConfig,
-        entries: _entries,
+        entries: entriesForPdf,
         startingTotals: startingTotals,
         coverValues: _buildCoverValues(),
         coverImages: _buildCoverImages(),
@@ -1043,13 +1051,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   bool _templateUsesCrewColumns(ReportPdfTemplate template) {
+    const crewKeys = <String>{
+      'picCrewName',
+      'sicCrewName',
+      'pilotPicName',
+      'pilotSicName',
+      'anyPIC',
+      'anySIC',
+      'flightPIC',
+      'flightSIC',
+      'simPIC',
+      'simSIC',
+    };
     for (final table in template.tables) {
       for (final column in table.columns) {
-        final key = column.key;
-        if (key == 'picCrewName' ||
-            key == 'sicCrewName' ||
-            key == 'pilotPicName' ||
-            key == 'pilotSicName') {
+        if (crewKeys.contains(column.key)) {
           return true;
         }
       }
@@ -1134,6 +1150,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   Future<ReportTemplateTotals> _loadStandardStartingTotals(
     ReportPdfApplicationService service,
+    ReportPdfTimeFormat timeFormat,
   ) async {
     final cutoff = _from.subtract(const Duration(microseconds: 1));
     final firstDate = DateTime.utc(1970);
@@ -1142,7 +1159,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     }
 
     final repo = ref.read(reportsRepositoryProvider);
-    final eventTypes = ref.read(reportsEventTypesProvider);
+    final eventTypes = _eventTypesForPdf(ref.read(reportsEventTypesProvider));
     Set<int>? includedFlightIds;
     if (_filters.isNotEmpty && eventTypes.flights) {
       final beforeResult = await repo.load(
@@ -1167,7 +1184,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       from: firstDate,
       to: cutoff,
     );
-    var startingTotals = service.sumTotalsFromEntries(beforeEntries);
+    var startingTotals = service.sumTotalsFromEntries(
+      beforeEntries,
+      timeFormat: timeFormat,
+    );
     if (ref.read(includePreviousExperienceProvider)) {
       final previousTotals = await repo.loadAllPreviousExperienceTotals();
       startingTotals = startingTotals.addTotals(
@@ -1175,6 +1195,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       );
     }
     return startingTotals;
+  }
+
+  ReportsEventTypesSelection _eventTypesForPdf(
+    ReportsEventTypesSelection eventTypes,
+  ) {
+    return eventTypes.copyWith(duty: false, positioning: false);
   }
 
   ReportTemplateTotals _templateTotalsFromReportsTotals(ReportsTotals totals) {
@@ -1219,7 +1245,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (signatureImage == null || signatureImage.isEmpty) {
       return const <String, Uint8List>{};
     }
-    return <String, Uint8List>{'pilot.signatureImage': signatureImage};
+    return <String, Uint8List>{
+      'pilot.signatureImage': signatureImage,
+      'anySignature': signatureImage,
+      'flightSignature': signatureImage,
+      'simSignature': signatureImage,
+    };
   }
 
   Future<(Map<int, ReportEntryCrewNames>, Map<int, ReportEntryCrewNames>)>
@@ -4058,9 +4089,9 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
 
   Future<void> _loadItems() async {
     setState(() => _isBusy = true);
-    final rows = await (widget.db.select(widget.db.reportTemplates)
-          ..orderBy([(t) => d.OrderingTerm.asc(t.templateName)]))
-        .get();
+    final rows = await (widget.db.select(
+      widget.db.reportTemplates,
+    )..orderBy([(t) => d.OrderingTerm.asc(t.templateName)])).get();
     if (!mounted) {
       return;
     }

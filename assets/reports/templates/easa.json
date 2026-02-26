@@ -2,6 +2,8 @@
   "rowsPerPage": 20,
   "forceLandscape": true,
   "defaultPageSize": "a4",
+  "dateFormat": "dd-MMM-yyyy",
+  "timeFormat": "H:mm",
   "rowHeight": 17,
   "coverPage": {
     "enabled": true,
@@ -168,7 +170,7 @@
           { "text": "9", "hspan": 2},
           { "text": "10", "hspan": 5},
           { "text": "11", "hspan": 3},
-          { "text": "12"}
+          { "text": "12", "hspan": 2}
         ]
       },
       {
@@ -177,7 +179,12 @@
           { "text": "OPERATIONAL\nCONDITION TIME", "hspan": 2, "weight": "bold" },
           { "text": "PILOT FUNCTION TIME", "hspan": 5, "weight": "bold" },
           { "text": "SYNTETIC TRAINING DEVICES SESSION", "hspan": 3, "weight": "bold" },
-          { "text": "REMARKS\nAND ENDORSEMENTS", "vspan": 3, "weight": "bold" }
+          {
+            "text": "REMARKS\nAND ENDORSEMENTS",
+            "hspan": 2,
+            "vspan": 3,
+            "weight": "bold"
+          }
         ]
       },
       {
@@ -214,8 +221,15 @@
         { "key": "simTypeRegistration", "width": 0.9 },
         { "key": "simSessionTotal", "width": 0.55 },
         {
-          "key": "simRemarks",
-          "width": 2.05,
+          "key": "anySignature",
+          "width": 0.45,
+          "signatureWidth": 14,
+          "signatureHeight": 5,
+          "signatureShowBorder": false
+        },
+        {
+          "key": "anyRemarks",
+          "width": 1.6,
           "alignment": "left"
         }
       ],

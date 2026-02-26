@@ -2,6 +2,8 @@
   "rowsPerPage": 27,
   "forceLandscape": true,
   "defaultPageSize": "letter",
+  "dateFormat": "dd-MMM-yyyy",
+  "timeFormat": "H:mm",
   "rowHeight": 16,
   "alternateRowBackgroundColor": "#E6E8EB",
   "coverPage": {
@@ -51,6 +53,7 @@
             },
             {
               "text": "REMARKS, PROCEDURES, MANEUVERS",
+              "hspan": 2,
               "vspan": 2,
               "weight": "bold"
             },
@@ -72,7 +75,14 @@
         { "key": "entryRegistration", "width": 1.25 },
         { "key": "fromIcao", "width": 1.25 },
         { "key": "toIcao", "width": 1.25 },
-        { "key": "entryRemarks", "width": 5.5, "alignment": "left" },
+        {
+          "key": "anySignature",
+          "width": 0.9,
+          "signatureWidth": 16,
+          "signatureHeight": 6,
+          "signatureShowBorder": false
+        },
+        { "key": "anyRemarks", "width": 4.6, "alignment": "left" },
         { "key": "ifrApproaches", "width": 0.75 },
         { "key": "landingsTotal", "width": 0.75 }
       ],

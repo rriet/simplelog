@@ -109,15 +109,15 @@ class _AboutTab extends StatelessWidget {
                       'SimpleLog was born in the cockpit: built by a real '
                       'airline pilot who got fed up with scribbling on paper '
                       "like it's 1976.\n\n"
-                      'This Flutter version replaces my previous Java desktop '
-                      'logbook app, which I developed and used for many years '
-                      'as an airline pilot. '
+                      'This app replaces my previous Java '
+                      'logbook software, which I developed and used for '
+                      'many years as an airline pilot. '
                       'The rewrite brings mobile support, modern UI, and '
                       'easier data portability — while preserving the core '
                       'focus on quick, accurate entries in real operations.\n\n'
                       'Just punch in takeoff, landing, airports and times → '
-                      'smash Calculate → watch how fast night, IFR, PIC/SIC '
-                      'and duty time gets calculated → save and done.\n\n'
+                      'smash Calculate → watch how fast totals and breakdowns '
+                      'gets calculated automatically → save and done.\n\n'
                       'No nonsense, no subscriptions, no server drama. Your '
                       'flights stay yours, stored locally, synced on local '
                       'network.\n\n'
@@ -249,17 +249,10 @@ class _AboutTab extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 10),
             Center(
               child: Column(
                 children: [
-                  Text(
-                    'Built with by a fellow pilot',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
                   Text(
                     'Flutter • Riverpod • Drift',
                     style: theme.textTheme.bodySmall?.copyWith(

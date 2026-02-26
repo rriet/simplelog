@@ -48,11 +48,11 @@ class ReportPdfTemplateLoader {
   }
 
   Future<List<ReportPdfTemplate>> _loadFromDatabase() async {
-    final rows = await (db.select(db.reportTemplates)
-          ..orderBy([
-            (t) => OrderingTerm.asc(t.templateName),
-          ]))
-        .get();
+    final rows =
+        await (db.select(db.reportTemplates)..orderBy([
+              (t) => OrderingTerm.asc(t.templateName),
+            ]))
+            .get();
     final templates = <ReportPdfTemplate>[];
     for (final row in rows) {
       final fileName = row.templateName.trim();
@@ -87,6 +87,8 @@ class ReportPdfTemplateLoader {
   ReportPdfTemplate _parseTemplate(String fileName, Map<String, dynamic> json) {
     final rowsPerPage = (json['rowsPerPage'] as num?)?.toInt() ?? 26;
     final defaultPageSize = _parsePageSize(json['defaultPageSize']?.toString());
+    final dateFormat = _parseDateFormat(json['dateFormat']?.toString());
+    final timeFormat = _parseTimeFormat(json['timeFormat']?.toString());
     final rowHeight = (json['rowHeight'] as num?)?.toDouble() ?? 11;
     final tablesJson = json['tables'];
     if (tablesJson is! List) {
@@ -100,6 +102,8 @@ class ReportPdfTemplateLoader {
       coverPage: _parseCoverPage(json['coverPage']),
       forceLandscape: json['forceLandscape'] == true,
       defaultPageSize: defaultPageSize,
+      dateFormat: dateFormat,
+      timeFormat: timeFormat,
       rowHeight: rowHeight <= 0 ? 11 : rowHeight,
       alternateRowBackgroundColorHex: json['alternateRowBackgroundColor']
           ?.toString(),
@@ -154,6 +158,7 @@ class ReportPdfTemplateLoader {
       valueKey: json['valueKey']?.toString(),
       width: (json['width'] as num?)?.toDouble(),
       height: (json['height'] as num?)?.toDouble(),
+      showBorder: json['showBorder'] != false,
     );
   }
 
@@ -204,6 +209,39 @@ class ReportPdfTemplateLoader {
     );
   }
 
+  ReportPdfDateFormat _parseDateFormat(String? raw) {
+    switch ((raw ?? '').trim().toLowerCase()) {
+      case 'dd/mmm/yy':
+      case 'dd_mmm_yy':
+        return ReportPdfDateFormat.ddMmmYy;
+      case 'yyyy-mm-dd':
+      case 'yyyy_mm_dd':
+        return ReportPdfDateFormat.yyyyMmDd;
+      case 'dd-mm-yyyy':
+      case 'dd_mm_yyyy':
+      default:
+        return ReportPdfDateFormat.ddMmYyyy;
+    }
+  }
+
+  ReportPdfTimeFormat _parseTimeFormat(String? raw) {
+    switch ((raw ?? '').trim().toLowerCase()) {
+      case 'hh:mm':
+      case 'hhmm':
+        return ReportPdfTimeFormat.hhMm;
+      case 'h:mm':
+      case 'hmm':
+        return ReportPdfTimeFormat.hMm;
+      case 'h.dd':
+      case 'decimal':
+      case 'decimalhours':
+      case 'decimal_hours':
+        return ReportPdfTimeFormat.decimalHours;
+      default:
+        return ReportPdfTimeFormat.hMm;
+    }
+  }
+
   ReportPdfColumnConfig _parseColumn(Map<String, dynamic> json) {
     final key = (json['key'] ?? '').toString().trim();
     if (key.isEmpty) {
@@ -224,6 +262,9 @@ class ReportPdfTemplateLoader {
       alignment: alignment,
       verticalAlignment: verticalAlignment,
       textStyle: _parseTextStyle(json),
+      signatureWidth: (json['signatureWidth'] as num?)?.toDouble(),
+      signatureHeight: (json['signatureHeight'] as num?)?.toDouble(),
+      signatureShowBorder: json['signatureShowBorder'] == true,
     );
   }
 

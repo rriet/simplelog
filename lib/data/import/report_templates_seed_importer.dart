@@ -44,28 +44,34 @@ class ReportTemplatesSeedImporter {
         templateJson: templateJson,
         templateName: templateName,
       );
-      await db.into(db.reportTemplates).insertOnConflictUpdate(
-        ReportTemplatesCompanion.insert(
-          templateName: templateName,
-          templateJson: normalizedJson,
-        ),
-      );
+      await db
+          .into(db.reportTemplates)
+          .insertOnConflictUpdate(
+            ReportTemplatesCompanion.insert(
+              templateName: templateName,
+              templateJson: normalizedJson,
+            ),
+          );
       inserted++;
     }
     return inserted;
   }
 
   Future<int> _count(AppDatabase db) async {
-    final row = await db.customSelect(
-      'SELECT COUNT(*) AS c FROM report_templates',
-    ).getSingle();
+    final row = await db
+        .customSelect(
+          'SELECT COUNT(*) AS c FROM report_templates',
+        )
+        .getSingle();
     return row.read<int>('c');
   }
 
   Future<void> _ensureCompatibleTable(AppDatabase db) async {
-    final columns = await db.customSelect(
-      'PRAGMA table_info(report_templates)',
-    ).get();
+    final columns = await db
+        .customSelect(
+          'PRAGMA table_info(report_templates)',
+        )
+        .get();
     if (columns.isEmpty) {
       await db.customStatement('''
         CREATE TABLE IF NOT EXISTS report_templates (
@@ -77,9 +83,7 @@ class ReportTemplatesSeedImporter {
       return;
     }
 
-    final columnNames = columns
-        .map((row) => row.read<String>('name'))
-        .toSet();
+    final columnNames = columns.map((row) => row.read<String>('name')).toSet();
     if (columnNames.contains('template_name')) {
       return;
     }
@@ -87,9 +91,11 @@ class ReportTemplatesSeedImporter {
     final sourceNameColumn = columnNames.contains('report_name')
         ? 'report_name'
         : 'file_name';
-    final legacyRows = await db.customSelect(
-      'SELECT $sourceNameColumn, template_json FROM report_templates',
-    ).get();
+    final legacyRows = await db
+        .customSelect(
+          'SELECT $sourceNameColumn, template_json FROM report_templates',
+        )
+        .get();
     await db.customStatement('DROP TABLE report_templates');
     await db.customStatement('''
       CREATE TABLE report_templates (
@@ -129,6 +135,8 @@ class ReportTemplatesSeedImporter {
       }
       decoded['templateName'] = templateName;
       decoded
+        ..putIfAbsent('dateFormat', () => 'dd-MM-yyyy')
+        ..putIfAbsent('timeFormat', () => 'H:mm')
         ..remove('reportName')
         ..remove('displayName');
       return jsonEncode(decoded);
