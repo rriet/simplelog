@@ -5,6 +5,7 @@ import 'package:simplelog/features/airports/presentation/airport_screen.dart';
 import 'package:simplelog/features/crew/presentation/crew_screen.dart';
 import 'package:simplelog/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:simplelog/features/logbook/presentation/logbook_screen.dart';
+import 'package:simplelog/presentation/about/about_screen.dart';
 import 'package:simplelog/presentation/database/database_screen.dart';
 import 'package:simplelog/presentation/settings/settings_screen.dart';
 
@@ -33,6 +34,9 @@ enum AppScreen {
 
   /// App settings.
   settings,
+
+  /// About and licensing information.
+  about,
 }
 
 /// Builds the root screen widget for each [AppScreen] entry.
@@ -48,6 +52,7 @@ extension AppScreenWidget on AppScreen {
       AppScreen.crew => const CrewScreen(),
       AppScreen.database => const DatabaseScreen(),
       AppScreen.settings => const SettingsScreen(),
+      AppScreen.about => const AboutScreen(),
     };
   }
 }

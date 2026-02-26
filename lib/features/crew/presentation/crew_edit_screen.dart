@@ -172,11 +172,56 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
     if (result == null || result.files.isEmpty) {
       return;
     }
-    final bytes = result.files.first.bytes;
-    if (bytes == null || !mounted) {
+
+    final picked = result.files.first;
+    final sourcePath = picked.path ?? '';
+    if (sourcePath.isNotEmpty) {
+      final cropped = await _cropFromPath(sourcePath);
+      if (!mounted || cropped == null) {
+        return;
+      }
+      setState(() => _pictureBytes = cropped);
       return;
     }
-    setState(() => _pictureBytes = bytes);
+
+    final bytes = picked.bytes;
+    if (bytes == null || bytes.isEmpty || !mounted) {
+      return;
+    }
+    final tempDir = await getTemporaryDirectory();
+    final tempPath =
+        '${tempDir.path}/crew_file_${DateTime.now().millisecondsSinceEpoch}.png';
+    await File(tempPath).writeAsBytes(bytes, flush: true);
+    final cropped = await _cropFromPath(tempPath);
+    if (!mounted || cropped == null) {
+      return;
+    }
+    setState(() => _pictureBytes = cropped);
+  }
+
+  Future<Uint8List?> _cropFromPath(String sourcePath) async {
+    try {
+      final result = await showAdaptiveImageCropper(
+        context,
+        imageProvider: FileImage(File(sourcePath)),
+        allowedAspectRatios: const [
+          null,
+          CropAspectRatio(width: 1, height: 1),
+          CropAspectRatio(width: 4, height: 3),
+          CropAspectRatio(width: 16, height: 9),
+        ],
+      );
+      if (result == null) {
+        return null;
+      }
+      final byteData = await result.uiImage.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      result.uiImage.dispose();
+      return byteData?.buffer.asUint8List();
+    } on Object {
+      return null;
+    }
   }
 
   Future<void> _showPhotoMenu({

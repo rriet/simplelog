@@ -20,6 +20,7 @@ class AppDrawer extends StatelessWidget {
     AppScreen.crew,
     AppScreen.dashboard,
     AppScreen.settings,
+    AppScreen.about,
   ];
 
   /// Currently selected screen.
@@ -90,6 +91,7 @@ String _screenLabel(AppLocalizations l10n, AppScreen screen) {
     AppScreen.crew => l10n.screenCrew,
     AppScreen.database => l10n.screenDatabase,
     AppScreen.settings => l10n.screenSettings,
+    AppScreen.about => 'About',
   };
 }
 
@@ -103,5 +105,6 @@ IconData _screenIcon(AppScreen screen) {
     AppScreen.crew => Icons.people_outline,
     AppScreen.database => Icons.storage_outlined,
     AppScreen.settings => Icons.settings_outlined,
+    AppScreen.about => Icons.info_outline,
   };
 }
