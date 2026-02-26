@@ -3,10 +3,9 @@
 **SimpleLog** is a pilot logbook app for professional and private aviators.
 
 This Flutter version replaces my previous Java desktop logbook app, which I 
-developed and used for many years as an airline pilot. 
-
-The rewrite brings mobile support, modern UI, and easier data portability — 
-while preserving the core focus on quick, accurate entries in real operations.
+developed and used for many years as an airline pilot. The rewrite brings 
+mobile support, modern UI, and easier data portability — while preserving 
+the core focus on quick, accurate entries in real operations.
 
 Designed by an airline pilot, it is built to reduce typing, speed up entries,
 and keep your records accurate.

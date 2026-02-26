@@ -109,6 +109,12 @@ class _AboutTab extends StatelessWidget {
                       'SimpleLog was born in the cockpit: built by a real '
                       'airline pilot who got fed up with scribbling on paper '
                       "like it's 1976.\n\n"
+                      'This Flutter version replaces my previous Java desktop '
+                      'logbook app, which I developed and used for many years '
+                      'as an airline pilot. '
+                      'The rewrite brings mobile support, modern UI, and '
+                      'easier data portability — while preserving the core '
+                      'focus on quick, accurate entries in real operations.\n\n'
                       'Just punch in takeoff, landing, airports and times → '
                       'smash Calculate → watch how fast night, IFR, PIC/SIC '
                       'and duty time gets calculated → save and done.\n\n'
