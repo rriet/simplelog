@@ -1,12 +1,15 @@
 import 'package:simplelog/data/models/flight_write_input.dart';
 import 'package:simplelog/domain/validation/validation_issue.dart';
 
-/// Public API documentation.
+/// Validates flight write requests against domain and consistency rules.
 class FlightWriteValidator {
-  /// Public API documentation.
+  /// Creates a stateless flight validator.
   const FlightWriteValidator();
 
-  /// Public API documentation.
+  /// Returns validation errors and warnings for the provided [input].
+  ///
+  /// Errors block persistence; warnings highlight suspicious but still
+  /// savable values.
   ValidationReport validate(FlightWriteInput input) {
     final errors = <ValidationIssue>[];
     final warnings = <ValidationIssue>[];

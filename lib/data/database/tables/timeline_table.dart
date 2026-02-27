@@ -1,9 +1,10 @@
 import 'package:drift/drift.dart';
 
-/// Public API documentation.
+/// Stores canonical UTC timestamps referenced by flights and other entries.
 class TimeLines extends Table {
-  /// Public API documentation.
+  /// Primary key for a timeline row.
   IntColumn get id => integer().autoIncrement()();
-  /// Public API documentation.
+
+  /// UTC date-time value used by related records.
   DateTimeColumn get eventDateTime => dateTime()();
 }

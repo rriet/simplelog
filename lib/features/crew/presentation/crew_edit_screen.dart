@@ -17,15 +17,15 @@ import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
-/// Public API documentation.
+/// Screen used to create or edit a crew member record.
 class CrewEditScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates a crew edit screen for [item], optionally in create mode.
   const CrewEditScreen({required this.item, super.key, this.isCreate = false});
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Crew row being edited, or a seed value when creating.
   final CrewData item;
-  /// Public API documentation.
+
+  /// When true, saves as a new row instead of updating [item].
   final bool isCreate;
 
   @override

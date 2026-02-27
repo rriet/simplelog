@@ -3,22 +3,22 @@ import 'package:drift/drift.dart';
 import 'package:simplelog/data/database/tables/airports_table.dart';
 import 'package:simplelog/data/database/tables/timeline_table.dart';
 
-/// Public API documentation.
+/// Positioning legs table.
 class Positionings extends Table {
-  /// Public API documentation.
+  /// Surrogate primary key.
   IntColumn get id => integer().autoIncrement()();
-  /// Public API documentation.
+  /// Departure airport id.
   IntColumn get departurePlaceId => integer().references(Airports, #id)();
-  /// Public API documentation.
+  /// Arrival airport id.
   IntColumn get arrivalPlaceId => integer().references(Airports, #id)();
-  /// Public API documentation.
+  /// Timeline reference for departure datetime.
   IntColumn get departureDateTimeId => integer().references(TimeLines, #id)();
-  /// Public API documentation.
+  /// Optional arrival datetime.
   DateTimeColumn get arrivalDateTime => dateTime().nullable()();
-  /// Public API documentation.
+  /// Total positioning time in minutes.
   IntColumn get timeTotalMinutes => integer()();
-  /// Public API documentation.
+  /// Optional notes.
   TextColumn get notes => text().withDefault(const Constant(''))();
-  /// Public API documentation.
+  /// Lock flag preventing edits.
   BoolColumn get isLocked => boolean()();
 }

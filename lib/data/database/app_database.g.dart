@@ -379,46 +379,46 @@ class $AircraftTypesTable extends AircraftTypes
 }
 
 class AircraftType extends DataClass implements Insertable<AircraftType> {
-  /// Public API documentation.
+  /// Surrogate primary key.
   final int id;
 
-  /// Public API documentation.
+  /// Short type code (e.g. A320).
   final String code;
 
-  /// Public API documentation.
+  /// Family/group label.
   final String family;
 
-  /// Public API documentation.
+  /// Human-readable long type name.
   final String longName;
 
-  /// Public API documentation.
+  /// Optional manufacturer name.
   final String? manufacturer;
 
-  /// Public API documentation.
+  /// Aircraft category enum stored via converter.
   final AircraftCategory category;
 
-  /// Public API documentation.
+  /// Engine type enum stored via converter.
   final EngineType engineType;
 
-  /// Public API documentation.
+  /// Maximum takeoff weight.
   final int mtow;
 
-  /// Public API documentation.
+  /// Engine count.
   final int engineCount;
 
-  /// Public API documentation.
+  /// Whether type requires multi-pilot operation.
   final bool multiPilot;
 
-  /// Public API documentation.
+  /// Whether aircraft is complex.
   final bool complex;
 
-  /// Public API documentation.
+  /// Whether cockpit is EFIS-equipped.
   final bool efis;
 
-  /// Public API documentation.
+  /// Whether aircraft is high performance.
   final bool highPerformance;
 
-  /// Public API documentation.
+  /// Lock flag preventing edits.
   final bool isLocked;
   const AircraftType({
     required this.id,
@@ -1090,28 +1090,28 @@ class $AircraftsTable extends Aircrafts
 }
 
 class Aircraft extends DataClass implements Insertable<Aircraft> {
-  /// Public API documentation.
+  /// Surrogate primary key.
   final int id;
 
-  /// Public API documentation.
+  /// Linked aircraft type id.
   final int aircraftTypeId;
 
-  /// Public API documentation.
+  /// Registration/tail number.
   final String registration;
 
-  /// Public API documentation.
+  /// Optional per-aircraft MTOW override.
   final int? mtow;
 
-  /// Public API documentation.
+  /// Marks this row as simulator device/entry.
   final bool isSimulator;
 
-  /// Public API documentation.
+  /// Favorite/pinned flag.
   final bool isFavorite;
 
-  /// Public API documentation.
+  /// Lock flag preventing edits.
   final bool isLocked;
 
-  /// Public API documentation.
+  /// Optional notes.
   final String? notes;
   const Aircraft({
     required this.id,
@@ -1656,34 +1656,34 @@ class $AirportsTable extends Airports with TableInfo<$AirportsTable, Airport> {
 }
 
 class Airport extends DataClass implements Insertable<Airport> {
-  /// Public API documentation.
+  /// Surrogate primary key.
   final int id;
 
-  /// Public API documentation.
+  /// ICAO airport code.
   final String icao;
 
-  /// Public API documentation.
+  /// Optional IATA airport code.
   final String? iata;
 
-  /// Public API documentation.
+  /// Optional airport display name.
   final String? name;
 
-  /// Public API documentation.
+  /// Optional city.
   final String? city;
 
-  /// Public API documentation.
+  /// Optional country.
   final String? country;
 
-  /// Public API documentation.
+  /// Latitude in decimal degrees.
   final double latitude;
 
-  /// Public API documentation.
+  /// Longitude in decimal degrees.
   final double longitude;
 
-  /// Public API documentation.
+  /// Whether airport is pinned by user.
   final bool isFavorite;
 
-  /// Public API documentation.
+  /// Whether row is protected from edits.
   final bool isLocked;
   const Airport({
     required this.id,
@@ -2090,10 +2090,10 @@ class $TimeLinesTable extends TimeLines
 }
 
 class TimeLine extends DataClass implements Insertable<TimeLine> {
-  /// Public API documentation.
+  /// Primary key for a timeline row.
   final int id;
 
-  /// Public API documentation.
+  /// UTC date-time value used by related records.
   final DateTime eventDateTime;
   const TimeLine({required this.id, required this.eventDateTime});
   @override
@@ -3283,121 +3283,121 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
 }
 
 class Flight extends DataClass implements Insertable<Flight> {
-  /// Public API documentation.
+  /// Surrogate primary key.
   final int id;
 
-  /// Public API documentation.
+  /// Linked aircraft id.
   final int aircraftId;
 
-  /// Public API documentation.
+  /// Departure airport id.
   final int departureAirportId;
 
-  /// Public API documentation.
+  /// Arrival airport id.
   final int arrivalAirportId;
 
-  /// Public API documentation.
+  /// Timeline id for departure/chocks-off event.
   final int departureDateTimeId;
 
-  /// Public API documentation.
+  /// Optional takeoff timestamp.
   final DateTime? takeOffDateTime;
 
-  /// Public API documentation.
+  /// Optional landing timestamp.
   final DateTime? landingDateTime;
 
-  /// Public API documentation.
+  /// Optional arrival/chocks-on timestamp.
   final DateTime? arrivalDateTime;
 
-  /// Public API documentation.
+  /// PIC time in minutes.
   final int timePICMinutes;
 
-  /// Public API documentation.
+  /// PICUS time in minutes.
   final int timePICUSMinutes;
 
-  /// Public API documentation.
+  /// SIC time in minutes.
   final int timeSICMinutes;
 
-  /// Public API documentation.
+  /// Dual time in minutes.
   final int timeDualMinutes;
 
-  /// Public API documentation.
+  /// Instructor time in minutes.
   final int timeInstructorMinutes;
 
-  /// Public API documentation.
+  /// IFR time in minutes.
   final int timeIFRMinutes;
 
-  /// Public API documentation.
+  /// Instrument time in minutes.
   final int timeInstrumentMinutes;
 
-  /// Public API documentation.
+  /// Simulated instrument time in minutes.
   final int timeSimulatedInstrumentMinutes;
 
-  /// Public API documentation.
+  /// Night time in minutes.
   final int timeNightMinutes;
 
-  /// Public API documentation.
+  /// Cross-country time in minutes.
   final int timeCrossCountryMinutes;
 
-  /// Public API documentation.
+  /// Custom time bucket 1 in minutes.
   final int timeCustom1Minutes;
 
-  /// Public API documentation.
+  /// Custom time bucket 2 in minutes.
   final int timeCustom2Minutes;
 
-  /// Public API documentation.
+  /// Custom time bucket 3 in minutes.
   final int timeCustom3Minutes;
 
-  /// Public API documentation.
+  /// Custom time bucket 4 in minutes.
   final int timeCustom4Minutes;
 
-  /// Public API documentation.
+  /// Airborne/flight time in minutes.
   final int timeFlightMinutes;
 
-  /// Public API documentation.
+  /// Block time in minutes.
   final int timeBlockMinutes;
 
-  /// Public API documentation.
+  /// Accumulated total block time in minutes.
   final int timeTotalBlockMinutes;
 
-  /// Public API documentation.
+  /// Great-circle distance in nautical miles.
   final int distanceNM;
 
-  /// Public API documentation.
+  /// Number of IFR approaches.
   final int ifrApproaches;
 
-  /// Public API documentation.
+  /// Day takeoffs count.
   final int takeOffsDays;
 
-  /// Public API documentation.
+  /// Night takeoffs count.
   final int takeOffsNight;
 
-  /// Public API documentation.
+  /// Day landings count.
   final int landingsDay;
 
-  /// Public API documentation.
+  /// Night landings count.
   final int landingsNight;
 
-  /// Public API documentation.
+  /// Pilot function label (e.g. PF/PNF/IRP3/IRP4).
   final String pilotFunction;
 
-  /// Public API documentation.
+  /// Free-text approach type summary.
   final String approachType;
 
-  /// Public API documentation.
+  /// User remarks.
   final String remarks;
 
-  /// Public API documentation.
+  /// Private notes.
   final String notes;
 
-  /// Public API documentation.
+  /// Lock flag to prevent editing.
   final bool isLocked;
 
-  /// Public API documentation.
+  /// Optional endorsement/signature image bytes.
   final Uint8List? signatureImage;
 
-  /// Public API documentation.
+  /// Optional serialized endorsement metadata.
   final String? endorsementData;
 
-  /// Public API documentation.
+  /// Hash used to verify endorsement integrity.
   final String? endorsementHash;
   const Flight({
     required this.id,
@@ -4911,46 +4911,46 @@ class $LimitRulesTable extends LimitRules
 }
 
 class LimitRule extends DataClass implements Insertable<LimitRule> {
-  /// Public API documentation.
+  /// Surrogate primary key.
   final int ruleId;
 
-  /// Public API documentation.
+  /// User-facing rule name.
   final String ruleName;
 
-  /// Public API documentation.
+  /// Metric key (e.g. block, landings).
   final String metric;
 
-  /// Public API documentation.
+  /// Rule semantics (`minimum` or `maximum`).
   final String ruleType;
 
-  /// Public API documentation.
+  /// Window calculation mode descriptor.
   final String windowType;
 
-  /// Public API documentation.
+  /// Window size in units implied by [windowType].
   final int windowValue;
 
-  /// Public API documentation.
+  /// Threshold value in [limitUnit].
   final double limitValue;
 
-  /// Public API documentation.
+  /// Unit label for [limitValue].
   final String limitUnit;
 
-  /// Public API documentation.
+  /// Yellow warning threshold before limit.
   final double warnYellowBefore;
 
-  /// Public API documentation.
+  /// Red warning threshold before/after limit.
   final double warnRedBefore;
 
-  /// Public API documentation.
+  /// UI color for yellow state.
   final String warnYellowColor;
 
-  /// Public API documentation.
+  /// UI color for red state.
   final String warnRedColor;
 
-  /// Public API documentation.
+  /// Whether rule participates in calculations.
   final bool active;
 
-  /// Public API documentation.
+  /// Optional free-form notes.
   final String? notes;
   const LimitRule({
     required this.ruleId,
@@ -5530,19 +5530,19 @@ class $RuleSnapshotsTable extends RuleSnapshots
 }
 
 class RuleSnapshot extends DataClass implements Insertable<RuleSnapshot> {
-  /// Public API documentation.
+  /// Primary key for a snapshot row.
   final int snapshotId;
 
-  /// Public API documentation.
+  /// Foreign key to the rule that produced this snapshot.
   final int ruleId;
 
-  /// Public API documentation.
+  /// UTC timestamp when this snapshot was computed.
   final DateTime computedAt;
 
-  /// Public API documentation.
+  /// Numeric value measured for the rule at [computedAt].
   final double currentValue;
 
-  /// Public API documentation.
+  /// Evaluation status persisted as text (for example pass or fail).
   final String status;
   const RuleSnapshot({
     required this.snapshotId,
@@ -5991,28 +5991,28 @@ class $PositioningsTable extends Positionings
 }
 
 class Positioning extends DataClass implements Insertable<Positioning> {
-  /// Public API documentation.
+  /// Surrogate primary key.
   final int id;
 
-  /// Public API documentation.
+  /// Departure airport id.
   final int departurePlaceId;
 
-  /// Public API documentation.
+  /// Arrival airport id.
   final int arrivalPlaceId;
 
-  /// Public API documentation.
+  /// Timeline reference for departure datetime.
   final int departureDateTimeId;
 
-  /// Public API documentation.
+  /// Optional arrival datetime.
   final DateTime? arrivalDateTime;
 
-  /// Public API documentation.
+  /// Total positioning time in minutes.
   final int timeTotalMinutes;
 
-  /// Public API documentation.
+  /// Optional notes.
   final String notes;
 
-  /// Public API documentation.
+  /// Lock flag preventing edits.
   final bool isLocked;
   const Positioning({
     required this.id,
@@ -7078,88 +7078,88 @@ class $PreviousExperiencesTable extends PreviousExperiences
 
 class PreviousExperience extends DataClass
     implements Insertable<PreviousExperience> {
-  /// Public API documentation.
+  /// Surrogate primary key.
   final int id;
 
-  /// Public API documentation.
+  /// Aircraft type these totals apply to.
   final int aircraftTypeId;
 
-  /// Public API documentation.
+  /// Earliest known flight date for this experience bucket.
   final DateTime? dateTimeFirstFlight;
 
-  /// Public API documentation.
+  /// Most recent known flight date for this experience bucket.
   final DateTime? dateTimeLastFlight;
 
-  /// Public API documentation.
+  /// PIC minutes.
   final int timePICMinutes;
 
-  /// Public API documentation.
+  /// PICUS minutes.
   final int timePICUSMinutes;
 
-  /// Public API documentation.
+  /// SIC minutes.
   final int timeSICMinutes;
 
-  /// Public API documentation.
+  /// Dual minutes.
   final int timeDualMinutes;
 
-  /// Public API documentation.
+  /// Instructor minutes.
   final int timeInstructorMinutes;
 
-  /// Public API documentation.
+  /// IFR minutes.
   final int timeIFRMinutes;
 
-  /// Public API documentation.
+  /// Instrument minutes.
   final int timeInstrumentMinutes;
 
-  /// Public API documentation.
+  /// Simulated instrument minutes.
   final int timeSimulatedInstrumentMinutes;
 
-  /// Public API documentation.
+  /// Night minutes.
   final int timeNightMinutes;
 
-  /// Public API documentation.
+  /// Cross-country minutes.
   final int timeCrossCountryMinutes;
 
-  /// Public API documentation.
+  /// Custom time bucket 1 minutes.
   final int timeCustom1Minutes;
 
-  /// Public API documentation.
+  /// Custom time bucket 2 minutes.
   final int timeCustom2Minutes;
 
-  /// Public API documentation.
+  /// Custom time bucket 3 minutes.
   final int timeCustom3Minutes;
 
-  /// Public API documentation.
+  /// Custom time bucket 4 minutes.
   final int timeCustom4Minutes;
 
-  /// Public API documentation.
+  /// Flight minutes.
   final int timeFlightMinutes;
 
-  /// Public API documentation.
+  /// Block minutes.
   final int timeBlockMinutes;
 
-  /// Public API documentation.
+  /// Simulator minutes.
   final int timeSimulatorMinutes;
 
-  /// Public API documentation.
+  /// Distance in nautical miles.
   final int distanceNM;
 
-  /// Public API documentation.
+  /// Number of flights/sectors represented.
   final int flightCount;
 
-  /// Public API documentation.
+  /// IFR approaches count.
   final int ifrApproaches;
 
-  /// Public API documentation.
+  /// Day takeoffs count.
   final int takeOffsDays;
 
-  /// Public API documentation.
+  /// Night takeoffs count.
   final int takeOffsNight;
 
-  /// Public API documentation.
+  /// Day landings count.
   final int landingsDay;
 
-  /// Public API documentation.
+  /// Night landings count.
   final int landingsNight;
   const PreviousExperience({
     required this.id,
@@ -8504,25 +8504,25 @@ class $DutyPeriodsTable extends DutyPeriods
 }
 
 class DutyPeriod extends DataClass implements Insertable<DutyPeriod> {
-  /// Public API documentation.
+  /// Surrogate primary key.
   final int id;
 
-  /// Public API documentation.
+  /// Timeline id for duty start.
   final int dutyStartTimeLineId;
 
-  /// Public API documentation.
+  /// Timeline id for duty end.
   final int dutyEndTimeLineId;
 
-  /// Public API documentation.
+  /// Total duty minutes.
   final int timeDutyMinutes;
 
-  /// Public API documentation.
+  /// Rest before duty in minutes.
   final int restBeforeMinutes;
 
-  /// Public API documentation.
+  /// Factored duty minutes.
   final int timeFactoredDutyMinutes;
 
-  /// Public API documentation.
+  /// Lock flag preventing edits.
   final bool isLocked;
   const DutyPeriod({
     required this.id,
@@ -9030,31 +9030,31 @@ class $CrewTable extends Crew with TableInfo<$CrewTable, CrewData> {
 }
 
 class CrewData extends DataClass implements Insertable<CrewData> {
-  /// Public API documentation.
+  /// Surrogate primary key.
   final int id;
 
-  /// Public API documentation.
+  /// Crew display name.
   final String name;
 
-  /// Public API documentation.
+  /// Optional email address.
   final String? email;
 
-  /// Public API documentation.
+  /// Optional notes/comments.
   final String? notes;
 
-  /// Public API documentation.
+  /// Optional phone number.
   final String? phone;
 
-  /// Public API documentation.
+  /// Optional crew photo.
   final Uint8List? picture;
 
-  /// Public API documentation.
+  /// Marks the profile representing the user.
   final bool isSelf;
 
-  /// Public API documentation.
+  /// Favorite/pinned flag.
   final bool isFavorite;
 
-  /// Public API documentation.
+  /// Lock flag preventing edits.
   final bool isLocked;
   const CrewData({
     required this.id,
@@ -9488,16 +9488,16 @@ class $FlightCrewAssignmentsTable extends FlightCrewAssignments
 
 class FlightCrewAssignment extends DataClass
     implements Insertable<FlightCrewAssignment> {
-  /// Public API documentation.
+  /// Primary key for the assignment row.
   final int id;
 
-  /// Public API documentation.
+  /// Referenced flight.
   final int flightId;
 
-  /// Public API documentation.
+  /// Referenced crew member.
   final int crewId;
 
-  /// Public API documentation.
+  /// Crew role encoded using [CrewPositionConverter].
   final CrewPosition position;
   const FlightCrewAssignment({
     required this.id,
@@ -9991,37 +9991,37 @@ class $SimulatorTrainingsTable extends SimulatorTrainings
 
 class SimulatorTraining extends DataClass
     implements Insertable<SimulatorTraining> {
-  /// Public API documentation.
+  /// Surrogate primary key.
   final int id;
 
-  /// Public API documentation.
+  /// Linked aircraft id (simulator-capable aircraft row).
   final int aircraftId;
 
-  /// Public API documentation.
+  /// Start timeline reference.
   final int startTimeLineId;
 
-  /// Public API documentation.
+  /// Optional end datetime.
   final DateTime? endDateTime;
 
-  /// Public API documentation.
+  /// Session total in minutes.
   final int timeTotal;
 
-  /// Public API documentation.
+  /// User remarks.
   final String remarks;
 
-  /// Public API documentation.
+  /// Private notes.
   final String notes;
 
-  /// Public API documentation.
+  /// Lock flag preventing edits.
   final bool isLocked;
 
-  /// Public API documentation.
+  /// Optional endorsement signature image.
   final Uint8List? signatureImage;
 
-  /// Public API documentation.
+  /// Optional serialized endorsement metadata.
   final String? endorsementData;
 
-  /// Public API documentation.
+  /// Hash used to verify endorsement integrity.
   final String? endorsementHash;
   const SimulatorTraining({
     required this.id,
@@ -10526,16 +10526,16 @@ class $SimulatorCrewAssignmentsTable extends SimulatorCrewAssignments
 
 class SimulatorCrewAssignment extends DataClass
     implements Insertable<SimulatorCrewAssignment> {
-  /// Public API documentation.
+  /// Primary key for the assignment row.
   final int id;
 
-  /// Public API documentation.
+  /// Referenced simulator training session.
   final int simulatorId;
 
-  /// Public API documentation.
+  /// Referenced crew member.
   final int crewId;
 
-  /// Public API documentation.
+  /// Crew role encoded using [CrewPositionConverter].
   final CrewPosition position;
   const SimulatorCrewAssignment({
     required this.id,

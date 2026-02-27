@@ -26,9 +26,9 @@ import 'package:simplelog/presentation/shared/widgets/event_type_toggle_button.d
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/square_outline_button.dart';
 
-/// Public API documentation.
+/// Main logbook screen with list, analytics, and reports tabs.
 class LogbookScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates the logbook screen.
   const LogbookScreen({super.key});
 
   @override

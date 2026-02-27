@@ -14,20 +14,18 @@ import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.da
 import 'package:simplelog/presentation/shared/widgets/uppercase_text_formatter.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
-/// Public API documentation.
+/// Create/edit screen for airport rows.
 class AirportEditScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates the airport edit screen.
   const AirportEditScreen({
     required this.item,
     super.key,
     this.isCreate = false,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Initial airport value.
   final Airport item;
-  /// Public API documentation.
+  /// Whether screen is in create mode.
   final bool isCreate;
 
   @override

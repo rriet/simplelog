@@ -5,21 +5,19 @@ import 'package:simplelog/domain/repositories/aircraft_repository_contract.dart'
 import 'package:simplelog/domain/usecases/aircraft_use_cases.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
-/// Public API documentation.
+/// Provides the aircraft repository implementation for this app.
 final aircraftRepositoryProvider = Provider<AircraftRepositoryContract>((ref) {
   final db = ref.watch(databaseProvider);
   return AircraftRepository(db);
 });
-/// Public API documentation.
 
-/// Public API documentation.
+/// Provides aircraft use cases built on top of [aircraftRepositoryProvider].
 final aircraftUseCasesProvider = Provider<AircraftUseCases>((ref) {
   final repo = ref.watch(aircraftRepositoryProvider);
   return AircraftUseCases(repo);
-/// Public API documentation.
 });
 
-/// Public API documentation.
+/// Streams aircraft rows that match the current search query.
 final StreamProvider<List<AircraftRow>> Function(String) aircraftProvider =
     StreamProvider.autoDispose
         .family<List<AircraftRow>, String>(

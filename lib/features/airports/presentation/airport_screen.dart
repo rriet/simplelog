@@ -15,9 +15,9 @@ import 'package:simplelog/features/logbook/application/providers/logbook_feature
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
-/// Public API documentation.
+/// Main airport management screen.
 class AirportsScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates the airport management screen.
   const AirportsScreen({super.key});
 
   @override

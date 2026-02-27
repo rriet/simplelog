@@ -48,9 +48,9 @@ const appDatabaseFileName = 'simplelog_v1';
     UserProfiles,
   ],
 )
-/// Public API documentation.
+/// Main Drift database used by the application.
 class AppDatabase extends _$AppDatabase {
-  /// Public API documentation.
+  /// Creates the application database with the configured file name.
   AppDatabase() : super(driftDatabase(name: appDatabaseFileName));
 
   @override
@@ -74,7 +74,7 @@ class AppDatabase extends _$AppDatabase {
     },
   );
 
-  /// Public API documentation.
+  /// Deletes user-managed data tables while preserving static templates.
   Future<void> clearAllData() async {
     await transaction(() async {
       await delete(flightCrewAssignments).go();

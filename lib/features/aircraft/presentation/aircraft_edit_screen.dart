@@ -17,23 +17,21 @@ import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.da
 import 'package:simplelog/presentation/shared/widgets/uppercase_text_formatter.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
-/// Public API documentation.
+/// Create/edit screen for aircraft rows.
 class AircraftEditScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates the aircraft edit screen.
   const AircraftEditScreen({
     required this.item,
     super.key,
     this.isCreate = false,
     this.initialIsSimulator,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Initial aircraft value.
   final Aircraft item;
-  /// Public API documentation.
+  /// Whether screen is in create mode.
   final bool isCreate;
-  /// Public API documentation.
+  /// Optional simulator-mode default for create flow.
   final bool? initialIsSimulator;
 
   @override

@@ -7,7 +7,7 @@ import 'package:simplelog/features/crew/presentation/crew_edit_screen.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
-/// Public API documentation.
+/// Creates a new crew member and returns its id for inline picker workflows.
 Future<int?> createCrewAndReturnId({
   required BuildContext context,
   required WidgetRef ref,

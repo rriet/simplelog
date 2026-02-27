@@ -1,20 +1,18 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Aggregated data needed by duty edit UI.
 class DutyEditData {
-  /// Public API documentation.
+  /// Creates duty edit payload.
   const DutyEditData({
     required this.duty,
     required this.startLine,
     required this.endLine,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Duty period row being edited.
   final DutyPeriod duty;
-  /// Public API documentation.
+  /// Timeline row for duty start.
   final TimeLine? startLine;
-  /// Public API documentation.
+  /// Timeline row for duty end.
   final TimeLine? endLine;
 }

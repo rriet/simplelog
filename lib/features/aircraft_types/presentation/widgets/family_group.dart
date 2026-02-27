@@ -1,17 +1,16 @@
 import 'package:simplelog/data/models/aircraft_type_row.dart';
 
-/// Public API documentation.
+/// Group model used to display aircraft types by family in the UI.
 class FamilyGroup {
-  /// Public API documentation.
+  /// Creates a grouped collection for one aircraft [family].
   const FamilyGroup({
     required this.family,
     required this.rows,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Aircraft family label used as section header.
   final String family;
-  /// Public API documentation.
+
+  /// Rows that belong to this [family].
   final List<AircraftTypeRow> rows;
 }

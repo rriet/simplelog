@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Public API documentation.
+/// Shows an edit dialog constrained to a desktop-friendly maximum size.
 Future<T?> showConstrainedEditDialog<T>({
   required BuildContext context,
   required Widget child,

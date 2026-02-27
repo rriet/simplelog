@@ -4,21 +4,19 @@ import 'package:simplelog/data/repositories/dashboard_repository.dart';
 import 'package:simplelog/features/dashboard/domain/dashboard_models.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
-/// Public API documentation.
+/// Provides the dashboard repository implementation.
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
   final db = ref.watch(databaseProvider);
   return DashboardRepository(db);
 });
-/// Public API documentation.
 
-/// Public API documentation.
+/// Streams active limit rules shown in the dashboard.
 final dashboardRulesProvider = StreamProvider<List<LimitRule>>((ref) {
   final repo = ref.watch(dashboardRepositoryProvider);
   return repo.watchRules();
-/// Public API documentation.
 });
 
-/// Public API documentation.
+/// Streams prebuilt dashboard cards with status and summary information.
 final dashboardCardsProvider = StreamProvider<List<DashboardRuleCard>>((ref) {
   final repo = ref.watch(dashboardRepositoryProvider);
   return repo.watchDashboardCards();

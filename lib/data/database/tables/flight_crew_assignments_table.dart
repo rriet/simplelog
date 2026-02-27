@@ -9,15 +9,18 @@ const String _positionConstraint =
     "'observer','relief','relief_captain','relief_first_officer',"
     "'cabin_senior','cabin_crew','other'))";
 
-/// Public API documentation.
+/// Join table linking flights with assigned crew members and positions.
 class FlightCrewAssignments extends Table {
-  /// Public API documentation.
+  /// Primary key for the assignment row.
   IntColumn get id => integer().autoIncrement()();
-  /// Public API documentation.
+
+  /// Referenced flight.
   IntColumn get flightId => integer().references(Flights, #id)();
-  /// Public API documentation.
+
+  /// Referenced crew member.
   IntColumn get crewId => integer().references(Crew, #id)();
-  /// Public API documentation.
+
+  /// Crew role encoded using [CrewPositionConverter].
   TextColumn get position => text().map(const CrewPositionConverter())();
 
   @override

@@ -3,22 +3,20 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 
 @immutable
-/// Public API documentation.
+/// Theme extension for shared form-control sizing.
 class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
-  /// Public API documentation.
+  /// Creates form controls theme values.
   const AppFormControlsTheme({
     required this.pickerAddButtonSize,
     required this.pickerAddIconSize,
     required this.pickerAddBorderRadius,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Button size for picker "add" buttons.
   final double pickerAddButtonSize;
-  /// Public API documentation.
+  /// Icon size for picker "add" buttons.
   final double pickerAddIconSize;
-  /// Public API documentation.
+  /// Corner radius for picker "add" buttons.
   final double pickerAddBorderRadius;
 
   @override

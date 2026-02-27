@@ -2,15 +2,15 @@ import 'package:drift/drift.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/previous_experience_row.dart';
 
-/// Public API documentation.
+/// Drift repository for previous-experience totals.
 class PreviousExperienceRepository {
-  /// Public API documentation.
+  /// Creates repository bound to [_db].
   PreviousExperienceRepository(this._db);
 
-  /// Public API documentation.
+  /// Database handle.
   final AppDatabase _db;
 
-  /// Public API documentation.
+  /// Watches joined previous-experience rows with aircraft type metadata.
   Stream<List<PreviousExperienceRow>> watchRows() {
     final query = _db.select(_db.previousExperiences).join([
       innerJoin(
@@ -27,28 +27,27 @@ class PreviousExperienceRepository {
             ),
           )
           .toList(growable: false),
-    /// Public API documentation.
     );
   }
 
-  /// Public API documentation.
+  /// Inserts a new previous-experience row.
   Future<void> create(PreviousExperiencesCompanion companion) {
     return _db.into(_db.previousExperiences).insert(companion);
   }
 
-  /// Public API documentation.
+  /// Updates an existing previous-experience row.
   Future<void> update(PreviousExperience value) {
     return _db.update(_db.previousExperiences).replace(value);
   }
 
-  /// Public API documentation.
+  /// Deletes previous-experience row by [id].
   Future<void> delete(int id) {
     return (_db.delete(
       _db.previousExperiences,
     )..where((tbl) => tbl.id.equals(id))).go();
   }
 
-  /// Public API documentation.
+  /// Returns all previous-experience rows.
   Future<List<PreviousExperience>> fetchAll() {
     return _db.select(_db.previousExperiences).get();
   }

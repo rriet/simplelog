@@ -17,9 +17,9 @@ import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_di
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
-/// Public API documentation.
+/// Main aircraft type management screen.
 class AircraftTypesScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates the aircraft type management screen.
   const AircraftTypesScreen({super.key});
 
   @override

@@ -4,19 +4,18 @@ import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/features/crew/application/providers/crew_feature_providers.dart';
 import 'package:simplelog/presentation/shared/widgets/entity_picker_dialog.dart';
 
-/// Public API documentation.
+/// Dialog used to search and select a crew member.
 class CrewPickerDialog extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates a crew picker dialog with the provided [title].
   const CrewPickerDialog({
     required this.title,
     super.key,
-  /// Public API documentation.
   });
 
-  /// Public API documentation.
+  /// Dialog title shown in the header.
   final String title;
 
-  /// Public API documentation.
+  /// Opens the picker as a modal dialog and returns the selected crew row.
   static Future<CrewRow?> show(
     BuildContext context, {
     required String title,

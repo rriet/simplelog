@@ -4,23 +4,21 @@ import 'package:simplelog/data/models/logbook_entry.dart';
 
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_list_item.dart';
 
-/// Public API documentation.
+/// Simple flat list of logbook entries.
 class LogbookEntriesList extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates the entries list.
   const LogbookEntriesList({
     required this.entries,
     super.key,
     this.isCompact = true,
     this.onEntryTap,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Entries to render.
   final List<LogbookEntry> entries;
-  /// Public API documentation.
+  /// Compact/mobile mode flag.
   final bool isCompact;
-  /// Public API documentation.
+  /// Optional entry tap callback.
   final ValueChanged<LogbookEntry>? onEntryTap;
 
   @override

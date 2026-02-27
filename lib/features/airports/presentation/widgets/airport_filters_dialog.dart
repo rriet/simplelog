@@ -2,19 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 
-/// Public API documentation.
+/// Modal dialog that edits airport list ordering and search filters.
 class AirportFiltersDialog extends StatefulWidget {
-  /// Public API documentation.
+  /// Creates a dialog initialized with existing filter values.
   const AirportFiltersDialog({
     required this.initial,
     super.key,
-  /// Public API documentation.
   });
 
-  /// Public API documentation.
+  /// Initial filter state shown when the dialog opens.
   final AirportFilters initial;
 
-  /// Public API documentation.
+  /// Opens the dialog and returns the updated filters when applied.
   static Future<AirportFilters?> show(
     BuildContext context, {
     required AirportFilters initial,

@@ -30,15 +30,15 @@ import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.da
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
-/// Public API documentation.
+/// Screen used to create or edit simulator training entries.
 class SimulatorEditScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates a simulator editor for an existing [simulatorId] or a new row.
   const SimulatorEditScreen({super.key, this.simulatorId});
 
-  /// Public API documentation.
+  /// Existing simulator entry id when editing.
   final int? simulatorId;
 
-  /// Public API documentation.
+  /// True when this screen is creating a new simulator entry.
   bool get isCreate => simulatorId == null;
 
   @override

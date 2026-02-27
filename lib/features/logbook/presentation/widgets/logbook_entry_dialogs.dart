@@ -10,13 +10,11 @@ import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_details_dialog.dart';
 import 'package:simplelog/features/crew/presentation/widgets/crew_info_dialog.dart';
 
-/// Public API documentation.
+/// Helper entry-point for displaying event detail dialogs from the logbook.
 class LogbookEntryDialogs {
   const LogbookEntryDialogs._();
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Opens the appropriate info dialog for the provided [entry].
   static Future<void> show(
     BuildContext context, {
     required LogbookEntry entry,

@@ -2,9 +2,9 @@ import 'package:drift/drift.dart';
 
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Query helpers that build timeline-centric joined statements.
 extension TimelineViewQueries on AppDatabase {
-  /// Public API documentation.
+  /// Builds the base timeline query with related event and crew joins.
   JoinedSelectStatement<HasResultSet, dynamic> getTimeline() {
     final departureAirport = alias(airports, 'departure_airports');
     final arrivalAirport = alias(airports, 'arrival_airports');

@@ -25,7 +25,7 @@ class JsonMapConverter extends TypeConverter<Map<String, dynamic>, String> {
   String toSql(Map<String, dynamic> value) => jsonEncode(value);
 }
 
-/// Public API documentation.
+/// Stores user-level profile settings and signature assets.
 class UserProfiles extends Table {
   /// Single-row identifier (always `1`).
   IntColumn get id => integer().withDefault(const Constant(1))();

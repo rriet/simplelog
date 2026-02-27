@@ -207,7 +207,7 @@ class _TimeInputFieldState extends State<TimeInputField> {
   }
 }
 
-/// Public API documentation.
+/// Input formatter that forces numeric entry into `h:mm` shape.
 class TimeInputFormatter extends TextInputFormatter {
   /// Creates a formatter that keeps user input in `h:mm` shape.
   const TimeInputFormatter();

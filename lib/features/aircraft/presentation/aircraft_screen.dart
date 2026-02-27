@@ -17,9 +17,9 @@ import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/delete_confirmation_dialog.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
-/// Public API documentation.
+/// Main aircraft management screen for aircraft and simulator records.
 class AircraftScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates the aircraft management screen.
   const AircraftScreen({super.key});
 
   @override

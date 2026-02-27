@@ -3,15 +3,18 @@ import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/models/reports_models.dart';
 
-/// Public API documentation.
+/// Data-access service used by report screens and PDF generation.
 class ReportsRepository {
-  /// Public API documentation.
+  /// Creates a repository backed by the shared application database.
   ReportsRepository(this._db);
 
-  /// Public API documentation.
+  /// Database dependency used to query flights, timelines and related rows.
   final AppDatabase _db;
 
-  /// Public API documentation.
+  /// Loads aggregate totals for the selected range.
+  ///
+  /// When [includePreviousExperience] is true, matching previous-experience
+  /// totals are added to the computed values.
   Future<ReportsTotals> loadQuickTotals({
     required DateTime from,
     required DateTime to,
@@ -136,7 +139,6 @@ class ReportsRepository {
           );
     }
 
-    /// Public API documentation.
     return totals;
   }
 
@@ -200,7 +202,10 @@ class ReportsRepository {
     return (first, last);
   }
 
-  /// Public API documentation.
+  /// Loads detailed report data for the given [query] and active filters.
+  ///
+  /// Set [includePilotNames] to false when caller does not need PIC/SIC names,
+  /// which avoids additional lookup work.
   Future<ReportsData> load(
     ReportsQuery query, {
     bool includePilotNames = true,

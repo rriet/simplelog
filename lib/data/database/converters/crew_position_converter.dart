@@ -2,9 +2,9 @@ import 'package:drift/drift.dart';
 
 import 'package:simplelog/data/database/enums/crew_position.dart';
 
-/// Public API documentation.
+/// Converts [CrewPosition] values to and from their persisted database string.
 class CrewPositionConverter extends TypeConverter<CrewPosition, String> {
-  /// Public API documentation.
+  /// Creates a stateless crew position converter.
   const CrewPositionConverter();
 
   @override

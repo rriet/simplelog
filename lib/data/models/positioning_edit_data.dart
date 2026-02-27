@@ -1,17 +1,17 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Aggregates positioning and timeline data required by the edit screen.
 class PositioningEditData {
-  /// Public API documentation.
+  /// Creates edit data containing the positioning row and optional
+  /// departure line.
   const PositioningEditData({
     required this.positioning,
     required this.departureLine,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Persisted positioning entry to edit.
   final Positioning positioning;
-  /// Public API documentation.
+
+  /// Linked departure timeline record when available.
   final TimeLine? departureLine;
 }

@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 
-/// Public API documentation.
+/// Search bar used by aircraft type screens.
 class AircraftTypeSearchBar extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates the aircraft type search bar.
   const AircraftTypeSearchBar({
     required this.controller,
     required this.label,
     required this.onChanged,
     super.key,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Search text controller.
   final TextEditingController controller;
-  /// Public API documentation.
+  /// Field label.
   final String label;
-  /// Public API documentation.
+  /// Called when query changes.
   final ValueChanged<String> onChanged;
 
   @override

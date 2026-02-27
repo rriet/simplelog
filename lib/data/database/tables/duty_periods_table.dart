@@ -2,21 +2,21 @@ import 'package:drift/drift.dart';
 
 import 'package:simplelog/data/database/tables/timeline_table.dart';
 
-/// Public API documentation.
+/// Duty periods table.
 class DutyPeriods extends Table {
-  /// Public API documentation.
+  /// Surrogate primary key.
   IntColumn get id => integer().autoIncrement()();
-  /// Public API documentation.
+  /// Timeline id for duty start.
   IntColumn get dutyStartTimeLineId => integer().references(TimeLines, #id)();
-  /// Public API documentation.
+  /// Timeline id for duty end.
   IntColumn get dutyEndTimeLineId => integer().references(TimeLines, #id)();
-  /// Public API documentation.
+  /// Total duty minutes.
   IntColumn get timeDutyMinutes => integer()();
-  /// Public API documentation.
+  /// Rest before duty in minutes.
   IntColumn get restBeforeMinutes => integer().withDefault(const Constant(0))();
-  /// Public API documentation.
+  /// Factored duty minutes.
   IntColumn get timeFactoredDutyMinutes => integer()();
-  /// Public API documentation.
+  /// Lock flag preventing edits.
   BoolColumn get isLocked => boolean()();
 
   @override

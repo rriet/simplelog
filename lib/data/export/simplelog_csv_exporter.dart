@@ -4,12 +4,12 @@ import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
 
-/// Public API documentation.
+/// Exports flights and simulator sessions to the legacy SimpleLog CSV format.
 class SimpleLogCsvExporter {
-  /// Public API documentation.
+  /// Creates an exporter using the provided application database.
   SimpleLogCsvExporter(this.db);
 
-  /// Public API documentation.
+  /// Database source used to read all export entities.
   final AppDatabase db;
 
   static const List<String> _headers = [
@@ -74,11 +74,11 @@ class SimpleLogCsvExporter {
     'Custom Time 2 Minutes',
     'Custom Time 3 Minutes',
     'Custom Time 4 Minutes',
-    /// Public API documentation.
+    /// Total logged minutes (block for flights, total for simulators).
     'Total Minutes',
   ];
 
-  /// Public API documentation.
+  /// Builds and returns the full CSV payload with header and rows.
   Future<String> exportFlightsAndSimulatorsCsv() async {
     final flights = await db.select(db.flights).get();
     final simulators = await db.select(db.simulatorTrainings).get();

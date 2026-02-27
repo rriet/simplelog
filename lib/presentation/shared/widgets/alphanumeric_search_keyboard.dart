@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Public API documentation.
+/// On-screen alphanumeric keyboard used in custom search inputs.
 class AlphanumericSearchKeyboard extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates the keyboard widget.
   const AlphanumericSearchKeyboard({
     required this.onText,
     required this.onBackspace,
@@ -10,19 +10,17 @@ class AlphanumericSearchKeyboard extends StatelessWidget {
     super.key,
     this.onSpace,
     this.onHide,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Emits regular text keys.
   final ValueChanged<String> onText;
-  /// Public API documentation.
+  /// Handles backspace key.
   final VoidCallback onBackspace;
-  /// Public API documentation.
+  /// Handles enter/confirm key.
   final VoidCallback onEnter;
-  /// Public API documentation.
+  /// Optional custom space handler.
   final VoidCallback? onSpace;
-  /// Public API documentation.
+  /// Optional hide-keyboard handler.
   final VoidCallback? onHide;
 
   static const _gap = 8.0;

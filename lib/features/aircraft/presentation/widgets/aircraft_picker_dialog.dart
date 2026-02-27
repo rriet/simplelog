@@ -4,23 +4,21 @@ import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
 import 'package:simplelog/presentation/shared/widgets/entity_picker_dialog.dart';
 
-/// Public API documentation.
+/// Dialog wrapper around generic entity picker for aircraft selection.
 class AircraftPickerDialog extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates the aircraft picker dialog.
   const AircraftPickerDialog({
     required this.title,
     super.key,
     this.onlySimulators = false,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Dialog title.
   final String title;
-  /// Public API documentation.
+  /// When true, picker shows only simulator aircraft.
   final bool onlySimulators;
 
-  /// Public API documentation.
+  /// Opens the picker dialog and returns selected aircraft row.
   static Future<AircraftRow?> show(
     BuildContext context, {
     required String title,

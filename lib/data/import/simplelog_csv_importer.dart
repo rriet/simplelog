@@ -676,7 +676,7 @@ class SimpleLogCsvImporter {
           errors += 1;
         }
       }
-    /// Public API documentation.
+    // Import all rows in a single transaction for consistency.
     });
     onProgress?.call(totalRows, totalRows);
 
@@ -1170,7 +1170,8 @@ class SimpleLogCsvImporter {
           flights += 1;
         } on Object catch (_) {
           errors += 1;
-        /// Public API documentation.
+          // Skip malformed Southwest rows but keep importing
+          // the remaining file.
         }
       }
     });

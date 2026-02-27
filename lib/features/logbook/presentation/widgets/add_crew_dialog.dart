@@ -5,19 +5,18 @@ import 'package:simplelog/features/crew/presentation/widgets/crew_picker_dialog.
 import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/picker_with_add_input_field.dart';
 
-/// Public API documentation.
+/// Result payload returned by add-crew dialog.
 class CrewDraftSelection {
-  /// Public API documentation.
+  /// Creates a crew draft selection.
   const CrewDraftSelection({required this.crewId, required this.position});
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Selected crew id.
   final int crewId;
-  /// Public API documentation.
+  /// Selected crew position.
   final CrewPosition position;
 }
 
-/// Public API documentation.
+/// Positions available when adding a crew member to an entry.
 const List<CrewPosition> addCrewPositionOptions = [
   CrewPosition.pic,
   CrewPosition.picus,
@@ -28,13 +27,12 @@ const List<CrewPosition> addCrewPositionOptions = [
   CrewPosition.relief,
   CrewPosition.reliefCaptain,
   CrewPosition.reliefFirstOfficer,
-  /// Public API documentation.
   CrewPosition.cabinSenior,
   CrewPosition.cabinCrew,
   CrewPosition.other,
 ];
 
-/// Public API documentation.
+/// Localized label for a [CrewPosition] value.
 String crewPositionLabel(AppLocalizations l10n, CrewPosition value) {
   switch (value) {
     case CrewPosition.pic:
@@ -60,14 +58,13 @@ String crewPositionLabel(AppLocalizations l10n, CrewPosition value) {
     case CrewPosition.cabinCrew:
       return l10n.crewPositionCabinCrew;
     case CrewPosition.other:
-      /// Public API documentation.
       return l10n.crewPositionOther;
     case CrewPosition.unknown:
       return l10n.crewPositionUnknown;
   }
 }
 
-/// Public API documentation.
+/// Shows dialog to pick crew member and position for a logbook entry.
 Future<CrewDraftSelection?> showAddCrewDialog({
   required BuildContext context,
   required String Function(int? crewId) crewLabel,

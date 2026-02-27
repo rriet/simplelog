@@ -22,15 +22,15 @@ import 'package:simplelog/presentation/shared/widgets/inputs/picker_with_add_inp
 import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
-/// Public API documentation.
+/// Screen used to create or edit positioning entries.
 class PositioningEditScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates a positioning editor for an existing [positioningId] or new row.
   const PositioningEditScreen({super.key, this.positioningId});
 
-  /// Public API documentation.
+  /// Existing positioning entry id when editing.
   final int? positioningId;
 
-  /// Public API documentation.
+  /// True when this screen is creating a new positioning entry.
   bool get isCreate => positioningId == null;
 
   @override

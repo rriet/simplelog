@@ -4,26 +4,24 @@ import 'package:simplelog/data/models/logbook_entry.dart';
 
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_list_item.dart';
 
-/// Public API documentation.
+/// Logbook list grouped by year with sticky year header.
 class LogbookEntriesYearList extends StatefulWidget {
-  /// Public API documentation.
+  /// Creates a year-grouped entries list.
   const LogbookEntriesYearList({
     required this.entries,
     super.key,
     this.isCompact = true,
     this.enableSlideActions = false,
     this.onEntryTap,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Entries to render.
   final List<LogbookEntry> entries;
-  /// Public API documentation.
+  /// Compact/mobile mode flag.
   final bool isCompact;
-  /// Public API documentation.
+  /// Enables row slide actions.
   final bool enableSlideActions;
-  /// Public API documentation.
+  /// Optional entry tap callback.
   final ValueChanged<LogbookEntry>? onEntryTap;
 
   @override

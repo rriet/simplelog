@@ -1,20 +1,18 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Aggregated data needed by flight edit UI.
 class FlightEditData {
-  /// Public API documentation.
+  /// Creates flight edit payload.
   const FlightEditData({
     required this.flight,
     required this.departureLine,
     required this.crewAssignments,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Flight row being edited.
   final Flight flight;
-  /// Public API documentation.
+  /// Timeline row for departure/chocks-off.
   final TimeLine? departureLine;
-  /// Public API documentation.
+  /// Assigned crew rows.
   final List<FlightCrewAssignment> crewAssignments;
 }

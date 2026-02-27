@@ -1,11 +1,11 @@
 import 'package:drift/drift.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 
-/// Public API documentation.
+/// Converts [AircraftCategory] values to and from database text values.
 class AircraftCategoryConverter
-    /// Public API documentation.
+    /// Drift type converter base for enum <-> text mapping.
     extends TypeConverter<AircraftCategory, String> {
-  /// Public API documentation.
+  /// Creates a stateless aircraft category converter.
   const AircraftCategoryConverter();
 
   @override

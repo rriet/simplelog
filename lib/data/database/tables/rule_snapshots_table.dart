@@ -2,16 +2,20 @@ import 'package:drift/drift.dart';
 
 import 'package:simplelog/data/database/tables/limit_rules_table.dart';
 
-/// Public API documentation.
+/// Stores precomputed snapshots of rule values and their evaluation status.
 class RuleSnapshots extends Table {
-  /// Public API documentation.
+  /// Primary key for a snapshot row.
   IntColumn get snapshotId => integer().autoIncrement()();
-  /// Public API documentation.
+
+  /// Foreign key to the rule that produced this snapshot.
   IntColumn get ruleId => integer().references(LimitRules, #ruleId)();
-  /// Public API documentation.
+
+  /// UTC timestamp when this snapshot was computed.
   DateTimeColumn get computedAt => dateTime().withDefault(currentDateAndTime)();
-  /// Public API documentation.
+
+  /// Numeric value measured for the rule at [computedAt].
   RealColumn get currentValue => real()();
-  /// Public API documentation.
+
+  /// Evaluation status persisted as text (for example pass or fail).
   TextColumn get status => text()();
 }

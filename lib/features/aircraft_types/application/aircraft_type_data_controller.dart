@@ -5,7 +5,7 @@ import 'package:simplelog/features/aircraft_types/application/providers/aircraft
 import 'package:simplelog/state/controllers/data_controller.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
-/// Public API documentation.
+/// Handles aircraft-type CRUD validation and mutation for the UI layer.
 class AircraftTypeDataController extends Notifier<void>
     implements DataController<AircraftType, AircraftTypesCompanion> {
   @override

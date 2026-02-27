@@ -27,11 +27,10 @@ final StreamProvider<List<AircraftTypeRow>> Function(String)
   (ref, query) {
     final useCases = ref.watch(aircraftTypeUseCasesProvider);
     return useCases.watchAircraftTypes(query);
-  /// Public API documentation.
   },
 );
 
-/// Public API documentation.
+/// Streams distinct aircraft-type family names used in filters and grouping.
 final aircraftTypeFamiliesProvider = StreamProvider<List<String>>((ref) {
   final useCases = ref.watch(aircraftTypeUseCasesProvider);
   return useCases.watchFamilies();

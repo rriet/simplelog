@@ -4,9 +4,9 @@ import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/domain/repositories/crew_repository_contract.dart';
 
-/// Public API documentation.
+/// Drift-backed implementation of [CrewRepositoryContract].
 class CrewRepository implements CrewRepositoryContract {
-  /// Public API documentation.
+  /// Creates the repository with the shared app database.
   CrewRepository(this._db);
 
   final AppDatabase _db;

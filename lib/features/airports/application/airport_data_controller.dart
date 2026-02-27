@@ -5,7 +5,7 @@ import 'package:simplelog/features/airports/application/providers/airport_reposi
 import 'package:simplelog/state/controllers/data_controller.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
-/// Public API documentation.
+/// Handles airport CRUD validation and mutation commands for the UI layer.
 class AirportDataController extends Notifier<void>
     implements DataController<Airport, AirportsCompanion> {
   @override

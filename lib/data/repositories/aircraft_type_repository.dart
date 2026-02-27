@@ -4,9 +4,9 @@ import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/domain/repositories/aircraft_type_repository_contract.dart';
 
-/// Public API documentation.
+/// Drift-backed implementation of [AircraftTypeRepositoryContract].
 class AircraftTypeRepository implements AircraftTypeRepositoryContract {
-  /// Public API documentation.
+  /// Creates the repository with the shared app database.
   AircraftTypeRepository(this._db);
 
   final AppDatabase _db;

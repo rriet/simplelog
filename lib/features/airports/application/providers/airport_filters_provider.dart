@@ -8,23 +8,21 @@ import 'package:simplelog/data/models/airport_filters.dart';
 
 const _airportFiltersFileName = 'airport_filters.json';
 
-/// Public API documentation.
+/// Stores airport list filters and persists them locally.
 final airportFiltersProvider =
     NotifierProvider<AirportFiltersNotifier, AirportFilters>(
       AirportFiltersNotifier.new,
     );
-/// Public API documentation.
 
-/// Public API documentation.
+/// Notifier responsible for reading and writing persisted airport filters.
 class AirportFiltersNotifier extends Notifier<AirportFilters> {
   @override
   AirportFilters build() {
     unawaited(_load());
     return const AirportFilters();
-  /// Public API documentation.
   }
 
-  /// Public API documentation.
+  /// Updates filter state and persists the new value.
   Future<void> setFilters(AirportFilters filters) async {
     state = filters;
     await _save(filters);

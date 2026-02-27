@@ -8,12 +8,11 @@ import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Public API documentation.
+/// Displays crew details with quick contact actions and related logbook items.
 class CrewInfoDialog {
   const CrewInfoDialog._();
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Opens the crew information dialog for the selected [row].
   static Future<void> show(
     BuildContext context, {
     required CrewRow row,

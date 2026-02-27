@@ -1,26 +1,24 @@
 import 'package:simplelog/data/models/simulator_crew_assignment_input.dart';
 
-/// Public API documentation.
+/// Optional defaults passed to flight/simulator forms.
 class FlightPrefill {
-  /// Public API documentation.
+  /// Creates a prefill payload.
   const FlightPrefill({
     this.aircraftId,
     this.fromAirportId,
     this.toAirportId,
     this.chocksOff,
     this.crewAssignments = const <SimulatorCrewAssignmentInput>[],
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Prefilled aircraft id.
   final int? aircraftId;
-  /// Public API documentation.
+  /// Prefilled departure airport id.
   final int? fromAirportId;
-  /// Public API documentation.
+  /// Prefilled arrival airport id.
   final int? toAirportId;
-  /// Public API documentation.
+  /// Prefilled chocks-off time.
   final DateTime? chocksOff;
-  /// Public API documentation.
+  /// Prefilled crew assignments.
   final List<SimulatorCrewAssignmentInput> crewAssignments;
 }

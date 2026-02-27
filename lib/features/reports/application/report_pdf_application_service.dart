@@ -61,7 +61,7 @@ class ReportTemplateRow {
   /// Free‑form remarks shown in the report.
   final String remarks;
 
-  /// Public API documentation.
+  /// Whether this row comes from a simulator training entry.
   final bool isSimulatorEntry;
 
   /// Number of instrument approaches flown on this row.
@@ -112,10 +112,10 @@ class ReportTemplateRow {
   /// Dual instruction time in minutes.
   final int dualMinutes;
 
-  /// Public API documentation.
+  /// Pilot-in-command minutes.
   final int picMinutes;
 
-  /// Public API documentation.
+  /// Pilot-in-command-under-supervision minutes.
   final int picusMinutes;
 
   /// PIC + PICUS time in minutes.
@@ -243,10 +243,10 @@ class ReportTemplateTotals {
   /// Dual instruction minutes.
   final int dualMinutes;
 
-  /// Public API documentation.
+  /// Summed pilot-in-command minutes across all rows.
   final int picMinutes;
 
-  /// Public API documentation.
+  /// Summed pilot-in-command-under-supervision minutes across all rows.
   final int picusMinutes;
 
   /// PIC + PICUS minutes.

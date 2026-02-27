@@ -5,7 +5,7 @@ import 'package:simplelog/features/crew/application/providers/crew_repository_pr
 import 'package:simplelog/state/controllers/data_controller.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
-/// Public API documentation.
+/// Handles crew CRUD validation and mutation commands for the UI layer.
 class CrewDataController extends Notifier<void>
     implements DataController<CrewData, CrewCompanion> {
   @override

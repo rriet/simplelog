@@ -1,17 +1,17 @@
 import 'package:simplelog/data/database/enums/crew_position.dart';
 
-/// Public API documentation.
+/// Input payload used to create or update a simulator crew assignment row.
 class SimulatorCrewAssignmentInput {
-  /// Public API documentation.
+  /// Creates a crew assignment input with the selected crew member and role.
   const SimulatorCrewAssignmentInput({
     required this.crewId,
     required this.position,
-  /// Public API documentation.
+    // Keep immutable to safely pass between UI and repository layers.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Referenced crew member identifier.
   final int crewId;
-  /// Public API documentation.
+
+  /// Crew position for the assignment (for example PIC or SIC).
   final CrewPosition position;
 }

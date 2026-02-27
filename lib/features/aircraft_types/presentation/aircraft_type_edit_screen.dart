@@ -13,20 +13,18 @@ import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.da
 import 'package:simplelog/presentation/shared/widgets/uppercase_text_formatter.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
-/// Public API documentation.
+/// Create/edit screen for aircraft type rows.
 class AircraftTypeEditScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates the aircraft type edit screen.
   const AircraftTypeEditScreen({
     required this.item,
     super.key,
     this.isCreate = false,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Initial aircraft type value.
   final AircraftType item;
-  /// Public API documentation.
+  /// Whether screen is in create mode.
   final bool isCreate;
 
   @override

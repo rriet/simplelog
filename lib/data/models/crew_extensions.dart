@@ -1,8 +1,9 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Convenience formatting helpers for [CrewData] used by the
+/// presentation layer.
 extension CrewExtensions on CrewData {
-  /// Public API documentation.
+  /// Returns uppercase initials derived from the crew member name.
   String get initials {
     final parts = name.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty) {
@@ -11,17 +12,18 @@ extension CrewExtensions on CrewData {
     final first = parts.first.isNotEmpty ? parts.first[0] : '';
     final last = parts.length > 1 && parts.last.isNotEmpty ? parts.last[0] : '';
     return (first + last).toUpperCase();
-  /// Public API documentation.
   }
 
-  /// Public API documentation.
+  /// Returns the phone number formatted for display.
   String get formattedPhone {
     return formatPhoneDisplay(phone);
-  /// Public API documentation.
   }
 }
 
-/// Public API documentation.
+/// Formats a raw phone number into a human-friendly representation.
+///
+/// Returns an empty string when [input] is null or blank, and falls back to
+/// the original text when the value cannot be safely normalized.
 String formatPhoneDisplay(String? input) {
   final raw = (input ?? '').trim();
   if (raw.isEmpty) return '';

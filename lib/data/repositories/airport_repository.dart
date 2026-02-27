@@ -5,9 +5,9 @@ import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/data/models/airport_row.dart';
 import 'package:simplelog/domain/repositories/airport_repository_contract.dart';
 
-/// Public API documentation.
+/// Drift-backed implementation of [AirportRepositoryContract].
 class AirportRepository implements AirportRepositoryContract {
-  /// Public API documentation.
+  /// Creates the repository with the shared app database.
   AirportRepository(this._db);
 
   final AppDatabase _db;

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/data/database/user_settings_json.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
-/// Public API documentation.
+/// JSON key used to persist flight factoring settings in user profile state.
 const flightFactoringSettingsKey = 'flight_factoring_settings';
 
 /// Persisted calculation rules used for flight time factoring.

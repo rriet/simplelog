@@ -1,7 +1,7 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Convenience getters for [AircraftType] domain-derived properties.
 extension AircraftTypeExtensions on AircraftType {
-  /// Public API documentation.
+  /// True when the aircraft type declares more than one engine.
   bool get isMultiEngine => engineCount > 1;
 }

@@ -15,9 +15,9 @@ import 'package:simplelog/data/models/simulator_edit_data.dart';
 import 'package:simplelog/data/security/entry_endorsement_hash_service.dart';
 import 'package:simplelog/domain/repositories/logbook_repository_contract.dart';
 
-/// Public API documentation.
+/// Drift-backed implementation of [LogbookRepositoryContract].
 class LogbookRepository implements LogbookRepositoryContract {
-  /// Public API documentation.
+  /// Creates the repository with the shared app database.
   LogbookRepository(this._db);
 
   final AppDatabase _db;
