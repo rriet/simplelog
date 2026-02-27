@@ -27,45 +27,45 @@ class SimpleLogImportOptions {
     this.overrideAircraftTypeValues = false,
   });
 
-  /// Public API documentation.
+  /// Recompute night minutes from timeline values.
   final bool recalculateNightTime;
-  /// Public API documentation.
+  /// Recompute total time and derived pilot-function splits.
   final bool recalculateTotalTime;
-  /// Public API documentation.
+  /// Recompute takeoff/landing day-night counters.
   final bool recalculateTakeoffLanding;
-  /// Public API documentation.
+  /// Recompute cross-country time.
   final bool recalculateCrossCountry;
-  /// Public API documentation.
+  /// Cross-country threshold in nautical miles.
   final int crossCountryThresholdNm;
-  /// Public API documentation.
+  /// Recompute instrument time.
   final bool recalculateInstrument;
-  /// Public API documentation.
+  /// Instrument percentage applied to source totals.
   final int instrumentPercent;
-  /// Public API documentation.
+  /// Minimum instrument time in minutes.
   final int instrumentMinimumMinutes;
-  /// Public API documentation.
+  /// Minutes subtracted before applying instrument percentage.
   final int instrumentSubtractMinutes;
-  /// Public API documentation.
+  /// Recompute IFR time.
   final bool recalculateIfrTime;
-  /// Public API documentation.
+  /// IFR percentage applied to source totals.
   final int ifrPercent;
-  /// Public API documentation.
+  /// Minimum IFR time in minutes.
   final int ifrMinimumMinutes;
-  /// Public API documentation.
+  /// Minutes subtracted before IFR percentage.
   final int ifrSubtractMinutes;
-  /// Public API documentation.
+  /// IRP3 percentage used by total-time recalculation.
   final int irp3Percent;
-  /// Public API documentation.
+  /// IRP3 fixed minutes used by total-time recalculation.
   final int irp3SubtractMinutes;
-  /// Public API documentation.
+  /// IRP4 percentage used by total-time recalculation.
   final int irp4Percent;
-  /// Public API documentation.
+  /// IRP4 fixed minutes used by total-time recalculation.
   final int irp4SubtractMinutes;
-  /// Public API documentation.
+  /// Whether airport master data should be overwritten when matched.
   final bool overrideAirportValues;
-  /// Public API documentation.
+  /// Whether aircraft rows should be overwritten when matched.
   final bool overrideAircraftValues;
-  /// Public API documentation.
+  /// Whether aircraft type rows should be overwritten when matched.
   final bool overrideAircraftTypeValues;
 
   /// Whether any overwrite option is enabled for existing reference data.

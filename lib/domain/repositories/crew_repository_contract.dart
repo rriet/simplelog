@@ -1,26 +1,32 @@
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_row.dart';
 
-/// Public API documentation.
+/// Contract for crew member management and assignment usage checks.
 abstract class CrewRepositoryContract {
-  /// Public API documentation.
+  /// Streams crew rows matching [query].
   Stream<List<CrewRow>> watchCrew(String query);
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Toggles lock state for [item].
   Future<void> toggleLock(CrewData item);
-  /// Public API documentation.
+
+  /// Toggles favorite state for [item].
   Future<void> toggleFavorite(CrewData item);
-  /// Public API documentation.
+
+  /// Deletes [item].
   Future<void> delete(CrewData item);
-  /// Public API documentation.
+
+  /// Creates a crew row and optionally marks it as self when [setSelf] is true.
   Future<void> create(CrewCompanion companion, {required bool setSelf});
-  /// Public API documentation.
+
+  /// Updates [item] and optionally updates the self marker when [setSelf].
   Future<void> update(CrewData item, {required bool setSelf});
-  /// Public API documentation.
+
+  /// Counts duplicate crew names excluding [currentId].
   Future<int> countDuplicateName(String name, int currentId);
-  /// Public API documentation.
+
+  /// Counts flight crew assignments for [crewId].
   Future<int> countFlightAssignmentsForCrew(int crewId);
-  /// Public API documentation.
+
+  /// Counts simulator crew assignments for [crewId].
   Future<int> countSimulatorAssignmentsForCrew(int crewId);
 }

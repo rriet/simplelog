@@ -1,21 +1,20 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Visual state for a dashboard limit card.
 enum LimitCardStatus {
-  /// Public API documentation.
+  /// Limit is comfortably within threshold.
   green,
 
-  /// Public API documentation.
+  /// Limit is approaching threshold.
   yellow,
 
-  /// Public API documentation.
+  /// Limit has reached/violated threshold.
   red,
 }
-/// Public API documentation.
 
-/// Public API documentation.
+/// Summary data rendered in a single dashboard limit card.
 class DashboardRuleCard {
-  /// Public API documentation.
+  /// Creates a dashboard card model.
   const DashboardRuleCard({
     required this.rule,
     required this.currentValue,
@@ -23,54 +22,54 @@ class DashboardRuleCard {
     required this.remainingValue,
     required this.windowStart,
     required this.windowEnd,
-    /// Public API documentation.
     required this.status,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Backing rule definition.
   final LimitRule rule;
-  /// Public API documentation.
-  final double currentValue;
-  /// Public API documentation.
-  final double limitValue;
-  /// Public API documentation.
-  final double remainingValue;
-  /// Public API documentation.
-  final DateTime windowStart;
-  /// Public API documentation.
-  final DateTime windowEnd;
-  /// Public API documentation.
-  final LimitCardStatus status;
-/// Public API documentation.
-}
-/// Public API documentation.
 
-/// Public API documentation.
+  /// Current metric value in rule units.
+  final double currentValue;
+
+  /// Rule limit value in rule units.
+  final double limitValue;
+
+  /// Remaining value before hitting limit.
+  final double remainingValue;
+
+  /// Start of the evaluation window (UTC).
+  final DateTime windowStart;
+
+  /// End of the evaluation window (UTC).
+  final DateTime windowEnd;
+
+  /// Computed card status used for color/alerts.
+  final LimitCardStatus status;
+}
+
+/// Expanded totals for one dashboard rule window.
 class DashboardRuleDetails {
-  /// Public API documentation.
+  /// Creates details for a selected dashboard rule.
   const DashboardRuleDetails({
     required this.windowStart,
     required this.windowEnd,
     required this.totals,
   });
 
-  /// Public API documentation.
+  /// Start of the analyzed window (UTC).
   final DateTime windowStart;
-  /// Public API documentation.
-  final DateTime windowEnd;
-  /// Public API documentation.
-  final DashboardTotals totals;
-/// Public API documentation.
-}
-/// Public API documentation.
 
-/// Public API documentation.
+  /// End of the analyzed window (UTC).
+  final DateTime windowEnd;
+
+  /// Aggregated totals inside the window.
+  final DashboardTotals totals;
+}
+
+/// Time/count aggregates used by dashboard details.
 class DashboardTotals {
-  /// Public API documentation.
+  /// Creates a totals value object.
   const DashboardTotals({
-    /// Public API documentation.
     required this.flightsCount,
     required this.blockMinutes,
     required this.flightMinutes,
@@ -81,20 +80,27 @@ class DashboardTotals {
     required this.landings,
   });
 
-  /// Public API documentation.
+  /// Flights count.
   final int flightsCount;
-  /// Public API documentation.
+
+  /// Block time in minutes.
   final int blockMinutes;
-  /// Public API documentation.
+
+  /// Flight/airborne time in minutes.
   final int flightMinutes;
-  /// Public API documentation.
+
+  /// Night time in minutes.
   final int nightMinutes;
-  /// Public API documentation.
+
+  /// IFR time in minutes.
   final int ifrMinutes;
-  /// Public API documentation.
+
+  /// Instrument time in minutes.
   final int instrumentMinutes;
-  /// Public API documentation.
+
+  /// Duty time in minutes.
   final int dutyMinutes;
-  /// Public API documentation.
+
+  /// Landings count.
   final int landings;
 }

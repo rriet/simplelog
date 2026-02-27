@@ -3,18 +3,21 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-/// Public API documentation.
+/// Reads current local database bytes.
 typedef DatabaseBytesReader = Future<Uint8List> Function();
-/// Public API documentation.
+
+/// Writes received database bytes to local storage.
 typedef DatabaseBytesWriter = Future<void> Function(Uint8List bytes);
-/// Public API documentation.
+
+/// Callback for peer hello handshake.
 typedef PeerHelloHandler = void Function(String host, int port);
-/// Public API documentation.
+
+/// Callback fired after transfer completion endpoint is hit.
 typedef TransferCompleteHandler = void Function();
 
-/// Public API documentation.
+/// Lightweight HTTP server used for peer-to-peer local database sync.
 class LocalSyncServer {
-  /// Public API documentation.
+  /// Creates the server with read/write callbacks and optional hooks.
   LocalSyncServer({
     required DatabaseBytesReader readDatabase,
     required DatabaseBytesWriter writeDatabase,
@@ -31,45 +34,41 @@ class LocalSyncServer {
 
   final DatabaseBytesReader _readDatabase;
   final DatabaseBytesWriter _writeDatabase;
-  /// Public API documentation.
   final PeerHelloHandler? _onPeerHello;
-  /// Public API documentation.
   final TransferCompleteHandler? _onTransferComplete;
   final int? _schemaVersion;
   String? _deviceName;
-  /// Public API documentation.
   HttpServer? _server;
 
-  /// Public API documentation.
+  /// Whether server is currently bound and accepting requests.
   bool get isRunning => _server != null;
-  /// Public API documentation.
+
+  /// Active bound port, or null if server is stopped.
   int? get port => _server?.port;
-  /// Public API documentation.
+
+  /// Friendly local device name shared with peers.
   String? get deviceName => _deviceName;
 
-  // updated through an explicit server-status transition method.
-  /// Public API documentation.
+  /// Updates name reported by `/info`.
   set deviceName(String name) {
     _deviceName = name;
   }
 
-  /// Public API documentation.
+  /// Starts HTTP server on [port] (0 means ephemeral port).
   Future<void> start({int port = 0}) async {
     if (_server != null) {
       return;
     }
-/// Public API documentation.
 
     _server = await HttpServer.bind(
       InternetAddress.anyIPv4,
       port,
       shared: true,
     );
-
     unawaited(_handleRequests(_server!));
   }
 
-  /// Public API documentation.
+  /// Stops server and closes active socket.
   Future<void> stop() async {
     final server = _server;
     if (server == null) {

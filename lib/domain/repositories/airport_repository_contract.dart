@@ -2,30 +2,32 @@ import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/data/models/airport_row.dart';
 
-/// Public API documentation.
+/// Contract for airport CRUD plus usage checks.
 abstract class AirportRepositoryContract {
-  /// Public API documentation.
-  Stream<List<AirportRow>> watchAirports(
-    String query,
-    AirportFilters filters,
-  /// Public API documentation.
-  );
-/// Public API documentation.
+  /// Streams airports filtered by text [query] and structured [filters].
+  Stream<List<AirportRow>> watchAirports(String query, AirportFilters filters);
 
-  /// Public API documentation.
+  /// Toggles lock state of [item].
   Future<void> toggleLock(Airport item);
-  /// Public API documentation.
+
+  /// Toggles favorite state of [item].
   Future<void> toggleFavorite(Airport item);
-  /// Public API documentation.
+
+  /// Deletes [item].
   Future<void> delete(Airport item);
-  /// Public API documentation.
+
+  /// Inserts a new airport and returns its generated id.
   Future<int> create(AirportsCompanion companion);
-  /// Public API documentation.
+
+  /// Updates an existing airport row.
   Future<void> update(Airport item);
-  /// Public API documentation.
+
+  /// Counts duplicate ICAO rows excluding [currentId].
   Future<int> countDuplicateIcao(String icao, int currentId);
-  /// Public API documentation.
+
+  /// Counts flights that reference [airportId].
   Future<int> countFlightsUsingAirport(int airportId);
-  /// Public API documentation.
+
+  /// Counts positionings that reference [airportId].
   Future<int> countPositioningsUsingAirport(int airportId);
 }

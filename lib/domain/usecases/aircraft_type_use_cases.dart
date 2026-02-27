@@ -4,48 +4,48 @@ import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/domain/common/domain_validation.dart';
 import 'package:simplelog/domain/repositories/aircraft_type_repository_contract.dart';
 
-/// Public API documentation.
+/// Use-case facade for aircraft type management.
 class AircraftTypeUseCases {
-  /// Public API documentation.
+  /// Creates use-cases wired to an [AircraftTypeRepositoryContract].
   AircraftTypeUseCases(this._repository);
 
-  /// Public API documentation.
   final AircraftTypeRepositoryContract _repository;
 
-  /// Public API documentation.
+  /// Streams aircraft types filtered by [query].
   Stream<List<AircraftTypeRow>> watchAircraftTypes(String query) {
-    /// Public API documentation.
     return _repository.watchAircraftTypes(query);
   }
 
-  /// Public API documentation.
+  /// Streams distinct family values for filtering/grouping.
   Stream<List<String>> watchFamilies() {
-    /// Public API documentation.
     return _repository.watchFamilies();
   }
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Toggles lock state of [item].
   Future<void> toggleLock(AircraftType item) => _repository.toggleLock(item);
-  /// Public API documentation.
+
+  /// Counts aircraft rows referencing [typeId].
   Future<int> countAircraftForType(int typeId) =>
       _repository.countAircraftForType(typeId);
-  /// Public API documentation.
+
+  /// Deletes [item].
   Future<void> delete(AircraftType item) => _repository.delete(item);
-  /// Public API documentation.
+
+  /// Creates a new type and returns its id.
   Future<int> create(AircraftTypesCompanion companion) =>
       _repository.create(companion);
-  /// Public API documentation.
+
+  /// Updates [item].
   Future<void> update(AircraftType item) => _repository.update(item);
-  /// Public API documentation.
+
+  /// Counts duplicate codes excluding [currentId].
   Future<int> countDuplicateCodes(String code, int currentId) =>
       _repository.countDuplicateCodes(code, currentId);
 
-  /// Public API documentation.
+  /// Validates a new type before insertion.
   Future<DomainValidation> validateCreate(
     AircraftTypesCompanion companion,
   ) async {
-    /// Public API documentation.
     final code = companion.code.value.trim();
     if (code.isEmpty) {
       return const DomainValidation.error('Code is required.');
@@ -57,7 +57,7 @@ class AircraftTypeUseCases {
     return const DomainValidation.ok();
   }
 
-  /// Public API documentation.
+  /// Validates an existing type before update.
   Future<DomainValidation> validateUpdate(AircraftType item) async {
     final code = item.code.trim();
     if (code.isEmpty) {
@@ -69,9 +69,8 @@ class AircraftTypeUseCases {
     }
     return const DomainValidation.ok();
   }
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Validates whether [item] can be safely deleted.
   Future<DomainValidation> validateDelete(AircraftType item) async {
     if (item.isLocked) {
       return const DomainValidation.error('This aircraft type is locked.');
@@ -83,7 +82,7 @@ class AircraftTypeUseCases {
     return const DomainValidation.ok();
   }
 
-  /// Public API documentation.
+  /// Normalizes code/family/name values before create.
   AircraftTypesCompanion normalizeCompanion(AircraftTypesCompanion companion) {
     final code = companion.code.value.trim();
     final familyRaw = companion.family.value.trim();
@@ -97,7 +96,7 @@ class AircraftTypeUseCases {
     );
   }
 
-  /// Public API documentation.
+  /// Normalizes type fields before update.
   AircraftType normalizeItem(AircraftType item) {
     final code = item.code.trim();
     final familyRaw = item.family.trim();

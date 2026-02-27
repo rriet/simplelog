@@ -1,30 +1,37 @@
 import 'package:drift/drift.dart';
 
-/// Public API documentation.
+/// Airport master-data table used by flights, sims and filters.
 class Airports extends Table {
-  /// Public API documentation.
+  /// Surrogate primary key.
   IntColumn get id => integer().autoIncrement()();
-  /// Public API documentation.
+
+  /// ICAO airport code.
   TextColumn get icao => text()();
-  /// Public API documentation.
+
+  /// Optional IATA airport code.
   TextColumn get iata => text().nullable()();
-  /// Public API documentation.
+
+  /// Optional airport display name.
   TextColumn get name => text().nullable()();
-  /// Public API documentation.
+
+  /// Optional city.
   TextColumn get city => text().nullable()();
-  /// Public API documentation.
+
+  /// Optional country.
   TextColumn get country => text().nullable()();
-  /// Public API documentation.
+
+  /// Latitude in decimal degrees.
   RealColumn get latitude => real()();
-  /// Public API documentation.
+
+  /// Longitude in decimal degrees.
   RealColumn get longitude => real()();
-  /// Public API documentation.
+
+  /// Whether airport is pinned by user.
   BoolColumn get isFavorite => boolean()();
-  /// Public API documentation.
+
+  /// Whether row is protected from edits.
   BoolColumn get isLocked => boolean()();
 
   @override
-  List<String> get customConstraints => const [
-    'UNIQUE(icao)',
-  ];
+  List<String> get customConstraints => const ['UNIQUE(icao)'];
 }

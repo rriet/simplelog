@@ -4,62 +4,57 @@ import 'dart:io';
 import 'package:bonsoir/bonsoir.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
-/// Public API documentation.
+/// mDNS/Bonjour service type used for SimpleLog local sync discovery.
 const String kSyncServiceType = '_simplelog._tcp';
-/// Public API documentation.
 
-/// Public API documentation.
+/// Device discovered on local network and available for sync.
 class DiscoveredDevice {
-  /// Public API documentation.
+  /// Creates a discovered device entry.
   DiscoveredDevice({
     required this.name,
     required this.host,
-    /// Public API documentation.
     required this.port,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Human-readable device name.
   final String name;
-  /// Public API documentation.
+
+  /// IP/host announced by Bonjour.
   final String host;
-  /// Public API documentation.
+
+  /// HTTP port exposed by peer sync server.
   final int port;
 }
 
-/// Public API documentation.
+/// Handles Bonjour broadcast and peer discovery for local sync.
 class LocalSyncDiscovery {
-  /// Public API documentation.
+  /// Creates discovery service bound to local server [port].
   LocalSyncDiscovery({required int port}) : _port = port;
 
-  /// Public API documentation.
   final int _port;
-  /// Public API documentation.
   BonsoirDiscovery? _discovery;
   BonsoirBroadcast? _broadcast;
   StreamSubscription<BonsoirDiscoveryEvent>? _subscription;
   final _controller = StreamController<List<DiscoveredDevice>>.broadcast();
   final Map<String, DiscoveredDevice> _devices = {};
-  /// Public API documentation.
   String? _cachedName;
 
-  /// Public API documentation.
+  /// Stream of discovered peers sorted by display name.
   Stream<List<DiscoveredDevice>> get devices => _controller.stream;
-  /// Public API documentation.
+
+  /// Returns and caches local device display name.
   Future<String> get localDeviceName async {
     _cachedName ??= await _deviceName();
     return _cachedName!;
   }
 
-  /// Public API documentation.
+  /// Starts broadcasting this device and scanning for peers.
   Future<void> start() async {
     final serviceName = _sanitizeServiceName(await localDeviceName);
     final service = BonsoirService(
       name: serviceName,
       type: kSyncServiceType,
       port: _port,
-    /// Public API documentation.
     );
     _broadcast = BonsoirBroadcast(service: service);
     await _broadcast!.initialize();
@@ -71,7 +66,7 @@ class LocalSyncDiscovery {
     await _discovery!.start();
   }
 
-  /// Public API documentation.
+  /// Stops broadcasting/discovery and clears in-memory peer cache.
   Future<void> stop() async {
     await _subscription?.cancel();
     await _discovery?.stop();

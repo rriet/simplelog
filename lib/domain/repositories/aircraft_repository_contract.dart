@@ -1,28 +1,35 @@
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 
-/// Public API documentation.
+/// Contract for aircraft persistence and read models used by the app.
 abstract class AircraftRepositoryContract {
-  /// Public API documentation.
+  /// Streams aircraft rows filtered by free-text [query].
   Stream<List<AircraftRow>> watchAircraft(String query);
-  /// Public API documentation.
-  Future<List<AircraftRow>> fetchAircraftByType(int aircraftTypeId);
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Returns all aircraft assigned to [aircraftTypeId].
+  Future<List<AircraftRow>> fetchAircraftByType(int aircraftTypeId);
+
+  /// Toggles the lock status of [item].
   Future<void> toggleLock(Aircraft item);
-  /// Public API documentation.
+
+  /// Toggles the favorite status of [item].
   Future<void> toggleFavorite(Aircraft item);
-  /// Public API documentation.
+
+  /// Deletes [item] from storage.
   Future<void> delete(Aircraft item);
-  /// Public API documentation.
+
+  /// Inserts a new aircraft and returns its generated id.
   Future<int> create(AircraftsCompanion companion);
-  /// Public API documentation.
+
+  /// Updates an existing aircraft row.
   Future<void> update(Aircraft item);
-  /// Public API documentation.
+
+  /// Counts rows with the same registration excluding [currentId].
   Future<int> countDuplicateRegistration(String registration, int currentId);
-  /// Public API documentation.
+
+  /// Counts flight rows referencing [aircraftId].
   Future<int> countFlightsForAircraft(int aircraftId);
-  /// Public API documentation.
+
+  /// Counts simulator sessions referencing [aircraftId].
   Future<int> countSimSessionsForAircraft(int aircraftId);
 }

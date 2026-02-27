@@ -4,123 +4,123 @@ import 'package:simplelog/data/database/tables/aircrafts_table.dart';
 import 'package:simplelog/data/database/tables/airports_table.dart';
 import 'package:simplelog/data/database/tables/timeline_table.dart';
 
-/// Public API documentation.
+/// Main flight log table.
 class Flights extends Table {
-  /// Public API documentation.
+  /// Surrogate primary key.
   IntColumn get id => integer().autoIncrement()();
 
-  /// Public API documentation.
+  /// Linked aircraft id.
   IntColumn get aircraftId => integer().references(Aircrafts, #id)();
 
-  /// Public API documentation.
+  /// Departure airport id.
   IntColumn get departureAirportId => integer().references(Airports, #id)();
 
-  /// Public API documentation.
+  /// Arrival airport id.
   IntColumn get arrivalAirportId => integer().references(Airports, #id)();
 
-  /// Public API documentation.
+  /// Timeline id for departure/chocks-off event.
   IntColumn get departureDateTimeId => integer().references(TimeLines, #id)();
 
-  /// Public API documentation.
+  /// Optional takeoff timestamp.
   DateTimeColumn get takeOffDateTime => dateTime().nullable()();
 
-  /// Public API documentation.
+  /// Optional landing timestamp.
   DateTimeColumn get landingDateTime => dateTime().nullable()();
 
-  /// Public API documentation.
+  /// Optional arrival/chocks-on timestamp.
   DateTimeColumn get arrivalDateTime => dateTime().nullable()();
 
-  /// Public API documentation.
+  /// PIC time in minutes.
   IntColumn get timePICMinutes => integer()();
 
-  /// Public API documentation.
+  /// PICUS time in minutes.
   IntColumn get timePICUSMinutes => integer()();
 
-  /// Public API documentation.
+  /// SIC time in minutes.
   IntColumn get timeSICMinutes => integer()();
 
-  /// Public API documentation.
+  /// Dual time in minutes.
   IntColumn get timeDualMinutes => integer()();
 
-  /// Public API documentation.
+  /// Instructor time in minutes.
   IntColumn get timeInstructorMinutes => integer()();
 
-  /// Public API documentation.
+  /// IFR time in minutes.
   IntColumn get timeIFRMinutes => integer()();
 
-  /// Public API documentation.
+  /// Instrument time in minutes.
   IntColumn get timeInstrumentMinutes => integer()();
 
-  /// Public API documentation.
+  /// Simulated instrument time in minutes.
   IntColumn get timeSimulatedInstrumentMinutes => integer()();
 
-  /// Public API documentation.
+  /// Night time in minutes.
   IntColumn get timeNightMinutes => integer()();
 
-  /// Public API documentation.
+  /// Cross-country time in minutes.
   IntColumn get timeCrossCountryMinutes => integer()();
 
-  /// Public API documentation.
+  /// Custom time bucket 1 in minutes.
   IntColumn get timeCustom1Minutes => integer()();
 
-  /// Public API documentation.
+  /// Custom time bucket 2 in minutes.
   IntColumn get timeCustom2Minutes => integer()();
 
-  /// Public API documentation.
+  /// Custom time bucket 3 in minutes.
   IntColumn get timeCustom3Minutes => integer()();
 
-  /// Public API documentation.
+  /// Custom time bucket 4 in minutes.
   IntColumn get timeCustom4Minutes => integer()();
 
-  /// Public API documentation.
+  /// Airborne/flight time in minutes.
   IntColumn get timeFlightMinutes => integer()();
 
-  /// Public API documentation.
+  /// Block time in minutes.
   IntColumn get timeBlockMinutes => integer()();
 
-  /// Public API documentation.
+  /// Accumulated total block time in minutes.
   IntColumn get timeTotalBlockMinutes =>
       integer().withDefault(const Constant(0))();
 
-  /// Public API documentation.
+  /// Great-circle distance in nautical miles.
   IntColumn get distanceNM => integer()();
 
-  /// Public API documentation.
+  /// Number of IFR approaches.
   IntColumn get ifrApproaches => integer()();
 
-  /// Public API documentation.
+  /// Day takeoffs count.
   IntColumn get takeOffsDays => integer()();
 
-  /// Public API documentation.
+  /// Night takeoffs count.
   IntColumn get takeOffsNight => integer()();
 
-  /// Public API documentation.
+  /// Day landings count.
   IntColumn get landingsDay => integer()();
 
-  /// Public API documentation.
+  /// Night landings count.
   IntColumn get landingsNight => integer()();
 
-  /// Public API documentation.
+  /// Pilot function label (e.g. PF/PNF/IRP3/IRP4).
   TextColumn get pilotFunction => text().withDefault(const Constant('PF'))();
 
-  /// Public API documentation.
+  /// Free-text approach type summary.
   TextColumn get approachType => text()();
 
-  /// Public API documentation.
+  /// User remarks.
   TextColumn get remarks => text()();
 
-  /// Public API documentation.
+  /// Private notes.
   TextColumn get notes => text()();
 
-  /// Public API documentation.
+  /// Lock flag to prevent editing.
   BoolColumn get isLocked => boolean()();
 
-  /// Public API documentation.
+  /// Optional endorsement/signature image bytes.
   BlobColumn get signatureImage => blob().nullable()();
 
-  /// Public API documentation.
+  /// Optional serialized endorsement metadata.
   TextColumn get endorsementData => text().nullable()();
 
-  /// Public API documentation.
+  /// Hash used to verify endorsement integrity.
   TextColumn get endorsementHash => text().nullable()();
 }

@@ -2,89 +2,89 @@ import 'package:drift/drift.dart';
 
 import 'package:simplelog/data/database/tables/aircraft_types_table.dart';
 
-/// Public API documentation.
+/// Imported/manual totals representing experience before in-app records.
 class PreviousExperiences extends Table {
-  /// Public API documentation.
+  /// Surrogate primary key.
   IntColumn get id => integer().autoIncrement()();
 
-  /// Public API documentation.
+  /// Aircraft type these totals apply to.
   IntColumn get aircraftTypeId => integer().references(AircraftTypes, #id)();
 
-  /// Public API documentation.
+  /// Earliest known flight date for this experience bucket.
   DateTimeColumn get dateTimeFirstFlight => dateTime().nullable()();
 
-  /// Public API documentation.
+  /// Most recent known flight date for this experience bucket.
   DateTimeColumn get dateTimeLastFlight => dateTime().nullable()();
 
-  /// Public API documentation.
+  /// PIC minutes.
   IntColumn get timePICMinutes => integer()();
 
-  /// Public API documentation.
+  /// PICUS minutes.
   IntColumn get timePICUSMinutes => integer()();
 
-  /// Public API documentation.
+  /// SIC minutes.
   IntColumn get timeSICMinutes => integer()();
 
-  /// Public API documentation.
+  /// Dual minutes.
   IntColumn get timeDualMinutes => integer()();
 
-  /// Public API documentation.
+  /// Instructor minutes.
   IntColumn get timeInstructorMinutes => integer()();
 
-  /// Public API documentation.
+  /// IFR minutes.
   IntColumn get timeIFRMinutes => integer()();
 
-  /// Public API documentation.
+  /// Instrument minutes.
   IntColumn get timeInstrumentMinutes => integer()();
 
-  /// Public API documentation.
+  /// Simulated instrument minutes.
   IntColumn get timeSimulatedInstrumentMinutes => integer()();
 
-  /// Public API documentation.
+  /// Night minutes.
   IntColumn get timeNightMinutes => integer()();
 
-  /// Public API documentation.
+  /// Cross-country minutes.
   IntColumn get timeCrossCountryMinutes => integer()();
 
-  /// Public API documentation.
+  /// Custom time bucket 1 minutes.
   IntColumn get timeCustom1Minutes => integer()();
 
-  /// Public API documentation.
+  /// Custom time bucket 2 minutes.
   IntColumn get timeCustom2Minutes => integer()();
 
-  /// Public API documentation.
+  /// Custom time bucket 3 minutes.
   IntColumn get timeCustom3Minutes => integer()();
 
-  /// Public API documentation.
+  /// Custom time bucket 4 minutes.
   IntColumn get timeCustom4Minutes => integer()();
 
-  /// Public API documentation.
+  /// Flight minutes.
   IntColumn get timeFlightMinutes => integer()();
 
-  /// Public API documentation.
+  /// Block minutes.
   IntColumn get timeBlockMinutes => integer()();
 
-  /// Public API documentation.
+  /// Simulator minutes.
   IntColumn get timeSimulatorMinutes => integer()();
 
-  /// Public API documentation.
+  /// Distance in nautical miles.
   IntColumn get distanceNM => integer()();
 
-  /// Public API documentation.
+  /// Number of flights/sectors represented.
   IntColumn get flightCount => integer().withDefault(const Constant(0))();
 
-  /// Public API documentation.
+  /// IFR approaches count.
   IntColumn get ifrApproaches => integer()();
 
-  /// Public API documentation.
+  /// Day takeoffs count.
   IntColumn get takeOffsDays => integer()();
 
-  /// Public API documentation.
+  /// Night takeoffs count.
   IntColumn get takeOffsNight => integer()();
 
-  /// Public API documentation.
+  /// Day landings count.
   IntColumn get landingsDay => integer()();
 
-  /// Public API documentation.
+  /// Night landings count.
   IntColumn get landingsNight => integer()();
 }

@@ -15,9 +15,14 @@ import 'package:simplelog/domain/repositories/logbook_repository_contract.dart';
 import 'package:simplelog/domain/validation/flight_write_validator.dart';
 import 'package:simplelog/domain/validation/validation_issue.dart';
 
-/// Public API documentation.
+/// Application-layer facade that orchestrates logbook operations.
+///
+/// It validates write inputs and delegates persistence/query work to
+/// [LogbookRepositoryContract].
 class LogbookUseCases {
-  /// Public API documentation.
+  /// Creates use cases wired to [_repository].
+  ///
+  /// [flightWriteValidator] can be overridden in tests.
   LogbookUseCases(
     this._repository, {
     FlightWriteValidator flightWriteValidator = const FlightWriteValidator(),
@@ -25,88 +30,79 @@ class LogbookUseCases {
 
   final LogbookRepositoryContract _repository;
 
-  /// Public API documentation.
+  /// Validator used before creating/updating flights.
   final FlightWriteValidator _flightWriteValidator;
 
-  /// Public API documentation.
+  /// Watches logbook entries that match [filters].
   Stream<List<LogbookEntry>> watchLogbook(LogbookFilters filters) {
-    /// Public API documentation.
     return _repository.watchLogbook(filters);
   }
 
-  /// Public API documentation.
+  /// Fetches one paginated logbook slice for [filters].
   Future<List<LogbookEntry>> fetchLogbookPage(
     LogbookFilters filters, {
     required int limit,
     required int offset,
-
-    /// Public API documentation.
   }) {
-    /// Public API documentation.
     return _repository.fetchLogbookPage(filters, limit: limit, offset: offset);
   }
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Returns earliest timeline date among stored entries, if any.
   Future<DateTime?> fetchFirstEventDate() => _repository.fetchFirstEventDate();
 
-  /// Public API documentation.
+  /// Returns the entry attached to [timeLineId], or `null` if missing.
   Future<LogbookEntry?> fetchEntryByTimelineId(int timeLineId) =>
       _repository.fetchEntryByTimelineId(timeLineId);
 
-  /// Public API documentation.
+  /// Finds a flight by primary key.
   Future<Flight?> findFlightById(int flightId) =>
       _repository.findFlightById(flightId);
 
-  /// Public API documentation.
+  /// Loads all data required to edit a flight.
   Future<FlightEditData?> loadFlightEditData(int flightId) =>
       _repository.loadFlightEditData(flightId);
 
-  /// Public API documentation.
+  /// Returns flight crew assignments for [flightId].
   Future<List<FlightCrewAssignment>> fetchFlightCrewAssignments(int flightId) =>
-      /// Public API documentation.
       _repository.fetchFlightCrewAssignments(flightId);
 
-  /// Public API documentation.
+  /// Toggles lock state for the provided logbook [entry].
   Future<void> toggleEntryLock(LogbookEntry entry) =>
-      /// Public API documentation.
       _repository.toggleEntryLock(entry);
 
-  /// Public API documentation.
+  /// Toggles lock state for a duty period by id.
   Future<void> toggleDutyLock(int dutyId) => _repository.toggleDutyLock(dutyId);
 
-  /// Public API documentation.
+  /// Finds a duty period by id.
   Future<DutyPeriod?> findDutyById(int dutyId) =>
       _repository.findDutyById(dutyId);
 
-  /// Public API documentation.
+  /// Loads all data required to edit a duty period.
   Future<DutyEditData?> loadDutyEditData(int dutyId) =>
-      /// Public API documentation.
       _repository.loadDutyEditData(dutyId);
 
-  /// Public API documentation.
+  /// Finds a positioning entry by id.
   Future<Positioning?> findPositioningById(int positioningId) =>
       _repository.findPositioningById(positioningId);
 
-  /// Public API documentation.
+  /// Loads all data required to edit a positioning entry.
   Future<PositioningEditData?> loadPositioningEditData(int positioningId) =>
       _repository.loadPositioningEditData(positioningId);
 
-  /// Public API documentation.
+  /// Finds a simulator session by id.
   Future<SimulatorTraining?> findSimulatorTrainingById(int simulatorId) =>
       _repository.findSimulatorTrainingById(simulatorId);
 
-  /// Public API documentation.
+  /// Loads all data required to edit a simulator session.
   Future<SimulatorEditData?> loadSimulatorEditData(int simulatorId) =>
       _repository.loadSimulatorEditData(simulatorId);
 
-  /// Public API documentation.
+  /// Returns simulator crew assignments for [simulatorId].
   Future<List<SimulatorCrewAssignment>> fetchSimulatorCrewAssignments(
     int simulatorId,
   ) => _repository.fetchSimulatorCrewAssignments(simulatorId);
 
-  /// Public API documentation.
+  /// Creates a duty period using UTC [start]/[end] and computed minutes.
   Future<void> createDuty({
     required DateTime start,
     required DateTime end,
@@ -118,12 +114,10 @@ class LogbookUseCases {
       end: end,
       dutyMinutes: dutyMinutes,
       factoredMinutes: factoredMinutes,
-
-      /// Public API documentation.
     );
   }
 
-  /// Public API documentation.
+  /// Updates an existing [duty] period with new timing values.
   Future<void> updateDuty({
     required DutyPeriod duty,
     required DateTime start,
@@ -138,11 +132,9 @@ class LogbookUseCases {
       dutyMinutes: dutyMinutes,
       factoredMinutes: factoredMinutes,
     );
-
-    /// Public API documentation.
   }
 
-  /// Public API documentation.
+  /// Creates a positioning leg.
   Future<void> createPositioning({
     required int departureAirportId,
     required int arrivalAirportId,
@@ -161,13 +153,9 @@ class LogbookUseCases {
     );
   }
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Updates an existing [positioning] leg.
   Future<void> updatePositioning({
     required Positioning positioning,
-
-    /// Public API documentation.
     required DateTime departureDateTime,
     required DateTime? arrivalDateTime,
     required int departureAirportId,
@@ -179,8 +167,6 @@ class LogbookUseCases {
       positioning: positioning,
       departureDateTime: departureDateTime,
       arrivalDateTime: arrivalDateTime,
-
-      /// Public API documentation.
       departureAirportId: departureAirportId,
       arrivalAirportId: arrivalAirportId,
       totalMinutes: totalMinutes,
@@ -188,12 +174,14 @@ class LogbookUseCases {
     );
   }
 
-  /// Public API documentation.
+  /// Validates [input] without writing data.
   ValidationReport validateFlightWrite(FlightWriteInput input) {
     return _flightWriteValidator.validate(input);
   }
 
-  /// Public API documentation.
+  /// Creates a flight if [input] passes validation.
+  ///
+  /// Returns validation warnings and errors in [WriteResult].
   Future<WriteResult<void>> createFlight({
     required FlightWriteInput input,
   }) async {
@@ -205,7 +193,9 @@ class LogbookUseCases {
     return WriteResult.success(warnings: validation.warnings);
   }
 
-  /// Public API documentation.
+  /// Updates [flight] if [input] passes validation.
+  ///
+  /// Returns validation warnings and errors in [WriteResult].
   Future<WriteResult<void>> updateFlight({
     required Flight flight,
     required FlightWriteInput input,
@@ -213,14 +203,12 @@ class LogbookUseCases {
     final validation = _flightWriteValidator.validate(input);
     if (validation.hasErrors) {
       return WriteResult.failure(errors: validation.errors);
-
-      /// Public API documentation.
     }
     await _repository.updateFlight(flight: flight, input: input);
     return WriteResult.success(warnings: validation.warnings);
   }
 
-  /// Public API documentation.
+  /// Creates a simulator training record and optional endorsement payload.
   Future<void> createSimulatorTraining({
     required int aircraftId,
     required DateTime startDateTime,
@@ -239,27 +227,18 @@ class LogbookUseCases {
       totalMinutes: totalMinutes,
       remarks: remarks,
       notes: notes,
-
-      /// Public API documentation.
       crewAssignments: crewAssignments,
       endorsementData: endorsementData,
       endorsementSignatureImage: endorsementSignatureImage,
     );
-
-    /// Public API documentation.
   }
 
-  /// Public API documentation.
+  /// Updates [simulatorTraining] and related crew/endorsement data.
   Future<void> updateSimulatorTraining({
-    /// Public API documentation.
     required SimulatorTraining simulatorTraining,
     required int aircraftId,
-
-    /// Public API documentation.
     required DateTime startDateTime,
     required DateTime? endDateTime,
-
-    /// Public API documentation.
     required int totalMinutes,
     required String remarks,
     required String notes,
@@ -271,81 +250,67 @@ class LogbookUseCases {
       simulatorTraining: simulatorTraining,
       aircraftId: aircraftId,
       startDateTime: startDateTime,
-
-      /// Public API documentation.
       endDateTime: endDateTime,
       totalMinutes: totalMinutes,
-
-      /// Public API documentation.
       remarks: remarks,
       notes: notes,
-
-      /// Public API documentation.
       crewAssignments: crewAssignments,
       endorsementData: endorsementData,
       endorsementSignatureImage: endorsementSignatureImage,
     );
   }
 
-  /// Public API documentation.
+  /// Verifies stored endorsement hash integrity for flight [flightId].
   Future<bool> verifyFlightEndorsementHash(int flightId) =>
       _repository.verifyFlightEndorsementHash(flightId);
 
-  /// Public API documentation.
+  /// Verifies stored endorsement hash integrity for simulator [simulatorId].
   Future<bool> verifySimulatorEndorsementHash(int simulatorId) =>
       _repository.verifySimulatorEndorsementHash(simulatorId);
 
-  /// Public API documentation.
+  /// Returns formatted crew labels for one flight.
   Future<List<String>> fetchFlightCrewLabels(int flightId) =>
       _repository.fetchFlightCrewLabels(flightId);
 
-  /// Public API documentation.
+  /// Returns detailed crew rows for one flight.
   Future<List<CrewInfoItem>> fetchFlightCrewInfo(int flightId) =>
-      /// Public API documentation.
       _repository.fetchFlightCrewInfo(flightId);
 
-  /// Public API documentation.
+  /// Returns formatted crew labels for one simulator session.
   Future<List<String>> fetchSimulatorCrewLabels(int simulatorId) =>
       _repository.fetchSimulatorCrewLabels(simulatorId);
 
-  /// Public API documentation.
+  /// Returns detailed crew rows for one simulator session.
   Future<List<CrewInfoItem>> fetchSimulatorCrewInfo(int simulatorId) =>
       _repository.fetchSimulatorCrewInfo(simulatorId);
 
-  /// Public API documentation.
+  /// Fetches all entries associated with airport [airportId].
   Future<List<LogbookEntry>> fetchEntriesForAirport(int airportId) =>
       _repository.fetchEntriesForAirport(airportId);
 
-  /// Public API documentation.
+  /// Fetches a page of entries associated with airport [airportId].
   Future<List<LogbookEntry>> fetchEntriesForAirportPage(
     int airportId, {
-
-    /// Public API documentation.
     required int limit,
     required int offset,
   }) => _repository.fetchEntriesForAirportPage(
-    /// Public API documentation.
     airportId,
     limit: limit,
     offset: offset,
   );
 
-  /// Public API documentation.
+  /// Returns aggregated flight totals for airport [airportId].
   Future<LogbookFlightSummary> fetchFlightSummaryForAirport(int airportId) =>
       _repository.fetchFlightSummaryForAirport(airportId);
 
-  /// Public API documentation.
+  /// Fetches all entries associated with aircraft [aircraftId].
   Future<List<LogbookEntry>> fetchEntriesForAircraft(int aircraftId) =>
-      /// Public API documentation.
       _repository.fetchEntriesForAircraft(aircraftId);
 
-  /// Public API documentation.
+  /// Fetches a page of entries associated with aircraft [aircraftId].
   Future<List<LogbookEntry>> fetchEntriesForAircraftPage(
-    /// Public API documentation.
     int aircraftId, {
     required int limit,
-
-    /// Public API documentation.
     required int offset,
   }) => _repository.fetchEntriesForAircraftPage(
     aircraftId,
@@ -353,17 +318,16 @@ class LogbookUseCases {
     offset: offset,
   );
 
-  /// Public API documentation.
+  /// Returns aggregated flight totals for aircraft [aircraftId].
   Future<LogbookFlightSummary> fetchFlightSummaryForAircraft(int aircraftId) =>
       _repository.fetchFlightSummaryForAircraft(aircraftId);
 
-  /// Public API documentation.
+  /// Fetches all entries associated with aircraft type [aircraftTypeId].
   Future<List<LogbookEntry>> fetchEntriesForAircraftType(int aircraftTypeId) =>
       _repository.fetchEntriesForAircraftType(aircraftTypeId);
 
-  /// Public API documentation.
+  /// Fetches a page of entries for aircraft type [aircraftTypeId].
   Future<List<LogbookEntry>> fetchEntriesForAircraftTypePage(
-    /// Public API documentation.
     int aircraftTypeId, {
     required int limit,
     required int offset,
@@ -373,12 +337,12 @@ class LogbookUseCases {
     offset: offset,
   );
 
-  /// Public API documentation.
+  /// Returns aggregated flight totals for aircraft type [aircraftTypeId].
   Future<LogbookFlightSummary> fetchFlightSummaryForAircraftType(
     int aircraftTypeId,
   ) => _repository.fetchFlightSummaryForAircraftType(aircraftTypeId);
 
-  /// Public API documentation.
+  /// Fetches a paged entry list for a family represented by [aircraftTypeIds].
   Future<List<LogbookEntry>> fetchEntriesForAircraftTypeFamilyPage(
     List<int> aircraftTypeIds, {
     required int limit,
@@ -389,16 +353,16 @@ class LogbookUseCases {
     offset: offset,
   );
 
-  /// Public API documentation.
+  /// Returns aggregated totals for a family represented by [aircraftTypeIds].
   Future<LogbookFlightSummary> fetchFlightSummaryForAircraftTypeFamily(
     List<int> aircraftTypeIds,
   ) => _repository.fetchFlightSummaryForAircraftTypeFamily(aircraftTypeIds);
 
-  /// Public API documentation.
+  /// Fetches all entries associated with crew member [crewId].
   Future<List<LogbookEntry>> fetchEntriesForCrew(int crewId) =>
       _repository.fetchEntriesForCrew(crewId);
 
-  /// Public API documentation.
+  /// Fetches a paged list of entries associated with crew member [crewId].
   Future<List<LogbookEntry>> fetchEntriesForCrewPage(
     int crewId, {
     required int limit,
@@ -409,14 +373,14 @@ class LogbookUseCases {
     offset: offset,
   );
 
-  /// Public API documentation.
+  /// Returns aggregated flight totals for crew member [crewId].
   Future<LogbookFlightSummary> fetchFlightSummaryForCrew(int crewId) =>
       _repository.fetchFlightSummaryForCrew(crewId);
 
-  /// Public API documentation.
+  /// Deletes the concrete record represented by [entry].
   Future<void> deleteEntry(LogbookEntry entry) =>
       _repository.deleteEntry(entry);
 
-  /// Public API documentation.
+  /// Deletes duty entry with id [dutyId].
   Future<void> deleteDutyById(int dutyId) => _repository.deleteDutyById(dutyId);
 }
