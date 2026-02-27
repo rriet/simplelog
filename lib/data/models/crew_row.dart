@@ -1,20 +1,19 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Crew row wrapper used by list UIs.
 class CrewRow {
-  /// Public API documentation.
+  /// Creates a crew row wrapper.
   const CrewRow(this.crew);
 
-  /// Public API documentation.
+  /// Backing crew entity.
   final CrewData crew;
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Convenience id getter.
   int get id => crew.id;
-  /// Public API documentation.
+  /// Convenience name getter.
   String get name => crew.name;
-  /// Public API documentation.
+  /// Convenience favorite getter.
   bool get isFavorite => crew.isFavorite;
-  /// Public API documentation.
+  /// Convenience lock getter.
   bool get isLocked => crew.isLocked;
 }

@@ -4,9 +4,9 @@ import 'package:simplelog/data/models/airport_extensions.dart';
 import 'package:simplelog/data/models/airport_row.dart';
 import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
-/// Public API documentation.
+/// Single airport list row with actions and slidable support.
 class AirportListItem extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates one airport list item.
   const AirportListItem({
     required this.row,
     required this.isCompact,
@@ -16,23 +16,21 @@ class AirportListItem extends StatelessWidget {
     required this.onDelete,
     required this.onOpenDetails,
     super.key,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Backing row data.
   final AirportRow row;
-  /// Public API documentation.
+  /// Whether compact/mobile mode is active.
   final bool isCompact;
-  /// Public API documentation.
+  /// Called to toggle favorite.
   final VoidCallback onToggleFavorite;
-  /// Public API documentation.
+  /// Called to toggle lock.
   final VoidCallback onToggleLock;
-  /// Public API documentation.
+  /// Called to edit.
   final VoidCallback onEdit;
-  /// Public API documentation.
+  /// Called to delete.
   final VoidCallback onDelete;
-  /// Public API documentation.
+  /// Called to open details.
   final VoidCallback onOpenDetails;
 
   @override

@@ -2,32 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
 
-/// Public API documentation.
+/// Search fields available in crew filter dialog.
 enum CrewSearchBy {
-  /// Public API documentation.
+  /// Search across all supported fields.
   all,
-  /// Public API documentation.
+  /// Search by crew name.
   name,
-  /// Public API documentation.
+  /// Search by email.
   email,
-  /// Public API documentation.
+  /// Search by phone.
   phone,
-  /// Public API documentation.
+  /// Search by notes.
   notes,
 }
 
-/// Public API documentation.
+/// Dialog to configure crew search mode.
 class CrewFiltersDialog extends StatefulWidget {
-  /// Public API documentation.
+  /// Creates the crew filters dialog.
   const CrewFiltersDialog({
     required this.initialSearchBy,
     super.key,
   });
 
-  /// Public API documentation.
+  /// Initial selected search field.
   final CrewSearchBy initialSearchBy;
 
-  /// Public API documentation.
+  /// Opens the dialog and returns selected search mode.
   static Future<CrewSearchBy?> show(
     BuildContext context, {
     required CrewSearchBy initialSearchBy,

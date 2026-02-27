@@ -1,17 +1,15 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Previous-experience row joined with its aircraft type.
 class PreviousExperienceRow {
-  /// Public API documentation.
+  /// Creates the joined row model.
   const PreviousExperienceRow({
     required this.previousExperience,
     required this.aircraftType,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Previous-experience totals.
   final PreviousExperience previousExperience;
-  /// Public API documentation.
+  /// Linked aircraft type metadata.
   final AircraftType aircraftType;
 }

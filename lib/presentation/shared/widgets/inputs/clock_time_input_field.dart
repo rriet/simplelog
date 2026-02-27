@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 ///
 /// Valid range is `00:00` to `23:59`.
 class ClockTimeInputField extends StatefulWidget {
-  /// Public API documentation.
+  /// Creates a clock-time input field.
   const ClockTimeInputField({
     required this.controller,
     required this.label,
@@ -18,28 +18,27 @@ class ClockTimeInputField extends StatefulWidget {
     this.allowEmpty = false,
     this.errorText,
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Text controller bound to the formatted `HH:mm` value.
   final TextEditingController controller;
-  /// Public API documentation.
+  /// Input label shown in the field decoration.
   final String label;
-  /// Public API documentation.
+  /// Value emitted when input is empty and focus is lost.
   final int fallbackMinutes;
-  /// Public API documentation.
+  /// Callback receiving parsed minutes-of-day on valid changes.
   final ValueChanged<int>? onChangedMinutes;
-  /// Public API documentation.
+  /// Callback fired when field is cleared and [allowEmpty] is true.
   final VoidCallback? onCleared;
-  /// Public API documentation.
+  /// Optional additional validator called after built-in validation.
   final String? Function(String?)? validator;
-  /// Public API documentation.
+  /// Optional suffix widget.
   final Widget? suffixIcon;
-  /// Public API documentation.
+  /// Whether empty text is considered valid.
   final bool allowEmpty;
-  /// Public API documentation.
+  /// External error text override.
   final String? errorText;
 
-  /// Public API documentation.
+  /// Formats minutes-of-day into `HH:mm`.
   static String formatMinutesOfDay(int minutes) {
     final safe = minutes.clamp(0, 23 * 60 + 59);
     final hours = safe ~/ 60;
@@ -48,7 +47,7 @@ class ClockTimeInputField extends StatefulWidget {
         '${mins.toString().padLeft(2, '0')}';
   }
 
-  /// Public API documentation.
+  /// Parses `HH:mm` or compact numeric input into minutes-of-day.
   static int? parseMinutesOfDay(String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return null;
@@ -63,7 +62,6 @@ class ClockTimeInputField extends StatefulWidget {
     }
     final digits = trimmed.replaceAll(RegExp('[^0-9]'), '');
     if (digits.isEmpty) return null;
-    /// Public API documentation.
     final raw = int.tryParse(digits);
     if (raw == null) return null;
     if (digits.length <= 2) {
@@ -76,7 +74,7 @@ class ClockTimeInputField extends StatefulWidget {
     return hours * 60 + mins;
   }
 
-  /// Public API documentation.
+  /// Returns whether [value] is a valid clock text.
   static bool isValidClockText(String value, {bool allowEmpty = false}) {
     final trimmed = value.trim();
     if (allowEmpty && trimmed.isEmpty) return true;
@@ -175,9 +173,7 @@ class _ClockTimeInputFieldState extends State<ClockTimeInputField> {
       },
       autovalidateMode: AutovalidateMode.disabled,
       validator: (value) {
-        /// Public API documentation.
         final raw = value ?? '';
-        /// Public API documentation.
         if (!ClockTimeInputField.isValidClockText(
           raw,
           allowEmpty: widget.allowEmpty,
@@ -190,9 +186,9 @@ class _ClockTimeInputFieldState extends State<ClockTimeInputField> {
   }
 }
 
-/// Public API documentation.
+/// Input formatter that keeps clock-time text in `HH:mm` shape.
 class ClockTimeInputFormatter extends TextInputFormatter {
-  /// Public API documentation.
+  /// Creates the formatter.
   const ClockTimeInputFormatter();
 
   @override

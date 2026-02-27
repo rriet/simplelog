@@ -1,25 +1,23 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Aircraft row paired with optional aircraft type details.
 class AircraftRow {
-  /// Public API documentation.
+  /// Creates an aircraft row wrapper.
   const AircraftRow(this.aircraft, this.type);
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Aircraft entity.
   final Aircraft aircraft;
-  /// Public API documentation.
+  /// Related aircraft type (if available).
   final AircraftType? type;
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Convenience id getter.
   int get id => aircraft.id;
-  /// Public API documentation.
+  /// Convenience registration getter.
   String get registration => aircraft.registration;
-  /// Public API documentation.
+  /// Convenience favorite getter.
   bool get isFavorite => aircraft.isFavorite;
-  /// Public API documentation.
+  /// Convenience lock getter.
   bool get isLocked => aircraft.isLocked;
-  /// Public API documentation.
+  /// MTOW preferring aircraft override then type default.
   int get effectiveMtow => aircraft.mtow ?? type?.mtow ?? 0;
 }

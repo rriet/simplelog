@@ -1,24 +1,23 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Aircraft type row wrapper used by list/filter UIs.
 class AircraftTypeRow {
-  /// Public API documentation.
+  /// Creates an aircraft type wrapper.
   const AircraftTypeRow(this.type);
 
-  /// Public API documentation.
+  /// Backing aircraft type entity.
   final AircraftType type;
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Convenience id getter.
   int get id => type.id;
-  /// Public API documentation.
+  /// Convenience code getter.
   String get code => type.code;
-  /// Public API documentation.
+  /// Convenience family getter.
   String get family => type.family;
-  /// Public API documentation.
+  /// Convenience long-name getter.
   String get longName => type.longName;
-  /// Public API documentation.
+  /// Convenience manufacturer getter.
   String? get manufacturer => type.manufacturer;
-  /// Public API documentation.
+  /// Convenience lock getter.
   bool get isLocked => type.isLocked;
 }

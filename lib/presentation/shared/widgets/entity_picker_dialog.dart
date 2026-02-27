@@ -6,9 +6,9 @@ import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/presentation/shared/widgets/keyboard_list_navigation.dart';
 import 'package:simplelog/presentation/shared/widgets/picker_search_bar.dart';
 
-/// Public API documentation.
+/// Generic searchable picker dialog for selecting an entity of type [T].
 class EntityPickerDialog<T> extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates the picker dialog.
   const EntityPickerDialog({
     required this.title,
     required this.itemsBuilder,
@@ -26,40 +26,38 @@ class EntityPickerDialog<T> extends ConsumerStatefulWidget {
     this.emptyText = 'No results found',
     this.loadingWidget,
     this.errorBuilder,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Dialog title.
   final String title;
-  /// Public API documentation.
+  /// Static search label (when [searchLabelBuilder] is not provided).
   final String? searchLabel;
-  /// Public API documentation.
+  /// Dynamic search label builder.
   final String Function(WidgetRef ref)? searchLabelBuilder;
-  /// Public API documentation.
+  /// Builds async items list for the current search query.
   final AsyncValue<List<T>> Function(WidgetRef ref, String query) itemsBuilder;
-  /// Public API documentation.
+  /// Returns title text for each item row.
   final String Function(T item) itemTitle;
-  /// Public API documentation.
+  /// Returns stable key value used for item identity.
   final Object Function(T item) itemKey;
-  /// Public API documentation.
+  /// Optional subtitle text per item.
   final String? Function(T item)? itemSubtitle;
-  /// Public API documentation.
+  /// Optional extra filter applied after loading items.
   final bool Function(T item)? itemFilter;
-  /// Public API documentation.
+  /// Optional trailing widget builder for the search row.
   final Widget? Function(BuildContext context, WidgetRef ref)?
       searchTrailingBuilder;
-  /// Public API documentation.
+  /// Optional trailing widget builder per item row.
   final Widget? Function(BuildContext context, T item)? itemTrailingBuilder;
-  /// Public API documentation.
+  /// Optional favorite-state resolver.
   final bool Function(T item)? isFavorite;
-  /// Public API documentation.
+  /// Optional callback to toggle favorite state.
   final Future<void> Function(WidgetRef ref, T item)? onToggleFavorite;
-  /// Public API documentation.
+  /// Empty-state message.
   final String emptyText;
-  /// Public API documentation.
+  /// Optional loading replacement widget.
   final Widget? loadingWidget;
-  /// Public API documentation.
+  /// Optional custom error builder.
   final Widget Function(BuildContext context, Object error)? errorBuilder;
 
   @override

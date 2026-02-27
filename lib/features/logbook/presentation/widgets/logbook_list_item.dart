@@ -7,9 +7,9 @@ import 'package:simplelog/data/models/airport_extensions.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
-/// Public API documentation.
+/// Logbook entry tile with optional slide actions.
 class LogbookListItem extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates a logbook list item.
   const LogbookListItem({
     required this.entry,
     required this.isCompact,
@@ -19,31 +19,26 @@ class LogbookListItem extends StatelessWidget {
     this.onOpen,
     this.onDelete,
     this.onToggleLock,
-
-    /// Public API documentation.
   });
-
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Entry rendered by this row.
   final LogbookEntry entry;
 
-  /// Public API documentation.
+  /// Whether compact/mobile mode is active.
   final bool isCompact;
 
-  /// Public API documentation.
+  /// Enables slidable actions when true.
   final bool enableSlideActions;
 
-  /// Public API documentation.
+  /// Edit callback.
   final ValueChanged<LogbookEntry>? onEdit;
 
-  /// Public API documentation.
+  /// Open/details callback.
   final ValueChanged<LogbookEntry>? onOpen;
 
-  /// Public API documentation.
+  /// Delete callback.
   final ValueChanged<LogbookEntry>? onDelete;
 
-  /// Public API documentation.
+  /// Lock toggle callback.
   final ValueChanged<LogbookEntry>? onToggleLock;
 
   @override

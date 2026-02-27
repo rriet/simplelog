@@ -5,43 +5,41 @@ import 'package:drift/drift.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/features/dashboard/domain/dashboard_models.dart';
 
-/// Public API documentation.
+/// Repository that computes dashboard limits and metrics from the database.
 class DashboardRepository {
-  /// Public API documentation.
+  /// Creates the repository.
   DashboardRepository(this._db);
 
   final AppDatabase _db;
 
-  /// Public API documentation.
+  /// Cached IFR column name for schema compatibility.
   String? _cachedFlightsIfrColumnName;
 
-  /// Public API documentation.
+  /// Watches all configured rules ordered by name.
   Stream<List<LimitRule>> watchRules() {
     return (_db.select(
       _db.limitRules,
-
-      /// Public API documentation.
     )..orderBy([(t) => OrderingTerm.asc(t.ruleName)])).watch();
   }
 
-  /// Public API documentation.
+  /// Inserts a new rule and returns its id.
   Future<int> createRule(LimitRulesCompanion companion) {
     return _db.into(_db.limitRules).insert(companion);
   }
 
-  /// Public API documentation.
+  /// Updates an existing rule.
   Future<void> updateRule(LimitRule rule) async {
     await _db.update(_db.limitRules).replace(rule);
   }
 
-  /// Public API documentation.
+  /// Deletes a rule by [ruleId].
   Future<void> deleteRule(int ruleId) async {
     await (_db.delete(
       _db.limitRules,
     )..where((t) => t.ruleId.equals(ruleId))).go();
   }
 
-  /// Public API documentation.
+  /// Loads totals for one rule window and returns detail payload.
   Future<DashboardRuleDetails> loadRuleDetails(LimitRule rule) async {
     final now = DateTime.now().toUtc();
     final window = _resolveWindow(now, rule.windowType, rule.windowValue);
@@ -93,7 +91,6 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
         nightMinutes: _readInteger(flightsTotalsRow, 'night_minutes'),
         ifrMinutes: _readInteger(flightsTotalsRow, 'ifr_minutes'),
 
-        /// Public API documentation.
         instrumentMinutes: _readInteger(flightsTotalsRow, 'instrument_minutes'),
         dutyMinutes: _readInteger(dutyTotalsRow, 'duty_minutes'),
         landings: _readInteger(flightsTotalsRow, 'landings'),
@@ -101,7 +98,7 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
     );
   }
 
-  /// Public API documentation.
+  /// Watches computed dashboard cards and updates when source tables change.
   Stream<List<DashboardRuleCard>> watchDashboardCards() {
     final invalidations = _db
         .customSelect(

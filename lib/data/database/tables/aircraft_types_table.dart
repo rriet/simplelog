@@ -10,35 +10,35 @@ const String _categoryConstraint =
     "CHECK(category IN ('amphibian','gyrocopter','helicopter','landplane', "
     "'seaplane','tiltwing'))";
 
-/// Public API documentation.
+/// Aircraft type catalog table.
 class AircraftTypes extends Table {
-  /// Public API documentation.
+  /// Surrogate primary key.
   IntColumn get id => integer().autoIncrement()();
-  /// Public API documentation.
+  /// Short type code (e.g. A320).
   TextColumn get code => text()();
-  /// Public API documentation.
+  /// Family/group label.
   TextColumn get family => text()();
-  /// Public API documentation.
+  /// Human-readable long type name.
   TextColumn get longName => text()();
-  /// Public API documentation.
+  /// Optional manufacturer name.
   TextColumn get manufacturer => text().nullable()();
-  /// Public API documentation.
+  /// Aircraft category enum stored via converter.
   TextColumn get category => text().map(const AircraftCategoryConverter())();
-  /// Public API documentation.
+  /// Engine type enum stored via converter.
   TextColumn get engineType => text().map(const EngineTypeConverter())();
-  /// Public API documentation.
+  /// Maximum takeoff weight.
   IntColumn get mtow => integer()();
-  /// Public API documentation.
+  /// Engine count.
   IntColumn get engineCount => integer()();
-  /// Public API documentation.
+  /// Whether type requires multi-pilot operation.
   BoolColumn get multiPilot => boolean()();
-  /// Public API documentation.
+  /// Whether aircraft is complex.
   BoolColumn get complex => boolean()();
-  /// Public API documentation.
+  /// Whether cockpit is EFIS-equipped.
   BoolColumn get efis => boolean()();
-  /// Public API documentation.
+  /// Whether aircraft is high performance.
   BoolColumn get highPerformance => boolean()();
-  /// Public API documentation.
+  /// Lock flag preventing edits.
   BoolColumn get isLocked => boolean()();
 
   @override

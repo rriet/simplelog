@@ -1,23 +1,23 @@
 import 'package:drift/drift.dart';
 
-/// Public API documentation.
+/// Crew master-data table.
 class Crew extends Table {
-  /// Public API documentation.
+  /// Surrogate primary key.
   IntColumn get id => integer().autoIncrement()();
-  /// Public API documentation.
+  /// Crew display name.
   TextColumn get name => text()();
-  /// Public API documentation.
+  /// Optional email address.
   TextColumn get email => text().nullable()();
-  /// Public API documentation.
+  /// Optional notes/comments.
   TextColumn get notes => text().nullable()();
-  /// Public API documentation.
+  /// Optional phone number.
   TextColumn get phone => text().nullable()();
-  /// Public API documentation.
+  /// Optional crew photo.
   BlobColumn get picture => blob().nullable()();
-  /// Public API documentation.
+  /// Marks the profile representing the user.
   BoolColumn get isSelf => boolean()();
-  /// Public API documentation.
+  /// Favorite/pinned flag.
   BoolColumn get isFavorite => boolean()();
-  /// Public API documentation.
+  /// Lock flag preventing edits.
   BoolColumn get isLocked => boolean()();
 }

@@ -1,35 +1,35 @@
 import 'package:drift/drift.dart';
 
-/// Public API documentation.
+/// Dashboard/limits rule definitions.
 class LimitRules extends Table {
-  /// Public API documentation.
+  /// Surrogate primary key.
   IntColumn get ruleId => integer().autoIncrement()();
-  /// Public API documentation.
+  /// User-facing rule name.
   TextColumn get ruleName => text()();
-  /// Public API documentation.
+  /// Metric key (e.g. block, landings).
   TextColumn get metric => text()();
-  /// Public API documentation.
+  /// Rule semantics (`minimum` or `maximum`).
   TextColumn get ruleType => text()();
-  /// Public API documentation.
+  /// Window calculation mode descriptor.
   TextColumn get windowType => text()();
-  /// Public API documentation.
+  /// Window size in units implied by [windowType].
   IntColumn get windowValue => integer()();
-  /// Public API documentation.
+  /// Threshold value in [limitUnit].
   RealColumn get limitValue => real()();
-  /// Public API documentation.
+  /// Unit label for [limitValue].
   TextColumn get limitUnit => text()();
-  /// Public API documentation.
+  /// Yellow warning threshold before limit.
   RealColumn get warnYellowBefore => real().withDefault(const Constant(0))();
-  /// Public API documentation.
+  /// Red warning threshold before/after limit.
   RealColumn get warnRedBefore => real().withDefault(const Constant(0))();
-  /// Public API documentation.
+  /// UI color for yellow state.
   TextColumn get warnYellowColor =>
       text().withDefault(const Constant('#FFC107'))();
-  /// Public API documentation.
+  /// UI color for red state.
   TextColumn get warnRedColor =>
       text().withDefault(const Constant('#DC3545'))();
-  /// Public API documentation.
+  /// Whether rule participates in calculations.
   BoolColumn get active => boolean().withDefault(const Constant(true))();
-  /// Public API documentation.
+  /// Optional free-form notes.
   TextColumn get notes => text().nullable()();
 }

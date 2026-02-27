@@ -2,9 +2,9 @@ import 'dart:typed_data';
 
 import 'package:simplelog/data/database/enums/crew_position.dart';
 
-/// Public API documentation.
+/// Expanded crew information used in detail views and reports.
 class CrewInfoItem {
-  /// Public API documentation.
+  /// Creates a crew info item.
   const CrewInfoItem({
     required this.crewId,
     required this.name,
@@ -13,25 +13,23 @@ class CrewInfoItem {
     this.email,
     this.notes,
     this.picture,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Crew id.
   final int crewId;
-  /// Public API documentation.
+  /// Crew display name.
   final String name;
-  /// Public API documentation.
+  /// Assigned crew position.
   final CrewPosition position;
-  /// Public API documentation.
+  /// Optional phone number.
   final String? phone;
-  /// Public API documentation.
+  /// Optional email address.
   final String? email;
-  /// Public API documentation.
+  /// Optional notes.
   final String? notes;
-  /// Public API documentation.
+  /// Optional picture bytes.
   final Uint8List? picture;
 
-  /// Public API documentation.
+  /// Uppercase label of [position].
   String get positionLabel => position.name.toUpperCase();
 }

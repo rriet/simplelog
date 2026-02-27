@@ -3,43 +3,48 @@ import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/domain/common/domain_validation.dart';
 import 'package:simplelog/domain/repositories/crew_repository_contract.dart';
 
-/// Public API documentation.
+/// Use-case facade for crew CRUD and validation workflows.
 class CrewUseCases {
-  /// Public API documentation.
+  /// Creates use-cases bound to a crew repository implementation.
   CrewUseCases(this._repository);
 
-  /// Public API documentation.
+  /// Repository used by this use-case facade.
   final CrewRepositoryContract _repository;
 
-  /// Public API documentation.
+  /// Streams crew rows filtered by free-text [query].
   Stream<List<CrewRow>> watchCrew(String query) => _repository.watchCrew(query);
 
-  /// Public API documentation.
+  /// Toggles lock status for [item].
   Future<void> toggleLock(CrewData item) => _repository.toggleLock(item);
-  /// Public API documentation.
+
+  /// Toggles favorite status for [item].
   Future<void> toggleFavorite(CrewData item) =>
       _repository.toggleFavorite(item);
-  /// Public API documentation.
+
+  /// Deletes [item] from storage.
   Future<void> delete(CrewData item) => _repository.delete(item);
-  /// Public API documentation.
+
+  /// Creates a crew row and optionally sets it as self when [setSelf] is true.
   Future<void> create(CrewCompanion companion, {required bool setSelf}) =>
-      /// Public API documentation.
       _repository.create(companion, setSelf: setSelf);
-  /// Public API documentation.
+
+  /// Updates [item] and optionally sets it as self when [setSelf] is true.
   Future<void> update(CrewData item, {required bool setSelf}) =>
-      /// Public API documentation.
       _repository.update(item, setSelf: setSelf);
-  /// Public API documentation.
+
+  /// Counts duplicate names excluding [currentId].
   Future<int> countDuplicateName(String name, int currentId) =>
       _repository.countDuplicateName(name, currentId);
-  /// Public API documentation.
+
+  /// Counts flight assignments for crew [crewId].
   Future<int> countFlightAssignmentsForCrew(int crewId) =>
       _repository.countFlightAssignmentsForCrew(crewId);
-  /// Public API documentation.
+
+  /// Counts simulator assignments for crew [crewId].
   Future<int> countSimulatorAssignmentsForCrew(int crewId) =>
       _repository.countSimulatorAssignmentsForCrew(crewId);
 
-  /// Public API documentation.
+  /// Validates create input before inserting a new crew row.
   Future<DomainValidation> validateCreate(CrewCompanion companion) async {
     final name = companion.name.value.trim();
     if (name.isEmpty) {
@@ -52,7 +57,7 @@ class CrewUseCases {
     return const DomainValidation.ok();
   }
 
-  /// Public API documentation.
+  /// Validates update input before persisting a crew row.
   Future<DomainValidation> validateUpdate(CrewData item) async {
     final name = item.name.trim();
     if (name.isEmpty) {
@@ -65,7 +70,9 @@ class CrewUseCases {
     return const DomainValidation.ok();
   }
 
-  /// Public API documentation.
+  /// Validates whether [item] can be deleted.
+  ///
+  /// Deletion is blocked when row is locked or referenced by any entry.
   Future<DomainValidation> validateDelete(CrewData item) async {
     if (item.isLocked) {
       return const DomainValidation.error('This crew member is locked.');

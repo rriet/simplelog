@@ -1,37 +1,35 @@
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Airport row enriched with usage counters.
 class AirportRow {
-  /// Public API documentation.
+  /// Creates an enriched airport row.
   const AirportRow(
     this.airport, {
     required this.flightCount,
     required this.positioningCount,
     required this.takeoffCount,
     required this.landingCount,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Airport entity.
   final Airport airport;
-  /// Public API documentation.
+  /// Number of flights referencing this airport.
   final int flightCount;
-  /// Public API documentation.
+  /// Number of positionings referencing this airport.
   final int positioningCount;
-  /// Public API documentation.
+  /// Total takeoffs at this airport.
   final int takeoffCount;
-  /// Public API documentation.
+  /// Total landings at this airport.
   final int landingCount;
 
-  /// Public API documentation.
+  /// Convenience id getter.
   int get id => airport.id;
-  /// Public API documentation.
+  /// Convenience ICAO getter.
   String get icao => airport.icao;
-  /// Public API documentation.
+  /// Convenience favorite getter.
   bool get isFavorite => airport.isFavorite;
-  /// Public API documentation.
+  /// Convenience lock getter.
   bool get isLocked => airport.isLocked;
-  /// Public API documentation.
+  /// Combined flight + positioning count.
   int get totalVisits => flightCount + positioningCount;
 }

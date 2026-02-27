@@ -4,9 +4,9 @@ import 'package:simplelog/data/models/crew_extensions.dart';
 import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
-/// Public API documentation.
+/// Single crew row with avatar, contact info, and actions.
 class CrewListItem extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates one crew list row.
   const CrewListItem({
     required this.row,
     required this.isCompact,
@@ -17,25 +17,23 @@ class CrewListItem extends StatelessWidget {
     required this.onOpenDetails,
     required this.onPhotoTap,
     super.key,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Backing row data.
   final CrewRow row;
-  /// Public API documentation.
+  /// Whether compact/mobile mode is active.
   final bool isCompact;
-  /// Public API documentation.
+  /// Called to toggle favorite.
   final VoidCallback onToggleFavorite;
-  /// Public API documentation.
+  /// Called to toggle lock.
   final VoidCallback onToggleLock;
-  /// Public API documentation.
+  /// Called to edit.
   final VoidCallback onEdit;
-  /// Public API documentation.
+  /// Called to delete.
   final VoidCallback onDelete;
-  /// Public API documentation.
+  /// Called to open details.
   final VoidCallback onOpenDetails;
-  /// Public API documentation.
+  /// Called when photo/avatar is tapped.
   final VoidCallback onPhotoTap;
 
   @override

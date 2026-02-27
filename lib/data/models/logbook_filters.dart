@@ -2,17 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 
 @immutable
-/// Public API documentation.
+/// Filter model applied to logbook queries.
 class LogbookFilters {
-  /// Public API documentation.
+  /// Creates a filters object.
   const LogbookFilters({
     required this.types,
     this.from,
     this.to,
-  /// Public API documentation.
   });
 
-  /// Public API documentation.
+  /// Default filter set with all event types enabled.
   factory LogbookFilters.initial() {
     return const LogbookFilters(
       types: {
@@ -21,20 +20,17 @@ class LogbookFilters {
         LogbookEventType.dutyPeriod,
         LogbookEventType.positioning,
       },
-    /// Public API documentation.
     );
-  /// Public API documentation.
   }
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Optional inclusive start datetime.
   final DateTime? from;
-  /// Public API documentation.
+  /// Optional inclusive end datetime.
   final DateTime? to;
-  /// Public API documentation.
+  /// Included event types.
   final Set<LogbookEventType> types;
 
-  /// Public API documentation.
+  /// Returns a copy with selected fields replaced.
   LogbookFilters copyWith({
     DateTime? from,
     DateTime? to,

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/presentation/shared/widgets/picker_search_bar.dart';
 
-/// Public API documentation.
+/// Search bar used in airport screens/dialogs.
 class AirportSearchBar extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates the airport search bar.
   const AirportSearchBar({
     required this.controller,
     required this.label,
@@ -15,25 +15,23 @@ class AirportSearchBar extends StatelessWidget {
     this.focusNode,
     this.onSubmitted,
     this.onKeyEvent,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Search text controller.
   final TextEditingController controller;
-  /// Public API documentation.
+  /// Search field label.
   final String label;
-  /// Public API documentation.
+  /// Called when query text changes.
   final ValueChanged<String> onChanged;
-  /// Public API documentation.
+  /// Opens the filter dialog.
   final VoidCallback onFilterPressed;
-  /// Public API documentation.
+  /// Whether field auto-focuses on open.
   final bool autofocus;
-  /// Public API documentation.
+  /// Optional focus node override.
   final FocusNode? focusNode;
-  /// Public API documentation.
+  /// Optional submit callback.
   final ValueChanged<String>? onSubmitted;
-  /// Public API documentation.
+  /// Optional key event handler for keyboard navigation.
   final KeyEventResult Function(FocusNode, KeyEvent)? onKeyEvent;
 
   @override

@@ -7,36 +7,30 @@ import 'package:simplelog/data/models/logbook_flight_summary.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart';
 
-/// Public API documentation.
+/// Fetches one page of logbook entries.
 typedef LogbookEntriesPageLoader =
-    /// Public API documentation.
     Future<List<LogbookEntry>> Function(int limit, int offset);
-/// Public API documentation.
+/// Loads summary totals for the current data set.
 typedef LogbookFlightSummaryLoader = Future<LogbookFlightSummary> Function();
-/// Public API documentation.
 
-/// Public API documentation.
+/// Lazy-loading logbook list panel with summary header.
 class LogbookEntriesLazyPanel extends StatefulWidget {
-  /// Public API documentation.
+  /// Creates the lazy panel.
   const LogbookEntriesLazyPanel({
     required this.pageLoader,
     required this.summaryLoader,
     required this.onEntryTap,
-    /// Public API documentation.
     super.key,
-    /// Public API documentation.
     this.pageSize = 120,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Callback used to load paged entries.
   final LogbookEntriesPageLoader pageLoader;
-  /// Public API documentation.
+  /// Callback used to load summary totals.
   final LogbookFlightSummaryLoader summaryLoader;
-  /// Public API documentation.
+  /// Called when user taps an entry.
   final ValueChanged<LogbookEntry> onEntryTap;
-  /// Public API documentation.
+  /// Page size used for incremental loads.
   final int pageSize;
 
   @override

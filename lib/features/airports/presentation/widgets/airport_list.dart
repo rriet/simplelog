@@ -4,9 +4,9 @@ import 'package:simplelog/data/models/airport_row.dart';
 
 import 'package:simplelog/features/airports/presentation/widgets/airport_list_item.dart';
 
-/// Public API documentation.
+/// Airport list widget with item actions.
 class AirportList extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates the airport list.
   const AirportList({
     required this.items,
     required this.isCompact,
@@ -16,23 +16,21 @@ class AirportList extends StatelessWidget {
     required this.onDelete,
     required this.onOpenDetails,
     super.key,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Airport rows to render.
   final List<AirportRow> items;
-  /// Public API documentation.
+  /// Whether compact/mobile mode is active.
   final bool isCompact;
-  /// Public API documentation.
+  /// Called to toggle favorite state.
   final ValueChanged<AirportRow> onToggleFavorite;
-  /// Public API documentation.
+  /// Called to toggle lock state.
   final ValueChanged<AirportRow> onToggleLock;
-  /// Public API documentation.
+  /// Called to edit an item.
   final ValueChanged<AirportRow> onEdit;
-  /// Public API documentation.
+  /// Called to delete an item.
   final ValueChanged<AirportRow> onDelete;
-  /// Public API documentation.
+  /// Called to open airport details.
   final ValueChanged<AirportRow> onOpenDetails;
 
   @override

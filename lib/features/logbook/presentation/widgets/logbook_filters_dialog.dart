@@ -5,50 +5,50 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
 
-/// Public API documentation.
+/// Preset ranges available in the logbook filters dialog.
 enum LogbookDatePreset {
-  /// Public API documentation.
+  /// User-selected custom dates.
   custom,
-  /// Public API documentation.
+  /// Since first recorded flight.
   sinceFirstFlight,
-  /// Public API documentation.
+  /// Last 7 days.
   last7Days,
-  /// Public API documentation.
+  /// Last 14 days.
   last14Days,
-  /// Public API documentation.
+  /// Last 21 days.
   last21Days,
-  /// Public API documentation.
+  /// Last 28 days.
   last28Days,
-  /// Public API documentation.
+  /// Last 365 days.
   last365Days,
-  /// Public API documentation.
+  /// Previous calendar month.
   lastMonth,
-  /// Public API documentation.
+  /// Previous calendar year.
   lastYear,
-  /// Public API documentation.
+  /// Current calendar month.
   currentMonth,
-  /// Public API documentation.
+  /// Current calendar year.
   currentYear,
 }
 
-/// Public API documentation.
+/// Dialog used to edit [LogbookFilters] with date/type controls.
 class LogbookFiltersDialog extends StatefulWidget {
-  /// Public API documentation.
+  /// Creates the filters dialog.
   const LogbookFiltersDialog({
     required this.initial,
     required this.loadFirstEventDate,
     super.key,
   });
 
-  /// Public API documentation.
+  /// Initial filter state.
   final LogbookFilters initial;
-  /// Public API documentation.
+  /// Async loader used by "since first flight" preset.
   final Future<DateTime?> Function() loadFirstEventDate;
 
   @override
   State<LogbookFiltersDialog> createState() => _LogbookFiltersDialogState();
 
-  /// Public API documentation.
+  /// Shows the dialog and returns selected filters on apply.
   static Future<LogbookFilters?> show(
     BuildContext context, {
     required LogbookFilters initial,

@@ -4,9 +4,9 @@ import 'package:simplelog/data/models/crew_row.dart';
 
 import 'package:simplelog/features/crew/presentation/widgets/crew_list_item.dart';
 
-/// Public API documentation.
+/// Crew list widget with item actions.
 class CrewList extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates the crew list.
   const CrewList({
     required this.items,
     required this.isCompact,
@@ -17,25 +17,23 @@ class CrewList extends StatelessWidget {
     required this.onOpenDetails,
     required this.onPhotoTap,
     super.key,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Crew rows to render.
   final List<CrewRow> items;
-  /// Public API documentation.
+  /// Whether compact/mobile mode is active.
   final bool isCompact;
-  /// Public API documentation.
+  /// Called to toggle favorite.
   final ValueChanged<CrewRow> onToggleFavorite;
-  /// Public API documentation.
+  /// Called to toggle lock.
   final ValueChanged<CrewRow> onToggleLock;
-  /// Public API documentation.
+  /// Called to edit.
   final ValueChanged<CrewRow> onEdit;
-  /// Public API documentation.
+  /// Called to delete.
   final ValueChanged<CrewRow> onDelete;
-  /// Public API documentation.
+  /// Called to open details.
   final ValueChanged<CrewRow> onOpenDetails;
-  /// Public API documentation.
+  /// Called when avatar/photo is tapped.
   final ValueChanged<CrewRow> onPhotoTap;
 
   @override

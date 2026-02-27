@@ -3,9 +3,9 @@ import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/features/aircraft_types/presentation/widgets/aircraft_type_row.dart';
 import 'package:simplelog/features/aircraft_types/presentation/widgets/family_group.dart';
 
-/// Public API documentation.
+/// Section widget that renders one aircraft-type family and its rows.
 class FamilySection extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates a family section.
   const FamilySection({
     required this.group,
     required this.isCompact,
@@ -15,23 +15,21 @@ class FamilySection extends StatelessWidget {
     required this.onOpenDetails,
     required this.onOpenFamilyDetails,
     super.key,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Family group data.
   final FamilyGroup group;
-  /// Public API documentation.
+  /// Whether compact/mobile mode is active.
   final bool isCompact;
-  /// Public API documentation.
+  /// Called to toggle row lock.
   final ValueChanged<AircraftTypeRow> onToggleLock;
-  /// Public API documentation.
+  /// Called to edit a row.
   final ValueChanged<AircraftTypeRow> onEdit;
-  /// Public API documentation.
+  /// Called to delete a row.
   final ValueChanged<AircraftTypeRow> onDelete;
-  /// Public API documentation.
+  /// Called to open type details.
   final ValueChanged<AircraftTypeRow> onOpenDetails;
-  /// Public API documentation.
+  /// Called when family header is tapped.
   final ValueChanged<FamilyGroup> onOpenFamilyDetails;
 
   @override

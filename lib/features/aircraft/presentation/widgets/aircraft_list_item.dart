@@ -3,9 +3,9 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
-/// Public API documentation.
+/// Single aircraft row with lock/edit/delete actions.
 class AircraftListItem extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates one aircraft list row.
   const AircraftListItem({
     required this.row,
     required this.onToggleFavorite,
@@ -15,23 +15,21 @@ class AircraftListItem extends StatelessWidget {
     required this.onOpenDetails,
     super.key,
     this.isMobile = false,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Backing row data.
   final AircraftRow row;
-  /// Public API documentation.
+  /// Called to toggle favorite.
   final VoidCallback onToggleFavorite;
-  /// Public API documentation.
+  /// Called to toggle lock.
   final VoidCallback onToggleLock;
-  /// Public API documentation.
+  /// Called to edit.
   final VoidCallback onEdit;
-  /// Public API documentation.
+  /// Called to delete.
   final VoidCallback onDelete;
-  /// Public API documentation.
+  /// Called to open details.
   final VoidCallback onOpenDetails;
-  /// Public API documentation.
+  /// Compact/mobile rendering mode.
   final bool isMobile;
 
   @override

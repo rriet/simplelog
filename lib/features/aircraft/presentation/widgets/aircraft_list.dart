@@ -4,9 +4,9 @@ import 'package:simplelog/data/models/aircraft_row.dart';
 
 import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_list_item.dart';
 
-/// Public API documentation.
+/// Aircraft list grouped by favorites and type.
 class AircraftList extends StatelessWidget {
-  /// Public API documentation.
+  /// Creates the aircraft list.
   const AircraftList({
     required this.items,
     required this.isCompact,
@@ -16,23 +16,21 @@ class AircraftList extends StatelessWidget {
     required this.onDelete,
     required this.onOpenDetails,
     super.key,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Aircraft rows to render.
   final List<AircraftRow> items;
-  /// Public API documentation.
+  /// Whether compact/mobile mode is active.
   final bool isCompact;
-  /// Public API documentation.
+  /// Called to toggle favorite.
   final ValueChanged<AircraftRow> onToggleFavorite;
-  /// Public API documentation.
+  /// Called to toggle lock.
   final ValueChanged<AircraftRow> onToggleLock;
-  /// Public API documentation.
+  /// Called to edit.
   final ValueChanged<AircraftRow> onEdit;
-  /// Public API documentation.
+  /// Called to delete.
   final ValueChanged<AircraftRow> onDelete;
-  /// Public API documentation.
+  /// Called to open details.
   final ValueChanged<AircraftRow> onOpenDetails;
 
   @override
