@@ -7,9 +7,12 @@ import 'package:simplelog/presentation/settings/widgets/flight_takeoff_landing_s
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/flight_time_fields_visibility_provider.dart';
 
-/// Public API documentation.
+/// Settings tab for flight time-field visibility and custom labels.
+///
+/// Inputs: provider-backed visibility flags and label values.
+/// Output: persisted settings updates as users toggle switches or edit labels.
 class TimeFieldsSettingsTab extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates the time-fields settings tab.
   const TimeFieldsSettingsTab({super.key});
 
   @override

@@ -40,7 +40,7 @@ final openPdfAfterSavingProvider =
       OpenPdfAfterSavingNotifier.new,
     );
 
-/// Public API documentation.
+/// Exposes pilot information used by PDF templates and report headers.
 final reportPilotInfoProvider =
     NotifierProvider<ReportPilotInfoNotifier, ReportPilotInfo>(
       ReportPilotInfoNotifier.new,

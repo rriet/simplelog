@@ -25,9 +25,9 @@ import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
-/// Public API documentation.
+/// Main Database tab panel for sync, import/export, backup, and restore tools.
 class DatabaseSyncTrigger extends ConsumerWidget {
-  /// Public API documentation.
+  /// Creates the database tools panel.
   const DatabaseSyncTrigger({super.key});
 
   @override

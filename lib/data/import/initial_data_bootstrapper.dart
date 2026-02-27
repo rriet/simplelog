@@ -10,12 +10,13 @@ import 'package:simplelog/data/import/report_templates_seed_importer.dart';
 /// This avoids re-creating partial defaults (like `Self` crew) when a user
 /// deletes one entity manually.
 class InitialDataBootstrapper {
-  /// Public API documentation.
+  /// Creates the bootstrapper.
   const InitialDataBootstrapper();
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Seeds initial reference data when the database has no user/content data.
+  ///
+  /// Inputs: open [AppDatabase] instance.
+  /// Output: side effects in DB (airports, templates, self-crew, rules).
   Future<void> bootstrapIfDatabaseEmpty(AppDatabase db) async {
     final hasAnyData = await _hasAnyData(db);
     if (hasAnyData) {

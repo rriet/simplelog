@@ -12,9 +12,12 @@ import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_fiel
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 
-/// Public API documentation.
+/// Settings tab to manage imported/manual previous-experience totals.
+///
+/// Users can list, add, edit, and delete previous experience rows per aircraft
+/// type. Changes are persisted through the previous-experience repository.
 class PreviousExperienceSettingsTab extends ConsumerWidget {
-  /// Public API documentation.
+  /// Creates the previous-experience tab.
   const PreviousExperienceSettingsTab({super.key});
 
   @override

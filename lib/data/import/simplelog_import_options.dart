@@ -1,6 +1,9 @@
-/// Public API documentation.
+/// Immutable options controlling legacy SimpleLog CSV import behavior.
 class SimpleLogImportOptions {
-  /// Public API documentation.
+  /// Creates import options.
+  ///
+  /// Inputs are booleans/thresholds for recalculation and overwrite behavior.
+  /// Output is a value object consumed by the CSV importer.
   const SimpleLogImportOptions({
     this.recalculateNightTime = false,
     this.recalculateTotalTime = false,
@@ -22,9 +25,7 @@ class SimpleLogImportOptions {
     this.overrideAirportValues = false,
     this.overrideAircraftValues = false,
     this.overrideAircraftTypeValues = false,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
   /// Public API documentation.
   final bool recalculateNightTime;
@@ -67,13 +68,13 @@ class SimpleLogImportOptions {
   /// Public API documentation.
   final bool overrideAircraftTypeValues;
 
-  /// Public API documentation.
+  /// Whether any overwrite option is enabled for existing reference data.
   bool get overrideExistingValues =>
       overrideAirportValues ||
       overrideAircraftValues ||
       overrideAircraftTypeValues;
 
-  /// Public API documentation.
+  /// Returns a copy with selected fields replaced.
   SimpleLogImportOptions copyWith({
     bool? recalculateNightTime,
     bool? recalculateTotalTime,

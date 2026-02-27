@@ -4,9 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/state/providers/flight_form_settings_provider.dart';
 
-/// Public API documentation.
+/// Displays and persists the "log takeoff and landing times" preference.
+///
+/// Reads the current boolean value from [flightFormTakeoffLandingLogProvider]
+/// and writes changes back when toggled by the user.
 class FlightTakeoffLandingSwitch extends ConsumerWidget {
-  /// Public API documentation.
+  /// Creates the switch tile.
+  ///
+  /// [contentPadding] lets callers align this tile with surrounding controls.
   const FlightTakeoffLandingSwitch({
     super.key,
     this.contentPadding,

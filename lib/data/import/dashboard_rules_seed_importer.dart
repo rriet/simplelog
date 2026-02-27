@@ -2,20 +2,24 @@ import 'package:drift/drift.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/user_settings_json.dart';
 
-/// Public API documentation.
+/// Seeds default dashboard limit rules the first time the app is opened.
+///
+/// Uses a user-settings flag to avoid reseeding after first successful insert.
 class DashboardRulesSeedImporter {
-  /// Public API documentation.
+  /// Creates the dashboard rules seeder.
   const DashboardRulesSeedImporter();
 
-  /// Public API documentation.
+  /// Internal user-settings key used to track seeding completion.
   static const _prefsKey = 'dashboard_rules_seeded_v1';
 
-  /// Public API documentation.
+  /// Clears the seeding flag so defaults can be inserted again.
   static Future<void> clearSeedFlag(AppDatabase db) async {
     await UserSettingsJsonStore(db).patch((json) => json.remove(_prefsKey));
   }
 
-  /// Public API documentation.
+  /// Inserts default limit rules if not seeded yet and table is empty.
+  ///
+  /// Returns the number of inserted rules.
   Future<int> importOnFirstOpen(AppDatabase db) async {
     final store = UserSettingsJsonStore(db);
     final settings = await store.load();

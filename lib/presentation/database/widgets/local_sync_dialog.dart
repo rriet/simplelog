@@ -23,7 +23,7 @@ const int syncPort = 54742;
 
 /// Dialog that discovers peers and sends/receives database snapshots over LAN.
 class LocalSyncDialog extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates the local network sync dialog.
   const LocalSyncDialog({super.key});
 
   @override

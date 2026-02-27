@@ -3,15 +3,13 @@ import 'package:simplelog/data/models/previous_experience_row.dart';
 import 'package:simplelog/data/repositories/previous_experience_repository.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
-/// Public API documentation.
+/// Provides the concrete previous-experience repository backed by Drift.
 final previousExperienceRepositoryProvider =
     Provider<PreviousExperienceRepository>((ref) {
       final db = ref.watch(databaseProvider);
       return PreviousExperienceRepository(db);
     });
-/// Public API documentation.
-
-/// Public API documentation.
+/// Streams all previous-experience rows joined with aircraft type data.
 final StreamProvider<List<PreviousExperienceRow>> previousExperiencesProvider =
     StreamProvider.autoDispose<List<PreviousExperienceRow>>((ref) {
       final repo = ref.watch(previousExperienceRepositoryProvider);

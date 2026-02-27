@@ -41,24 +41,24 @@ import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Public API documentation.
+/// Entry section to open directly when navigating into the reports module.
 enum ReportsPanelSection {
-  /// Public API documentation.
+  /// Dashboard-style overview totals and KPIs.
   overview,
 
-  /// Public API documentation.
+  /// Flight/simulator entry list and map tools.
   flights,
 
-  /// Public API documentation.
+  /// Grouped analytics and comparisons.
   analizes,
 
-  /// Public API documentation.
+  /// PDF report generation controls.
   reports,
 
-  /// Public API documentation.
+  /// Filter builder and saved filters.
   filters,
 
-  /// Public API documentation.
+  /// Totals-focused panel.
   totals,
 }
 
@@ -71,6 +71,7 @@ const _pilotFilterFields = <ReportsFilterField>{
 };
 
 class _XslTemplateOption {
+  /// Creates a selectable template entry for the PDF generator UI.
   const _XslTemplateOption({
     required this.fileName,
     required this.description,
@@ -78,13 +79,11 @@ class _XslTemplateOption {
     required this.template,
   });
 
-  /// Public API documentation.
-
-  /// Public API documentation.
+  /// Internal template file identifier.
   final String fileName;
   final String description;
 
-  /// Public API documentation.
+  /// Number of rows this template can render per PDF page.
   final int numberOfLines;
   final ReportPdfTemplate template;
 }
@@ -96,12 +95,15 @@ String _sanitizeTemplateName(String raw) {
       .replaceAll(RegExp('_+'), '_');
 }
 
-/// Public API documentation.
+/// Reports module screen for analytics, filtering, and PDF generation.
 class ReportsScreen extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates the reports screen.
+  ///
+  /// [section] can preselect and preload a specific panel when opened from
+  /// another part of the app.
   const ReportsScreen({super.key, this.section});
 
-  /// Public API documentation.
+  /// Optional panel that should be shown first.
   final ReportsPanelSection? section;
 
   @override

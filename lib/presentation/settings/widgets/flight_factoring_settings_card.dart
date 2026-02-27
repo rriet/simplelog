@@ -7,9 +7,12 @@ import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.da
 import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 
-/// Public API documentation.
+/// Editable card for import/flight calculation factors.
+///
+/// Collects percentage/time thresholds and auto-saves them to
+/// [flightFactoringSettingsProvider].
 class FlightFactoringSettingsCard extends ConsumerStatefulWidget {
-  /// Public API documentation.
+  /// Creates the card widget.
   const FlightFactoringSettingsCard({super.key});
 
   @override

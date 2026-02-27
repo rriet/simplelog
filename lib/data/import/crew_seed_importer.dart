@@ -1,12 +1,12 @@
 import 'package:drift/drift.dart';
 import 'package:simplelog/data/database/app_database.dart';
 
-/// Public API documentation.
+/// Seeds a default `Self` crew record when the crew table is empty.
 class CrewSeedImporter {
-  /// Public API documentation.
+  /// Creates the crew seed importer.
   const CrewSeedImporter();
 
-  /// Public API documentation.
+  /// Inserts default crew data if needed and returns inserted row count.
   Future<int> importIfEmpty(AppDatabase db) async {
     final countExpr = db.crew.id.count();
     final query = db.selectOnly(db.crew)..addColumns([countExpr]);

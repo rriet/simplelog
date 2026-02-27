@@ -3,23 +3,25 @@ import 'package:simplelog/data/import/simplelog_import_options.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 
-/// Public API documentation.
+/// Dialog to configure how legacy SimpleLog CSV rows are imported.
+///
+/// Input: source [fileName] and optional [initial] options.
+/// Output: selected [SimpleLogImportOptions] when the user confirms import.
 class SimpleLogImportOptionsDialog extends StatefulWidget {
-  /// Public API documentation.
+  /// Creates the import options dialog.
   const SimpleLogImportOptionsDialog({
     required this.fileName,
     super.key,
     this.initial = const SimpleLogImportOptions(),
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Name shown in the dialog header for user context.
   final String fileName;
-  /// Public API documentation.
+
+  /// Preloaded option values used to initialize controls.
   final SimpleLogImportOptions initial;
 
-  /// Public API documentation.
+  /// Opens the dialog and resolves to the chosen options, or `null` on cancel.
   static Future<SimpleLogImportOptions?> show(
     BuildContext context, {
     required String fileName,

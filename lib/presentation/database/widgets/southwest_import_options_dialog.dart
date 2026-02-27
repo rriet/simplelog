@@ -3,23 +3,25 @@ import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
 
-/// Public API documentation.
+/// Dialog to configure Southwest CSV import rules before processing.
+///
+/// Input: [fileName] and [initial] options.
+/// Output: selected [SouthwestImportOptions] if user presses Import.
 class SouthwestImportOptionsDialog extends StatefulWidget {
-  /// Public API documentation.
+  /// Creates the dialog widget.
   const SouthwestImportOptionsDialog({
     required this.fileName,
     required this.initial,
     super.key,
-  /// Public API documentation.
   });
-/// Public API documentation.
 
-  /// Public API documentation.
+  /// Display name of the file being imported.
   final String fileName;
-  /// Public API documentation.
+
+  /// Initial values used to populate all controls.
   final SouthwestImportOptions initial;
 
-  /// Public API documentation.
+  /// Opens the dialog and returns chosen import options, or `null` if canceled.
   static Future<SouthwestImportOptions?> show(
     BuildContext context, {
     required String fileName,
