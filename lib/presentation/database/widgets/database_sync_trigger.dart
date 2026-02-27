@@ -13,6 +13,7 @@ import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/export/simplelog_csv_exporter.dart';
 import 'package:simplelog/data/import/dashboard_rules_seed_importer.dart';
 import 'package:simplelog/data/import/import_operation_result.dart';
+import 'package:simplelog/data/import/legacy_simplelog_db_importer.dart';
 import 'package:simplelog/data/import/simplelog_csv_importer.dart';
 import 'package:simplelog/presentation/database/widgets/import_options_preferences.dart';
 import 'package:simplelog/presentation/database/widgets/local_sync_dialog.dart';
@@ -32,51 +33,95 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FilledButton.icon(
-            icon: const Icon(Icons.sync),
-            label: Text(l10n.databaseSyncStartLocal),
-            onPressed: () => showDialog<void>(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => const LocalSyncDialog(),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(
+              'Database Tools',
+              style: theme.textTheme.headlineSmall,
             ),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.upload_file),
-            label: const Text('Import CSV'),
-            onPressed: () => _importCsv(context, ref),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.download_outlined),
-            label: const Text('Export Flights/Simulator CSV'),
-            onPressed: () => _exportCsv(context, ref),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.save_alt_outlined),
-            label: const Text('Backup Logbook'),
-            onPressed: () => _backupDatabase(context, ref),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.restore_outlined),
-            label: const Text('Restore Logbook'),
-            onPressed: () => _restoreDatabase(context, ref),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.delete_forever_outlined),
-            label: const Text('Database Dump (Temporary)'),
-            onPressed: () => _clearDatabase(context, ref),
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(
+              'Sync, import/export, and backup/restore your data.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _DatabaseSectionCard(
+              title: 'Sync',
+              subtitle: 'Connect two devices on the same network.',
+              children: [
+                _DatabaseActionButton(
+                  icon: Icons.sync,
+                  label: l10n.databaseSyncStartLocal,
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const LocalSyncDialog(),
+                  ),
+                  filled: true,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _DatabaseSectionCard(
+              title: 'Import / Export',
+              subtitle: 'Move data in and out using CSV.',
+              children: [
+                _DatabaseActionButton(
+                  icon: Icons.upload_file,
+                  label: 'Import CSV',
+                  onPressed: () => _importCsv(context, ref),
+                ),
+                const SizedBox(height: 8),
+                _DatabaseActionButton(
+                  icon: Icons.download_outlined,
+                  label: 'Export Flights/Simulator CSV',
+                  onPressed: () => _exportCsv(context, ref),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _DatabaseSectionCard(
+              title: 'Backup / Restore',
+              subtitle: 'Create and restore SQLite backups.',
+              children: [
+                _DatabaseActionButton(
+                  icon: Icons.save_alt_outlined,
+                  label: 'Backup Logbook',
+                  onPressed: () => _backupDatabase(context, ref),
+                ),
+                const SizedBox(height: 8),
+                _DatabaseActionButton(
+                  icon: Icons.restore_outlined,
+                  label: 'Restore Logbook',
+                  onPressed: () => _restoreDatabase(context, ref),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _DatabaseSectionCard(
+              title: 'Danger Zone',
+              subtitle: 'Permanent operations.',
+              accentColor: colorScheme.error,
+              children: [
+                _DatabaseActionButton(
+                  icon: Icons.delete_forever_outlined,
+                  label: 'Database Dump (Temporary)',
+                  onPressed: () => _clearDatabase(context, ref),
+                  danger: true,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -84,11 +129,19 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   Future<void> _importCsv(BuildContext context, WidgetRef ref) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['csv'],
+      allowedExtensions: const ['csv', 'sqlite', 'db'],
       withData: true,
     );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.single;
+    if (!context.mounted) return;
+    final lowerName = file.name.toLowerCase();
+    final isDatabaseFile =
+        lowerName.endsWith('.sqlite') || lowerName.endsWith('.db');
+    if (isDatabaseFile) {
+      await _importDatabaseFile(context, ref, file);
+      return;
+    }
     final bytes =
         file.bytes ??
         (file.path == null ? null : await File(file.path!).readAsBytes());
@@ -189,6 +242,64 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     }
   }
 
+  Future<void> _importDatabaseFile(
+    BuildContext context,
+    WidgetRef ref,
+    PlatformFile file,
+  ) async {
+    final bytes =
+        file.bytes ??
+        (file.path == null ? null : await File(file.path!).readAsBytes());
+    if (bytes == null || bytes.isEmpty || !context.mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Import database file?'),
+        content: const Text(
+          'Current logbook data will be replaced. '
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final db = ref.read(databaseProvider);
+    final importer = LegacySimpleLogDbImporter(db);
+    final result = await importer.importFromBytes(bytes);
+    if (!context.mounted) return;
+    await _showLegacyImportSummary(context, result);
+  }
+
+  Future<void> _showLegacyImportSummary(
+    BuildContext context,
+    LegacySimpleLogDbImportResult stats,
+  ) async {
+    await showAppMessageDialog(
+      context,
+      title: 'Import Summary',
+      message:
+          'Aircraft Types: ${stats.aircraftTypes}\n'
+          'Aircraft: ${stats.aircrafts}\n'
+          'Airports: ${stats.airports}\n'
+          'Crew: ${stats.crew}\n'
+          'Flights: ${stats.flights}\n'
+          'Simulator Sessions: ${stats.simulators}\n'
+          'Flight Crew Assignments: ${stats.flightCrewAssignments}\n'
+          'Simulator Crew Assignments: ${stats.simulatorCrewAssignments}',
+    );
+  }
+
   Future<void> _exportCsv(BuildContext context, WidgetRef ref) async {
     final db = ref.read(databaseProvider);
     final exporter = SimpleLogCsvExporter(db);
@@ -209,78 +320,78 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       0xBF,
       ...utf8.encode(csv),
     ]);
-    String? path;
-    if (Platform.isIOS || Platform.isAndroid) {
-      path = await FilePicker.platform.saveFile(
-        dialogTitle: 'Save CSV Export',
-        fileName: fileName,
-        type: FileType.custom,
-        allowedExtensions: const ['csv'],
-        bytes: bytes,
-      );
-      if (path == null || path.isEmpty) return;
-      // On iOS/Android, the picker persists bytes to the selected location.
-    } else {
-      // On macOS, writing to a save-file path may fail with sandbox access.
-      // Picking a directory grants access for a direct write.
-      final directory = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: 'Choose export folder',
-      );
-      if (directory == null || directory.isEmpty) return;
-      path = '$directory${Platform.pathSeparator}$fileName';
+    final path = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save CSV Export',
+      fileName: fileName,
+      type: Platform.isIOS || Platform.isAndroid
+          ? FileType.custom
+          : FileType.any,
+      allowedExtensions: Platform.isIOS || Platform.isAndroid
+          ? const ['csv']
+          : null,
+      bytes: Platform.isIOS || Platform.isAndroid ? bytes : null,
+    );
+    if (path == null || path.isEmpty || !context.mounted) return;
+
+    if (!Platform.isIOS && !Platform.isAndroid) {
       try {
         await File(path).writeAsBytes(bytes, flush: true);
       } on FileSystemException {
         final docsDir = await getApplicationDocumentsDirectory();
-        path = '${docsDir.path}${Platform.pathSeparator}$fileName';
-        await File(path).writeAsBytes(bytes, flush: true);
+        final fallbackPath =
+            '${docsDir.path}${Platform.pathSeparator}$fileName';
+        await File(fallbackPath).writeAsBytes(bytes, flush: true);
+        if (!context.mounted) return;
+        await _showInfoDialog(context, 'CSV exported to fallback location.');
+        return;
       }
     }
 
     if (!context.mounted) return;
-    await _showInfoDialog(context, 'CSV exported: $path');
+    await _showInfoDialog(context, 'CSV exported.');
   }
 
   Future<void> _backupDatabase(BuildContext context, WidgetRef ref) async {
     final bytes = await _readDatabaseBytes(ref);
     if (!context.mounted) return;
 
-    final timestamp = DateTime.now()
-        .toUtc()
-        .toIso8601String()
-        .replaceAll(':', '')
-        .replaceAll('-', '')
-        .split('.')
-        .first;
-    final fileName = 'simplelog_backup_$timestamp.sqlite';
-    String? path;
+    final nowUtc = DateTime.now().toUtc();
+    final yyyy = nowUtc.year.toString().padLeft(4, '0');
+    final mm = nowUtc.month.toString().padLeft(2, '0');
+    final dd = nowUtc.day.toString().padLeft(2, '0');
+    final fileName = 'simplelog-backup-$yyyy-$mm-$dd.sqlite';
+    final path = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save database backup',
+      fileName: fileName,
+      type: Platform.isIOS || Platform.isAndroid
+          ? FileType.custom
+          : FileType.any,
+      allowedExtensions: Platform.isIOS || Platform.isAndroid
+          ? const ['sqlite']
+          : null,
+      bytes: Platform.isIOS || Platform.isAndroid ? bytes : null,
+    );
+    if (path == null || path.isEmpty || !context.mounted) return;
 
-    if (Platform.isIOS || Platform.isAndroid) {
-      path = await FilePicker.platform.saveFile(
-        dialogTitle: 'Save database backup',
-        fileName: fileName,
-        type: FileType.custom,
-        allowedExtensions: const ['sqlite'],
-        bytes: bytes,
-      );
-      if (path == null || path.isEmpty) return;
-    } else {
-      final directory = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: 'Choose backup folder',
-      );
-      if (directory == null || directory.isEmpty) return;
-      path = '$directory${Platform.pathSeparator}$fileName';
+    if (!Platform.isIOS && !Platform.isAndroid) {
       try {
         await File(path).writeAsBytes(bytes, flush: true);
       } on FileSystemException {
         final docsDir = await getApplicationDocumentsDirectory();
-        path = '${docsDir.path}${Platform.pathSeparator}$fileName';
-        await File(path).writeAsBytes(bytes, flush: true);
+        final fallbackPath =
+            '${docsDir.path}${Platform.pathSeparator}$fileName';
+        await File(fallbackPath).writeAsBytes(bytes, flush: true);
+        if (!context.mounted) return;
+        await _showInfoDialog(
+          context,
+          'Backup saved.',
+        );
+        return;
       }
     }
 
     if (!context.mounted) return;
-    await _showInfoDialog(context, 'Backup saved: $path');
+    await _showInfoDialog(context, 'Backup saved.');
   }
 
   Future<void> _restoreDatabase(BuildContext context, WidgetRef ref) async {
@@ -300,8 +411,8 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Restore database backup?'),
-        content: Text(
-          'Current logbook data will be replaced by "${file.name}". '
+        content: const Text(
+          'Current logbook data will be replaced. '
           'This cannot be undone.',
         ),
         actions: [
@@ -532,6 +643,101 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     };
     if (failure.message.isEmpty) return prefix;
     return '$prefix ${failure.message}';
+  }
+}
+
+class _DatabaseSectionCard extends StatelessWidget {
+  const _DatabaseSectionCard({
+    required this.title,
+    required this.subtitle,
+    required this.children,
+    this.accentColor,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<Widget> children;
+  final Color? accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final titleColor = accentColor ?? colorScheme.onSurface;
+
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: titleColor,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DatabaseActionButton extends StatelessWidget {
+  const _DatabaseActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.filled = false,
+    this.danger = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final bool filled;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final iconColor = danger ? colorScheme.error : null;
+    final textColor = danger ? colorScheme.error : null;
+
+    if (filled) {
+      return SizedBox(
+        width: double.infinity,
+        child: FilledButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon),
+          label: Text(label),
+        ),
+      );
+    }
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: iconColor),
+        label: Text(
+          label,
+          style: textColor == null ? null : TextStyle(color: textColor),
+        ),
+      ),
+    );
   }
 }
 
