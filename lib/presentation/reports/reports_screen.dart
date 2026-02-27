@@ -15,6 +15,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/maps/map_tile_caching.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
+import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
@@ -1692,7 +1693,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 TabBar(
                   controller: _tabController,
                   onTap: _onTabChanged,
-                  isScrollable: compact,
+                  isScrollable: AppTabBarStyles.isScrollable,
+                  tabAlignment: AppTabBarStyles.tabAlignment,
+                  labelPadding: AppTabBarStyles.labelPadding,
                   tabs: [
                     Tab(text: l10n.reportsTabOverview),
                     Tab(text: l10n.reportsTabFlights),
@@ -2008,8 +2011,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Widget _buildReportsSection({required bool compact}) {
-    return SingleChildScrollView(
-      child: _buildReportsControls(compact: compact),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: SingleChildScrollView(
+          child: _buildReportsControls(compact: compact),
+        ),
+      ),
     );
   }
 
@@ -2036,181 +2044,245 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
     final includeHoursBefore = ref.watch(includeHoursBeforeProvider);
     final openPdfAfterSaving = ref.watch(openPdfAfterSavingProvider);
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                onPressed: _isGeneratingPdf ? null : _openMapDialog,
-                icon: const Icon(Icons.map_outlined),
-                label: Text(l10n.reportsShowMap),
-              ),
-              SizedBox(
-                width: compact ? 160 : 180,
-                child: EventTypeToggleButton(
-                  label: l10n.reportsShowPath,
-                  selected: _showPathOnMap,
-                  onTap: _isGeneratingPdf
-                      ? () {}
-                      : () => setState(() => _showPathOnMap = !_showPathOnMap),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Divider(height: 1),
-          if (_isGeneratingPdf) ...[
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ReportsSectionCard(
+          title: 'Map',
+          subtitle: 'Preview the filtered routes and path overlay.',
+          children: [
+            _ReportsActionButton(
+              icon: Icons.map_outlined,
+              label: l10n.reportsShowMap,
+              onPressed: _isGeneratingPdf ? null : _openMapDialog,
+            ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                SizedBox(
-                  width: 180,
-                  child: LinearProgressIndicator(value: _pdfGenerationProgress),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    _pdfGenerationStatus,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+            SizedBox(
+              width: compact ? 170 : 210,
+              child: EventTypeToggleButton(
+                label: l10n.reportsShowPath,
+                selected: _showPathOnMap,
+                onTap: _isGeneratingPdf
+                    ? () {}
+                    : () => setState(() => _showPathOnMap = !_showPathOnMap),
+              ),
             ),
           ],
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              SizedBox(
-                width: compact ? 260 : 330,
-                child: DropdownButtonFormField<_XslTemplateOption>(
-                  key: ValueKey(
-                    _selectedTemplate?.fileName ?? 'template_selector',
+        ),
+        const SizedBox(height: 12),
+        _ReportsSectionCard(
+          title: 'PDF Generation',
+          subtitle: 'Select template and export the report PDF.',
+          children: [
+            DropdownButtonFormField<_XslTemplateOption>(
+              key: ValueKey(_selectedTemplate?.fileName ?? 'template_selector'),
+              initialValue: _selectedTemplate,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: l10n.reportsXmlTemplateLabel,
+                border: const OutlineInputBorder(),
+                isDense: true,
+              ),
+              items: _xslTemplateOptions
+                  .map(
+                    (template) => DropdownMenuItem<_XslTemplateOption>(
+                      value: template,
+                      child: _overflowText(template.description),
+                    ),
+                  )
+                  .toList(growable: false),
+              selectedItemBuilder: (context) => _xslTemplateOptions
+                  .map(
+                    (template) =>
+                        _dropdownSelectedItem(template.description),
+                  )
+                  .toList(growable: false),
+              onChanged: (value) {
+                if (_isGeneratingPdf) return;
+                if (value == null) return;
+                setState(() => _selectedTemplate = value);
+                unawaited(
+                  ref
+                      .read(selectedReportTemplateFileNameProvider.notifier)
+                      .setValue(value: value.fileName),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            _ReportsActionButton(
+              icon: Icons.edit_note_rounded,
+              label: 'Edit Templates',
+              onPressed: _isGeneratingPdf ? null : _openTemplateEditorDialog,
+            ),
+            const SizedBox(height: 8),
+            _ReportsActionButton(
+              icon: Icons.picture_as_pdf_outlined,
+              label: _isGeneratingPdf
+                  ? l10n.reportsGeneratingShort
+                  : l10n.reportsGeneratePdf,
+              onPressed: _isGeneratingPdf ? null : _generatePdf,
+              filled: true,
+            ),
+            if (_isGeneratingPdf) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 180,
+                    child: LinearProgressIndicator(
+                      value: _pdfGenerationProgress,
+                    ),
                   ),
-                  initialValue: _selectedTemplate,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: l10n.reportsXmlTemplateLabel,
-                    border: const OutlineInputBorder(),
-                    isDense: true,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _pdfGenerationStatus,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: onSurface),
+                    ),
                   ),
-                  items: _xslTemplateOptions
-                      .map(
-                        (template) => DropdownMenuItem<_XslTemplateOption>(
-                          value: template,
-                          child: _overflowText(template.description),
-                        ),
-                      )
-                      .toList(growable: false),
-                  selectedItemBuilder: (context) => _xslTemplateOptions
-                      .map(
-                        (template) =>
-                            _dropdownSelectedItem(template.description),
-                      )
-                      .toList(growable: false),
-                  onChanged: (value) {
-                    if (_isGeneratingPdf) return;
-                    if (value == null) return;
-                    setState(() {
-                      _selectedTemplate = value;
-                    });
-                    unawaited(
-                      ref
-                          .read(selectedReportTemplateFileNameProvider.notifier)
-                          .setValue(value: value.fileName),
-                    );
-                  },
-                ),
-              ),
-              SquareOutlineButton(
-                onPressed: _isGeneratingPdf ? null : _openTemplateEditorDialog,
-                icon: Icons.edit_note_rounded,
-                label: 'Edit Templates',
-              ),
-              FilledButton.icon(
-                onPressed: _isGeneratingPdf ? null : _generatePdf,
-                icon: _isGeneratingPdf
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.picture_as_pdf_outlined),
-                label: Text(
-                  _isGeneratingPdf
-                      ? l10n.reportsGeneratingShort
-                      : l10n.reportsGeneratePdf,
-                ),
-              ),
-              SizedBox(
-                width: compact ? 190 : 220,
-                child: EventTypeToggleButton(
-                  label: 'Open PDF after saving',
-                  selected: openPdfAfterSaving,
-                  onTap: _isGeneratingPdf
-                      ? () {}
-                      : () => ref
-                            .read(openPdfAfterSavingProvider.notifier)
-                            .setValue(value: !openPdfAfterSaving),
-                ),
+                ],
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          const Divider(height: 1),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              SizedBox(
-                width: compact ? 190 : 220,
-                child: EventTypeToggleButton(
-                  label: l10n.reportsIncludeHoursBefore,
-                  selected: includeHoursBefore,
-                  onTap: _isGeneratingPdf
-                      ? () {}
-                      : () => ref
-                            .read(includeHoursBeforeProvider.notifier)
-                            .setValue(value: !includeHoursBefore),
-                ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _ReportsSectionCard(
+          title: 'Options',
+          subtitle: 'Adjust generation behavior and profile data.',
+          children: [
+            SizedBox(
+              width: compact ? 200 : 240,
+              child: EventTypeToggleButton(
+                label: 'Open PDF after saving',
+                selected: openPdfAfterSaving,
+                onTap: _isGeneratingPdf
+                    ? () {}
+                    : () => ref
+                          .read(openPdfAfterSavingProvider.notifier)
+                          .setValue(value: !openPdfAfterSaving),
               ),
-              SizedBox(
-                width: compact ? 190 : 220,
-                child: EventTypeToggleButton(
-                  label: l10n.reportsPreviousExperienceLabel,
-                  selected: includePreviousExperience,
-                  onTap: _isGeneratingPdf
-                      ? () {}
-                      : () => unawaited(
-                          _setIncludePreviousExperience(
-                            !includePreviousExperience,
-                          ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: compact ? 200 : 240,
+              child: EventTypeToggleButton(
+                label: l10n.reportsIncludeHoursBefore,
+                selected: includeHoursBefore,
+                onTap: _isGeneratingPdf
+                    ? () {}
+                    : () => ref
+                          .read(includeHoursBeforeProvider.notifier)
+                          .setValue(value: !includeHoursBefore),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: compact ? 200 : 240,
+              child: EventTypeToggleButton(
+                label: l10n.reportsPreviousExperienceLabel,
+                selected: includePreviousExperience,
+                onTap: _isGeneratingPdf
+                    ? () {}
+                    : () => unawaited(
+                        _setIncludePreviousExperience(
+                          !includePreviousExperience,
                         ),
-                ),
+                      ),
               ),
-              SizedBox(
-                width: compact ? 190 : 220,
-                child: EventTypeToggleButton(
-                  label: 'Pilot profile',
-                  selected: false,
-                  onTap: () => unawaited(showPilotProfileEditorDialog(context)),
-                ),
+            ),
+            const SizedBox(height: 8),
+            _ReportsActionButton(
+              icon: Icons.person_outline,
+              label: 'Pilot profile',
+              onPressed: () => unawaited(showPilotProfileEditorDialog(context)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ReportsSectionCard extends StatelessWidget {
+  const _ReportsSectionCard({
+    required this.title,
+    required this.subtitle,
+    required this.children,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Divider(height: 1),
-        ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReportsActionButton extends StatelessWidget {
+  const _ReportsActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.filled = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    if (filled) {
+      return SizedBox(
+        width: double.infinity,
+        child: FilledButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon),
+          label: Text(label),
+        ),
+      );
+    }
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        label: Text(label),
       ),
     );
   }
