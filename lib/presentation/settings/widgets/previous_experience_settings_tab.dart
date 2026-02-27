@@ -20,77 +20,101 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rowsAsync = ref.watch(previousExperiencesProvider);
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Row(
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
           children: [
             Text(
               'Previous Experience',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: theme.textTheme.headlineSmall,
             ),
-            const Spacer(),
-            FilledButton.icon(
-              onPressed: () => _openEditor(context, ref),
-              icon: const Icon(Icons.add),
-              label: const Text('Add'),
+            const SizedBox(height: 6),
+            Text(
+              'Manage prior totals by aircraft type.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _SettingsSectionCard(
+              title: 'Entries',
+              subtitle: 'Edit, add, or remove previous experience records.',
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: () => _openEditor(context, ref),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                rowsAsync.when(
+                  data: (rows) {
+                    final totalFlightCount = rows.fold<int>(
+                      0,
+                      (sum, row) => sum + row.previousExperience.flightCount,
+                    );
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Flight count: $totalFlightCount',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        if (rows.isEmpty)
+                          const Text('No previous experience entries yet.'),
+                        ...rows.map<Widget>((row) {
+                          final block = _formatMinutes(
+                            row.previousExperience.timeBlockMinutes,
+                          );
+                          final pic = _formatMinutes(
+                            row.previousExperience.timePICMinutes,
+                          );
+                          final sim = _formatMinutes(
+                            row.previousExperience.timeSimulatorMinutes,
+                          );
+                          return Card(
+                            child: ListTile(
+                              title: Text(
+                                '${row.aircraftType.code} • '
+                                '${row.aircraftType.longName}',
+                              ),
+                              subtitle: Text(
+                                'Block $block  PIC $pic  SIM $sim',
+                              ),
+                              onTap: () => _openEditor(
+                                context,
+                                ref,
+                                initial: row.previousExperience,
+                              ),
+                              trailing: IconButton(
+                                tooltip: 'Delete',
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () =>
+                                    _deleteEntry(context, ref, row),
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    );
+                  },
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (error, _) => Text(error.toString()),
+                ),
+              ],
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        rowsAsync.when(
-          data: (rows) {
-            final totalFlightCount = rows.fold<int>(
-              0,
-              (sum, row) => sum + row.previousExperience.flightCount,
-            );
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Flight count: $totalFlightCount',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 8),
-                if (rows.isEmpty)
-                  const Text('No previous experience entries yet.'),
-                ...rows.map<Widget>((row) {
-                  final block = _formatMinutes(
-                    row.previousExperience.timeBlockMinutes,
-                  );
-                  final pic = _formatMinutes(
-                    row.previousExperience.timePICMinutes,
-                  );
-                  final sim = _formatMinutes(
-                    row.previousExperience.timeSimulatorMinutes,
-                  );
-                  return Card(
-                    child: ListTile(
-                      title: Text(
-                        '${row.aircraftType.code} • '
-                        '${row.aircraftType.longName}',
-                      ),
-                      subtitle: Text('Block $block  PIC $pic  SIM $sim'),
-                      onTap: () => _openEditor(
-                        context,
-                        ref,
-                        initial: row.previousExperience,
-                      ),
-                      trailing: IconButton(
-                        tooltip: 'Delete',
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () => _deleteEntry(context, ref, row),
-                      ),
-                    ),
-                  );
-                }),
-              ],
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => Text(error.toString()),
-        ),
-      ],
+      ),
     );
   }
 
@@ -152,6 +176,51 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
 
   static String _formatMinutes(int minutes) {
     return HourInputField.formatHours(minutes);
+  }
+}
+
+class _SettingsSectionCard extends StatelessWidget {
+  const _SettingsSectionCard({
+    required this.title,
+    required this.subtitle,
+    required this.children,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...children,
+          ],
+        ),
+      ),
+    );
   }
 }
 

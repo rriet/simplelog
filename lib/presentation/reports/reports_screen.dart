@@ -2149,20 +2149,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                       : l10n.reportsGeneratePdf,
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Open PDF after saving'),
-                  const SizedBox(width: 6),
-                  Switch(
-                    value: openPdfAfterSaving,
-                    onChanged: _isGeneratingPdf
-                        ? null
-                        : (value) => ref
-                              .read(openPdfAfterSavingProvider.notifier)
-                              .setValue(value: value),
-                  ),
-                ],
+              SizedBox(
+                width: compact ? 190 : 220,
+                child: EventTypeToggleButton(
+                  label: 'Open PDF after saving',
+                  selected: openPdfAfterSaving,
+                  onTap: _isGeneratingPdf
+                      ? () {}
+                      : () => ref
+                            .read(openPdfAfterSavingProvider.notifier)
+                            .setValue(value: !openPdfAfterSaving),
+                ),
               ),
             ],
           ),

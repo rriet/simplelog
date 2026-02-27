@@ -7,14 +7,20 @@ import 'package:simplelog/state/providers/flight_form_settings_provider.dart';
 /// Public API documentation.
 class FlightTakeoffLandingSwitch extends ConsumerWidget {
   /// Public API documentation.
-  const FlightTakeoffLandingSwitch({super.key});
+  const FlightTakeoffLandingSwitch({
+    super.key,
+    this.contentPadding,
+  });
+
+  /// Optional tile content padding.
+  final EdgeInsetsGeometry? contentPadding;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final enabled = ref.watch(flightFormTakeoffLandingLogProvider);
     return enabled.when(
       data: (value) => SwitchListTile(
-        contentPadding: EdgeInsets.zero,
+        contentPadding: contentPadding ?? EdgeInsets.zero,
         title: const Text('Log takeoff and landing times'),
         value: value,
         onChanged: (next) {

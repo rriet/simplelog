@@ -120,125 +120,214 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
       _loadedLabels = true;
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const FlightTakeoffLandingSwitch(),
-        const SizedBox(height: 8),
-        Text(
-          'Visible Time Fields',
-          style: Theme.of(context).textTheme.titleMedium,
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(
+              'Time Fields',
+              style: theme.textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Control visible time columns and custom labels.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const _SettingsPlainCard(
+              child: FlightTakeoffLandingSwitch(
+                contentPadding: EdgeInsets.symmetric(horizontal: 16),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _SettingsSectionCard(
+              title: 'Visible Time Fields',
+              subtitle: 'Choose which columns are shown in forms and lists.',
+              children: [
+                SwitchListTile(
+                  value: visibility.pic,
+                  title: const Text('PIC'),
+                  onChanged: (v) => _updateVisibility(visibility, pic: v),
+                ),
+                SwitchListTile(
+                  value: visibility.picus,
+                  title: const Text('PICUS'),
+                  onChanged: (v) => _updateVisibility(visibility, picus: v),
+                ),
+                SwitchListTile(
+                  value: visibility.sic,
+                  title: const Text('SIC'),
+                  onChanged: (v) => _updateVisibility(visibility, sic: v),
+                ),
+                SwitchListTile(
+                  value: visibility.dual,
+                  title: const Text('Dual'),
+                  onChanged: (v) => _updateVisibility(visibility, dual: v),
+                ),
+                SwitchListTile(
+                  value: visibility.instructor,
+                  title: const Text('Instructor'),
+                  onChanged: (v) =>
+                      _updateVisibility(visibility, instructor: v),
+                ),
+                SwitchListTile(
+                  value: visibility.ifr,
+                  title: const Text('IFR'),
+                  onChanged: (v) => _updateVisibility(visibility, ifr: v),
+                ),
+                SwitchListTile(
+                  value: visibility.instrument,
+                  title: const Text('Instrument'),
+                  onChanged: (v) =>
+                      _updateVisibility(visibility, instrument: v),
+                ),
+                SwitchListTile(
+                  value: visibility.simInstrument,
+                  title: const Text('Sim Instrument'),
+                  onChanged: (v) =>
+                      _updateVisibility(visibility, simInstrument: v),
+                ),
+                SwitchListTile(
+                  value: visibility.night,
+                  title: const Text('Night'),
+                  onChanged: (v) => _updateVisibility(visibility, night: v),
+                ),
+                SwitchListTile(
+                  value: visibility.crossCountry,
+                  title: const Text('CrossCountry'),
+                  onChanged: (v) =>
+                      _updateVisibility(visibility, crossCountry: v),
+                ),
+                SwitchListTile(
+                  value: visibility.custom1,
+                  title: Text(labels.custom1),
+                  onChanged: (v) => _updateVisibility(visibility, custom1: v),
+                ),
+                SwitchListTile(
+                  value: visibility.custom2,
+                  title: Text(labels.custom2),
+                  onChanged: (v) => _updateVisibility(visibility, custom2: v),
+                ),
+                SwitchListTile(
+                  value: visibility.custom3,
+                  title: Text(labels.custom3),
+                  onChanged: (v) => _updateVisibility(visibility, custom3: v),
+                ),
+                SwitchListTile(
+                  value: visibility.custom4,
+                  title: Text(labels.custom4),
+                  onChanged: (v) => _updateVisibility(visibility, custom4: v),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _SettingsSectionCard(
+              title: 'Custom Time Labels',
+              subtitle: 'Rename custom fields used across the app.',
+              children: [
+                TextFormField(
+                  controller: _c1,
+                  decoration: const InputDecoration(labelText: 'Custom 1'),
+                  onChanged: (_) => _scheduleLabelsSave(),
+                  onEditingComplete: () => unawaited(_saveLabelsNow()),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _c2,
+                  decoration: const InputDecoration(labelText: 'Custom 2'),
+                  onChanged: (_) => _scheduleLabelsSave(),
+                  onEditingComplete: () => unawaited(_saveLabelsNow()),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _c3,
+                  decoration: const InputDecoration(labelText: 'Custom 3'),
+                  onChanged: (_) => _scheduleLabelsSave(),
+                  onEditingComplete: () => unawaited(_saveLabelsNow()),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _c4,
+                  decoration: const InputDecoration(labelText: 'Custom 4'),
+                  onChanged: (_) => _scheduleLabelsSave(),
+                  onEditingComplete: () => unawaited(_saveLabelsNow()),
+                ),
+                const SizedBox(height: 6),
+              ],
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        SwitchListTile(
-          value: visibility.pic,
-          title: const Text('PIC'),
-          onChanged: (v) => _updateVisibility(visibility, pic: v),
+      ),
+    );
+  }
+}
+
+class _SettingsSectionCard extends StatelessWidget {
+  const _SettingsSectionCard({
+    required this.title,
+    required this.subtitle,
+    required this.children,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...children,
+          ],
         ),
-        SwitchListTile(
-          value: visibility.picus,
-          title: const Text('PICUS'),
-          onChanged: (v) => _updateVisibility(visibility, picus: v),
-        ),
-        SwitchListTile(
-          value: visibility.sic,
-          title: const Text('SIC'),
-          onChanged: (v) => _updateVisibility(visibility, sic: v),
-        ),
-        SwitchListTile(
-          value: visibility.dual,
-          title: const Text('Dual'),
-          onChanged: (v) => _updateVisibility(visibility, dual: v),
-        ),
-        SwitchListTile(
-          value: visibility.instructor,
-          title: const Text('Instructor'),
-          onChanged: (v) => _updateVisibility(visibility, instructor: v),
-        ),
-        SwitchListTile(
-          value: visibility.ifr,
-          title: const Text('IFR'),
-          onChanged: (v) => _updateVisibility(visibility, ifr: v),
-        ),
-        SwitchListTile(
-          value: visibility.instrument,
-          title: const Text('Instrument'),
-          onChanged: (v) => _updateVisibility(visibility, instrument: v),
-        ),
-        SwitchListTile(
-          value: visibility.simInstrument,
-          title: const Text('Sim Instrument'),
-          onChanged: (v) => _updateVisibility(visibility, simInstrument: v),
-        ),
-        SwitchListTile(
-          value: visibility.night,
-          title: const Text('Night'),
-          onChanged: (v) => _updateVisibility(visibility, night: v),
-        ),
-        SwitchListTile(
-          value: visibility.crossCountry,
-          title: const Text('CrossCountry'),
-          onChanged: (v) => _updateVisibility(visibility, crossCountry: v),
-        ),
-        SwitchListTile(
-          value: visibility.custom1,
-          title: Text(labels.custom1),
-          onChanged: (v) => _updateVisibility(visibility, custom1: v),
-        ),
-        SwitchListTile(
-          value: visibility.custom2,
-          title: Text(labels.custom2),
-          onChanged: (v) => _updateVisibility(visibility, custom2: v),
-        ),
-        SwitchListTile(
-          value: visibility.custom3,
-          title: Text(labels.custom3),
-          onChanged: (v) => _updateVisibility(visibility, custom3: v),
-        ),
-        SwitchListTile(
-          value: visibility.custom4,
-          title: Text(labels.custom4),
-          onChanged: (v) => _updateVisibility(visibility, custom4: v),
-        ),
-        const Divider(height: 24),
-        Text(
-          'Custom Time Labels',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _c1,
-          decoration: const InputDecoration(labelText: 'Custom 1'),
-          onChanged: (_) => _scheduleLabelsSave(),
-          onEditingComplete: () => unawaited(_saveLabelsNow()),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _c2,
-          decoration: const InputDecoration(labelText: 'Custom 2'),
-          onChanged: (_) => _scheduleLabelsSave(),
-          onEditingComplete: () => unawaited(_saveLabelsNow()),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _c3,
-          decoration: const InputDecoration(labelText: 'Custom 3'),
-          onChanged: (_) => _scheduleLabelsSave(),
-          onEditingComplete: () => unawaited(_saveLabelsNow()),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _c4,
-          decoration: const InputDecoration(labelText: 'Custom 4'),
-          onChanged: (_) => _scheduleLabelsSave(),
-          onEditingComplete: () => unawaited(_saveLabelsNow()),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Labels are saved automatically.',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
+      ),
+    );
+  }
+}
+
+class _SettingsPlainCard extends StatelessWidget {
+  const _SettingsPlainCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: child,
+      ),
     );
   }
 }

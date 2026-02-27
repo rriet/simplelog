@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/presentation/database/database_screen.dart';
 import 'package:simplelog/presentation/settings/widgets/flight_factoring_settings_card.dart';
+import 'package:simplelog/presentation/settings/widgets/flight_takeoff_landing_switch.dart';
 import 'package:simplelog/presentation/settings/widgets/pilot_profile_settings_card.dart';
 import 'package:simplelog/presentation/settings/widgets/previous_experience_settings_tab.dart';
 import 'package:simplelog/presentation/settings/widgets/simulator_default_position_selector.dart';
@@ -17,8 +17,6 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-
     return DefaultTabController(
       length: 4,
       child: Column(
@@ -37,22 +35,64 @@ class SettingsScreen extends ConsumerWidget {
           Expanded(
             child: TabBarView(
               children: [
-                ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Text(
-                      l10n.settingsAppearance,
-                      style: Theme.of(context).textTheme.titleMedium,
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        Text(
+                          'General Settings',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Appearance, defaults, and profile preferences.',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                        const SizedBox(height: 16),
+                        const _SettingsSectionCard(
+                          title: 'Appearance',
+                          subtitle: 'Theme and display preferences.',
+                          children: [
+                            ThemeModeSelector(),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const _SettingsSectionCard(
+                          title: 'Defaults',
+                          subtitle:
+                              'Default values used when creating entries.',
+                          children: [
+                            FlightTakeoffLandingSwitch(),
+                            SizedBox(height: 8),
+                            SimulatorDefaultPositionSelector(),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const _SettingsSectionCard(
+                          title: 'Calculation Rules',
+                          subtitle: 'Automatic time and threshold rules.',
+                          children: [
+                            FlightFactoringSettingsCard(),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const _SettingsSectionCard(
+                          title: 'Pilot Profile',
+                          subtitle: 'Pilot identity and signature preferences.',
+                          children: [
+                            PilotProfileSettingsCard(),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    const ThemeModeSelector(),
-                    const SizedBox(height: 12),
-                    const SimulatorDefaultPositionSelector(),
-                    const SizedBox(height: 12),
-                    const FlightFactoringSettingsCard(),
-                    const SizedBox(height: 12),
-                    const PilotProfileSettingsCard(),
-                  ],
+                  ),
                 ),
                 const DatabaseScreen(),
                 const PreviousExperienceSettingsTab(),
@@ -61,6 +101,51 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SettingsSectionCard extends StatelessWidget {
+  const _SettingsSectionCard({
+    required this.title,
+    required this.subtitle,
+    required this.children,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...children,
+          ],
+        ),
       ),
     );
   }
