@@ -657,6 +657,12 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   }
 
   Future<void> _toggleEntryLock(LogbookEntry entry) async {
+    if (await _requiresEndorsementUnlockConfirmation(entry)) {
+      final confirmed = await _confirmEndorsementUnlock();
+      if (confirmed != true || !mounted) {
+        return;
+      }
+    }
     final useCases = ref.read(logbookUseCasesProvider);
     await useCases.toggleEntryLock(entry);
     if (entry.type == LogbookEventType.dutyPeriod) {
@@ -666,6 +672,47 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
       return;
     }
     await _refreshEntryByTimelineId(entry.timeLine.id);
+  }
+
+  Future<bool> _requiresEndorsementUnlockConfirmation(
+    LogbookEntry entry,
+  ) async {
+    if (entry.type == LogbookEventType.flight) {
+      final flight = entry.flight;
+      if (flight == null || !flight.isLocked) return false;
+      return (flight.endorsementData?.trim().isNotEmpty ?? false) ||
+          (flight.signatureImage?.isNotEmpty ?? false);
+    }
+    if (entry.type == LogbookEventType.simulatorTraining) {
+      final simulator = entry.simulatorTraining;
+      if (simulator == null || !simulator.isLocked) return false;
+      return (simulator.endorsementData?.trim().isNotEmpty ?? false) ||
+          (simulator.signatureImage?.isNotEmpty ?? false);
+    }
+    return false;
+  }
+
+  Future<bool?> _confirmEndorsementUnlock() {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Unlock endorsed entry?'),
+        content: const Text(
+          'If you unlock this entry, signature and endorsement '
+          'information will be deleted. Continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Unlock'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _editDuty(LogbookDutyGroupItem group) async {

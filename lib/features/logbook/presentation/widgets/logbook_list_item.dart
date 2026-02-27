@@ -19,22 +19,30 @@ class LogbookListItem extends StatelessWidget {
     this.onOpen,
     this.onDelete,
     this.onToggleLock,
-  /// Public API documentation.
+
+    /// Public API documentation.
   });
-/// Public API documentation.
+
+  /// Public API documentation.
 
   /// Public API documentation.
   final LogbookEntry entry;
+
   /// Public API documentation.
   final bool isCompact;
+
   /// Public API documentation.
   final bool enableSlideActions;
+
   /// Public API documentation.
   final ValueChanged<LogbookEntry>? onEdit;
+
   /// Public API documentation.
   final ValueChanged<LogbookEntry>? onOpen;
+
   /// Public API documentation.
   final ValueChanged<LogbookEntry>? onDelete;
+
   /// Public API documentation.
   final ValueChanged<LogbookEntry>? onToggleLock;
 
@@ -292,6 +300,10 @@ class LogbookListItem extends StatelessWidget {
           typeLongName: typeLongName,
           label: 'Simulator',
           icon: Icons.monitor,
+          hasEndorsement: _hasEndorsement(
+            simulator?.endorsementData,
+            simulator?.signatureImage,
+          ),
         ),
         const SizedBox(height: 6),
         Row(
@@ -377,7 +389,14 @@ class LogbookListItem extends StatelessWidget {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _FlightTopLine(tailNumber: tailNumber, typeLongName: typeLongName),
+        _FlightTopLine(
+          tailNumber: tailNumber,
+          typeLongName: typeLongName,
+          hasEndorsement: _hasEndorsement(
+            flight?.endorsementData,
+            flight?.signatureImage,
+          ),
+        ),
         const SizedBox(height: 6),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,7 +432,8 @@ class LogbookListItem extends StatelessWidget {
                                 TextSpan(text: blockTime),
                                 if (totalBlockMinutes != blockMinutes)
                                   TextSpan(
-                                    text: ' ($totalBlockTime'
+                                    text:
+                                        ' ($totalBlockTime'
                                         'h)',
                                     style: Theme.of(
                                       context,
@@ -618,6 +638,11 @@ class LogbookListItem extends StatelessWidget {
         return false;
     }
   }
+
+  bool _hasEndorsement(String? endorsementData, List<int>? signatureImage) {
+    return (endorsementData?.trim().isNotEmpty ?? false) ||
+        (signatureImage?.isNotEmpty ?? false);
+  }
 }
 
 class _SimpleTopLine extends StatelessWidget {
@@ -670,12 +695,14 @@ class _FlightTopLine extends StatelessWidget {
     required this.typeLongName,
     this.label,
     this.icon,
+    this.hasEndorsement = false,
   });
 
   final String tailNumber;
   final String typeLongName;
   final String? label;
   final IconData? icon;
+  final bool hasEndorsement;
 
   @override
   Widget build(BuildContext context) {
@@ -693,6 +720,14 @@ class _FlightTopLine extends StatelessWidget {
           Icon(icon ?? Icons.flight_takeoff, size: 14),
           const SizedBox(width: 6),
           Text(label ?? l10n.logbookEventFlight),
+          if (hasEndorsement) ...[
+            const SizedBox(width: 6),
+            Icon(
+              Icons.verified_outlined,
+              size: 14,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ],
           const SizedBox(width: 12),
           Expanded(
             child: Row(

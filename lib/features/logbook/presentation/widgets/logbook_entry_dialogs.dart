@@ -4,6 +4,7 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_info_item.dart';
 import 'package:simplelog/data/models/crew_row.dart';
+import 'package:simplelog/data/models/endorsement_data.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_details_dialog.dart';
@@ -12,7 +13,8 @@ import 'package:simplelog/features/crew/presentation/widgets/crew_info_dialog.da
 /// Public API documentation.
 class LogbookEntryDialogs {
   const LogbookEntryDialogs._();
-/// Public API documentation.
+
+  /// Public API documentation.
 
   /// Public API documentation.
   static Future<void> show(
@@ -255,6 +257,14 @@ class LogbookEntryDialogs {
     final blockTime = '${_formatMinutes(flight.timeBlockMinutes)}h';
     final remarks = flight.remarks.trim();
     final notes = flight.notes.trim();
+    final endorsement = EndorsementData.fromJsonString(
+      flight.endorsementData,
+      signatureImage: flight.signatureImage,
+    );
+    final hasEndorsement = _hasEndorsement(endorsement);
+    final isHashValid =
+        !hasEndorsement ||
+        await useCases.verifyFlightEndorsementHash(flight.id);
     final hasCrew = crewList.isNotEmpty;
     final takeOffs = flight.takeOffsDays + flight.takeOffsNight;
     final landings = flight.landingsDay + flight.landingsNight;
@@ -308,6 +318,19 @@ class LogbookEntryDialogs {
                           style: theme.textTheme.titleSmall,
                         ),
                       ),
+                      if (hasEndorsement)
+                        IconButton(
+                          tooltip: 'Show endorsement',
+                          onPressed: () => _showEndorsementInfo(
+                            dialogContext,
+                            endorsement!,
+                            isHashValid: isHashValid,
+                          ),
+                          icon: _EndorsementStatusIcon(
+                            isValid: isHashValid,
+                            colorScheme: colorScheme,
+                          ),
+                        ),
                       TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(),
                         child: Text(l10n.okAction),
@@ -363,10 +386,10 @@ class LogbookEntryDialogs {
                                 onTap: depAirport == null
                                     ? null
                                     : () => _showAirportInfo(
-                                          dialogContext,
-                                          depAirport,
-                                          useCases,
-                                        ),
+                                        dialogContext,
+                                        depAirport,
+                                        useCases,
+                                      ),
                               ),
                             ),
                             Expanded(
@@ -387,10 +410,10 @@ class LogbookEntryDialogs {
                                 onTap: arrAirport == null
                                     ? null
                                     : () => _showAirportInfo(
-                                          dialogContext,
-                                          arrAirport,
-                                          useCases,
-                                        ),
+                                        dialogContext,
+                                        arrAirport,
+                                        useCases,
+                                      ),
                               ),
                             ),
                           ],
@@ -411,8 +434,8 @@ class LogbookEntryDialogs {
                                     'Block',
                                     style: theme.textTheme.labelMedium
                                         ?.copyWith(
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
@@ -432,7 +455,7 @@ class LogbookEntryDialogs {
                             ),
                           ],
                         ),
-                        
+
                         if (timeMetrics.isNotEmpty) ...[
                           Divider(
                             color: colorScheme.outlineVariant,
@@ -542,8 +565,6 @@ class LogbookEntryDialogs {
                       ],
                     ),
                   ),
-                  
-                  
                 ],
               ),
             ),
@@ -571,6 +592,14 @@ class LogbookEntryDialogs {
     final tail = entry.aircraft?.registration ?? '-';
     final remarks = sim.remarks.trim();
     final notes = sim.notes.trim();
+    final endorsement = EndorsementData.fromJsonString(
+      sim.endorsementData,
+      signatureImage: sim.signatureImage,
+    );
+    final hasEndorsement = _hasEndorsement(endorsement);
+    final isHashValid =
+        !hasEndorsement ||
+        await useCases.verifySimulatorEndorsementHash(sim.id);
     final hasCrew = crewList.isNotEmpty;
 
     if (!context.mounted) return;
@@ -609,6 +638,19 @@ class LogbookEntryDialogs {
                           style: theme.textTheme.titleSmall,
                         ),
                       ),
+                      if (hasEndorsement)
+                        IconButton(
+                          tooltip: 'Show endorsement',
+                          onPressed: () => _showEndorsementInfo(
+                            dialogContext,
+                            endorsement!,
+                            isHashValid: isHashValid,
+                          ),
+                          icon: _EndorsementStatusIcon(
+                            isValid: isHashValid,
+                            colorScheme: colorScheme,
+                          ),
+                        ),
                       TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(),
                         child: Text(l10n.okAction),
@@ -729,6 +771,166 @@ class LogbookEntryDialogs {
       context,
       airport: airport,
       logbookUseCases: useCases,
+    );
+  }
+
+  static bool _hasEndorsement(EndorsementData? endorsement) {
+    if (endorsement == null) return false;
+    return !endorsement.isEmpty;
+  }
+
+  static Future<void> _showEndorsementInfo(
+    BuildContext context,
+    EndorsementData endorsement, {
+    bool isHashValid = true,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Endorsement',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (!isHashValid) ...[
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        dialogContext,
+                      ).colorScheme.errorContainer.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Warning: flight information does not match the '
+                      'original endorsed flight record.',
+                      style: Theme.of(dialogContext).textTheme.bodyMedium
+                          ?.copyWith(
+                            color: Theme.of(dialogContext).colorScheme.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                ],
+                _PositioningInfoCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _PositioningInfoValue(
+                        label: 'Name',
+                        value: endorsement.name.isEmpty
+                            ? '-'
+                            : endorsement.name,
+                      ),
+                      const SizedBox(height: 8),
+                      _PositioningInfoValue(
+                        label: 'Certificate',
+                        value: endorsement.certificate.isEmpty
+                            ? '-'
+                            : endorsement.certificate,
+                      ),
+                      const SizedBox(height: 8),
+                      _PositioningInfoValue(
+                        label: 'Expiry',
+                        value: endorsement.expiry.isEmpty
+                            ? '-'
+                            : endorsement.expiry,
+                      ),
+                      const SizedBox(height: 8),
+                      _PositioningInfoValue(
+                        label: 'Type',
+                        value: endorsement.type.isEmpty
+                            ? '-'
+                            : endorsement.type,
+                      ),
+                      if (endorsement.hasSignature) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Theme.of(
+                                dialogContext,
+                              ).colorScheme.outlineVariant,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Image.memory(
+                              endorsement.signatureImage!,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EndorsementStatusIcon extends StatelessWidget {
+  const _EndorsementStatusIcon({
+    required this.isValid,
+    required this.colorScheme,
+  });
+
+  final bool isValid;
+  final ColorScheme colorScheme;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isValid) {
+      return Icon(Icons.verified_outlined, color: colorScheme.primary);
+    }
+    return SizedBox(
+      width: 22,
+      height: 22,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(Icons.verified_outlined, color: colorScheme.error),
+          Transform.rotate(
+            angle: -0.8,
+            child: Container(
+              width: 18,
+              height: 2,
+              color: colorScheme.error,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -30,6 +30,7 @@ environment:
 dependencies:
   bonsoir: ^6.0.1
   croppy: any
+  crypto: 3.0.7
   cupertino_icons: ^1.0.8
   device_info_plus: 12.3.0
   drift: ^2.31.0

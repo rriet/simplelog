@@ -12,6 +12,7 @@ import 'package:simplelog/data/models/logbook_flight_summary.dart';
 import 'package:simplelog/data/models/positioning_edit_data.dart';
 import 'package:simplelog/data/models/simulator_crew_assignment_input.dart';
 import 'package:simplelog/data/models/simulator_edit_data.dart';
+import 'package:simplelog/data/security/entry_endorsement_hash_service.dart';
 import 'package:simplelog/domain/repositories/logbook_repository_contract.dart';
 
 /// Public API documentation.
@@ -20,6 +21,8 @@ class LogbookRepository implements LogbookRepositoryContract {
   LogbookRepository(this._db);
 
   final AppDatabase _db;
+  final EntryEndorsementHashService _endorsementHashService =
+      EntryEndorsementHashService();
 
   @override
   Future<void> toggleEntryLock(LogbookEntry entry) async {
@@ -27,6 +30,20 @@ class LogbookRepository implements LogbookRepositoryContract {
       case LogbookEventType.flight:
         final item = entry.flight;
         if (item == null) return;
+        if (item.isLocked &&
+            _hasEndorsement(item.endorsementData, item.signatureImage)) {
+          await _db
+              .update(_db.flights)
+              .replace(
+                item.copyWith(
+                  isLocked: false,
+                  signatureImage: const Value(null),
+                  endorsementData: const Value(null),
+                  endorsementHash: const Value(null),
+                ),
+              );
+          return;
+        }
         await _db
             .update(_db.flights)
             .replace(item.copyWith(isLocked: !item.isLocked));
@@ -34,6 +51,20 @@ class LogbookRepository implements LogbookRepositoryContract {
       case LogbookEventType.simulatorTraining:
         final item = entry.simulatorTraining;
         if (item == null) return;
+        if (item.isLocked &&
+            _hasEndorsement(item.endorsementData, item.signatureImage)) {
+          await _db
+              .update(_db.simulatorTrainings)
+              .replace(
+                item.copyWith(
+                  isLocked: false,
+                  signatureImage: const Value(null),
+                  endorsementData: const Value(null),
+                  endorsementHash: const Value(null),
+                ),
+              );
+          return;
+        }
         await _db
             .update(_db.simulatorTrainings)
             .replace(item.copyWith(isLocked: !item.isLocked));
@@ -267,6 +298,13 @@ class LogbookRepository implements LogbookRepositoryContract {
     required FlightWriteInput input,
   }) async {
     await _db.transaction(() async {
+      final cleanedEndorsementData = _normalizeEndorsementData(
+        input.endorsementData,
+      );
+      final hasEndorsement = _hasEndorsement(
+        cleanedEndorsementData,
+        input.endorsementSignatureImage,
+      );
       final departureTimelineId = await _db
           .into(_db.timeLines)
           .insert(
@@ -311,11 +349,14 @@ class LogbookRepository implements LogbookRepositoryContract {
               remarks: input.remarks,
               notes: input.notes,
               timeTotalBlockMinutes: Value(input.timeTotalBlockMinutes),
-              isLocked: false,
-              signatureImage: const Value(null),
+              isLocked: hasEndorsement,
+              signatureImage: Value(input.endorsementSignatureImage),
+              endorsementData: Value(cleanedEndorsementData),
+              endorsementHash: const Value(null),
             ),
           );
       await _replaceFlightCrewAssignments(flightId, input.crewAssignments);
+      await _recomputeAndPersistFlightEndorsementHash(flightId);
     });
   }
 
@@ -325,6 +366,13 @@ class LogbookRepository implements LogbookRepositoryContract {
     required FlightWriteInput input,
   }) async {
     await _db.transaction(() async {
+      final cleanedEndorsementData = _normalizeEndorsementData(
+        input.endorsementData,
+      );
+      final hasEndorsement = _hasEndorsement(
+        cleanedEndorsementData,
+        input.endorsementSignatureImage,
+      );
       final departureLine = await (_db.select(
         _db.timeLines,
       )..where((t) => t.id.equals(flight.departureDateTimeId))).getSingle();
@@ -371,9 +419,14 @@ class LogbookRepository implements LogbookRepositoryContract {
               remarks: input.remarks,
               notes: input.notes,
               timeTotalBlockMinutes: input.timeTotalBlockMinutes,
+              isLocked: hasEndorsement || flight.isLocked,
+              signatureImage: Value(input.endorsementSignatureImage),
+              endorsementData: Value(cleanedEndorsementData),
+              endorsementHash: const Value(null),
             ),
           );
       await _replaceFlightCrewAssignments(flight.id, input.crewAssignments);
+      await _recomputeAndPersistFlightEndorsementHash(flight.id);
     });
   }
 
@@ -418,8 +471,15 @@ class LogbookRepository implements LogbookRepositoryContract {
     required String remarks,
     required String notes,
     required List<SimulatorCrewAssignmentInput> crewAssignments,
+    Uint8List? endorsementSignatureImage,
+    String? endorsementData,
   }) async {
     await _db.transaction(() async {
+      final cleanedEndorsementData = _normalizeEndorsementData(endorsementData);
+      final hasEndorsement = _hasEndorsement(
+        cleanedEndorsementData,
+        endorsementSignatureImage,
+      );
       final startTimelineId = await _db
           .into(_db.timeLines)
           .insert(TimeLinesCompanion.insert(eventDateTime: startDateTime));
@@ -433,11 +493,14 @@ class LogbookRepository implements LogbookRepositoryContract {
               timeTotal: totalMinutes,
               remarks: remarks,
               notes: notes,
-              isLocked: false,
-              signatureImage: const Value(null),
+              isLocked: hasEndorsement,
+              signatureImage: Value(endorsementSignatureImage),
+              endorsementData: Value(cleanedEndorsementData),
+              endorsementHash: const Value(null),
             ),
           );
       await _replaceSimulatorCrewAssignments(simulatorId, crewAssignments);
+      await _recomputeAndPersistSimulatorEndorsementHash(simulatorId);
     });
   }
 
@@ -451,8 +514,15 @@ class LogbookRepository implements LogbookRepositoryContract {
     required String remarks,
     required String notes,
     required List<SimulatorCrewAssignmentInput> crewAssignments,
+    Uint8List? endorsementSignatureImage,
+    String? endorsementData,
   }) async {
     await _db.transaction(() async {
+      final cleanedEndorsementData = _normalizeEndorsementData(endorsementData);
+      final hasEndorsement = _hasEndorsement(
+        cleanedEndorsementData,
+        endorsementSignatureImage,
+      );
       final startLine =
           await (_db.select(_db.timeLines)
                 ..where((t) => t.id.equals(simulatorTraining.startTimeLineId)))
@@ -469,13 +539,38 @@ class LogbookRepository implements LogbookRepositoryContract {
               timeTotal: totalMinutes,
               remarks: remarks,
               notes: notes,
+              isLocked: hasEndorsement || simulatorTraining.isLocked,
+              signatureImage: Value(endorsementSignatureImage),
+              endorsementData: Value(cleanedEndorsementData),
+              endorsementHash: const Value(null),
             ),
           );
       await _replaceSimulatorCrewAssignments(
         simulatorTraining.id,
         crewAssignments,
       );
+      await _recomputeAndPersistSimulatorEndorsementHash(simulatorTraining.id);
     });
+  }
+
+  @override
+  Future<bool> verifyFlightEndorsementHash(int flightId) async {
+    final flight = await findFlightById(flightId);
+    if (flight == null) return false;
+    final stored = flight.endorsementHash?.trim();
+    if (stored == null || stored.isEmpty) return true;
+    final expected = await _buildFlightEndorsementHash(flight);
+    return expected == stored;
+  }
+
+  @override
+  Future<bool> verifySimulatorEndorsementHash(int simulatorId) async {
+    final simulatorTraining = await findSimulatorTrainingById(simulatorId);
+    if (simulatorTraining == null) return false;
+    final stored = simulatorTraining.endorsementHash?.trim();
+    if (stored == null || stored.isEmpty) return true;
+    final expected = await _buildSimulatorEndorsementHash(simulatorTraining);
+    return expected == stored;
   }
 
   Future<void> _replaceSimulatorCrewAssignments(
@@ -1669,6 +1764,101 @@ LIMIT ? OFFSET ?
 
   TimeLine? _normalizeTimeLine(TimeLine? row) {
     return row;
+  }
+
+  String? _normalizeEndorsementData(String? value) {
+    final cleaned = value?.trim();
+    if (cleaned == null || cleaned.isEmpty) {
+      return null;
+    }
+    return cleaned;
+  }
+
+  bool _hasEndorsement(String? endorsementData, Uint8List? signatureImage) {
+    final hasData = endorsementData != null && endorsementData.isNotEmpty;
+    final hasSignature = signatureImage != null && signatureImage.isNotEmpty;
+    return hasData || hasSignature;
+  }
+
+  Future<void> _recomputeAndPersistFlightEndorsementHash(int flightId) async {
+    final flight = await findFlightById(flightId);
+    if (flight == null) return;
+    final hash = await _buildFlightEndorsementHash(flight);
+    await (_db.update(
+      _db.flights,
+    )..where((tbl) => tbl.id.equals(flight.id))).write(
+      FlightsCompanion(endorsementHash: Value(hash)),
+    );
+  }
+
+  Future<void> _recomputeAndPersistSimulatorEndorsementHash(
+    int simulatorId,
+  ) async {
+    final simulatorTraining = await findSimulatorTrainingById(simulatorId);
+    if (simulatorTraining == null) return;
+    final hash = await _buildSimulatorEndorsementHash(simulatorTraining);
+    await (_db.update(
+      _db.simulatorTrainings,
+    )..where((tbl) => tbl.id.equals(simulatorTraining.id))).write(
+      SimulatorTrainingsCompanion(endorsementHash: Value(hash)),
+    );
+  }
+
+  Future<String?> _buildFlightEndorsementHash(Flight flight) async {
+    if (!_hasEndorsement(flight.endorsementData, flight.signatureImage)) {
+      return null;
+    }
+    final departureLine = await (_db.select(
+      _db.timeLines,
+    )..where((t) => t.id.equals(flight.departureDateTimeId))).getSingleOrNull();
+    if (departureLine == null) {
+      return null;
+    }
+    final assignments =
+        await (_db.select(_db.flightCrewAssignments)
+              ..where((t) => t.flightId.equals(flight.id))
+              ..orderBy([
+                (t) => OrderingTerm.asc(t.crewId),
+                (t) => OrderingTerm.asc(t.position),
+              ]))
+            .get();
+    return _endorsementHashService.hashFlight(
+      flight: flight,
+      departureDateTime: departureLine.eventDateTime,
+      crewAssignments: assignments,
+    );
+  }
+
+  Future<String?> _buildSimulatorEndorsementHash(
+    SimulatorTraining simulatorTraining,
+  ) async {
+    if (!_hasEndorsement(
+      simulatorTraining.endorsementData,
+      simulatorTraining.signatureImage,
+    )) {
+      return null;
+    }
+    final startLine =
+        await (_db.select(
+              _db.timeLines,
+            )..where((t) => t.id.equals(simulatorTraining.startTimeLineId)))
+            .getSingleOrNull();
+    if (startLine == null) {
+      return null;
+    }
+    final assignments =
+        await (_db.select(_db.simulatorCrewAssignments)
+              ..where((t) => t.simulatorId.equals(simulatorTraining.id))
+              ..orderBy([
+                (t) => OrderingTerm.asc(t.crewId),
+                (t) => OrderingTerm.asc(t.position),
+              ]))
+            .get();
+    return _endorsementHashService.hashSimulator(
+      simulator: simulatorTraining,
+      startDateTime: startLine.eventDateTime,
+      crewAssignments: assignments,
+    );
   }
 
   @override

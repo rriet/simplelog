@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:simplelog/data/models/simulator_crew_assignment_input.dart';
 
 /// Input data used when creating or updating a flight log entry.
@@ -39,6 +41,8 @@ class FlightWriteInput {
     required this.remarks,
     required this.notes,
     required this.crewAssignments,
+    this.endorsementData,
+    this.endorsementSignatureImage,
   });
 
   /// Identifier of the aircraft used for this flight.
@@ -145,4 +149,10 @@ class FlightWriteInput {
 
   /// Crew assignments associated with this flight.
   final List<SimulatorCrewAssignmentInput> crewAssignments;
+
+  /// Serialized endorsement metadata JSON.
+  final String? endorsementData;
+
+  /// Endorsement signature image bytes.
+  final Uint8List? endorsementSignatureImage;
 }

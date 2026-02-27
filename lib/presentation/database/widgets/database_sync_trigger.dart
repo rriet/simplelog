@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/export/simplelog_csv_exporter.dart';
 import 'package:simplelog/data/import/dashboard_rules_seed_importer.dart';
@@ -17,8 +18,10 @@ import 'package:simplelog/presentation/database/widgets/import_options_preferenc
 import 'package:simplelog/presentation/database/widgets/local_sync_dialog.dart';
 import 'package:simplelog/presentation/database/widgets/simplelog_import_options_dialog.dart';
 import 'package:simplelog/presentation/database/widgets/southwest_import_options_dialog.dart';
+import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
+import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
 /// Public API documentation.
@@ -54,6 +57,18 @@ class DatabaseSyncTrigger extends ConsumerWidget {
             icon: const Icon(Icons.download_outlined),
             label: const Text('Export Flights/Simulator CSV'),
             onPressed: () => _exportCsv(context, ref),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.save_alt_outlined),
+            label: const Text('Backup Logbook'),
+            onPressed: () => _backupDatabase(context, ref),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.restore_outlined),
+            label: const Text('Restore Logbook'),
+            onPressed: () => _restoreDatabase(context, ref),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
@@ -226,6 +241,88 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     await _showInfoDialog(context, 'CSV exported: $path');
   }
 
+  Future<void> _backupDatabase(BuildContext context, WidgetRef ref) async {
+    final bytes = await _readDatabaseBytes(ref);
+    if (!context.mounted) return;
+
+    final timestamp = DateTime.now()
+        .toUtc()
+        .toIso8601String()
+        .replaceAll(':', '')
+        .replaceAll('-', '')
+        .split('.')
+        .first;
+    final fileName = 'simplelog_backup_$timestamp.sqlite';
+    String? path;
+
+    if (Platform.isIOS || Platform.isAndroid) {
+      path = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save database backup',
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: const ['sqlite'],
+        bytes: bytes,
+      );
+      if (path == null || path.isEmpty) return;
+    } else {
+      final directory = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: 'Choose backup folder',
+      );
+      if (directory == null || directory.isEmpty) return;
+      path = '$directory${Platform.pathSeparator}$fileName';
+      try {
+        await File(path).writeAsBytes(bytes, flush: true);
+      } on FileSystemException {
+        final docsDir = await getApplicationDocumentsDirectory();
+        path = '${docsDir.path}${Platform.pathSeparator}$fileName';
+        await File(path).writeAsBytes(bytes, flush: true);
+      }
+    }
+
+    if (!context.mounted) return;
+    await _showInfoDialog(context, 'Backup saved: $path');
+  }
+
+  Future<void> _restoreDatabase(BuildContext context, WidgetRef ref) async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['sqlite', 'db', 'backup'],
+      withData: true,
+    );
+    if (picked == null || picked.files.isEmpty || !context.mounted) return;
+    final file = picked.files.single;
+    final bytes =
+        file.bytes ??
+        (file.path == null ? null : await File(file.path!).readAsBytes());
+    if (bytes == null || bytes.isEmpty || !context.mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Restore database backup?'),
+        content: Text(
+          'Current logbook data will be replaced by "${file.name}". '
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Restore'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+    await _replaceDatabaseBytes(ref, bytes);
+    if (!context.mounted) return;
+    await _showInfoDialog(context, 'Database restored from backup.');
+  }
+
   String _decodeCsvBytes(Uint8List bytes) {
     if (bytes.length >= 3 &&
         bytes[0] == 0xEF &&
@@ -331,6 +428,37 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   Future<void> _showInfoDialog(BuildContext context, String message) async {
     if (!context.mounted) return;
     await showAppMessageDialog(context, message: message);
+  }
+
+  Future<Uint8List> _readDatabaseBytes(WidgetRef ref) async {
+    final db = ref.read(databaseProvider);
+    await db.customStatement('PRAGMA wal_checkpoint(TRUNCATE)');
+    final path = await _databasePath();
+    return File(path).readAsBytes();
+  }
+
+  Future<void> _replaceDatabaseBytes(WidgetRef ref, Uint8List bytes) async {
+    final db = ref.read(databaseProvider);
+    await db.close();
+    final path = await _databasePath();
+    await File(path).writeAsBytes(bytes, flush: true);
+    ref
+      ..invalidate(databaseProvider)
+      ..invalidate(flightFactoringSettingsProvider)
+      ..invalidate(reportPilotInfoProvider);
+  }
+
+  Future<String> _databasePath() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final currentPath = '${dir.path}/$appDatabaseFileName.sqlite';
+    final legacyPath = '${dir.path}/simplelog.sqlite';
+    if (File(currentPath).existsSync()) {
+      return currentPath;
+    }
+    if (File(legacyPath).existsSync()) {
+      return legacyPath;
+    }
+    return currentPath;
   }
 
   Future<bool> _showOptionsDialog(

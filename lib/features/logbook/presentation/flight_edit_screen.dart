@@ -14,6 +14,7 @@ import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/data/models/airport_row.dart';
 import 'package:simplelog/data/models/crew_row.dart';
+import 'package:simplelog/data/models/endorsement_data.dart';
 import 'package:simplelog/data/models/flight_write_input.dart';
 import 'package:simplelog/data/models/simulator_crew_assignment_input.dart';
 import 'package:simplelog/domain/validation/validation_issue.dart';
@@ -29,6 +30,7 @@ import 'package:simplelog/features/logbook/presentation/flight_prefill.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/endorsement_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
@@ -47,7 +49,7 @@ import 'package:simplelog/state/providers/simulator_default_crew_position_provid
 
 /// Screen for creating a new flight or editing an existing logbook entry.
 class FlightEditScreen extends ConsumerStatefulWidget {
-  /// Creates a flight edit screen. 
+  /// Creates a flight edit screen.
   /// When [flightId] is `null`, a new flight is created.
   const FlightEditScreen({super.key, this.flightId, this.prefill});
 
@@ -165,6 +167,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   final List<CrewDraftSelection> _crewRows = [];
   final Map<int, String> _airportLabelCache = {};
   final Map<int, String> _crewLabelCache = {};
+  EndorsementData? _endorsement;
 
   int _takeoffsDay = 0;
   int _takeoffsNight = 0;
@@ -253,6 +256,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       _landing = null;
       _chocksOn = null;
       _timeTotalBlockMinutes = 0;
+      _endorsement = null;
       _chocksOffTimeController.text = prefill?.chocksOff == null
           ? ''
           : ClockTimeInputField.formatMinutesOfDay(
@@ -284,6 +288,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     }
     final flight = loaded.flight;
     _flight = flight;
+    _endorsement = EndorsementData.fromJsonString(
+      flight.endorsementData,
+      signatureImage: flight.signatureImage,
+    );
     _aircraftId = flight.aircraftId;
     _fromAirportId = flight.departureAirportId;
     _toAirportId = flight.arrivalAirportId;
@@ -1078,6 +1086,8 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       remarks: _remarksController.text.trim(),
       notes: _notesController.text.trim(),
       crewAssignments: crewAssignments,
+      endorsementData: _endorsement?.toJsonString(),
+      endorsementSignatureImage: _endorsement?.signatureImage,
     );
 
     final useCases = ref.read(logbookUseCasesProvider);
@@ -2111,6 +2121,15 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
               ),
             ),
             TextButton.icon(
+              onPressed: _openEndorsementDialog,
+              icon: Icon(
+                _endorsement == null
+                    ? Icons.draw_outlined
+                    : Icons.verified_outlined,
+              ),
+              label: const Text('Endorsement'),
+            ),
+            TextButton.icon(
               onPressed: () async {
                 final draft = await showAddCrewDialog(
                   context: context,
@@ -2206,6 +2225,17 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     );
     if (!mounted) return null;
     return createdId;
+  }
+
+  Future<void> _openEndorsementDialog() async {
+    final value = await EndorsementDialog.show(
+      context,
+      initial: _endorsement,
+    );
+    if (!mounted || value == null) return;
+    setState(() {
+      _endorsement = value.isEmpty ? null : value;
+    });
   }
 
   TimeOfDay? _toTimeOfDayFromDb(DateTime? d) {

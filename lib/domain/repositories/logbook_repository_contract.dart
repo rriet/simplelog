@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_info_item.dart';
 import 'package:simplelog/data/models/duty_edit_data.dart';
@@ -124,6 +126,8 @@ abstract class LogbookRepositoryContract {
     required String remarks,
     required String notes,
     required List<SimulatorCrewAssignmentInput> crewAssignments,
+    String? endorsementData,
+    Uint8List? endorsementSignatureImage,
   });
 
   /// Updates an existing simulator training entry.
@@ -136,7 +140,15 @@ abstract class LogbookRepositoryContract {
     required String remarks,
     required String notes,
     required List<SimulatorCrewAssignmentInput> crewAssignments,
+    String? endorsementData,
+    Uint8List? endorsementSignatureImage,
   });
+
+  /// Verifies whether the persisted flight endorsement hash still matches.
+  Future<bool> verifyFlightEndorsementHash(int flightId);
+
+  /// Verifies whether the persisted simulator endorsement hash still matches.
+  Future<bool> verifySimulatorEndorsementHash(int simulatorId);
 
   /// Resolves human‑readable crew labels for a flight.
   Future<List<String>> fetchFlightCrewLabels(int flightId);

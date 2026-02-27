@@ -3865,6 +3865,266 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
     return points;
   }
 
+  Future<void> _exportInteractiveHtmlMap() async {
+    final l10n = AppLocalizations.of(context)!;
+    final html = _buildInteractiveMapHtml();
+    const fileName = 'SimpleLogMap.html';
+    final bytes = Uint8List.fromList(utf8.encode(html));
+
+    final path = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save Interactive Flight Map',
+      fileName: fileName,
+      type: FileType.custom,
+      allowedExtensions: const ['html'],
+      bytes: Platform.isIOS || Platform.isAndroid ? bytes : null,
+    );
+    if (path == null || path.isEmpty || !mounted) return;
+
+    if (!Platform.isIOS && !Platform.isAndroid) {
+      try {
+        await File(path).writeAsBytes(bytes, flush: true);
+      } on FileSystemException {
+        final docsDir = await getApplicationDocumentsDirectory();
+        final fallbackPath =
+            '${docsDir.path}${Platform.pathSeparator}$fileName';
+        await File(fallbackPath).writeAsBytes(bytes, flush: true);
+        if (!mounted) return;
+        await showAppMessageDialog(
+          context,
+          title: l10n.reportsFlightMapTitle,
+          message:
+              'Interactive map exported.\n\n'
+              'Requested location was not writable.\n'
+              'Saved to: $fallbackPath\n\n'
+              'You can open or share this HTML file directly.',
+        );
+        return;
+      }
+    }
+
+    if (!mounted) return;
+    await showAppMessageDialog(
+      context,
+      title: l10n.reportsFlightMapTitle,
+      message:
+          'Interactive map exported.\n\n'
+          'File: $path\n\n'
+          'You can open or share this HTML file directly.',
+    );
+  }
+
+  String _buildInteractiveMapHtml() {
+    final features = <Map<String, dynamic>>[];
+    final points = <Map<String, dynamic>>[];
+    final seenPointKeys = <String>{};
+    final bounds = _BoundsAccumulator();
+
+    for (final row in widget.flights) {
+      final fromIcao = row.fromIcao.trim().toUpperCase();
+      final toIcao = row.toIcao.trim().toUpperCase();
+      final hasLine =
+          row.fromLatitude != null &&
+          row.fromLongitude != null &&
+          row.toLatitude != null &&
+          row.toLongitude != null;
+
+      if (hasLine) {
+        final fromPoint = LatLng(row.fromLatitude!, row.fromLongitude!);
+        final toPoint = LatLng(row.toLatitude!, row.toLongitude!);
+        final greatCircle = _greatCirclePoints(
+          fromPoint,
+          toPoint,
+          segments: 64,
+        );
+        final coordinates = greatCircle
+            .map((p) => [p.longitude, p.latitude])
+            .toList(growable: false);
+        for (final p in greatCircle) {
+          bounds.extend(p.latitude, p.longitude);
+        }
+        features.add({
+          'type': 'Feature',
+          'geometry': {
+            'type': 'LineString',
+            'coordinates': coordinates,
+          },
+          'properties': {
+            'flightId': row.flightId,
+            'fromIcao': fromIcao,
+            'toIcao': toIcao,
+            'departureUtc': row.departureDateTime.toIso8601String(),
+            'registration': row.registration,
+            'modelCode': row.modelCode,
+            'pilotNames': row.pilotNames,
+            'minutes': row.totalMinutes,
+          },
+        });
+      }
+
+      if (row.fromLatitude != null && row.fromLongitude != null) {
+        final key =
+            '${row.fromLatitude!.toStringAsFixed(6)}_'
+            '${row.fromLongitude!.toStringAsFixed(6)}';
+        if (seenPointKeys.add(key)) {
+          points.add({
+            'type': 'Feature',
+            'geometry': {
+              'type': 'Point',
+              'coordinates': [row.fromLongitude!, row.fromLatitude!],
+            },
+            'properties': {
+              'icao': fromIcao,
+              'kind': 'from',
+            },
+          });
+        }
+      }
+      if (row.toLatitude != null && row.toLongitude != null) {
+        final key =
+            '${row.toLatitude!.toStringAsFixed(6)}_'
+            '${row.toLongitude!.toStringAsFixed(6)}';
+        if (seenPointKeys.add(key)) {
+          points.add({
+            'type': 'Feature',
+            'geometry': {
+              'type': 'Point',
+              'coordinates': [row.toLongitude!, row.toLatitude!],
+            },
+            'properties': {
+              'icao': toIcao,
+              'kind': 'to',
+            },
+          });
+        }
+      }
+    }
+
+    final collection = {
+      'type': 'FeatureCollection',
+      'features': [...features, ...points],
+    };
+    final geoJson = jsonEncode(collection);
+    final center = bounds.centerOrDefault();
+    final centerLat = (center.$1 + center.$3) / 2;
+    final centerLon = (center.$2 + center.$4) / 2;
+
+    return '''
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SimpleLog Interactive Flight Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    #layout { height: 100%; display: grid; grid-template-rows: 56px 1fr; }
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      border-bottom: 1px solid #dce4ef;
+      background: #0f243f;
+      color: #e7eef8;
+    }
+    #title { font-size: 14px; font-weight: 600; letter-spacing: 0.02em; }
+    #stats { font-size: 12px; color: #bfd1eb; }
+    #map { width: 100%; height: 100%; }
+    .leaflet-popup-content { margin: 8px 10px; line-height: 1.35; }
+    .leaflet-control-attribution { font-size: 10px; }
+    #note {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      z-index: 500;
+      background: rgba(15, 31, 54, 0.9);
+      color: #dbe7f8;
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="layout">
+    <div id="topbar">
+      <div id="title">SimpleLog Interactive Flight Map</div>
+      <div id="stats"></div>
+    </div>
+    <div id="map"></div>
+  </div>
+  <div id="note">Interactive map: pan, zoom, click flights and airports</div>
+  <script>
+    const flights = $geoJson;
+    const stats = document.getElementById('stats');
+    const lineFeatures = flights.features.filter(function(f) {
+      return f.geometry && f.geometry.type === 'LineString';
+    });
+    const pointFeatures = flights.features.filter(function(f) {
+      return f.geometry && f.geometry.type === 'Point';
+    });
+    const airportSet = new Set(
+      pointFeatures
+        .map(function(f) { return ((f.properties && f.properties.icao) || '').trim(); })
+        .filter(Boolean)
+    );
+    stats.textContent = lineFeatures.length + ' flights · ' + airportSet.size + ' airports';
+
+    const map = L.map('map').setView([${centerLat.toStringAsFixed(8)}, ${centerLon.toStringAsFixed(8)}], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const routeLayer = L.geoJSON(flights, {
+      style: function(feature) {
+        if (feature.geometry && feature.geometry.type === 'LineString') {
+          return { color: '#2f7de1', weight: 2, opacity: 0.75 };
+        }
+        return { color: '#0f7f74', weight: 1, fillColor: '#2dd4bf', fillOpacity: 0.9 };
+      },
+      pointToLayer: function(feature, latlng) {
+        return L.circleMarker(latlng, {
+          radius: 4,
+          color: '#0f7f74',
+          weight: 1,
+          fillColor: '#2dd4bf',
+          fillOpacity: 0.9
+        });
+      },
+      onEachFeature: function(feature, layer) {
+        const p = feature.properties || {};
+        if (feature.geometry && feature.geometry.type === 'LineString') {
+          const dt = p.departureUtc ? new Date(p.departureUtc).toISOString().replace('T', ' ').replace('.000Z', 'Z') : '-';
+          layer.bindPopup(
+            '<b>Flight #' + (p.flightId || '-') + '</b><br>' +
+            (p.fromIcao || '-') + ' → ' + (p.toIcao || '-') + '<br>' +
+            (p.registration || '-') + ' (' + (p.modelCode || '-') + ')<br>' +
+            (p.minutes || 0) + ' min<br>' + dt
+          );
+          return;
+        }
+        const c = feature.geometry && feature.geometry.coordinates
+          ? feature.geometry.coordinates
+          : [0, 0];
+        layer.bindPopup(
+          '<b>Airport:</b> ' + (p.icao || '-') + '<br>' +
+          Number(c[1] || 0).toFixed(4) + ', ' + Number(c[0] || 0).toFixed(4)
+        );
+      }
+    }).addTo(map);
+
+    if (routeLayer.getBounds && routeLayer.getBounds().isValid()) {
+      map.fitBounds(routeLayer.getBounds(), { padding: [24, 24] });
+    }
+  </script>
+</body>
+</html>
+''';
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -3958,6 +4218,11 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
                     onPressed: () => setState(() => _showLines = !_showLines),
                     icon: Icon(_showLines ? Icons.route : Icons.scatter_plot),
                   ),
+                  IconButton(
+                    tooltip: 'Export interactive map',
+                    onPressed: _exportInteractiveHtmlMap,
+                    icon: const Icon(Icons.ios_share_outlined),
+                  ),
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(l10n.reportsDone),
@@ -4042,6 +4307,28 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
         ),
       ),
     );
+  }
+}
+
+class _BoundsAccumulator {
+  double? _minLat;
+  double? _maxLat;
+  double? _minLon;
+  double? _maxLon;
+
+  void extend(double lat, double lon) {
+    _minLat = _minLat == null ? lat : math.min(_minLat!, lat);
+    _maxLat = _maxLat == null ? lat : math.max(_maxLat!, lat);
+    _minLon = _minLon == null ? lon : math.min(_minLon!, lon);
+    _maxLon = _maxLon == null ? lon : math.max(_maxLon!, lon);
+  }
+
+  (double, double, double, double) centerOrDefault() {
+    final minLat = _minLat ?? -45;
+    final minLon = _minLon ?? -90;
+    final maxLat = _maxLat ?? 45;
+    final maxLon = _maxLon ?? 90;
+    return (minLat, minLon, maxLat, maxLon);
   }
 }
 

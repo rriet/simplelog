@@ -54,7 +54,25 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: appDatabaseFileName));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        await migrator.addColumn(flights, flights.endorsementData);
+        await migrator.addColumn(flights, flights.endorsementHash);
+        await migrator.addColumn(
+          simulatorTrainings,
+          simulatorTrainings.endorsementData,
+        );
+        await migrator.addColumn(
+          simulatorTrainings,
+          simulatorTrainings.endorsementHash,
+        );
+      }
+    },
+  );
 
   /// Public API documentation.
   Future<void> clearAllData() async {
@@ -77,8 +95,8 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
-  /// verifies that a single time_lines row is linked to exactly 
-  /// one event in the database. prevents one timestamp record 
+  /// verifies that a single time_lines row is linked to exactly
+  /// one event in the database. prevents one timestamp record
   /// from being reused incorrectly across different logbook entries.
   Future<void> assertTimelineUniqueness(int timeLineId) async {
     final results = await Future.wait([

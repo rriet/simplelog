@@ -2639,6 +2639,28 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
         type: DriftSqlType.blob,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _endorsementDataMeta = const VerificationMeta(
+    'endorsementData',
+  );
+  @override
+  late final GeneratedColumn<String> endorsementData = GeneratedColumn<String>(
+    'endorsement_data',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _endorsementHashMeta = const VerificationMeta(
+    'endorsementHash',
+  );
+  @override
+  late final GeneratedColumn<String> endorsementHash = GeneratedColumn<String>(
+    'endorsement_hash',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2678,6 +2700,8 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     notes,
     isLocked,
     signatureImage,
+    endorsementData,
+    endorsementHash,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3066,6 +3090,24 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
         ),
       );
     }
+    if (data.containsKey('endorsement_data')) {
+      context.handle(
+        _endorsementDataMeta,
+        endorsementData.isAcceptableOrUnknown(
+          data['endorsement_data']!,
+          _endorsementDataMeta,
+        ),
+      );
+    }
+    if (data.containsKey('endorsement_hash')) {
+      context.handle(
+        _endorsementHashMeta,
+        endorsementHash.isAcceptableOrUnknown(
+          data['endorsement_hash']!,
+          _endorsementHashMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3223,6 +3265,14 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
         DriftSqlType.blob,
         data['${effectivePrefix}signature_image'],
       ),
+      endorsementData: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}endorsement_data'],
+      ),
+      endorsementHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}endorsement_hash'],
+      ),
     );
   }
 
@@ -3343,6 +3393,12 @@ class Flight extends DataClass implements Insertable<Flight> {
 
   /// Public API documentation.
   final Uint8List? signatureImage;
+
+  /// Public API documentation.
+  final String? endorsementData;
+
+  /// Public API documentation.
+  final String? endorsementHash;
   const Flight({
     required this.id,
     required this.aircraftId,
@@ -3381,6 +3437,8 @@ class Flight extends DataClass implements Insertable<Flight> {
     required this.notes,
     required this.isLocked,
     this.signatureImage,
+    this.endorsementData,
+    this.endorsementHash,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3432,6 +3490,12 @@ class Flight extends DataClass implements Insertable<Flight> {
     if (!nullToAbsent || signatureImage != null) {
       map['signature_image'] = Variable<Uint8List>(signatureImage);
     }
+    if (!nullToAbsent || endorsementData != null) {
+      map['endorsement_data'] = Variable<String>(endorsementData);
+    }
+    if (!nullToAbsent || endorsementHash != null) {
+      map['endorsement_hash'] = Variable<String>(endorsementHash);
+    }
     return map;
   }
 
@@ -3482,6 +3546,12 @@ class Flight extends DataClass implements Insertable<Flight> {
       signatureImage: signatureImage == null && nullToAbsent
           ? const Value.absent()
           : Value(signatureImage),
+      endorsementData: endorsementData == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endorsementData),
+      endorsementHash: endorsementHash == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endorsementHash),
     );
   }
 
@@ -3540,6 +3610,8 @@ class Flight extends DataClass implements Insertable<Flight> {
       notes: serializer.fromJson<String>(json['notes']),
       isLocked: serializer.fromJson<bool>(json['isLocked']),
       signatureImage: serializer.fromJson<Uint8List?>(json['signatureImage']),
+      endorsementData: serializer.fromJson<String?>(json['endorsementData']),
+      endorsementHash: serializer.fromJson<String?>(json['endorsementHash']),
     );
   }
   @override
@@ -3587,6 +3659,8 @@ class Flight extends DataClass implements Insertable<Flight> {
       'notes': serializer.toJson<String>(notes),
       'isLocked': serializer.toJson<bool>(isLocked),
       'signatureImage': serializer.toJson<Uint8List?>(signatureImage),
+      'endorsementData': serializer.toJson<String?>(endorsementData),
+      'endorsementHash': serializer.toJson<String?>(endorsementHash),
     };
   }
 
@@ -3628,6 +3702,8 @@ class Flight extends DataClass implements Insertable<Flight> {
     String? notes,
     bool? isLocked,
     Value<Uint8List?> signatureImage = const Value.absent(),
+    Value<String?> endorsementData = const Value.absent(),
+    Value<String?> endorsementHash = const Value.absent(),
   }) => Flight(
     id: id ?? this.id,
     aircraftId: aircraftId ?? this.aircraftId,
@@ -3676,6 +3752,12 @@ class Flight extends DataClass implements Insertable<Flight> {
     signatureImage: signatureImage.present
         ? signatureImage.value
         : this.signatureImage,
+    endorsementData: endorsementData.present
+        ? endorsementData.value
+        : this.endorsementData,
+    endorsementHash: endorsementHash.present
+        ? endorsementHash.value
+        : this.endorsementHash,
   );
   Flight copyWithCompanion(FlightsCompanion data) {
     return Flight(
@@ -3783,6 +3865,12 @@ class Flight extends DataClass implements Insertable<Flight> {
       signatureImage: data.signatureImage.present
           ? data.signatureImage.value
           : this.signatureImage,
+      endorsementData: data.endorsementData.present
+          ? data.endorsementData.value
+          : this.endorsementData,
+      endorsementHash: data.endorsementHash.present
+          ? data.endorsementHash.value
+          : this.endorsementHash,
     );
   }
 
@@ -3827,7 +3915,9 @@ class Flight extends DataClass implements Insertable<Flight> {
           ..write('remarks: $remarks, ')
           ..write('notes: $notes, ')
           ..write('isLocked: $isLocked, ')
-          ..write('signatureImage: $signatureImage')
+          ..write('signatureImage: $signatureImage, ')
+          ..write('endorsementData: $endorsementData, ')
+          ..write('endorsementHash: $endorsementHash')
           ..write(')'))
         .toString();
   }
@@ -3871,6 +3961,8 @@ class Flight extends DataClass implements Insertable<Flight> {
     notes,
     isLocked,
     $driftBlobEquality.hash(signatureImage),
+    endorsementData,
+    endorsementHash,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -3913,7 +4005,12 @@ class Flight extends DataClass implements Insertable<Flight> {
           other.remarks == this.remarks &&
           other.notes == this.notes &&
           other.isLocked == this.isLocked &&
-          $driftBlobEquality.equals(other.signatureImage, this.signatureImage));
+          $driftBlobEquality.equals(
+            other.signatureImage,
+            this.signatureImage,
+          ) &&
+          other.endorsementData == this.endorsementData &&
+          other.endorsementHash == this.endorsementHash);
 }
 
 class FlightsCompanion extends UpdateCompanion<Flight> {
@@ -3954,6 +4051,8 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
   final Value<String> notes;
   final Value<bool> isLocked;
   final Value<Uint8List?> signatureImage;
+  final Value<String?> endorsementData;
+  final Value<String?> endorsementHash;
   const FlightsCompanion({
     this.id = const Value.absent(),
     this.aircraftId = const Value.absent(),
@@ -3992,6 +4091,8 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     this.notes = const Value.absent(),
     this.isLocked = const Value.absent(),
     this.signatureImage = const Value.absent(),
+    this.endorsementData = const Value.absent(),
+    this.endorsementHash = const Value.absent(),
   });
   FlightsCompanion.insert({
     this.id = const Value.absent(),
@@ -4031,6 +4132,8 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     required String notes,
     required bool isLocked,
     this.signatureImage = const Value.absent(),
+    this.endorsementData = const Value.absent(),
+    this.endorsementHash = const Value.absent(),
   }) : aircraftId = Value(aircraftId),
        departureAirportId = Value(departureAirportId),
        arrivalAirportId = Value(arrivalAirportId),
@@ -4099,6 +4202,8 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     Expression<String>? notes,
     Expression<bool>? isLocked,
     Expression<Uint8List>? signatureImage,
+    Expression<String>? endorsementData,
+    Expression<String>? endorsementHash,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4149,6 +4254,8 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
       if (notes != null) 'notes': notes,
       if (isLocked != null) 'is_locked': isLocked,
       if (signatureImage != null) 'signature_image': signatureImage,
+      if (endorsementData != null) 'endorsement_data': endorsementData,
+      if (endorsementHash != null) 'endorsement_hash': endorsementHash,
     });
   }
 
@@ -4190,6 +4297,8 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     Value<String>? notes,
     Value<bool>? isLocked,
     Value<Uint8List?>? signatureImage,
+    Value<String?>? endorsementData,
+    Value<String?>? endorsementHash,
   }) {
     return FlightsCompanion(
       id: id ?? this.id,
@@ -4234,6 +4343,8 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
       notes: notes ?? this.notes,
       isLocked: isLocked ?? this.isLocked,
       signatureImage: signatureImage ?? this.signatureImage,
+      endorsementData: endorsementData ?? this.endorsementData,
+      endorsementHash: endorsementHash ?? this.endorsementHash,
     );
   }
 
@@ -4361,6 +4472,12 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     if (signatureImage.present) {
       map['signature_image'] = Variable<Uint8List>(signatureImage.value);
     }
+    if (endorsementData.present) {
+      map['endorsement_data'] = Variable<String>(endorsementData.value);
+    }
+    if (endorsementHash.present) {
+      map['endorsement_hash'] = Variable<String>(endorsementHash.value);
+    }
     return map;
   }
 
@@ -4405,7 +4522,9 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
           ..write('remarks: $remarks, ')
           ..write('notes: $notes, ')
           ..write('isLocked: $isLocked, ')
-          ..write('signatureImage: $signatureImage')
+          ..write('signatureImage: $signatureImage, ')
+          ..write('endorsementData: $endorsementData, ')
+          ..write('endorsementHash: $endorsementHash')
           ..write(')'))
         .toString();
   }
@@ -9670,6 +9789,28 @@ class $SimulatorTrainingsTable extends SimulatorTrainings
         type: DriftSqlType.blob,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _endorsementDataMeta = const VerificationMeta(
+    'endorsementData',
+  );
+  @override
+  late final GeneratedColumn<String> endorsementData = GeneratedColumn<String>(
+    'endorsement_data',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _endorsementHashMeta = const VerificationMeta(
+    'endorsementHash',
+  );
+  @override
+  late final GeneratedColumn<String> endorsementHash = GeneratedColumn<String>(
+    'endorsement_hash',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -9681,6 +9822,8 @@ class $SimulatorTrainingsTable extends SimulatorTrainings
     notes,
     isLocked,
     signatureImage,
+    endorsementData,
+    endorsementHash,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -9766,6 +9909,24 @@ class $SimulatorTrainingsTable extends SimulatorTrainings
         ),
       );
     }
+    if (data.containsKey('endorsement_data')) {
+      context.handle(
+        _endorsementDataMeta,
+        endorsementData.isAcceptableOrUnknown(
+          data['endorsement_data']!,
+          _endorsementDataMeta,
+        ),
+      );
+    }
+    if (data.containsKey('endorsement_hash')) {
+      context.handle(
+        _endorsementHashMeta,
+        endorsementHash.isAcceptableOrUnknown(
+          data['endorsement_hash']!,
+          _endorsementHashMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -9811,6 +9972,14 @@ class $SimulatorTrainingsTable extends SimulatorTrainings
         DriftSqlType.blob,
         data['${effectivePrefix}signature_image'],
       ),
+      endorsementData: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}endorsement_data'],
+      ),
+      endorsementHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}endorsement_hash'],
+      ),
     );
   }
 
@@ -9848,6 +10017,12 @@ class SimulatorTraining extends DataClass
 
   /// Public API documentation.
   final Uint8List? signatureImage;
+
+  /// Public API documentation.
+  final String? endorsementData;
+
+  /// Public API documentation.
+  final String? endorsementHash;
   const SimulatorTraining({
     required this.id,
     required this.aircraftId,
@@ -9858,6 +10033,8 @@ class SimulatorTraining extends DataClass
     required this.notes,
     required this.isLocked,
     this.signatureImage,
+    this.endorsementData,
+    this.endorsementHash,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -9874,6 +10051,12 @@ class SimulatorTraining extends DataClass
     map['is_locked'] = Variable<bool>(isLocked);
     if (!nullToAbsent || signatureImage != null) {
       map['signature_image'] = Variable<Uint8List>(signatureImage);
+    }
+    if (!nullToAbsent || endorsementData != null) {
+      map['endorsement_data'] = Variable<String>(endorsementData);
+    }
+    if (!nullToAbsent || endorsementHash != null) {
+      map['endorsement_hash'] = Variable<String>(endorsementHash);
     }
     return map;
   }
@@ -9893,6 +10076,12 @@ class SimulatorTraining extends DataClass
       signatureImage: signatureImage == null && nullToAbsent
           ? const Value.absent()
           : Value(signatureImage),
+      endorsementData: endorsementData == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endorsementData),
+      endorsementHash: endorsementHash == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endorsementHash),
     );
   }
 
@@ -9911,6 +10100,8 @@ class SimulatorTraining extends DataClass
       notes: serializer.fromJson<String>(json['notes']),
       isLocked: serializer.fromJson<bool>(json['isLocked']),
       signatureImage: serializer.fromJson<Uint8List?>(json['signatureImage']),
+      endorsementData: serializer.fromJson<String?>(json['endorsementData']),
+      endorsementHash: serializer.fromJson<String?>(json['endorsementHash']),
     );
   }
   @override
@@ -9926,6 +10117,8 @@ class SimulatorTraining extends DataClass
       'notes': serializer.toJson<String>(notes),
       'isLocked': serializer.toJson<bool>(isLocked),
       'signatureImage': serializer.toJson<Uint8List?>(signatureImage),
+      'endorsementData': serializer.toJson<String?>(endorsementData),
+      'endorsementHash': serializer.toJson<String?>(endorsementHash),
     };
   }
 
@@ -9939,6 +10132,8 @@ class SimulatorTraining extends DataClass
     String? notes,
     bool? isLocked,
     Value<Uint8List?> signatureImage = const Value.absent(),
+    Value<String?> endorsementData = const Value.absent(),
+    Value<String?> endorsementHash = const Value.absent(),
   }) => SimulatorTraining(
     id: id ?? this.id,
     aircraftId: aircraftId ?? this.aircraftId,
@@ -9951,6 +10146,12 @@ class SimulatorTraining extends DataClass
     signatureImage: signatureImage.present
         ? signatureImage.value
         : this.signatureImage,
+    endorsementData: endorsementData.present
+        ? endorsementData.value
+        : this.endorsementData,
+    endorsementHash: endorsementHash.present
+        ? endorsementHash.value
+        : this.endorsementHash,
   );
   SimulatorTraining copyWithCompanion(SimulatorTrainingsCompanion data) {
     return SimulatorTraining(
@@ -9971,6 +10172,12 @@ class SimulatorTraining extends DataClass
       signatureImage: data.signatureImage.present
           ? data.signatureImage.value
           : this.signatureImage,
+      endorsementData: data.endorsementData.present
+          ? data.endorsementData.value
+          : this.endorsementData,
+      endorsementHash: data.endorsementHash.present
+          ? data.endorsementHash.value
+          : this.endorsementHash,
     );
   }
 
@@ -9985,7 +10192,9 @@ class SimulatorTraining extends DataClass
           ..write('remarks: $remarks, ')
           ..write('notes: $notes, ')
           ..write('isLocked: $isLocked, ')
-          ..write('signatureImage: $signatureImage')
+          ..write('signatureImage: $signatureImage, ')
+          ..write('endorsementData: $endorsementData, ')
+          ..write('endorsementHash: $endorsementHash')
           ..write(')'))
         .toString();
   }
@@ -10001,6 +10210,8 @@ class SimulatorTraining extends DataClass
     notes,
     isLocked,
     $driftBlobEquality.hash(signatureImage),
+    endorsementData,
+    endorsementHash,
   );
   @override
   bool operator ==(Object other) =>
@@ -10014,7 +10225,12 @@ class SimulatorTraining extends DataClass
           other.remarks == this.remarks &&
           other.notes == this.notes &&
           other.isLocked == this.isLocked &&
-          $driftBlobEquality.equals(other.signatureImage, this.signatureImage));
+          $driftBlobEquality.equals(
+            other.signatureImage,
+            this.signatureImage,
+          ) &&
+          other.endorsementData == this.endorsementData &&
+          other.endorsementHash == this.endorsementHash);
 }
 
 class SimulatorTrainingsCompanion extends UpdateCompanion<SimulatorTraining> {
@@ -10027,6 +10243,8 @@ class SimulatorTrainingsCompanion extends UpdateCompanion<SimulatorTraining> {
   final Value<String> notes;
   final Value<bool> isLocked;
   final Value<Uint8List?> signatureImage;
+  final Value<String?> endorsementData;
+  final Value<String?> endorsementHash;
   const SimulatorTrainingsCompanion({
     this.id = const Value.absent(),
     this.aircraftId = const Value.absent(),
@@ -10037,6 +10255,8 @@ class SimulatorTrainingsCompanion extends UpdateCompanion<SimulatorTraining> {
     this.notes = const Value.absent(),
     this.isLocked = const Value.absent(),
     this.signatureImage = const Value.absent(),
+    this.endorsementData = const Value.absent(),
+    this.endorsementHash = const Value.absent(),
   });
   SimulatorTrainingsCompanion.insert({
     this.id = const Value.absent(),
@@ -10048,6 +10268,8 @@ class SimulatorTrainingsCompanion extends UpdateCompanion<SimulatorTraining> {
     required String notes,
     required bool isLocked,
     this.signatureImage = const Value.absent(),
+    this.endorsementData = const Value.absent(),
+    this.endorsementHash = const Value.absent(),
   }) : aircraftId = Value(aircraftId),
        startTimeLineId = Value(startTimeLineId),
        timeTotal = Value(timeTotal),
@@ -10064,6 +10286,8 @@ class SimulatorTrainingsCompanion extends UpdateCompanion<SimulatorTraining> {
     Expression<String>? notes,
     Expression<bool>? isLocked,
     Expression<Uint8List>? signatureImage,
+    Expression<String>? endorsementData,
+    Expression<String>? endorsementHash,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -10075,6 +10299,8 @@ class SimulatorTrainingsCompanion extends UpdateCompanion<SimulatorTraining> {
       if (notes != null) 'notes': notes,
       if (isLocked != null) 'is_locked': isLocked,
       if (signatureImage != null) 'signature_image': signatureImage,
+      if (endorsementData != null) 'endorsement_data': endorsementData,
+      if (endorsementHash != null) 'endorsement_hash': endorsementHash,
     });
   }
 
@@ -10088,6 +10314,8 @@ class SimulatorTrainingsCompanion extends UpdateCompanion<SimulatorTraining> {
     Value<String>? notes,
     Value<bool>? isLocked,
     Value<Uint8List?>? signatureImage,
+    Value<String?>? endorsementData,
+    Value<String?>? endorsementHash,
   }) {
     return SimulatorTrainingsCompanion(
       id: id ?? this.id,
@@ -10099,6 +10327,8 @@ class SimulatorTrainingsCompanion extends UpdateCompanion<SimulatorTraining> {
       notes: notes ?? this.notes,
       isLocked: isLocked ?? this.isLocked,
       signatureImage: signatureImage ?? this.signatureImage,
+      endorsementData: endorsementData ?? this.endorsementData,
+      endorsementHash: endorsementHash ?? this.endorsementHash,
     );
   }
 
@@ -10132,6 +10362,12 @@ class SimulatorTrainingsCompanion extends UpdateCompanion<SimulatorTraining> {
     if (signatureImage.present) {
       map['signature_image'] = Variable<Uint8List>(signatureImage.value);
     }
+    if (endorsementData.present) {
+      map['endorsement_data'] = Variable<String>(endorsementData.value);
+    }
+    if (endorsementHash.present) {
+      map['endorsement_hash'] = Variable<String>(endorsementHash.value);
+    }
     return map;
   }
 
@@ -10146,7 +10382,9 @@ class SimulatorTrainingsCompanion extends UpdateCompanion<SimulatorTraining> {
           ..write('remarks: $remarks, ')
           ..write('notes: $notes, ')
           ..write('isLocked: $isLocked, ')
-          ..write('signatureImage: $signatureImage')
+          ..write('signatureImage: $signatureImage, ')
+          ..write('endorsementData: $endorsementData, ')
+          ..write('endorsementHash: $endorsementHash')
           ..write(')'))
         .toString();
   }
@@ -12743,6 +12981,8 @@ typedef $$FlightsTableCreateCompanionBuilder =
       required String notes,
       required bool isLocked,
       Value<Uint8List?> signatureImage,
+      Value<String?> endorsementData,
+      Value<String?> endorsementHash,
     });
 typedef $$FlightsTableUpdateCompanionBuilder =
     FlightsCompanion Function({
@@ -12783,6 +13023,8 @@ typedef $$FlightsTableUpdateCompanionBuilder =
       Value<String> notes,
       Value<bool> isLocked,
       Value<Uint8List?> signatureImage,
+      Value<String?> endorsementData,
+      Value<String?> endorsementHash,
     });
 
 final class $$FlightsTableReferences
@@ -13065,6 +13307,16 @@ class $$FlightsTableFilterComposer
 
   ColumnFilters<Uint8List> get signatureImage => $composableBuilder(
     column: $table.signatureImage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get endorsementData => $composableBuilder(
+    column: $table.endorsementData,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get endorsementHash => $composableBuilder(
+    column: $table.endorsementHash,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13361,6 +13613,16 @@ class $$FlightsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get endorsementData => $composableBuilder(
+    column: $table.endorsementData,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get endorsementHash => $composableBuilder(
+    column: $table.endorsementHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$AircraftsTableOrderingComposer get aircraftId {
     final $$AircraftsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -13620,6 +13882,16 @@ class $$FlightsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get endorsementData => $composableBuilder(
+    column: $table.endorsementData,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get endorsementHash => $composableBuilder(
+    column: $table.endorsementHash,
+    builder: (column) => column,
+  );
+
   $$AircraftsTableAnnotationComposer get aircraftId {
     final $$AircraftsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -13811,6 +14083,8 @@ class $$FlightsTableTableManager
                 Value<String> notes = const Value.absent(),
                 Value<bool> isLocked = const Value.absent(),
                 Value<Uint8List?> signatureImage = const Value.absent(),
+                Value<String?> endorsementData = const Value.absent(),
+                Value<String?> endorsementHash = const Value.absent(),
               }) => FlightsCompanion(
                 id: id,
                 aircraftId: aircraftId,
@@ -13849,6 +14123,8 @@ class $$FlightsTableTableManager
                 notes: notes,
                 isLocked: isLocked,
                 signatureImage: signatureImage,
+                endorsementData: endorsementData,
+                endorsementHash: endorsementHash,
               ),
           createCompanionCallback:
               ({
@@ -13889,6 +14165,8 @@ class $$FlightsTableTableManager
                 required String notes,
                 required bool isLocked,
                 Value<Uint8List?> signatureImage = const Value.absent(),
+                Value<String?> endorsementData = const Value.absent(),
+                Value<String?> endorsementHash = const Value.absent(),
               }) => FlightsCompanion.insert(
                 id: id,
                 aircraftId: aircraftId,
@@ -13927,6 +14205,8 @@ class $$FlightsTableTableManager
                 notes: notes,
                 isLocked: isLocked,
                 signatureImage: signatureImage,
+                endorsementData: endorsementData,
+                endorsementHash: endorsementHash,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -17813,6 +18093,8 @@ typedef $$SimulatorTrainingsTableCreateCompanionBuilder =
       required String notes,
       required bool isLocked,
       Value<Uint8List?> signatureImage,
+      Value<String?> endorsementData,
+      Value<String?> endorsementHash,
     });
 typedef $$SimulatorTrainingsTableUpdateCompanionBuilder =
     SimulatorTrainingsCompanion Function({
@@ -17825,6 +18107,8 @@ typedef $$SimulatorTrainingsTableUpdateCompanionBuilder =
       Value<String> notes,
       Value<bool> isLocked,
       Value<Uint8List?> signatureImage,
+      Value<String?> endorsementData,
+      Value<String?> endorsementHash,
     });
 
 final class $$SimulatorTrainingsTableReferences
@@ -17954,6 +18238,16 @@ class $$SimulatorTrainingsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get endorsementData => $composableBuilder(
+    column: $table.endorsementData,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get endorsementHash => $composableBuilder(
+    column: $table.endorsementHash,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$AircraftsTableFilterComposer get aircraftId {
     final $$AircraftsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -18072,6 +18366,16 @@ class $$SimulatorTrainingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get endorsementData => $composableBuilder(
+    column: $table.endorsementData,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get endorsementHash => $composableBuilder(
+    column: $table.endorsementHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$AircraftsTableOrderingComposer get aircraftId {
     final $$AircraftsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -18150,6 +18454,16 @@ class $$SimulatorTrainingsTableAnnotationComposer
 
   GeneratedColumn<Uint8List> get signatureImage => $composableBuilder(
     column: $table.signatureImage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get endorsementData => $composableBuilder(
+    column: $table.endorsementData,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get endorsementHash => $composableBuilder(
+    column: $table.endorsementHash,
     builder: (column) => column,
   );
 
@@ -18273,6 +18587,8 @@ class $$SimulatorTrainingsTableTableManager
                 Value<String> notes = const Value.absent(),
                 Value<bool> isLocked = const Value.absent(),
                 Value<Uint8List?> signatureImage = const Value.absent(),
+                Value<String?> endorsementData = const Value.absent(),
+                Value<String?> endorsementHash = const Value.absent(),
               }) => SimulatorTrainingsCompanion(
                 id: id,
                 aircraftId: aircraftId,
@@ -18283,6 +18599,8 @@ class $$SimulatorTrainingsTableTableManager
                 notes: notes,
                 isLocked: isLocked,
                 signatureImage: signatureImage,
+                endorsementData: endorsementData,
+                endorsementHash: endorsementHash,
               ),
           createCompanionCallback:
               ({
@@ -18295,6 +18613,8 @@ class $$SimulatorTrainingsTableTableManager
                 required String notes,
                 required bool isLocked,
                 Value<Uint8List?> signatureImage = const Value.absent(),
+                Value<String?> endorsementData = const Value.absent(),
+                Value<String?> endorsementHash = const Value.absent(),
               }) => SimulatorTrainingsCompanion.insert(
                 id: id,
                 aircraftId: aircraftId,
@@ -18305,6 +18625,8 @@ class $$SimulatorTrainingsTableTableManager
                 notes: notes,
                 isLocked: isLocked,
                 signatureImage: signatureImage,
+                endorsementData: endorsementData,
+                endorsementHash: endorsementHash,
               ),
           withReferenceMapper: (p0) => p0
               .map(

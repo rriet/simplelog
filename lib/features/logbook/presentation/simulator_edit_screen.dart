@@ -11,6 +11,7 @@ import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/data/models/crew_row.dart';
+import 'package:simplelog/data/models/endorsement_data.dart';
 import 'package:simplelog/data/models/simulator_crew_assignment_input.dart';
 import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
 import 'package:simplelog/features/aircraft/presentation/aircraft_edit_screen.dart';
@@ -20,6 +21,7 @@ import 'package:simplelog/features/logbook/application/providers/logbook_feature
 import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/endorsement_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
@@ -61,6 +63,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   int? _aircraftId;
   final List<CrewDraftSelection> _crewRows = [];
   final Map<int, String> _crewLabelCache = {};
+  EndorsementData? _endorsement;
   String? _simulatorErrorText;
   String? _startEndErrorText;
   String? _sessionTimeErrorText;
@@ -90,6 +93,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
 
   Future<void> _loadExisting() async {
     if (widget.isCreate) {
+      _endorsement = null;
       setState(() => _loading = false);
       await _insertDefaultSelfCrewIfAny();
       return;
@@ -102,6 +106,10 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       return;
     }
     _simulatorTraining = loaded.simulatorTraining;
+    _endorsement = EndorsementData.fromJsonString(
+      loaded.simulatorTraining.endorsementData,
+      signatureImage: loaded.simulatorTraining.signatureImage,
+    );
     _start = loaded.startLine == null
         ? DateTime.now()
         : DbDateTime.dbToUtc(loaded.startLine!.eventDateTime);
@@ -214,6 +222,17 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     );
     if (!mounted) return null;
     return createdId;
+  }
+
+  Future<void> _openEndorsementDialog() async {
+    final value = await EndorsementDialog.show(
+      context,
+      initial: _endorsement,
+    );
+    if (!mounted || value == null) return;
+    setState(() {
+      _endorsement = value.isEmpty ? null : value;
+    });
   }
 
   Future<void> _pickStartDate() async {
@@ -333,6 +352,8 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
         remarks: _remarksController.text.trim(),
         notes: _notesController.text.trim(),
         crewAssignments: crewAssignments,
+        endorsementData: _endorsement?.toJsonString(),
+        endorsementSignatureImage: _endorsement?.signatureImage,
       );
     } else {
       final item = _simulatorTraining;
@@ -346,6 +367,8 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
         remarks: _remarksController.text.trim(),
         notes: _notesController.text.trim(),
         crewAssignments: crewAssignments,
+        endorsementData: _endorsement?.toJsonString(),
+        endorsementSignatureImage: _endorsement?.signatureImage,
       );
     }
     if (!mounted) return;
@@ -526,6 +549,16 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
+            OutlinedButton.icon(
+              onPressed: _openEndorsementDialog,
+              icon: Icon(
+                _endorsement == null
+                    ? Icons.draw_outlined
+                    : Icons.verified_outlined,
+              ),
+              label: const Text('Endorsement'),
+            ),
+            const SizedBox(width: 8),
             OutlinedButton.icon(
               onPressed: () async {
                 final draft = await showAddCrewDialog(
