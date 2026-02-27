@@ -1,10 +1,11 @@
 {
   "rowsPerPage": 20,
   "forceLandscape": true,
-  "defaultPageSize": "a4",
+  "defaultPageSize": "letter",
   "dateFormat": "dd-MMM-yyyy",
   "timeFormat": "H:mm",
   "rowHeight": 17,
+  "alternateRowBackgroundColor": "#E6E8EB",
   "coverPage": {
     "enabled": true,
     "title": "Pilot Logbook",

@@ -8,7 +8,7 @@
   "alternateRowBackgroundColor": "#E6E8EB",
   "coverPage": {
     "enabled": true,
-    "title": "Pilot Logbook Summary",
+    "title": "Pilot Logbook",
     "blocks": [
       {
         "type": "kvGrid",

@@ -3914,7 +3914,7 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
   }
 
   String _buildInteractiveMapHtml() {
-    final features = <Map<String, dynamic>>[];
+    final routeBuckets = <String, _RouteBucket>{};
     final points = <Map<String, dynamic>>[];
     final seenPointKeys = <String>{};
     final bounds = _BoundsAccumulator();
@@ -3931,79 +3931,98 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
       if (hasLine) {
         final fromPoint = LatLng(row.fromLatitude!, row.fromLongitude!);
         final toPoint = LatLng(row.toLatitude!, row.toLongitude!);
-        final greatCircle = _greatCirclePoints(
-          fromPoint,
-          toPoint,
-          segments: 64,
-        );
-        final coordinates = greatCircle
-            .map((p) => [p.longitude, p.latitude])
-            .toList(growable: false);
-        for (final p in greatCircle) {
-          bounds.extend(p.latitude, p.longitude);
-        }
-        features.add({
-          'type': 'Feature',
-          'geometry': {
-            'type': 'LineString',
-            'coordinates': coordinates,
+        final pairCodes = [fromIcao, toIcao]..sort();
+        final routeKey = pairCodes.join('↔');
+        routeBuckets.putIfAbsent(
+          routeKey,
+          () {
+            final greatCircle = _greatCirclePoints(
+              fromPoint,
+              toPoint,
+              segments: 24,
+            );
+            final coordinates = greatCircle
+                .map(
+                  (p) => [
+                    _roundCoord(p.longitude),
+                    _roundCoord(p.latitude),
+                  ],
+                )
+                .toList(growable: false);
+            for (final p in greatCircle) {
+              bounds.extend(p.latitude, p.longitude);
+            }
+            return _RouteBucket(
+              route: '${pairCodes.first} ↔ ${pairCodes.last}',
+              fromIcao: pairCodes.first,
+              toIcao: pairCodes.last,
+              coordinates: coordinates,
+            );
           },
-          'properties': {
-            'flightId': row.flightId,
-            'fromIcao': fromIcao,
-            'toIcao': toIcao,
-            'departureUtc': row.departureDateTime.toIso8601String(),
-            'registration': row.registration,
-            'modelCode': row.modelCode,
-            'pilotNames': row.pilotNames,
-            'minutes': row.totalMinutes,
-          },
-        });
+        ).count += 1;
       }
 
       if (row.fromLatitude != null && row.fromLongitude != null) {
         final key =
-            '${row.fromLatitude!.toStringAsFixed(6)}_'
-            '${row.fromLongitude!.toStringAsFixed(6)}';
+            '${row.fromLatitude!.toStringAsFixed(4)}_'
+            '${row.fromLongitude!.toStringAsFixed(4)}';
         if (seenPointKeys.add(key)) {
           points.add({
             'type': 'Feature',
             'geometry': {
               'type': 'Point',
-              'coordinates': [row.fromLongitude!, row.fromLatitude!],
+              'coordinates': [
+                _roundCoord(row.fromLongitude!),
+                _roundCoord(row.fromLatitude!),
+              ],
             },
-            'properties': {
-              'icao': fromIcao,
-              'kind': 'from',
-            },
+            'properties': {'icao': fromIcao},
           });
         }
       }
       if (row.toLatitude != null && row.toLongitude != null) {
         final key =
-            '${row.toLatitude!.toStringAsFixed(6)}_'
-            '${row.toLongitude!.toStringAsFixed(6)}';
+            '${row.toLatitude!.toStringAsFixed(4)}_'
+            '${row.toLongitude!.toStringAsFixed(4)}';
         if (seenPointKeys.add(key)) {
           points.add({
             'type': 'Feature',
             'geometry': {
               'type': 'Point',
-              'coordinates': [row.toLongitude!, row.toLatitude!],
+              'coordinates': [
+                _roundCoord(row.toLongitude!),
+                _roundCoord(row.toLatitude!),
+              ],
             },
-            'properties': {
-              'icao': toIcao,
-              'kind': 'to',
-            },
+            'properties': {'icao': toIcao},
           });
         }
       }
     }
 
+    final routeFeatures = routeBuckets.values
+        .map((bucket) {
+          return <String, dynamic>{
+            'type': 'Feature',
+            'geometry': {
+              'type': 'LineString',
+              'coordinates': bucket.coordinates,
+            },
+            'properties': {
+              'route': bucket.route,
+              'fromIcao': bucket.fromIcao,
+              'toIcao': bucket.toIcao,
+              'count': bucket.count,
+            },
+          };
+        })
+        .toList(growable: false);
+
     final collection = {
       'type': 'FeatureCollection',
-      'features': [...features, ...points],
+      'features': [...routeFeatures, ...points],
     };
-    final geoJson = jsonEncode(collection);
+    final geoJson = const JsonEncoder.withIndent('  ').convert(collection);
     final center = bounds.centerOrDefault();
     final centerLat = (center.$1 + center.$3) / 2;
     final centerLon = (center.$2 + center.$4) / 2;
@@ -4070,7 +4089,7 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
         .map(function(f) { return ((f.properties && f.properties.icao) || '').trim(); })
         .filter(Boolean)
     );
-    stats.textContent = lineFeatures.length + ' flights · ' + airportSet.size + ' airports';
+    stats.textContent = lineFeatures.length + ' routes · ' + airportSet.size + ' airports';
 
     const map = L.map('map').setView([${centerLat.toStringAsFixed(8)}, ${centerLon.toStringAsFixed(8)}], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -4097,12 +4116,9 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
       onEachFeature: function(feature, layer) {
         const p = feature.properties || {};
         if (feature.geometry && feature.geometry.type === 'LineString') {
-          const dt = p.departureUtc ? new Date(p.departureUtc).toISOString().replace('T', ' ').replace('.000Z', 'Z') : '-';
           layer.bindPopup(
-            '<b>Flight #' + (p.flightId || '-') + '</b><br>' +
-            (p.fromIcao || '-') + ' → ' + (p.toIcao || '-') + '<br>' +
-            (p.registration || '-') + ' (' + (p.modelCode || '-') + ')<br>' +
-            (p.minutes || 0) + ' min<br>' + dt
+            '<b>' + (p.route || ((p.fromIcao || '-') + ' ↔ ' + (p.toIcao || '-'))) + '</b><br>' +
+            Number(p.count || 0) + ' flights'
           );
           return;
         }
@@ -4123,6 +4139,10 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
 </body>
 </html>
 ''';
+  }
+
+  double _roundCoord(double value) {
+    return double.parse(value.toStringAsFixed(5));
   }
 
   @override
@@ -4330,6 +4350,21 @@ class _BoundsAccumulator {
     final maxLon = _maxLon ?? 90;
     return (minLat, minLon, maxLat, maxLon);
   }
+}
+
+class _RouteBucket {
+  _RouteBucket({
+    required this.route,
+    required this.fromIcao,
+    required this.toIcao,
+    required this.coordinates,
+  });
+
+  final String route;
+  final String fromIcao;
+  final String toIcao;
+  final List<List<double>> coordinates;
+  int count = 0;
 }
 
 class _TemplateEntryItem {
