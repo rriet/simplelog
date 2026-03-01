@@ -13,6 +13,7 @@ import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/export/simplelog_csv_exporter.dart';
 import 'package:simplelog/data/import/dashboard_rules_seed_importer.dart';
 import 'package:simplelog/data/import/import_operation_result.dart';
+import 'package:simplelog/data/import/import_source_dispatcher.dart';
 import 'package:simplelog/data/import/legacy_simplelog_db_importer.dart';
 import 'package:simplelog/data/import/simplelog_csv_importer.dart';
 import 'package:simplelog/presentation/database/widgets/import_options_preferences.dart';
@@ -29,6 +30,8 @@ import 'package:simplelog/state/providers/simulator_default_crew_position_provid
 class DatabaseSyncTrigger extends ConsumerWidget {
   /// Creates the database tools panel.
   const DatabaseSyncTrigger({super.key});
+
+  static const _sourceDispatcher = ImportSourceDispatcher();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -135,10 +138,8 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     if (result == null || result.files.isEmpty) return;
     final file = result.files.single;
     if (!context.mounted) return;
-    final lowerName = file.name.toLowerCase();
-    final isDatabaseFile =
-        lowerName.endsWith('.sqlite') || lowerName.endsWith('.db');
-    if (isDatabaseFile) {
+    final detectedFromName = _sourceDispatcher.detect(fileName: file.name);
+    if (detectedFromName == ImportSourceKind.legacySimpleLogDb) {
       await _importDatabaseFile(context, ref, file);
       return;
     }
@@ -147,11 +148,14 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         (file.path == null ? null : await File(file.path!).readAsBytes());
     if (bytes == null) return;
     final content = _decodeCsvBytes(bytes);
-    final type = _detectCsvType(content);
+    final type = _sourceDispatcher.detect(
+      fileName: file.name,
+      content: content,
+    );
     if (!context.mounted) return;
     final db = ref.read(databaseProvider);
 
-    if (type == _CsvImportType.simpleLogOld) {
+    if (type == ImportSourceKind.legacySimpleLogCsv) {
       final initialOptions = await ImportOptionsPreferences.loadSimpleLog(db);
       if (!context.mounted) return;
       final options = await SimpleLogImportOptionsDialog.show(
@@ -189,7 +193,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         return;
       }
       await _showImportSummary(context, outcome.data!);
-    } else if (type == _CsvImportType.swapa) {
+    } else if (type == ImportSourceKind.southwestCsv) {
       final defaultPosition = await ref.read(
         simulatorDefaultCrewPositionProvider.future,
       );
@@ -574,14 +578,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
 
   Future<bool> _showOptionsDialog(
     BuildContext context,
-    _CsvImportType type,
+    ImportSourceKind type,
     String fileName,
   ) async {
-    final label = switch (type) {
-      _CsvImportType.simpleLogOld => 'SimpleLog (old version)',
-      _CsvImportType.swapa => 'SWAPA',
-      _CsvImportType.unknown => 'Unknown file',
-    };
+    final label = _sourceDispatcher.labelFor(type);
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -600,35 +600,6 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       ),
     );
     return result ?? false;
-  }
-
-  _CsvImportType _detectCsvType(String content) {
-    final lines = content
-        .split(RegExp(r'\r\n|\n|\r'))
-        .where((line) => line.trim().isNotEmpty)
-        .toList();
-    if (lines.isEmpty) return _CsvImportType.unknown;
-
-    final first = lines.first.trim();
-    final normalized = _normalizeHeader(first);
-    if (normalized == _normalizeHeader(_simpleLogOldHeader)) {
-      return _CsvImportType.simpleLogOld;
-    }
-
-    if (first.contains('TotalBlockhrsmins')) {
-      final headerIndex = lines.indexWhere(
-        (line) => line.startsWith('TAFB_RadialScale1_MinimumValue'),
-      );
-      if (headerIndex != -1) {
-        return _CsvImportType.swapa;
-      }
-    }
-
-    return _CsvImportType.unknown;
-  }
-
-  String _normalizeHeader(String header) {
-    return header.replaceAll('"', '').replaceAll(' ', '');
   }
 
   String _buildImportErrorMessage(ImportFailure? failure) {
@@ -741,14 +712,9 @@ class _DatabaseActionButton extends StatelessWidget {
   }
 }
 
-enum _CsvImportType { simpleLogOld, swapa, unknown }
-
 class _ImportProgress {
   const _ImportProgress({required this.processed, required this.total});
 
   final int processed;
   final int total;
 }
-
-const _simpleLogOldHeader =
-    '"Date (DD/MM/YYYY)","Departure Time (HH:MM)","Arrival Time (HH:MM)","Departure Epoch","Arrival Epoch","Departure Icao","Departure Iata","Departure Airport Name","Departure City","Departure Country","Departure Latitude","Departure Longitude","Arrival Icao","Arrival Iata","Arrival Airport Name","Arrival City","Arrival Country","Arrival Latitude","Arrival Longitude","Aircraft Registration","Aircraft MTOW","Aircraft Simulator","Model Make & Model","Model Group","Model Engine Type","Model MTOW","Model Multi Engine","Model Multi Pilot","Model EFIS","Model Seaplane","PIC Name","PIC Email","PIC Phone","PIC Comments","SIC Name","SIC Email","SIC Phone","SIC Comments","Pilot Function","Remarks","Private notes","Takeoff day","Takeoff night","Landing day","Landing night","IFR Approaches","Approach Type","IFR Minutes","Simulated Instrument Minutes","Night Minutes","Corss country Minutes","PIC Minutes","PICUS Minutes","SIC Minutes","Dual Minutes","Instructor Minutes","Simulator Minutes","Custom Time 1 Minutes","Custom Time 2 Minutes","Custom Time 3 Minutes","Custom Time 4 Minutes","Total Minutes"';
