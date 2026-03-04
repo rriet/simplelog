@@ -1,5 +1,6 @@
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/import/import_operation_result.dart';
+import 'package:simplelog/data/import/logten_pro_import_models.dart';
 import 'package:simplelog/data/import/normalized_import_persistence_service.dart';
 import 'package:simplelog/data/import/qatar_airways_import_options.dart';
 import 'package:simplelog/data/import/qatar_airways_workbook_inspector.dart';
@@ -182,8 +183,9 @@ class SimpleLogCsvImporter {
   }
 
   /// Imports a LogTen Pro tab-separated export.
-  Future<SimpleLogImportResult> importLogTenProTsv(
+  Future<LogTenImportResult> importLogTenProTsv(
     String content, {
+    required LogTenImportOptions options,
     ImportProgressCallback? onProgress,
   }) async {
     final existingAirports = await db.select(db.airports).get();
@@ -196,22 +198,61 @@ class SimpleLogCsvImporter {
         if ((airport.iata ?? '').trim().isNotEmpty)
           airport.iata!.trim().toLowerCase(): airport,
     };
-    final batch = _logTenProParser.parse(
+    final parseResult = _logTenProParser.parse(
       content,
+      options: options,
+      existingAirportsByIcao: airportsByIcao,
+      existingAirportsByIata: airportsByIata,
+      includeIgnoredLineIssues: true,
+    );
+    if (parseResult.issues.any(
+      (issue) => issue.reason.toLowerCase() != 'ignored by user.',
+    )) {
+      throw const FormatException(
+        'LogTen Pro import has unresolved validation issues.',
+      );
+    }
+    final summary = await _persistence.importBatch(
+      parseResult.batch,
+      onProgress: onProgress,
+    );
+    return LogTenImportResult(summary: summary, issues: parseResult.issues);
+  }
+
+  /// Validates a LogTen Pro tab-separated export without persisting rows.
+  Future<List<LogTenImportIssue>> validateLogTenProTsv(
+    String content, {
+    required LogTenImportOptions options,
+  }) async {
+    final existingAirports = await db.select(db.airports).get();
+    final airportsByIcao = <String, Airport>{
+      for (final airport in existingAirports)
+        airport.icao.trim().toLowerCase(): airport,
+    };
+    final airportsByIata = <String, Airport>{
+      for (final airport in existingAirports)
+        if ((airport.iata ?? '').trim().isNotEmpty)
+          airport.iata!.trim().toLowerCase(): airport,
+    };
+    final parseResult = _logTenProParser.parse(
+      content,
+      options: options,
       existingAirportsByIcao: airportsByIcao,
       existingAirportsByIata: airportsByIata,
     );
-    return _persistence.importBatch(batch, onProgress: onProgress);
+    return parseResult.issues;
   }
 
   /// Safe variant of [importLogTenProTsv].
-  Future<ImportOperationResult<SimpleLogImportResult>> importLogTenProTsvSafely(
+  Future<ImportOperationResult<LogTenImportResult>> importLogTenProTsvSafely(
     String content, {
+    required LogTenImportOptions options,
     ImportProgressCallback? onProgress,
   }) async {
     try {
       final result = await importLogTenProTsv(
         content,
+        options: options,
         onProgress: onProgress,
       );
       return ImportOperationResult.success(result);

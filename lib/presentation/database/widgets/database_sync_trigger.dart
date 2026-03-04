@@ -16,6 +16,7 @@ import 'package:simplelog/data/import/dashboard_rules_seed_importer.dart';
 import 'package:simplelog/data/import/import_operation_result.dart';
 import 'package:simplelog/data/import/import_source_dispatcher.dart';
 import 'package:simplelog/data/import/legacy_simplelog_db_importer.dart';
+import 'package:simplelog/data/import/logten_pro_import_models.dart';
 import 'package:simplelog/data/import/logten_pro_tsv_inspector.dart';
 import 'package:simplelog/data/import/qatar_airways_import_options.dart';
 import 'package:simplelog/data/import/qatar_airways_workbook_inspector.dart';
@@ -24,6 +25,8 @@ import 'package:simplelog/features/aircraft/presentation/aircraft_edit_screen.da
 import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
 import 'package:simplelog/presentation/database/widgets/import_options_preferences.dart';
 import 'package:simplelog/presentation/database/widgets/local_sync_dialog.dart';
+import 'package:simplelog/presentation/database/widgets/logten_pro_import_options_dialog.dart';
+import 'package:simplelog/presentation/database/widgets/logten_pro_import_review_dialog.dart';
 import 'package:simplelog/presentation/database/widgets/qatar_airways_import_options_dialog.dart';
 import 'package:simplelog/presentation/database/widgets/qatar_airways_preflight_dialogs.dart';
 import 'package:simplelog/presentation/database/widgets/simplelog_import_options_dialog.dart';
@@ -261,15 +264,32 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         return;
       }
       _logLogTenProColumns(inspection);
+      final options = await LogTenProImportOptionsDialog.show(
+        context,
+        fileName: file.name,
+        inspection: inspection,
+        initial: LogTenImportOptions(
+          assignments: buildDefaultLogTenAssignments(inspection.columns),
+        ),
+      );
+      if (options == null || !context.mounted) return;
       final importer = SimpleLogCsvImporter(db);
+      final validatedOptions = await _reviewLogTenImportIssues(
+        context,
+        importer: importer,
+        content: content,
+        initialOptions: options,
+      );
+      if (validatedOptions == null || !context.mounted) return;
       final progress = ValueNotifier<_ImportProgress>(
         const _ImportProgress(processed: 0, total: 0),
       );
       _showImportProgressDialog(context, progress);
-      ImportOperationResult<SimpleLogImportResult>? outcome;
+      ImportOperationResult<LogTenImportResult>? outcome;
       try {
         outcome = await importer.importLogTenProTsvSafely(
           content,
+          options: validatedOptions,
           onProgress: (processed, total) => progress.value = _ImportProgress(
             processed: processed,
             total: total,
@@ -286,7 +306,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         await _showInfoDialog(context, message);
         return;
       }
-      await _showImportSummary(context, outcome.data!);
+      await _showLogTenImportSummary(context, outcome.data!);
     } else if (type == ImportSourceKind.southwestCsv) {
       final defaultPosition = await ref.read(
         simulatorDefaultCrewPositionProvider.future,
@@ -603,6 +623,101 @@ class DatabaseSyncTrigger extends ConsumerWidget {
           'Skipped: ${stats.skipped}\n'
           'Errors: ${stats.errors}',
     );
+  }
+
+  Future<void> _showLogTenImportSummary(
+    BuildContext context,
+    LogTenImportResult result,
+  ) async {
+    final stats = result.summary;
+    final issues = result.issues;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Import Summary'),
+        content: SizedBox(
+          width: 720,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Rows: ${stats.totalRows}\n'
+                'Flights: ${stats.flights}\n'
+                'Positionings: ${stats.positionings}\n'
+                'Simulators: ${stats.simulators}\n'
+                'Airports: ${stats.airports}\n'
+                'Aircraft Types: ${stats.aircraftTypes}\n'
+                'Aircraft: ${stats.aircrafts}\n'
+                'Crew: ${stats.crew}\n'
+                'Skipped: ${stats.skipped}\n'
+                'Errors: ${stats.errors}',
+              ),
+              if (issues.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'Skipped lines',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 260,
+                  child: ListView.builder(
+                    itemCount: issues.length,
+                    itemBuilder: (context, index) {
+                      final issue = issues[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'Line ${issue.lineNumber}: ${issue.reason}',
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<LogTenImportOptions?> _reviewLogTenImportIssues(
+    BuildContext context, {
+    required SimpleLogCsvImporter importer,
+    required String content,
+    required LogTenImportOptions initialOptions,
+  }) async {
+    var options = initialOptions;
+    while (true) {
+      final issues = await importer.validateLogTenProTsv(
+        content,
+        options: options,
+      );
+      if (!context.mounted) return null;
+      if (issues.isEmpty) {
+        return options;
+      }
+      final review = await LogTenProImportReviewDialog.show(
+        context,
+        issues: issues,
+        options: options,
+      );
+      if (review == null || !context.mounted) {
+        return null;
+      }
+      options = options.copyWith(
+        valueOverrides: review.valueOverrides,
+        ignoredLines: review.ignoredLines,
+      );
+    }
   }
 
   Future<void> _clearDatabase(BuildContext context, WidgetRef ref) async {

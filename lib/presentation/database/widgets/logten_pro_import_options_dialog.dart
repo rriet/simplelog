@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/data/import/logten_pro_import_models.dart';
 import 'package:simplelog/data/import/logten_pro_tsv_inspector.dart';
 
-/// Temporary preview dialog for LogTen Pro tab-separated imports.
-class LogTenProImportOptionsDialog extends StatelessWidget {
+/// Configuration dialog shown before importing a LogTen Pro export.
+class LogTenProImportOptionsDialog extends StatefulWidget {
   /// Creates the dialog.
   const LogTenProImportOptionsDialog({
     required this.fileName,
     required this.inspection,
+    required this.initial,
     super.key,
   });
 
@@ -16,26 +18,62 @@ class LogTenProImportOptionsDialog extends StatelessWidget {
   /// Extracted TSV metadata.
   final LogTenProTsvInspection inspection;
 
-  /// Opens the dialog.
-  static Future<void> show(
+  /// Initial import options.
+  final LogTenImportOptions initial;
+
+  /// Opens the dialog and returns selected options.
+  static Future<LogTenImportOptions?> show(
     BuildContext context, {
     required String fileName,
     required LogTenProTsvInspection inspection,
+    required LogTenImportOptions initial,
   }) {
-    return showDialog<void>(
+    return showDialog<LogTenImportOptions>(
       context: context,
       builder: (context) => LogTenProImportOptionsDialog(
         fileName: fileName,
         inspection: inspection,
+        initial: initial,
+      ),
+    );
+  }
+
+  @override
+  State<LogTenProImportOptionsDialog> createState() =>
+      _LogTenProImportOptionsDialogState();
+}
+
+class _LogTenProImportOptionsDialogState
+    extends State<LogTenProImportOptionsDialog> {
+  late final Map<String, LogTenFieldAssociation> _assignments;
+  late int _timezoneOffsetMinutes;
+
+  @override
+  void initState() {
+    super.initState();
+    _assignments = Map<String, LogTenFieldAssociation>.from(
+      widget.initial.assignments,
+    );
+    _timezoneOffsetMinutes = widget.initial.timezoneOffsetMinutes;
+  }
+
+  void _submit() {
+    Navigator.of(context).pop(
+      LogTenImportOptions(
+        assignments: Map<String, LogTenFieldAssociation>.from(_assignments),
+        timezoneOffsetMinutes: _timezoneOffsetMinutes,
+        valueOverrides: widget.initial.valueOverrides,
+        ignoredLines: widget.initial.ignoredLines,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final timezoneOptions = _buildTimezoneOptions();
     return Dialog(
       child: SizedBox(
-        width: 640,
+        width: 1100,
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.9,
@@ -62,25 +100,117 @@ class LogTenProImportOptionsDialog extends StatelessWidget {
                   ],
                 ),
               ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('File: ${widget.fileName}'),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('File: $fileName'),
-                      const SizedBox(height: 16),
-                      for (
-                        var index = 0;
-                        index < inspection.columns.length;
-                        index++
-                      )
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Text(
-                            '${index + 1}. ${inspection.columns[index]}',
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outlineVariant,
+                            ),
                           ),
                         ),
+                        child: const Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Source Column',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                'Association',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        height: 520,
+                        child: ListView.builder(
+                          itemCount: widget.inspection.columns.length,
+                          itemBuilder: (context, index) {
+                            final column = widget.inspection.columns[index];
+                            final value =
+                                _assignments[column] ??
+                                LogTenFieldAssociation.ignore;
+                            return Container(
+                              color: index.isEven
+                                  ? Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest
+                                        .withValues(alpha: 0.35)
+                                  : null,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      column,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child:
+                                        DropdownButtonFormField<
+                                          LogTenFieldAssociation
+                                        >(
+                                          initialValue: value,
+                                          decoration: const InputDecoration(
+                                            border: OutlineInputBorder(),
+                                            isDense: true,
+                                          ),
+                                          items: [
+                                            for (final option
+                                                in LogTenFieldAssociation
+                                                    .values)
+                                              DropdownMenuItem(
+                                                value: option,
+                                                child: Text(option.label),
+                                              ),
+                                          ],
+                                          onChanged: (selection) {
+                                            if (selection == null) return;
+                                            setState(() {
+                                              _assignments[column] = selection;
+                                            });
+                                          },
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -88,11 +218,39 @@ class LogTenProImportOptionsDialog extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    FilledButton(
+                    const Text('Timezone'),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: 220,
+                      child: DropdownButtonFormField<int>(
+                        initialValue: _timezoneOffsetMinutes,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        items: [
+                          for (final option in timezoneOptions)
+                            DropdownMenuItem(
+                              value: option.offsetMinutes,
+                              child: Text(option.label),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setState(() => _timezoneOffsetMinutes = value);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Close'),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: _submit,
+                      child: const Text('Import'),
                     ),
                   ],
                 ),
@@ -103,4 +261,17 @@ class LogTenProImportOptionsDialog extends StatelessWidget {
       ),
     );
   }
+}
+
+List<LogTenTimezoneOption> _buildTimezoneOptions() {
+  return [
+    for (var offset = -12; offset <= 14; offset += 1)
+      LogTenTimezoneOption(
+        label: offset == 0
+            ? 'UTC (Zulu)'
+            : 'UTC${offset > 0 ? '+' : '-'}'
+                  '${offset.abs().toString().padLeft(2, '0')}:00',
+        offsetMinutes: offset * 60,
+      ),
+  ];
 }
