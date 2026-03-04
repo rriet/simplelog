@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  archive: ^4.0.9
   bonsoir: ^6.0.1
   croppy: any
   crypto: 3.0.7
@@ -53,6 +54,7 @@ dependencies:
   riverpod: any
   sqlite3: ^2.9.3
   url_launcher: 6.3.2
+  xml: ^6.6.1
 dev_dependencies:
   build_runner: 2.11.1
   custom_lint: ^0.8.1

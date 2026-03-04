@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/database/user_settings_json.dart';
+import 'package:simplelog/data/import/qatar_airways_import_options.dart';
 import 'package:simplelog/data/import/simplelog_import_options.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
@@ -10,6 +11,7 @@ import 'package:simplelog/state/providers/flight_factoring_settings_provider.dar
 /// Persists CSV import options in `user_profiles.settings_json`.
 class ImportOptionsPreferences {
   static const _simplePrefix = 'import.simplelog.';
+  static const _qatarPrefix = 'import.qatar.';
   static const _swPrefix = 'import.southwest.';
 
   /// Loads import options used for legacy SimpleLog CSV files.
@@ -103,6 +105,33 @@ class ImportOptionsPreferences {
       settings[flightFactoringSettingsKey] = jsonEncode(
         factoringSettings.toJson(),
       );
+    });
+  }
+
+  /// Loads import options used for Qatar Airways workbook files.
+  static Future<QatarAirwaysImportOptions> loadQatarAirways({
+    required AppDatabase db,
+    CrewPosition fallbackPosition = CrewPosition.sic,
+  }) async {
+    final settings = await UserSettingsJsonStore(db).load();
+    return QatarAirwaysImportOptions(
+      defaultPosition:
+          _parseCrewPosition(
+            settings['${_qatarPrefix}defaultPosition'] as String?,
+          ) ??
+          fallbackPosition,
+      myName: (settings['${_qatarPrefix}myName'] as String?) ?? '',
+    );
+  }
+
+  /// Saves import options used for Qatar Airways workbook files.
+  static Future<void> saveQatarAirways(
+    AppDatabase db,
+    QatarAirwaysImportOptions value,
+  ) async {
+    await UserSettingsJsonStore(db).patch((settings) {
+      settings['${_qatarPrefix}defaultPosition'] = value.defaultPosition.name;
+      settings['${_qatarPrefix}myName'] = value.myName;
     });
   }
 

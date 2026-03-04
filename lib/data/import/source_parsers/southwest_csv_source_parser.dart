@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/flight/flight_calculations.dart';
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
 import 'package:simplelog/data/import/normalized_import_models.dart';
@@ -130,6 +131,9 @@ class SouthwestCsvSourceParser {
         final aircraftType = ImportedAircraftTypeDraft(
           code: typeCode.isEmpty ? 'UNKNOWN' : typeCode,
           family: _southwestFamily(typeCode),
+          longName: typeCode.isEmpty ? 'UNKNOWN' : typeCode,
+          manufacturer: '',
+          category: AircraftCategory.landplane,
           engineType: EngineType.jet,
           mtow: 0,
           engineCount: 2,

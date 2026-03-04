@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:drift/drift.dart';
 import 'package:simplelog/data/database/app_database.dart';
-import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/import/normalized_import_models.dart';
 import 'package:simplelog/data/import/simplelog_import_result.dart';
 
@@ -167,6 +166,8 @@ class NormalizedImportPersistenceService {
     if (aircraftId.created) counters.aircrafts += 1;
 
     final flightKey = _flightDateKey(
+      record.departureAirport.icao,
+      record.arrivalAirport.icao,
       record.departureDateTime,
       record.arrivalDateTime,
     );
@@ -496,19 +497,30 @@ class NormalizedImportPersistenceService {
 SELECT f.id AS flight_id,
        f.arrival_date_time AS arrival_date_time,
        f.departure_date_time_id AS departure_timeline_id,
-       tl.event_date_time AS departure_date_time
+       tl.event_date_time AS departure_date_time,
+       dep.icao AS departure_airport_icao,
+       arr.icao AS arrival_airport_icao
 FROM flights f
 INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
+INNER JOIN airports dep ON dep.id = f.departure_airport_id
+INNER JOIN airports arr ON arr.id = f.arrival_airport_id
 ''',
-      readsFrom: {db.flights, db.timeLines},
+      readsFrom: {db.flights, db.timeLines, db.airports},
     );
     final rows = await query.get();
     for (final row in rows) {
       final flightId = row.read<int>('flight_id');
       final departureTimelineId = row.read<int>('departure_timeline_id');
+      final departureAirportIcao = row.read<String>('departure_airport_icao');
+      final arrivalAirportIcao = row.read<String>('arrival_airport_icao');
       final departure = row.read<DateTime>('departure_date_time');
       final arrival = row.readNullable<DateTime>('arrival_date_time');
-      result[_flightDateKey(departure, arrival)] = _ExistingFlightData(
+      result[_flightDateKey(
+        departureAirportIcao,
+        arrivalAirportIcao,
+        departure,
+        arrival,
+      )] = _ExistingFlightData(
         flightId: flightId,
         departureTimelineId: departureTimelineId,
       );
@@ -644,9 +656,15 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       );
       final mergedLongName = _mergeText(
         existing.longName,
-        clean,
-        clean.isNotEmpty,
+        draft.longName,
+        draft.longName.trim().isNotEmpty,
       );
+      final mergedManufacturer = _mergeText(
+        existing.manufacturer,
+        draft.manufacturer,
+        draft.manufacturer.trim().isNotEmpty,
+      );
+      final mergedCategory = draft.category;
       final mergedEngineType = draft.engineType;
       final mergedMtow = draft.mtow > 0 ? draft.mtow : existing.mtow;
       final mergedEngineCount = draft.engineCount > 0
@@ -660,6 +678,8 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       final hasAircraftTypeChanges =
           (mergedFamily ?? clean) != existing.family ||
           (mergedLongName ?? clean) != existing.longName ||
+          mergedManufacturer != existing.manufacturer ||
+          mergedCategory != existing.category ||
           mergedEngineType != existing.engineType ||
           mergedMtow != existing.mtow ||
           mergedEngineCount != existing.engineCount ||
@@ -677,6 +697,8 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
         AircraftTypesCompanion(
           family: Value(mergedFamily ?? clean),
           longName: Value(mergedLongName ?? clean),
+          manufacturer: Value(mergedManufacturer),
+          category: Value(mergedCategory),
           engineType: Value(mergedEngineType),
           mtow: Value(mergedMtow),
           engineCount: Value(mergedEngineCount),
@@ -690,6 +712,8 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       cache[key] = existing.copyWith(
         family: mergedFamily ?? clean,
         longName: mergedLongName ?? clean,
+        manufacturer: Value(mergedManufacturer),
+        category: mergedCategory,
         engineType: mergedEngineType,
         mtow: mergedMtow,
         engineCount: mergedEngineCount,
@@ -707,9 +731,11 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
           AircraftTypesCompanion.insert(
             code: clean,
             family: draft.family.trim().isEmpty ? clean : draft.family.trim(),
-            longName: clean,
-            manufacturer: const Value(null),
-            category: AircraftCategory.landplane,
+            longName: draft.longName.trim().isEmpty ? clean : draft.longName,
+            manufacturer: draft.manufacturer.trim().isEmpty
+                ? const Value(null)
+                : Value(draft.manufacturer.trim()),
+            category: draft.category,
             engineType: draft.engineType,
             mtow: draft.mtow,
             engineCount: draft.engineCount == 0 ? 1 : draft.engineCount,
@@ -724,8 +750,11 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       id: id,
       code: clean,
       family: draft.family.trim().isEmpty ? clean : draft.family.trim(),
-      longName: clean,
-      category: AircraftCategory.landplane,
+      longName: draft.longName.trim().isEmpty ? clean : draft.longName.trim(),
+      manufacturer: draft.manufacturer.trim().isEmpty
+          ? null
+          : draft.manufacturer.trim(),
+      category: draft.category,
       engineType: draft.engineType,
       mtow: draft.mtow,
       engineCount: draft.engineCount == 0 ? 1 : draft.engineCount,
@@ -760,10 +789,16 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       final mergedTypeId = aircraftTypeId;
       final mergedMtow = normalizedMtow ?? existing.mtow;
       final mergedSimulator = draft.isSimulator;
+      final mergedNotes = _mergeText(
+        existing.notes,
+        draft.notes,
+        draft.notes.trim().isNotEmpty,
+      );
       final hasAircraftChanges =
           mergedTypeId != existing.aircraftTypeId ||
           mergedMtow != existing.mtow ||
-          mergedSimulator != existing.isSimulator;
+          mergedSimulator != existing.isSimulator ||
+          mergedNotes != existing.notes;
       if (!hasAircraftChanges) {
         return _IdResult(id: existing.id, created: false);
       }
@@ -775,6 +810,7 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
           aircraftTypeId: Value(mergedTypeId),
           mtow: Value(mergedMtow),
           isSimulator: Value(mergedSimulator),
+          notes: Value(mergedNotes),
         ),
       );
 
@@ -782,6 +818,7 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
         aircraftTypeId: mergedTypeId,
         mtow: Value(mergedMtow),
         isSimulator: mergedSimulator,
+        notes: Value(mergedNotes),
       );
       return _IdResult(id: existing.id, created: false);
     }
@@ -796,6 +833,9 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
             isSimulator: draft.isSimulator,
             isFavorite: false,
             isLocked: false,
+            notes: draft.notes.trim().isEmpty
+                ? const Value(null)
+                : Value(draft.notes.trim()),
           ),
         );
     cache[key] = Aircraft(
@@ -806,6 +846,7 @@ INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
       isSimulator: draft.isSimulator,
       isFavorite: false,
       isLocked: false,
+      notes: draft.notes.trim().isEmpty ? null : draft.notes.trim(),
     );
     return _IdResult(id: id, created: true);
   }
@@ -965,8 +1006,15 @@ String _airportKey(String icao) => icao.trim().toLowerCase();
 
 String _crewKey(String name) => name.trim().toLowerCase();
 
-String _flightDateKey(DateTime departure, DateTime? arrival) {
-  return '${departure.millisecondsSinceEpoch}|'
+String _flightDateKey(
+  String departureAirportIcao,
+  String arrivalAirportIcao,
+  DateTime departure,
+  DateTime? arrival,
+) {
+  return '${departureAirportIcao.trim().toUpperCase()}|'
+      '${arrivalAirportIcao.trim().toUpperCase()}|'
+      '${departure.millisecondsSinceEpoch}|'
       '${arrival?.millisecondsSinceEpoch ?? -1}';
 }
 

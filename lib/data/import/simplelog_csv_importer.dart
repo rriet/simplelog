@@ -1,9 +1,13 @@
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/import/import_operation_result.dart';
 import 'package:simplelog/data/import/normalized_import_persistence_service.dart';
+import 'package:simplelog/data/import/qatar_airways_import_options.dart';
+import 'package:simplelog/data/import/qatar_airways_workbook_inspector.dart';
 import 'package:simplelog/data/import/simplelog_import_options.dart';
 import 'package:simplelog/data/import/simplelog_import_result.dart';
 import 'package:simplelog/data/import/source_parsers/legacy_simplelog_csv_source_parser.dart';
+import 'package:simplelog/data/import/source_parsers/logten_pro_tsv_source_parser.dart';
+import 'package:simplelog/data/import/source_parsers/qatar_airways_xlsx_source_parser.dart';
 import 'package:simplelog/data/import/source_parsers/southwest_csv_source_parser.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
 
@@ -14,6 +18,8 @@ class SimpleLogCsvImporter {
   /// Creates an importer bound to the given [db] instance.
   SimpleLogCsvImporter(this.db)
     : _legacyParser = const LegacySimpleLogCsvSourceParser(),
+      _logTenProParser = const LogTenProTsvSourceParser(),
+      _qatarParser = const QatarAirwaysXlsxSourceParser(),
       _southwestParser = const SouthwestCsvSourceParser(),
       _persistence = NormalizedImportPersistenceService(db);
 
@@ -21,6 +27,8 @@ class SimpleLogCsvImporter {
   final AppDatabase db;
 
   final LegacySimpleLogCsvSourceParser _legacyParser;
+  final LogTenProTsvSourceParser _logTenProParser;
+  final QatarAirwaysXlsxSourceParser _qatarParser;
   final SouthwestCsvSourceParser _southwestParser;
   final NormalizedImportPersistenceService _persistence;
 
@@ -114,6 +122,112 @@ class SimpleLogCsvImporter {
         ImportFailure(
           type: ImportFailureType.unexpected,
           message: 'Unexpected Southwest import error.',
+          exception: error,
+        ),
+      );
+    }
+  }
+
+  /// Imports Qatar Airways workbook rows using direct field mapping.
+  Future<SimpleLogImportResult> importQatarAirwaysWorkbook(
+    QatarAirwaysWorkbookInspection workbook, {
+    required QatarAirwaysImportOptions options,
+    ImportProgressCallback? onProgress,
+  }) async {
+    final existingAirports = await db.select(db.airports).get();
+    final airportsByIata = <String, Airport>{
+      for (final airport in existingAirports)
+        if ((airport.iata ?? '').trim().isNotEmpty)
+          airport.iata!.trim().toLowerCase(): airport,
+    };
+    final batch = _qatarParser.parse(
+      workbook,
+      options: options,
+      existingAirportsByIata: airportsByIata,
+    );
+    return _persistence.importBatch(batch, onProgress: onProgress);
+  }
+
+  /// Safe variant of [importQatarAirwaysWorkbook].
+  Future<ImportOperationResult<SimpleLogImportResult>>
+  importQatarAirwaysWorkbookSafely(
+    QatarAirwaysWorkbookInspection workbook, {
+    required QatarAirwaysImportOptions options,
+    ImportProgressCallback? onProgress,
+  }) async {
+    try {
+      final result = await importQatarAirwaysWorkbook(
+        workbook,
+        options: options,
+        onProgress: onProgress,
+      );
+      return ImportOperationResult.success(result);
+    } on FormatException catch (error) {
+      return ImportOperationResult.failure(
+        ImportFailure(
+          type: ImportFailureType.invalidFormat,
+          message: 'Invalid Qatar Airways workbook format.',
+          exception: error,
+        ),
+      );
+    } on Object catch (error) {
+      return ImportOperationResult.failure(
+        ImportFailure(
+          type: ImportFailureType.unexpected,
+          message: 'Unexpected Qatar Airways import error.',
+          exception: error,
+        ),
+      );
+    }
+  }
+
+  /// Imports a LogTen Pro tab-separated export.
+  Future<SimpleLogImportResult> importLogTenProTsv(
+    String content, {
+    ImportProgressCallback? onProgress,
+  }) async {
+    final existingAirports = await db.select(db.airports).get();
+    final airportsByIcao = <String, Airport>{
+      for (final airport in existingAirports)
+        airport.icao.trim().toLowerCase(): airport,
+    };
+    final airportsByIata = <String, Airport>{
+      for (final airport in existingAirports)
+        if ((airport.iata ?? '').trim().isNotEmpty)
+          airport.iata!.trim().toLowerCase(): airport,
+    };
+    final batch = _logTenProParser.parse(
+      content,
+      existingAirportsByIcao: airportsByIcao,
+      existingAirportsByIata: airportsByIata,
+    );
+    return _persistence.importBatch(batch, onProgress: onProgress);
+  }
+
+  /// Safe variant of [importLogTenProTsv].
+  Future<ImportOperationResult<SimpleLogImportResult>> importLogTenProTsvSafely(
+    String content, {
+    ImportProgressCallback? onProgress,
+  }) async {
+    try {
+      final result = await importLogTenProTsv(
+        content,
+        onProgress: onProgress,
+      );
+      return ImportOperationResult.success(result);
+    } on FormatException catch (error) {
+      return ImportOperationResult.failure(
+        ImportFailure(
+          type: ImportFailureType.parseError,
+          message: error.message,
+          exception: error,
+        ),
+      );
+    } on Object catch (error) {
+      return ImportOperationResult.failure(
+        ImportFailure(
+          type: ImportFailureType.unexpected,
+          message: 'Unexpected LogTen Pro import error.',
           exception: error,
         ),
       );

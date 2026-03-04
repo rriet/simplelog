@@ -21,12 +21,33 @@ class AirportEditScreen extends ConsumerStatefulWidget {
     required this.item,
     super.key,
     this.isCreate = false,
+    this.initialIcao = '',
+    this.initialIata = '',
+    this.initialName = '',
+    this.initialCity = '',
+    this.initialCountry = '',
   });
 
   /// Initial airport value.
   final Airport item;
+
   /// Whether screen is in create mode.
   final bool isCreate;
+
+  /// Optional default ICAO used only in create mode.
+  final String initialIcao;
+
+  /// Optional default IATA used only in create mode.
+  final String initialIata;
+
+  /// Optional default name used only in create mode.
+  final String initialName;
+
+  /// Optional default city used only in create mode.
+  final String initialCity;
+
+  /// Optional default country used only in create mode.
+  final String initialCountry;
 
   @override
   ConsumerState<AirportEditScreen> createState() => _AirportEditScreenState();
@@ -50,19 +71,19 @@ class _AirportEditScreenState extends ConsumerState<AirportEditScreen> {
     super.initState();
     final item = widget.item;
     _icaoController = TextEditingController(
-      text: widget.isCreate ? '' : item.icao,
+      text: widget.isCreate ? widget.initialIcao : item.icao,
     );
     _iataController = TextEditingController(
-      text: widget.isCreate ? '' : (item.iata ?? ''),
+      text: widget.isCreate ? widget.initialIata : (item.iata ?? ''),
     );
     _nameController = TextEditingController(
-      text: widget.isCreate ? '' : (item.name ?? ''),
+      text: widget.isCreate ? widget.initialName : (item.name ?? ''),
     );
     _cityController = TextEditingController(
-      text: widget.isCreate ? '' : (item.city ?? ''),
+      text: widget.isCreate ? widget.initialCity : (item.city ?? ''),
     );
     _countryController = TextEditingController(
-      text: widget.isCreate ? '' : (item.country ?? ''),
+      text: widget.isCreate ? widget.initialCountry : (item.country ?? ''),
     );
     _latitude = widget.isCreate ? 0 : item.latitude;
     _longitude = widget.isCreate ? 0 : item.longitude;

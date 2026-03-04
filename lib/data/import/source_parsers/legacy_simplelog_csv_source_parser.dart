@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/flight/flight_calculations.dart';
+import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
 import 'package:simplelog/data/import/normalized_import_models.dart';
@@ -156,6 +157,9 @@ class LegacySimpleLogCsvSourceParser {
         final aircraftType = ImportedAircraftTypeDraft(
           code: get(idxModelCode).trim(),
           family: get(idxModelGroup).trim(),
+          longName: get(idxModelCode).trim(),
+          manufacturer: '',
+          category: AircraftCategory.landplane,
           engineType: _mapEngineType(get(idxModelEngine).trim()),
           mtow: typeMtow,
           engineCount: _parseBool(get(idxModelMultiEngine)) ? 2 : 1,

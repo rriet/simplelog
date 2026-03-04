@@ -2,6 +2,7 @@
 // Repeating field docs for every scalar here adds noise without adding meaning.
 // ignore_for_file: public_member_api_docs
 
+import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
 
@@ -120,6 +121,9 @@ class ImportedAircraftTypeDraft {
   const ImportedAircraftTypeDraft({
     required this.code,
     required this.family,
+    required this.longName,
+    required this.manufacturer,
+    required this.category,
     required this.engineType,
     required this.mtow,
     required this.engineCount,
@@ -134,6 +138,15 @@ class ImportedAircraftTypeDraft {
 
   /// Type family.
   final String family;
+
+  /// Human-readable long type name.
+  final String longName;
+
+  /// Manufacturer display name.
+  final String manufacturer;
+
+  /// Aircraft category.
+  final AircraftCategory category;
 
   /// Engine type.
   final EngineType engineType;
@@ -164,6 +177,7 @@ class ImportedAircraftDraft {
     required this.registration,
     required this.mtow,
     required this.isSimulator,
+    this.notes = '',
   });
 
   /// Registration.
@@ -174,6 +188,9 @@ class ImportedAircraftDraft {
 
   /// Whether the row is a simulator device.
   final bool isSimulator;
+
+  /// Optional aircraft notes.
+  final String notes;
 }
 
 /// Shared crew draft used by normalized records.

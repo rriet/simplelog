@@ -25,14 +25,24 @@ class AircraftEditScreen extends ConsumerStatefulWidget {
     super.key,
     this.isCreate = false,
     this.initialIsSimulator,
+    this.initialRegistration = '',
+    this.initialAircraftTypeId,
   });
 
   /// Initial aircraft value.
   final Aircraft item;
+
   /// Whether screen is in create mode.
   final bool isCreate;
+
   /// Optional simulator-mode default for create flow.
   final bool? initialIsSimulator;
+
+  /// Optional default registration used only in create mode.
+  final String initialRegistration;
+
+  /// Optional default aircraft type used only in create mode.
+  final int? initialAircraftTypeId;
 
   @override
   ConsumerState<AircraftEditScreen> createState() => _AircraftEditScreenState();
@@ -53,7 +63,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     super.initState();
     final item = widget.item;
     _registrationController = TextEditingController(
-      text: widget.isCreate ? '' : item.registration,
+      text: widget.isCreate ? widget.initialRegistration : item.registration,
     );
     _mtowController = TextEditingController(
       text: widget.isCreate ? '' : _mtowText(item.mtow),
@@ -61,7 +71,9 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     _notesController = TextEditingController(
       text: widget.isCreate ? '' : (item.notes ?? ''),
     );
-    _aircraftTypeId = widget.isCreate ? null : item.aircraftTypeId;
+    _aircraftTypeId = widget.isCreate
+        ? widget.initialAircraftTypeId
+        : item.aircraftTypeId;
     _isSimulatorMode = widget.isCreate
         ? (widget.initialIsSimulator ?? item.isSimulator)
         : item.isSimulator;

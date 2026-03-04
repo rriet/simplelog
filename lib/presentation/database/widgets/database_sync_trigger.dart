@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
@@ -15,9 +16,16 @@ import 'package:simplelog/data/import/dashboard_rules_seed_importer.dart';
 import 'package:simplelog/data/import/import_operation_result.dart';
 import 'package:simplelog/data/import/import_source_dispatcher.dart';
 import 'package:simplelog/data/import/legacy_simplelog_db_importer.dart';
+import 'package:simplelog/data/import/logten_pro_tsv_inspector.dart';
+import 'package:simplelog/data/import/qatar_airways_import_options.dart';
+import 'package:simplelog/data/import/qatar_airways_workbook_inspector.dart';
 import 'package:simplelog/data/import/simplelog_csv_importer.dart';
+import 'package:simplelog/features/aircraft/presentation/aircraft_edit_screen.dart';
+import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
 import 'package:simplelog/presentation/database/widgets/import_options_preferences.dart';
 import 'package:simplelog/presentation/database/widgets/local_sync_dialog.dart';
+import 'package:simplelog/presentation/database/widgets/qatar_airways_import_options_dialog.dart';
+import 'package:simplelog/presentation/database/widgets/qatar_airways_preflight_dialogs.dart';
 import 'package:simplelog/presentation/database/widgets/simplelog_import_options_dialog.dart';
 import 'package:simplelog/presentation/database/widgets/southwest_import_options_dialog.dart';
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
@@ -32,6 +40,8 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   const DatabaseSyncTrigger({super.key});
 
   static const _sourceDispatcher = ImportSourceDispatcher();
+  static const _logTenProInspector = LogTenProTsvInspector();
+  static const _qatarAirwaysInspector = QatarAirwaysWorkbookInspector();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -76,11 +86,13 @@ class DatabaseSyncTrigger extends ConsumerWidget {
             const SizedBox(height: 12),
             _DatabaseSectionCard(
               title: 'Import / Export',
-              subtitle: 'Move data in and out using CSV.',
+              subtitle:
+                  'Import supported files with automatic format '
+                  'detection, or export CSV.',
               children: [
                 _DatabaseActionButton(
                   icon: Icons.upload_file,
-                  label: 'Import CSV',
+                  label: 'Import File',
                   onPressed: () => _importCsv(context, ref),
                 ),
                 const SizedBox(height: 8),
@@ -132,7 +144,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   Future<void> _importCsv(BuildContext context, WidgetRef ref) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['csv', 'sqlite', 'db'],
+      allowedExtensions: const ['csv', 'sqlite', 'db', 'xlsx', 'txt', 'tsv'],
       withData: true,
     );
     if (result == null || result.files.isEmpty) return;
@@ -150,7 +162,8 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     final content = _decodeCsvBytes(bytes);
     final type = _sourceDispatcher.detect(
       fileName: file.name,
-      content: content,
+      content: file.name.toLowerCase().endsWith('.xlsx') ? null : content,
+      bytes: bytes,
     );
     if (!context.mounted) return;
     final db = ref.read(databaseProvider);
@@ -176,6 +189,87 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         outcome = await importer.importCsvSafely(
           content,
           options: options,
+          onProgress: (processed, total) => progress.value = _ImportProgress(
+            processed: processed,
+            total: total,
+          ),
+        );
+      } finally {
+        progress.dispose();
+      }
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      if (!context.mounted) return;
+      if (!outcome.isSuccess) {
+        final message = _buildImportErrorMessage(outcome.failure);
+        await _showInfoDialog(context, message);
+        return;
+      }
+      await _showImportSummary(context, outcome.data!);
+    } else if (type == ImportSourceKind.qatarAirwaysXlsx) {
+      final inspection = _qatarAirwaysInspector.inspect(bytes);
+      if (inspection == null) {
+        await _showInfoDialog(context, 'Unsupported Qatar Airways workbook.');
+        return;
+      }
+      _logQatarAirwaysColumns(inspection);
+      final selfCrew = await _loadSelfCrew(db);
+      if (!context.mounted) return;
+      if (selfCrew == null) {
+        await _showInfoDialog(
+          context,
+          'Select one crew member as self before importing Qatar Airways data.',
+        );
+        return;
+      }
+      if (!context.mounted) return;
+      final airportsReady = await _resolveMissingQatarAirports(
+        context,
+        db: db,
+        inspection: inspection,
+      );
+      if (!airportsReady || !context.mounted) return;
+      final aircraftReady = await _resolveMissingQatarSimulatorAircraft(
+        context,
+        db: db,
+        inspection: inspection,
+      );
+      if (!aircraftReady || !context.mounted) return;
+      final initialOptions = await ImportOptionsPreferences.loadQatarAirways(
+        db: db,
+      );
+      if (!context.mounted) return;
+      final options = await QatarAirwaysImportOptionsDialog.show(
+        context,
+        fileName: file.name,
+        inspection: inspection,
+        initial: initialOptions,
+      );
+      if (options == null || !context.mounted) return;
+      await ImportOptionsPreferences.saveQatarAirways(db, options);
+      if (!context.mounted) return;
+      await _importQatarAirwaysWorkbook(
+        context,
+        db: db,
+        inspection: inspection,
+        options: options,
+      );
+    } else if (type == ImportSourceKind.logTenProTsv) {
+      final inspection = _logTenProInspector.inspect(content);
+      if (inspection == null) {
+        await _showInfoDialog(context, 'Unsupported LogTen Pro export.');
+        return;
+      }
+      _logLogTenProColumns(inspection);
+      final importer = SimpleLogCsvImporter(db);
+      final progress = ValueNotifier<_ImportProgress>(
+        const _ImportProgress(processed: 0, total: 0),
+      );
+      _showImportProgressDialog(context, progress);
+      ImportOperationResult<SimpleLogImportResult>? outcome;
+      try {
+        outcome = await importer.importLogTenProTsvSafely(
+          content,
           onProgress: (processed, total) => progress.value = _ImportProgress(
             processed: processed,
             total: total,
@@ -543,6 +637,308 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   Future<void> _showInfoDialog(BuildContext context, String message) async {
     if (!context.mounted) return;
     await showAppMessageDialog(context, message: message);
+  }
+
+  Future<void> _importQatarAirwaysWorkbook(
+    BuildContext context, {
+    required AppDatabase db,
+    required QatarAirwaysWorkbookInspection inspection,
+    required QatarAirwaysImportOptions options,
+  }) async {
+    final importer = SimpleLogCsvImporter(db);
+    final progress = ValueNotifier<_ImportProgress>(
+      const _ImportProgress(processed: 0, total: 0),
+    );
+    _showImportProgressDialog(context, progress);
+    ImportOperationResult<SimpleLogImportResult>? outcome;
+    try {
+      outcome = await importer.importQatarAirwaysWorkbookSafely(
+        inspection,
+        options: options,
+        onProgress: (processed, total) => progress.value = _ImportProgress(
+          processed: processed,
+          total: total,
+        ),
+      );
+    } finally {
+      progress.dispose();
+    }
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    if (!context.mounted) return;
+    if (!outcome.isSuccess) {
+      final message = _buildImportErrorMessage(outcome.failure);
+      await _showInfoDialog(context, message);
+      return;
+    }
+    await _showImportSummary(context, outcome.data!);
+  }
+
+  void _logQatarAirwaysColumns(QatarAirwaysWorkbookInspection inspection) {
+    debugPrint(
+      'Qatar Airways workbook detected. '
+      'Sheet: ${inspection.sheetName}. '
+      'Columns: ${inspection.columns.length}',
+    );
+    for (var index = 0; index < inspection.columns.length; index++) {
+      debugPrint(
+        'Qatar Airways column ${index + 1}: ${inspection.columns[index]}',
+      );
+    }
+  }
+
+  void _logLogTenProColumns(LogTenProTsvInspection inspection) {
+    debugPrint(
+      'LogTen Pro export detected. Columns: ${inspection.columns.length}',
+    );
+    for (var index = 0; index < inspection.columns.length; index++) {
+      debugPrint(
+        'LogTen Pro column ${index + 1}: ${inspection.columns[index]}',
+      );
+    }
+  }
+
+  Future<CrewData?> _loadSelfCrew(AppDatabase db) async {
+    final crew = await (db.select(
+      db.crew,
+    )..where((tbl) => tbl.isSelf.equals(true))).get();
+    return crew.isEmpty ? null : crew.first;
+  }
+
+  Future<bool> _resolveMissingQatarAirports(
+    BuildContext context, {
+    required AppDatabase db,
+    required QatarAirwaysWorkbookInspection inspection,
+  }) async {
+    while (true) {
+      final missingCodes = await _findMissingQatarAirportCodes(db, inspection);
+      if (missingCodes.isEmpty) {
+        return true;
+      }
+      if (!context.mounted) return false;
+      final shouldContinue = await QatarAirwaysMissingAirportsDialog.show(
+        context,
+        missingIataCodes: missingCodes,
+        onCreateAirport: (iataCode) =>
+            _createMissingAirport(context, db: db, iataCode: iataCode),
+      );
+      if (!shouldContinue) {
+        return false;
+      }
+    }
+  }
+
+  Future<bool> _resolveMissingQatarSimulatorAircraft(
+    BuildContext context, {
+    required AppDatabase db,
+    required QatarAirwaysWorkbookInspection inspection,
+  }) async {
+    while (true) {
+      final missingAircraft = await _findMissingQatarSimulatorAircraft(
+        db,
+        inspection,
+      );
+      if (missingAircraft.isEmpty) {
+        return true;
+      }
+      if (!context.mounted) return false;
+      final shouldContinue = await QatarAirwaysMissingAircraftDialog.show(
+        context,
+        missingAircraft: missingAircraft,
+        onCreateAircraft: (aircraft) => _createMissingSimulatorAircraft(
+          context,
+          db: db,
+          missingAircraft: aircraft,
+        ),
+      );
+      if (!shouldContinue) {
+        return false;
+      }
+    }
+  }
+
+  Future<List<String>> _findMissingQatarAirportCodes(
+    AppDatabase db,
+    QatarAirwaysWorkbookInspection inspection,
+  ) async {
+    final airports = await db.select(db.airports).get();
+    final existingIata = <String>{
+      for (final airport in airports)
+        if ((airport.iata ?? '').trim().isNotEmpty)
+          airport.iata!.trim().toUpperCase(),
+    };
+    final missing = <String>{};
+    for (final row in inspection.rows) {
+      final flightDate = row.read('DATE (dd/mm/yy)').trim();
+      if (flightDate.isEmpty) continue;
+      final departure = row.read('DEPARTURE PLACE').trim().toUpperCase();
+      final arrival = row.read('ARRIVAL PLACE').trim().toUpperCase();
+      if (departure.length == 3 && !existingIata.contains(departure)) {
+        missing.add(departure);
+      }
+      if (arrival.length == 3 && !existingIata.contains(arrival)) {
+        missing.add(arrival);
+      }
+    }
+    final ordered = missing.toList()..sort();
+    return ordered;
+  }
+
+  Future<List<QatarAirwaysMissingAircraft>> _findMissingQatarSimulatorAircraft(
+    AppDatabase db,
+    QatarAirwaysWorkbookInspection inspection,
+  ) async {
+    final aircraftRows = await db.select(db.aircrafts).get();
+    final existingRegistrations = <String>{
+      for (final aircraft in aircraftRows)
+        aircraft.registration.trim().toUpperCase(),
+    };
+    final missing = <String, QatarAirwaysMissingAircraft>{};
+    for (final row in inspection.rows) {
+      final simulatorRegistration = row
+          .read('FSTD SESSION TYPE')
+          .trim()
+          .toUpperCase();
+      if (simulatorRegistration.isEmpty ||
+          existingRegistrations.contains(simulatorRegistration)) {
+        continue;
+      }
+      missing[simulatorRegistration] = QatarAirwaysMissingAircraft(
+        registration: simulatorRegistration,
+        aircraftTypeCode: row.read('AIRCRAFT TYPE').trim().toUpperCase(),
+      );
+    }
+    final ordered = missing.values.toList()
+      ..sort((left, right) => left.registration.compareTo(right.registration));
+    return ordered;
+  }
+
+  Future<bool> _createMissingAirport(
+    BuildContext context, {
+    required AppDatabase db,
+    required String iataCode,
+  }) async {
+    final isCompact = MediaQuery.of(context).size.width < 600;
+    const placeholder = Airport(
+      id: kPlaceholderId,
+      icao: '',
+      latitude: 0,
+      longitude: 0,
+      isFavorite: false,
+      isLocked: false,
+    );
+    if (isCompact) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => AirportEditScreen(
+            item: placeholder,
+            isCreate: true,
+            initialIata: iataCode,
+          ),
+        ),
+      );
+    } else {
+      await showDialog<Object?>(
+        context: context,
+        builder: (context) {
+          final size = MediaQuery.sizeOf(context);
+          return Dialog(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 520,
+                maxHeight: size.height * 0.9,
+              ),
+              child: AirportEditScreen(
+                item: placeholder,
+                isCreate: true,
+                initialIata: iataCode,
+              ),
+            ),
+          );
+        },
+      );
+    }
+    final airports = await db.select(db.airports).get();
+    return airports.any(
+      (airport) => airport.iata?.trim().toUpperCase() == iataCode,
+    );
+  }
+
+  Future<bool> _createMissingSimulatorAircraft(
+    BuildContext context, {
+    required AppDatabase db,
+    required QatarAirwaysMissingAircraft missingAircraft,
+  }) async {
+    final aircraftTypeId = await _findExistingQatarAircraftTypeId(
+      db,
+      typeCode: missingAircraft.aircraftTypeCode,
+    );
+    if (!context.mounted) return false;
+    final isCompact = MediaQuery.of(context).size.width < 600;
+    const placeholder = Aircraft(
+      id: kPlaceholderId,
+      aircraftTypeId: 0,
+      registration: '',
+      isSimulator: true,
+      isFavorite: false,
+      isLocked: false,
+    );
+    if (isCompact) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => AircraftEditScreen(
+            item: placeholder,
+            isCreate: true,
+            initialIsSimulator: true,
+            initialRegistration: missingAircraft.registration,
+            initialAircraftTypeId: aircraftTypeId,
+          ),
+        ),
+      );
+    } else {
+      if (!context.mounted) return false;
+      await showDialog<Object?>(
+        context: context,
+        builder: (context) => Dialog(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: MediaQuery.of(context).size.height * 0.9,
+            ),
+            child: SizedBox(
+              width: 520,
+              child: AircraftEditScreen(
+                item: placeholder,
+                isCreate: true,
+                initialIsSimulator: true,
+                initialRegistration: missingAircraft.registration,
+                initialAircraftTypeId: aircraftTypeId,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    final aircraftRows = await db.select(db.aircrafts).get();
+    return aircraftRows.any(
+      (aircraft) =>
+          aircraft.registration.trim().toUpperCase() ==
+          missingAircraft.registration,
+    );
+  }
+
+  Future<int?> _findExistingQatarAircraftTypeId(
+    AppDatabase db, {
+    required String typeCode,
+  }) async {
+    final normalizedCode = typeCode.trim().toUpperCase();
+    if (normalizedCode.isEmpty) {
+      return null;
+    }
+    final existing = await (db.select(
+      db.aircraftTypes,
+    )..where((tbl) => tbl.code.equals(normalizedCode))).getSingleOrNull();
+    return existing?.id;
   }
 
   Future<Uint8List> _readDatabaseBytes(WidgetRef ref) async {
