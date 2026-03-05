@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/flight/flight_calculations.dart';
+import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
@@ -263,7 +264,10 @@ class SouthwestCsvSourceParser {
             takeoffsNight: takeoffsNight,
             landingsDay: landingsDay,
             landingsNight: landingsNight,
-            pilotFunction: selfIsPic ? 'PF' : 'PNF',
+            pilotFunction: PilotFunctionLogic.fromTakeoffLanding(
+              takeoffCount: takeoffCount,
+              landingCount: landingCount,
+            ),
             approachType: '',
             remarks: '',
             notes: _buildSouthwestNotes(

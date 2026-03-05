@@ -14,6 +14,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/flight/flight_calculations.dart';
+import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/maps/map_tile_caching.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
@@ -27,6 +28,7 @@ import 'package:simplelog/data/models/reports_models.dart';
 import 'package:simplelog/data/reports/report_xsl_template_loader.dart';
 import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
+import 'package:simplelog/features/logbook/presentation/flight_edit_screen.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:simplelog/features/reports/application/report_pdf_application_service.dart';
@@ -166,6 +168,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     totals: ReportsTotals.zero(),
     flights: [],
   );
+  int _batchFlightCount = 0;
   List<LogbookEntry> _entries = const [];
   DateTime? _firstFlightDate;
   DateTime? _lastFlightDate;
@@ -315,8 +318,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   bool _shouldPreloadDetails(ReportsPanelSection? section) {
     return section == ReportsPanelSection.flights ||
-        section == ReportsPanelSection.analizes ||
-        section == ReportsPanelSection.batch;
+        section == ReportsPanelSection.analizes;
   }
 
   bool get _isFiltersOnlySection {
@@ -403,6 +405,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             totals: _applyTypeSelectionToTotals(totals, eventTypes),
             flights: const [],
           );
+          _batchFlightCount = eventTypes.flights ? totals.sectors : 0;
           _entries = const [];
           _detailsLoaded = false;
           _entriesLoaded = false;
@@ -439,6 +442,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             totals: _applyTypeSelectionToTotals(result.totals, eventTypes),
             flights: flights,
           );
+          _batchFlightCount = eventTypes.flights ? flights.length : 0;
           _entries = const [];
           _detailsLoaded = true;
           _entriesLoaded = false;
@@ -547,6 +551,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         if (!mounted) return;
         setState(() {
           _data = ReportsData(totals: _data.totals, flights: flights);
+          _batchFlightCount = eventTypes.flights ? flights.length : 0;
           _entries = const [];
           _detailsLoaded = true;
           _entriesLoaded = false;
@@ -584,6 +589,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             totals: _applyTypeSelectionToTotals(result.totals, eventTypes),
             flights: flights,
           );
+          _batchFlightCount = eventTypes.flights ? flights.length : 0;
           _entries = entries;
           _detailsLoaded = true;
           _entriesLoaded = includeEntries;
@@ -724,7 +730,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         includeEntries: true,
         includePilotNames: _needsPilotNamesForFilters(),
       );
-    } else if (index == 2 || index == 3 || index == 4) {
+    } else if (index == 2 || index == 3) {
       await _ensureDetailsLoaded(
         includeEntries: false,
         includePilotNames: _needsPilotNamesForFilters(),
@@ -2247,7 +2253,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Widget _buildBatchSection({required bool compact}) {
-    final filteredCount = _data.flights.length;
+    final filteredCount = _batchFlightCount;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760),
@@ -2336,8 +2342,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<void> _checkBatchFlights() async {
+    await _ensureBatchFlightsReadyForActions();
     final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
     final issues = <String>[];
+    String hhmm(int minutes) => TimeInputField.formatMinutes(minutes);
     for (final snapshot in snapshots.values) {
       final block = snapshot.timeBlockMinutes;
       if (snapshot.arrivalUtc != null &&
@@ -2353,26 +2361,33 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         issues.add('Flight ${snapshot.id}: missing airport ICAO.');
       }
       final totalBlock = snapshot.timeTotalBlockMinutes;
-      final normalizedFunction = snapshot.pilotFunction.trim().toUpperCase();
+      final takeoffs = snapshot.takeOffsDays + snapshot.takeOffsNight;
+      final landings = snapshot.landingsDay + snapshot.landingsNight;
+      final canonicalFunction = PilotFunctionLogic.canonicalize(
+        snapshot.pilotFunction,
+        takeoffCount: takeoffs,
+        landingCount: landings,
+      );
       if (snapshot.arrivalUtc != null) {
         final chocksBlock = snapshot.arrivalUtc!
             .difference(snapshot.departureUtc)
             .inMinutes;
         if (chocksBlock >= 0 && totalBlock != chocksBlock) {
           issues.add(
-            'Flight ${snapshot.id}: chocks block ($chocksBlock) '
-            '!= Total Block ($totalBlock).',
+            'Flight ${snapshot.id}: chocks block (${hhmm(chocksBlock)}) '
+            '!= Total Block (${hhmm(totalBlock)}).',
           );
         }
         if (chocksBlock >= 0 &&
-            (normalizedFunction == 'PF' ||
-                normalizedFunction == 'PNF' ||
-                normalizedFunction == 'PF/PNF' ||
-                normalizedFunction == 'PNF/PF')) {
+            (canonicalFunction == PilotFunctionLogic.pf ||
+                canonicalFunction == PilotFunctionLogic.pnf ||
+                canonicalFunction == PilotFunctionLogic.pfPnf ||
+                canonicalFunction == PilotFunctionLogic.pnfPf)) {
           if (block != totalBlock) {
             issues.add(
-              'Flight ${snapshot.id}: pilot function $normalizedFunction '
-              'requires Block ($block) = Total Block ($totalBlock).',
+              'Flight ${snapshot.id}: pilot function $canonicalFunction '
+              'requires Block (${hhmm(block)}) = '
+              'Total Block (${hhmm(totalBlock)}).',
             );
           }
         }
@@ -2383,8 +2398,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             .inMinutes;
         if (flightElapsed >= 0 && snapshot.timeFlightMinutes != flightElapsed) {
           issues.add(
-            'Flight ${snapshot.id}: elapsed flight time ($flightElapsed) '
-            '!= Flight time (${snapshot.timeFlightMinutes}).',
+            'Flight ${snapshot.id}: elapsed flight time '
+            '(${hhmm(flightElapsed)}) != Flight time '
+            '(${hhmm(snapshot.timeFlightMinutes)}).',
           );
         }
       }
@@ -2396,7 +2412,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       if (crewTotal != block) {
         issues.add(
           'Flight ${snapshot.id}: PIC+PICUS+SIC+Dual '
-          '($crewTotal) != Block ($block).',
+          '(${hhmm(crewTotal)}) != Block (${hhmm(block)}).',
         );
       }
       final cappedFields = <(String, int)>[
@@ -2405,16 +2421,27 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         ('IFR', snapshot.timeIFRMinutes),
         ('CrossCountry', snapshot.timeCrossCountryMinutes),
         ('Flight', snapshot.timeFlightMinutes),
-        ('Custom1', snapshot.timeCustom1Minutes),
-        ('Custom2', snapshot.timeCustom2Minutes),
-        ('Custom3', snapshot.timeCustom3Minutes),
-        ('Custom4', snapshot.timeCustom4Minutes),
       ];
       for (final (label, minutes) in cappedFields) {
         if (minutes > block) {
           issues.add(
             'Flight ${snapshot.id}: $label time '
-            '($minutes) is greater than Block ($block).',
+            '(${hhmm(minutes)}) is greater than Block (${hhmm(block)}).',
+          );
+        }
+      }
+      final customCappedFields = <(String, int)>[
+        ('Custom1', snapshot.timeCustom1Minutes),
+        ('Custom2', snapshot.timeCustom2Minutes),
+        ('Custom3', snapshot.timeCustom3Minutes),
+        ('Custom4', snapshot.timeCustom4Minutes),
+      ];
+      for (final (label, minutes) in customCappedFields) {
+        if (minutes > totalBlock) {
+          issues.add(
+            'Flight ${snapshot.id}: $label time '
+            '(${hhmm(minutes)}) is greater than '
+            'Total Block (${hhmm(totalBlock)}).',
           );
         }
       }
@@ -2449,26 +2476,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         }
       }
 
-      final function = normalizedFunction;
-      final takeoffs = snapshot.takeOffsDays + snapshot.takeOffsNight;
-      final landings = snapshot.landingsDay + snapshot.landingsNight;
-      final expected = switch (function) {
-        'PF' => (takeoffs: 1, landings: 1),
-        'PNF' => (takeoffs: 0, landings: 0),
-        'PF/PNF' => (takeoffs: 1, landings: 0),
-        'PNF/PF' => (takeoffs: 0, landings: 1),
-        _ => null,
-      };
-      if (expected == null) {
+      final patternOk = PilotFunctionLogic.matchesTakeoffLandingPattern(
+        canonicalFunction,
+        takeoffCount: takeoffs,
+        landingCount: landings,
+      );
+      if (!patternOk) {
         issues.add(
-          'Flight ${snapshot.id}: pilot function "$function" '
-          'is not one of PF, PNF, PF/PNF, PNF/PF.',
-        );
-      } else if (takeoffs != expected.takeoffs ||
-          landings != expected.landings) {
-        issues.add(
-          'Flight ${snapshot.id}: takeoff/landing mismatch for $function '
-          '(takeoffs=$takeoffs, landings=$landings).',
+          'Flight ${snapshot.id}: takeoff/landing mismatch for '
+          '$canonicalFunction (takeoffs=$takeoffs, landings=$landings; '
+          '${PilotFunctionLogic.takeoffLandingRule(canonicalFunction)}).',
         );
       }
     }
@@ -2516,6 +2533,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       ),
     );
     final finalPosition = selected ?? CrewPosition.pic;
+    await _ensureBatchFlightsReadyForActions();
     final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
     final modifiable = _unlockedBatchSnapshots(snapshots);
     final skippedLocked = snapshots.length - modifiable.length;
@@ -2550,6 +2568,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (!mounted) return;
     final selected = await _BatchCalculateAllDialog.show(context);
     if (selected == null || selected.isEmpty) return;
+    await _ensureBatchFlightsReadyForActions();
     final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
     final modifiable = _unlockedBatchSnapshots(snapshots);
     final skippedLocked = snapshots.length - modifiable.length;
@@ -2615,6 +2634,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<void> _batchCalculateNight() async {
+    await _ensureBatchFlightsReadyForActions();
     final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
     final modifiable = _unlockedBatchSnapshots(snapshots);
     final skippedLocked = snapshots.length - modifiable.length;
@@ -2795,6 +2815,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     required _BatchFlightSnapshot Function(_BatchFlightSnapshot snapshot)
     mutate,
   }) async {
+    await _ensureBatchFlightsReadyForActions();
     final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
     final modifiable = _unlockedBatchSnapshots(snapshots);
     final skippedLocked = snapshots.length - modifiable.length;
@@ -2828,6 +2849,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   Set<int> _filteredFlightIds() {
     return _data.flights.map((row) => row.flightId).toSet();
+  }
+
+  Future<void> _ensureBatchFlightsReadyForActions() async {
+    if (_batchFlightCount <= 0) return;
+    if (_data.flights.isNotEmpty) return;
+    await _ensureDetailsLoaded(
+      includeEntries: false,
+      includePilotNames: _needsPilotNamesForFilters(),
+    );
   }
 
   Future<_BatchLockTargets> _loadBatchLockTargets({
@@ -3046,9 +3076,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       depTimeEpochSeconds: dep.millisecondsSinceEpoch ~/ 1000,
       arrTimeEpochSeconds: arr.millisecondsSinceEpoch ~/ 1000,
     );
-    final normalized = snapshot.pilotFunction.trim().toUpperCase();
-    final takeoffCount = (normalized == 'PF' || normalized == 'PF/PNF') ? 1 : 0;
-    final landingCount = (normalized == 'PF' || normalized == 'PNF/PF') ? 1 : 0;
+    final canonicalFunction = PilotFunctionLogic.canonicalize(
+      snapshot.pilotFunction,
+      takeoffCount: snapshot.takeOffsDays + snapshot.takeOffsNight,
+      landingCount: snapshot.landingsDay + snapshot.landingsNight,
+    );
+    final takeoffCount =
+        (canonicalFunction == PilotFunctionLogic.pf ||
+            canonicalFunction == PilotFunctionLogic.pfPnf)
+        ? 1
+        : 0;
+    final landingCount =
+        (canonicalFunction == PilotFunctionLogic.pf ||
+            canonicalFunction == PilotFunctionLogic.pnfPf)
+        ? 1
+        : 0;
     var takeoffsDay = 0;
     var takeoffsNight = 0;
     var landingsDay = 0;
@@ -3130,31 +3172,268 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<void> _showBatchIssues(List<String> issues) async {
+    final parsedIssues = issues
+        .map(_BatchIssueCardData.fromIssueLine)
+        .toList(growable: false);
+    final flightIds = parsedIssues
+        .map((issue) => issue.flightId)
+        .whereType<int>()
+        .toSet();
+    final entriesByFlight = await _loadIssueFlightEntries(flightIds);
+    if (!mounted) return;
     await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Flight checks'),
-        content: SizedBox(
-          width: 640,
-          child: issues.isEmpty
-              ? const Text('No flight issues found.')
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: issues.length,
-                  itemBuilder: (context, index) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Text(issues[index]),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: const Text('Flight checks'),
+          content: SizedBox(
+            width: 760,
+            child: parsedIssues.isEmpty
+                ? const Text('No flight issues found.')
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: parsedIssues.length,
+                    itemBuilder: (context, index) {
+                      final issue = parsedIssues[index];
+                      final flightId = issue.flightId;
+                      final entry = flightId == null
+                          ? null
+                          : entriesByFlight[flightId];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                issue.message,
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              if (entry != null) ...[
+                                const SizedBox(height: 8),
+                                InkWell(
+                                  onTap: () => unawaited(
+                                    LogbookEntryDialogs.show(
+                                      context,
+                                      entry: entry,
+                                      useCases: ref.read(
+                                        logbookUseCasesProvider,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.outlineVariant,
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(_issueFlightSummary(entry)),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    OutlinedButton.icon(
+                                      onPressed: () => unawaited(
+                                        LogbookEntryDialogs.show(
+                                          context,
+                                          entry: entry,
+                                          useCases: ref.read(
+                                            logbookUseCasesProvider,
+                                          ),
+                                        ),
+                                      ),
+                                      icon: const Icon(
+                                        Icons.visibility_outlined,
+                                      ),
+                                      label: const Text('Details'),
+                                    ),
+                                    OutlinedButton.icon(
+                                      onPressed: () async {
+                                        final useCases = ref.read(
+                                          logbookUseCasesProvider,
+                                        );
+                                        await useCases.toggleEntryLock(entry);
+                                        if (!mounted) return;
+                                        final refreshed = await useCases
+                                            .fetchEntryByTimelineId(
+                                              entry.timeLine.id,
+                                            );
+                                        if (refreshed != null &&
+                                            refreshed.flight != null &&
+                                            flightId != null) {
+                                          setStateDialog(() {
+                                            entriesByFlight[flightId] =
+                                                refreshed;
+                                          });
+                                        }
+                                      },
+                                      icon: Icon(
+                                        (entry.flight?.isLocked ?? false)
+                                            ? Icons.lock_open_outlined
+                                            : Icons.lock_outline,
+                                      ),
+                                      label: Text(
+                                        (entry.flight?.isLocked ?? false)
+                                            ? 'Unlock'
+                                            : 'Lock',
+                                      ),
+                                    ),
+                                    OutlinedButton.icon(
+                                      onPressed: () => unawaited(
+                                        _openFlightEditFromIssue(
+                                          flightId!,
+                                          onChanged: () async {
+                                            final useCases = ref.read(
+                                              logbookUseCasesProvider,
+                                            );
+                                            final refreshed = await useCases
+                                                .fetchEntryByTimelineId(
+                                                  entry.timeLine.id,
+                                                );
+                                            if (refreshed != null &&
+                                                refreshed.flight != null) {
+                                              setStateDialog(() {
+                                                entriesByFlight[flightId] =
+                                                    refreshed;
+                                              });
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.edit_outlined),
+                                      label: const Text('Edit'),
+                                    ),
+                                    OutlinedButton.icon(
+                                      onPressed: () async {
+                                        final useCases = ref.read(
+                                          logbookUseCasesProvider,
+                                        );
+                                        await useCases.deleteEntry(entry);
+                                        if (!mounted || flightId == null) {
+                                          return;
+                                        }
+                                        setStateDialog(() {
+                                          entriesByFlight.remove(flightId);
+                                        });
+                                      },
+                                      icon: const Icon(Icons.delete_outline),
+                                      label: const Text('Delete'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                ),
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
           ),
-        ],
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _openFlightEditFromIssue(
+    int flightId, {
+    Future<void> Function()? onChanged,
+  }) async {
+    if (!mounted) return;
+    final isCompact = MediaQuery.of(context).size.width < 600;
+    final screen = FlightEditScreen(flightId: flightId);
+    var changed = false;
+    if (isCompact) {
+      changed =
+          await Navigator.of(
+            context,
+          ).push<bool>(MaterialPageRoute(builder: (_) => screen)) ??
+          false;
+    } else {
+      changed =
+          await showDialog<bool>(
+            context: context,
+            builder: (context) => Dialog(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 640,
+                  maxHeight: MediaQuery.of(context).size.height * 0.9,
+                ),
+                child: SizedBox(width: 640, child: screen),
+              ),
+            ),
+          ) ??
+          false;
+    }
+    if (!changed) return;
+    if (onChanged != null) {
+      await onChanged();
+    }
+    await _loadOverviewData();
+    if (!mounted) return;
+    await _ensureDetailsLoaded(
+      includeEntries: false,
+      includePilotNames: _needsPilotNamesForFilters(),
+    );
+  }
+
+  String _issueFlightSummary(LogbookEntry entry) {
+    final dep = entry.timeLine.eventDateTime.toUtc();
+    final depDate = DateFormat('yyyy-MM-dd').format(dep);
+    final depTime = DateFormat('HH:mm').format(dep);
+    final arr = entry.flight?.arrivalDateTime;
+    final arrTime = arr == null ? '--:--' : DateFormat('HH:mm').format(arr);
+    final from = entry.departureAirport?.icao ?? '---';
+    final to = entry.arrivalAirport?.icao ?? '---';
+    final block = TimeInputField.formatMinutes(
+      entry.flight?.timeBlockMinutes ?? 0,
+    );
+    return '$depDate $from $depTime → $to $arrTime  Block $block';
+  }
+
+  Future<Map<int, LogbookEntry>> _loadIssueFlightEntries(
+    Set<int> flightIds,
+  ) async {
+    if (flightIds.isEmpty) return {};
+    final db = ref.read(databaseProvider);
+    final placeholders = List.filled(flightIds.length, '?').join(',');
+    final rows = await db
+        .customSelect(
+          '''
+SELECT id AS flight_id, departure_date_time_id AS timeline_id
+FROM flights
+WHERE id IN ($placeholders)
+''',
+          variables: flightIds.map(d.Variable<int>.new).toList(),
+          readsFrom: {db.flights},
+        )
+        .get();
+    final useCases = ref.read(logbookUseCasesProvider);
+    final result = <int, LogbookEntry>{};
+    for (final row in rows) {
+      final flightId = row.read<int>('flight_id');
+      final timelineId = row.read<int>('timeline_id');
+      final entry = await useCases.fetchEntryByTimelineId(timelineId);
+      if (entry?.flight != null) {
+        result[flightId] = entry!;
+      }
+    }
+    return result;
   }
 
   Future<void> _showBatchChanges(List<_BatchFlightChange> changes) async {
@@ -3201,6 +3480,29 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       ),
     );
   }
+}
+
+class _BatchIssueCardData {
+  const _BatchIssueCardData({
+    required this.flightId,
+    required this.message,
+  });
+
+  factory _BatchIssueCardData.fromIssueLine(String line) {
+    final match = RegExp(r'^Flight\s+(\d+):\s*(.*)$').firstMatch(line.trim());
+    if (match == null) {
+      return _BatchIssueCardData(flightId: null, message: line.trim());
+    }
+    final id = int.tryParse(match.group(1) ?? '');
+    final explanation = (match.group(2) ?? '').trim();
+    return _BatchIssueCardData(
+      flightId: id,
+      message: explanation.isEmpty ? line.trim() : explanation,
+    );
+  }
+
+  final int? flightId;
+  final String message;
 }
 
 enum _BatchCalcField {

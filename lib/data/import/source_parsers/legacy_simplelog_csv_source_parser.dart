@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/flight/flight_calculations.dart';
+import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
@@ -708,27 +709,11 @@ String _canonicalPilotFunction(
   required int takeoffCount,
   required int landingCount,
 }) {
-  final normalized = raw.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
-  switch (normalized) {
-    case 'PF':
-      return 'PF';
-    case 'PNF':
-    case 'PM':
-      return 'PNF';
-    case 'PF/PNF':
-      return 'PF/PNF';
-    case 'PNF/PF':
-    case 'PM/PF':
-      return 'PNF/PF';
-    case 'IRP3':
-      return 'IRP 3';
-    case 'IRP4':
-      return 'IRP 4';
-  }
-  if (takeoffCount > 0 && landingCount > 0) return 'PF';
-  if (takeoffCount > 0 && landingCount == 0) return 'PF/PNF';
-  if (takeoffCount == 0 && landingCount > 0) return 'PNF/PF';
-  return 'PNF';
+  return PilotFunctionLogic.canonicalize(
+    raw,
+    takeoffCount: takeoffCount,
+    landingCount: landingCount,
+  );
 }
 
 int _applyIrpFactoring({
