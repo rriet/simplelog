@@ -10,6 +10,7 @@ import 'package:simplelog/core/flight/flight_calculations.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/database/enums/pilot_function.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/data/models/airport_row.dart';
@@ -68,11 +69,16 @@ class FlightEditScreen extends ConsumerStatefulWidget {
 
 class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   static const String _pilotPf = 'PF';
-  static const String _pilotPnf = 'PNF';
-  static const String _pilotPfPnf = 'PF/PNF';
-  static const String _pilotPnfPf = 'PNF/PF';
-  static const String _pilotIrp3 = 'IRP 3';
-  static const String _pilotIrp4 = 'IRP 4';
+  static const String _pilotOther = 'OTHER';
+  static const List<PilotFunction> _pilotFunctionOptions = <PilotFunction>[
+    PilotFunction.pf,
+    PilotFunction.pnf,
+    PilotFunction.pfPnf,
+    PilotFunction.pnfPf,
+    PilotFunction.irp3,
+    PilotFunction.irp4,
+    PilotFunction.other,
+  ];
 
   final _remarksController = TextEditingController();
   final _notesController = TextEditingController();
@@ -301,7 +307,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final totalTakeoffs = flight.takeOffsDays + flight.takeOffsNight;
     final totalLandings = flight.landingsDay + flight.landingsNight;
     _pilotFunction = _normalizePilotFunction(
-      flight.pilotFunction,
+      flight.pilotFunction.label,
       fallbackTakeoffs: totalTakeoffs,
       fallbackLandings: totalLandings,
     );
@@ -1403,32 +1409,15 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
               child: DropdownInputField<String>(
                 label: l10n.fieldPilotFunction,
                 value: _pilotFunction,
-                items: [
-                  DropdownMenuItem(
-                    value: _pilotPf,
-                    child: Text(_pilotFunctionOptionLabel(_pilotPf)),
-                  ),
-                  DropdownMenuItem(
-                    value: _pilotPnf,
-                    child: Text(_pilotFunctionOptionLabel(_pilotPnf)),
-                  ),
-                  DropdownMenuItem(
-                    value: _pilotPfPnf,
-                    child: Text(_pilotFunctionOptionLabel(_pilotPfPnf)),
-                  ),
-                  DropdownMenuItem(
-                    value: _pilotPnfPf,
-                    child: Text(_pilotFunctionOptionLabel(_pilotPnfPf)),
-                  ),
-                  DropdownMenuItem(
-                    value: _pilotIrp3,
-                    child: Text(_pilotFunctionOptionLabel(_pilotIrp3)),
-                  ),
-                  DropdownMenuItem(
-                    value: _pilotIrp4,
-                    child: Text(_pilotFunctionOptionLabel(_pilotIrp4)),
-                  ),
-                ],
+                items: _pilotFunctionOptions
+                    .map((function) {
+                      final value = function.label;
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(_pilotFunctionOptionLabel(value)),
+                      );
+                    })
+                    .toList(growable: false),
                 onChanged: (value) =>
                     setState(() => _pilotFunction = value ?? _pilotPf),
               ),
@@ -2343,7 +2332,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     return 'Crew #$crewId';
   }
 
-  String _pilotFunctionOptionLabel(String value) => value;
+  String _pilotFunctionOptionLabel(String value) {
+    return value == _pilotOther ? 'Other' : value;
+  }
 
   String _pilotFunctionFromCounts(int takeoffs, int landings) {
     if (takeoffs > 0 && landings > 0) return 'PF';
@@ -2360,7 +2351,8 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         v == 'PF/PNF' ||
         v == 'PNF/PF' ||
         v == 'IRP 3' ||
-        v == 'IRP 4';
+        v == 'IRP 4' ||
+        v == _pilotOther;
   }
 
   String _normalizePilotFunction(

@@ -2570,18 +2570,16 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _pilotFunctionMeta = const VerificationMeta(
-    'pilotFunction',
-  );
   @override
-  late final GeneratedColumn<String> pilotFunction = GeneratedColumn<String>(
+  late final GeneratedColumnWithTypeConverter<PilotFunction, String>
+  pilotFunction = GeneratedColumn<String>(
     'pilot_function',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
     defaultValue: const Constant('PF'),
-  );
+  ).withConverter<PilotFunction>($FlightsTable.$converterpilotFunction);
   static const VerificationMeta _approachTypeMeta = const VerificationMeta(
     'approachType',
   );
@@ -3037,15 +3035,6 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     } else if (isInserting) {
       context.missing(_landingsNightMeta);
     }
-    if (data.containsKey('pilot_function')) {
-      context.handle(
-        _pilotFunctionMeta,
-        pilotFunction.isAcceptableOrUnknown(
-          data['pilot_function']!,
-          _pilotFunctionMeta,
-        ),
-      );
-    }
     if (data.containsKey('approach_type')) {
       context.handle(
         _approachTypeMeta,
@@ -3241,10 +3230,12 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
         DriftSqlType.int,
         data['${effectivePrefix}landings_night'],
       )!,
-      pilotFunction: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}pilot_function'],
-      )!,
+      pilotFunction: $FlightsTable.$converterpilotFunction.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}pilot_function'],
+        )!,
+      ),
       approachType: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}approach_type'],
@@ -3280,6 +3271,9 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
   $FlightsTable createAlias(String alias) {
     return $FlightsTable(attachedDatabase, alias);
   }
+
+  static TypeConverter<PilotFunction, String> $converterpilotFunction =
+      const PilotFunctionConverter();
 }
 
 class Flight extends DataClass implements Insertable<Flight> {
@@ -3377,7 +3371,7 @@ class Flight extends DataClass implements Insertable<Flight> {
   final int landingsNight;
 
   /// Pilot function label (e.g. PF/PNF/IRP3/IRP4).
-  final String pilotFunction;
+  final PilotFunction pilotFunction;
 
   /// Free-text approach type summary.
   final String approachType;
@@ -3482,7 +3476,11 @@ class Flight extends DataClass implements Insertable<Flight> {
     map['take_offs_night'] = Variable<int>(takeOffsNight);
     map['landings_day'] = Variable<int>(landingsDay);
     map['landings_night'] = Variable<int>(landingsNight);
-    map['pilot_function'] = Variable<String>(pilotFunction);
+    {
+      map['pilot_function'] = Variable<String>(
+        $FlightsTable.$converterpilotFunction.toSql(pilotFunction),
+      );
+    }
     map['approach_type'] = Variable<String>(approachType);
     map['remarks'] = Variable<String>(remarks);
     map['notes'] = Variable<String>(notes);
@@ -3604,7 +3602,7 @@ class Flight extends DataClass implements Insertable<Flight> {
       takeOffsNight: serializer.fromJson<int>(json['takeOffsNight']),
       landingsDay: serializer.fromJson<int>(json['landingsDay']),
       landingsNight: serializer.fromJson<int>(json['landingsNight']),
-      pilotFunction: serializer.fromJson<String>(json['pilotFunction']),
+      pilotFunction: serializer.fromJson<PilotFunction>(json['pilotFunction']),
       approachType: serializer.fromJson<String>(json['approachType']),
       remarks: serializer.fromJson<String>(json['remarks']),
       notes: serializer.fromJson<String>(json['notes']),
@@ -3653,7 +3651,7 @@ class Flight extends DataClass implements Insertable<Flight> {
       'takeOffsNight': serializer.toJson<int>(takeOffsNight),
       'landingsDay': serializer.toJson<int>(landingsDay),
       'landingsNight': serializer.toJson<int>(landingsNight),
-      'pilotFunction': serializer.toJson<String>(pilotFunction),
+      'pilotFunction': serializer.toJson<PilotFunction>(pilotFunction),
       'approachType': serializer.toJson<String>(approachType),
       'remarks': serializer.toJson<String>(remarks),
       'notes': serializer.toJson<String>(notes),
@@ -3696,7 +3694,7 @@ class Flight extends DataClass implements Insertable<Flight> {
     int? takeOffsNight,
     int? landingsDay,
     int? landingsNight,
-    String? pilotFunction,
+    PilotFunction? pilotFunction,
     String? approachType,
     String? remarks,
     String? notes,
@@ -4045,7 +4043,7 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
   final Value<int> takeOffsNight;
   final Value<int> landingsDay;
   final Value<int> landingsNight;
-  final Value<String> pilotFunction;
+  final Value<PilotFunction> pilotFunction;
   final Value<String> approachType;
   final Value<String> remarks;
   final Value<String> notes;
@@ -4291,7 +4289,7 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     Value<int>? takeOffsNight,
     Value<int>? landingsDay,
     Value<int>? landingsNight,
-    Value<String>? pilotFunction,
+    Value<PilotFunction>? pilotFunction,
     Value<String>? approachType,
     Value<String>? remarks,
     Value<String>? notes,
@@ -4455,7 +4453,9 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
       map['landings_night'] = Variable<int>(landingsNight.value);
     }
     if (pilotFunction.present) {
-      map['pilot_function'] = Variable<String>(pilotFunction.value);
+      map['pilot_function'] = Variable<String>(
+        $FlightsTable.$converterpilotFunction.toSql(pilotFunction.value),
+      );
     }
     if (approachType.present) {
       map['approach_type'] = Variable<String>(approachType.value);
@@ -12975,7 +12975,7 @@ typedef $$FlightsTableCreateCompanionBuilder =
       required int takeOffsNight,
       required int landingsDay,
       required int landingsNight,
-      Value<String> pilotFunction,
+      Value<PilotFunction> pilotFunction,
       required String approachType,
       required String remarks,
       required String notes,
@@ -13017,7 +13017,7 @@ typedef $$FlightsTableUpdateCompanionBuilder =
       Value<int> takeOffsNight,
       Value<int> landingsDay,
       Value<int> landingsNight,
-      Value<String> pilotFunction,
+      Value<PilotFunction> pilotFunction,
       Value<String> approachType,
       Value<String> remarks,
       Value<String> notes,
@@ -13280,9 +13280,10 @@ class $$FlightsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get pilotFunction => $composableBuilder(
+  ColumnWithTypeConverterFilters<PilotFunction, PilotFunction, String>
+  get pilotFunction => $composableBuilder(
     column: $table.pilotFunction,
-    builder: (column) => ColumnFilters(column),
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<String> get approachType => $composableBuilder(
@@ -13858,10 +13859,11 @@ class $$FlightsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get pilotFunction => $composableBuilder(
-    column: $table.pilotFunction,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<PilotFunction, String> get pilotFunction =>
+      $composableBuilder(
+        column: $table.pilotFunction,
+        builder: (column) => column,
+      );
 
   GeneratedColumn<String> get approachType => $composableBuilder(
     column: $table.approachType,
@@ -14077,7 +14079,7 @@ class $$FlightsTableTableManager
                 Value<int> takeOffsNight = const Value.absent(),
                 Value<int> landingsDay = const Value.absent(),
                 Value<int> landingsNight = const Value.absent(),
-                Value<String> pilotFunction = const Value.absent(),
+                Value<PilotFunction> pilotFunction = const Value.absent(),
                 Value<String> approachType = const Value.absent(),
                 Value<String> remarks = const Value.absent(),
                 Value<String> notes = const Value.absent(),
@@ -14159,7 +14161,7 @@ class $$FlightsTableTableManager
                 required int takeOffsNight,
                 required int landingsDay,
                 required int landingsNight,
-                Value<String> pilotFunction = const Value.absent(),
+                Value<PilotFunction> pilotFunction = const Value.absent(),
                 required String approachType,
                 required String remarks,
                 required String notes,

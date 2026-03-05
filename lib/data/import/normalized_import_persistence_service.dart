@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:drift/drift.dart';
+import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/import/normalized_import_models.dart';
 import 'package:simplelog/data/import/simplelog_import_result.dart';
@@ -229,7 +230,7 @@ class NormalizedImportPersistenceService {
           takeOffsNight: Value(record.takeoffsNight),
           landingsDay: Value(record.landingsDay),
           landingsNight: Value(record.landingsNight),
-          pilotFunction: Value(record.pilotFunction),
+          pilotFunction: Value(PilotFunctionLogic.parse(record.pilotFunction)),
           approachType: Value(record.approachType),
           remarks: Value(record.remarks),
           notes: Value(record.notes),
@@ -282,7 +283,9 @@ class NormalizedImportPersistenceService {
               takeOffsNight: record.takeoffsNight,
               landingsDay: record.landingsDay,
               landingsNight: record.landingsNight,
-              pilotFunction: Value(record.pilotFunction),
+              pilotFunction: Value(
+                PilotFunctionLogic.parse(record.pilotFunction),
+              ),
               approachType: record.approachType,
               remarks: record.remarks,
               notes: record.notes,

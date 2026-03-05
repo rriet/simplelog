@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:drift/drift.dart';
+import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_info_item.dart';
 import 'package:simplelog/data/models/duty_edit_data.dart';
@@ -344,7 +345,9 @@ class LogbookRepository implements LogbookRepositoryContract {
               takeOffsNight: input.takeOffsNight,
               landingsDay: input.landingsDay,
               landingsNight: input.landingsNight,
-              pilotFunction: Value(input.pilotFunction),
+              pilotFunction: Value(
+                PilotFunctionLogic.parse(input.pilotFunction),
+              ),
               approachType: input.approachType,
               remarks: input.remarks,
               notes: input.notes,
@@ -414,7 +417,7 @@ class LogbookRepository implements LogbookRepositoryContract {
               takeOffsNight: input.takeOffsNight,
               landingsDay: input.landingsDay,
               landingsNight: input.landingsNight,
-              pilotFunction: input.pilotFunction,
+              pilotFunction: PilotFunctionLogic.parse(input.pilotFunction),
               approachType: input.approachType,
               remarks: input.remarks,
               notes: input.notes,

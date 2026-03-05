@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import 'package:simplelog/data/database/converters/pilot_function_converter.dart';
 import 'package:simplelog/data/database/tables/aircrafts_table.dart';
 import 'package:simplelog/data/database/tables/airports_table.dart';
 import 'package:simplelog/data/database/tables/timeline_table.dart';
@@ -121,7 +122,11 @@ class Flights extends Table {
   IntColumn get landingsNight => integer()();
 
   /// Pilot function label (e.g. PF/PNF/IRP3/IRP4).
-  TextColumn get pilotFunction => text().withDefault(const Constant('PF'))();
+  TextColumn get pilotFunction => text()
+      .map(const PilotFunctionConverter())
+      .withDefault(
+        const Constant('PF'),
+      )();
 
   /// Free-text approach type summary.
   TextColumn get approachType => text()();

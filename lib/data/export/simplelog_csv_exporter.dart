@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
@@ -74,6 +75,7 @@ class SimpleLogCsvExporter {
     'Custom Time 2 Minutes',
     'Custom Time 3 Minutes',
     'Custom Time 4 Minutes',
+
     /// Total logged minutes (block for flights, total for simulators).
     'Total Minutes',
   ];
@@ -230,7 +232,7 @@ class SimpleLogCsvExporter {
                   case 'SIC Comments':
                     return crewSet.sic?.notes ?? '';
                   case 'Pilot Function':
-                    return flight.pilotFunction;
+                    return PilotFunctionLogic.fromEnum(flight.pilotFunction);
                   case 'Remarks':
                     return flight.remarks;
                   case 'Private notes':

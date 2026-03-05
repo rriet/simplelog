@@ -31,6 +31,7 @@ import 'package:simplelog/features/logbook/application/providers/logbook_feature
 import 'package:simplelog/features/logbook/presentation/flight_edit_screen.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_list_item.dart';
 import 'package:simplelog/features/reports/application/report_pdf_application_service.dart';
 import 'package:simplelog/presentation/reports/providers/report_pdf_application_service_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
@@ -169,6 +170,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     flights: [],
   );
   int _batchFlightCount = 0;
+  bool _isCheckingBatchFlights = false;
   List<LogbookEntry> _entries = const [];
   DateTime? _firstFlightDate;
   DateTime? _lastFlightDate;
@@ -318,7 +320,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   bool _shouldPreloadDetails(ReportsPanelSection? section) {
     return section == ReportsPanelSection.flights ||
-        section == ReportsPanelSection.analizes;
+        section == ReportsPanelSection.analizes ||
+        section == ReportsPanelSection.batch;
   }
 
   bool get _isFiltersOnlySection {
@@ -730,7 +733,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         includeEntries: true,
         includePilotNames: _needsPilotNamesForFilters(),
       );
-    } else if (index == 2 || index == 3) {
+    } else if (index == 2 || index == 3 || index == 4) {
       await _ensureDetailsLoaded(
         includeEntries: false,
         includePilotNames: _needsPilotNamesForFilters(),
@@ -2273,11 +2276,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  if (_isCheckingBatchFlights) ...[
+                    const SizedBox(height: 8),
+                    const LinearProgressIndicator(minHeight: 3),
+                  ],
                   const SizedBox(height: 8),
                   _ReportsActionButton(
-                    icon: Icons.rule_folder_outlined,
-                    label: 'Check Flights',
-                    onPressed: filteredCount == 0 ? null : _checkBatchFlights,
+                    icon: _isCheckingBatchFlights
+                        ? Icons.hourglass_top
+                        : Icons.rule_folder_outlined,
+                    label: _isCheckingBatchFlights
+                        ? 'Checking...'
+                        : 'Check Flights',
+                    onPressed: filteredCount == 0 || _isCheckingBatchFlights
+                        ? null
+                        : _checkBatchFlights,
                   ),
                   const SizedBox(height: 12),
                   Divider(
@@ -2342,48 +2355,77 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<void> _checkBatchFlights() async {
-    await _ensureBatchFlightsReadyForActions();
-    final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
-    final issues = <String>[];
-    String hhmm(int minutes) => TimeInputField.formatMinutes(minutes);
-    for (final snapshot in snapshots.values) {
-      final block = snapshot.timeBlockMinutes;
-      if (snapshot.arrivalUtc != null &&
-          snapshot.arrivalUtc!.isBefore(snapshot.departureUtc)) {
-        issues.add(
-          'Flight ${snapshot.id}: arrival is before departure.',
-        );
-      }
-      if (block < 0 || snapshot.timeTotalBlockMinutes < 0) {
-        issues.add('Flight ${snapshot.id}: negative block values.');
-      }
-      if (snapshot.fromIcao.trim().isEmpty || snapshot.toIcao.trim().isEmpty) {
-        issues.add('Flight ${snapshot.id}: missing airport ICAO.');
-      }
-      final totalBlock = snapshot.timeTotalBlockMinutes;
-      final takeoffs = snapshot.takeOffsDays + snapshot.takeOffsNight;
-      final landings = snapshot.landingsDay + snapshot.landingsNight;
-      final canonicalFunction = PilotFunctionLogic.canonicalize(
-        snapshot.pilotFunction,
-        takeoffCount: takeoffs,
-        landingCount: landings,
-      );
-      if (snapshot.arrivalUtc != null) {
-        final chocksBlock = snapshot.arrivalUtc!
-            .difference(snapshot.departureUtc)
-            .inMinutes;
-        if (chocksBlock >= 0 && totalBlock != chocksBlock) {
-          issues.add(
-            'Flight ${snapshot.id}: chocks block (${hhmm(chocksBlock)}) '
-            '!= Total Block (${hhmm(totalBlock)}).',
-          );
+    if (_isCheckingBatchFlights) return;
+    if (!mounted) return;
+    final selectedChecks = await _BatchFlightChecksDialog.show(context);
+    if (selectedChecks == null || selectedChecks.isEmpty) {
+      return;
+    }
+    setState(() => _isCheckingBatchFlights = true);
+    try {
+      await _ensureBatchFlightsReadyForActions();
+      final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
+      final issues = <String>[];
+      String hhmm(int minutes) => TimeInputField.formatMinutes(minutes);
+      final yieldStopwatch = Stopwatch()..start();
+      for (final snapshot in snapshots.values) {
+        if (yieldStopwatch.elapsedMicroseconds >= 16000) {
+          await Future<void>.delayed(Duration.zero);
+          yieldStopwatch.reset();
         }
-        if (chocksBlock >= 0 &&
-            (canonicalFunction == PilotFunctionLogic.pf ||
-                canonicalFunction == PilotFunctionLogic.pnf ||
-                canonicalFunction == PilotFunctionLogic.pfPnf ||
-                canonicalFunction == PilotFunctionLogic.pnfPf)) {
-          if (block != totalBlock) {
+        final block = snapshot.timeBlockMinutes;
+        if (selectedChecks.contains(_BatchFlightCheck.timelineConsistency)) {
+          if (snapshot.arrivalUtc != null &&
+              snapshot.arrivalUtc!.isBefore(snapshot.departureUtc)) {
+            issues.add(
+              'Flight ${snapshot.id}: arrival is before departure.',
+            );
+          }
+          if (block < 0 || snapshot.timeTotalBlockMinutes < 0) {
+            issues.add('Flight ${snapshot.id}: negative block values.');
+          }
+          if (snapshot.fromIcao.trim().isEmpty ||
+              snapshot.toIcao.trim().isEmpty) {
+            issues.add('Flight ${snapshot.id}: missing airport ICAO.');
+          }
+        }
+        final totalBlock = snapshot.timeTotalBlockMinutes;
+        final takeoffs = snapshot.takeOffsDays + snapshot.takeOffsNight;
+        final landings = snapshot.landingsDay + snapshot.landingsNight;
+        final canonicalFunction = PilotFunctionLogic.canonicalize(
+          snapshot.pilotFunction,
+          takeoffCount: takeoffs,
+          landingCount: landings,
+        );
+        if (snapshot.arrivalUtc != null &&
+            (selectedChecks.contains(
+                  _BatchFlightCheck.chocksEqualsTotalBlock,
+                ) ||
+                selectedChecks.contains(
+                  _BatchFlightCheck.pilotFunctionRequiresBlockEqualsTotalBlock,
+                ))) {
+          final chocksBlock = snapshot.arrivalUtc!
+              .difference(snapshot.departureUtc)
+              .inMinutes;
+          if (selectedChecks.contains(
+                _BatchFlightCheck.chocksEqualsTotalBlock,
+              ) &&
+              chocksBlock >= 0 &&
+              totalBlock != chocksBlock) {
+            issues.add(
+              'Flight ${snapshot.id}: chocks block (${hhmm(chocksBlock)}) '
+              '!= Total Block (${hhmm(totalBlock)}).',
+            );
+          }
+          if (selectedChecks.contains(
+                _BatchFlightCheck.pilotFunctionRequiresBlockEqualsTotalBlock,
+              ) &&
+              chocksBlock >= 0 &&
+              (canonicalFunction == PilotFunctionLogic.pf ||
+                  canonicalFunction == PilotFunctionLogic.pnf ||
+                  canonicalFunction == PilotFunctionLogic.pfPnf ||
+                  canonicalFunction == PilotFunctionLogic.pnfPf) &&
+              block != totalBlock) {
             issues.add(
               'Flight ${snapshot.id}: pilot function $canonicalFunction '
               'requires Block (${hhmm(block)}) = '
@@ -2391,105 +2433,126 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             );
           }
         }
-      }
-      if (snapshot.takeoffUtc != null && snapshot.landingUtc != null) {
-        final flightElapsed = snapshot.landingUtc!
-            .difference(snapshot.takeoffUtc!)
-            .inMinutes;
-        if (flightElapsed >= 0 && snapshot.timeFlightMinutes != flightElapsed) {
-          issues.add(
-            'Flight ${snapshot.id}: elapsed flight time '
-            '(${hhmm(flightElapsed)}) != Flight time '
-            '(${hhmm(snapshot.timeFlightMinutes)}).',
+        if (selectedChecks.contains(
+              _BatchFlightCheck.flightElapsedMatchesTimes,
+            ) &&
+            snapshot.takeoffUtc != null &&
+            snapshot.landingUtc != null) {
+          final flightElapsed = snapshot.landingUtc!
+              .difference(snapshot.takeoffUtc!)
+              .inMinutes;
+          if (flightElapsed >= 0 &&
+              snapshot.timeFlightMinutes != flightElapsed) {
+            issues.add(
+              'Flight ${snapshot.id}: elapsed flight time '
+              '(${hhmm(flightElapsed)}) != Flight time '
+              '(${hhmm(snapshot.timeFlightMinutes)}).',
+            );
+          }
+        }
+        if (selectedChecks.contains(_BatchFlightCheck.crewTimesEqualBlock)) {
+          final crewTotal =
+              snapshot.timePICMinutes +
+              snapshot.timePICUSMinutes +
+              snapshot.timeSICMinutes +
+              snapshot.timeDualMinutes;
+          if (crewTotal != block) {
+            issues.add(
+              'Flight ${snapshot.id}: PIC+PICUS+SIC+Dual '
+              '(${hhmm(crewTotal)}) != Block (${hhmm(block)}).',
+            );
+          }
+        }
+        if (selectedChecks.contains(_BatchFlightCheck.cappedTimesWithinBlock)) {
+          final cappedFields = <(String, int)>[
+            ('Night', snapshot.timeNightMinutes),
+            ('Instrument', snapshot.timeInstrumentMinutes),
+            ('Simulated Instrument', snapshot.timeSimulatedInstrumentMinutes),
+            ('IFR', snapshot.timeIFRMinutes),
+            ('CrossCountry', snapshot.timeCrossCountryMinutes),
+            ('Flight', snapshot.timeFlightMinutes),
+          ];
+          for (final (label, minutes) in cappedFields) {
+            if (minutes > block) {
+              issues.add(
+                'Flight ${snapshot.id}: $label time '
+                '(${hhmm(minutes)}) is greater than Block (${hhmm(block)}).',
+              );
+            }
+          }
+        }
+        if (selectedChecks.contains(
+          _BatchFlightCheck.customTimesWithinTotalBlock,
+        )) {
+          final customCappedFields = <(String, int)>[
+            ('Custom1', snapshot.timeCustom1Minutes),
+            ('Custom2', snapshot.timeCustom2Minutes),
+            ('Custom3', snapshot.timeCustom3Minutes),
+            ('Custom4', snapshot.timeCustom4Minutes),
+          ];
+          for (final (label, minutes) in customCappedFields) {
+            if (minutes > totalBlock) {
+              issues.add(
+                'Flight ${snapshot.id}: $label time '
+                '(${hhmm(minutes)}) is greater than '
+                'Total Block (${hhmm(totalBlock)}).',
+              );
+            }
+          }
+        }
+        if (selectedChecks.contains(_BatchFlightCheck.distanceValidation)) {
+          if (snapshot.distanceNm < 0) {
+            issues.add('Flight ${snapshot.id}: negative distance.');
+          } else if (snapshot.fromLatitude != null &&
+              snapshot.fromLongitude != null &&
+              snapshot.toLatitude != null &&
+              snapshot.toLongitude != null &&
+              (snapshot.fromIcao != snapshot.toIcao) &&
+              snapshot.distanceNm > 0) {
+            final calcDistance = FlightCalculations(
+              latDep: snapshot.fromLatitude!,
+              longDep: snapshot.fromLongitude!,
+              latArr: snapshot.toLatitude!,
+              longArr: snapshot.toLongitude!,
+              depTimeEpochSeconds:
+                  snapshot.departureUtc.millisecondsSinceEpoch ~/ 1000,
+              arrTimeEpochSeconds:
+                  (snapshot.arrivalUtc ?? snapshot.departureUtc)
+                      .millisecondsSinceEpoch ~/
+                  1000,
+            ).flightDistanceNm.round();
+            final diff = (snapshot.distanceNm - calcDistance).abs();
+            final tolerance = math.max(30, (calcDistance * 0.4).round());
+            if (diff > tolerance) {
+              issues.add(
+                'Flight ${snapshot.id}: distance seems incorrect '
+                '(stored ${snapshot.distanceNm}nm, '
+                'great-circle ${calcDistance}nm).',
+              );
+            }
+          }
+        }
+        if (selectedChecks.contains(_BatchFlightCheck.pilotFunctionPattern)) {
+          final patternOk = PilotFunctionLogic.matchesTakeoffLandingPattern(
+            canonicalFunction,
+            takeoffCount: takeoffs,
+            landingCount: landings,
           );
+          if (!patternOk) {
+            issues.add(
+              'Flight ${snapshot.id}: takeoff/landing mismatch for '
+              '$canonicalFunction (takeoffs=$takeoffs, landings=$landings; '
+              '${PilotFunctionLogic.takeoffLandingRule(canonicalFunction)}).',
+            );
+          }
         }
       }
-      final crewTotal =
-          snapshot.timePICMinutes +
-          snapshot.timePICUSMinutes +
-          snapshot.timeSICMinutes +
-          snapshot.timeDualMinutes;
-      if (crewTotal != block) {
-        issues.add(
-          'Flight ${snapshot.id}: PIC+PICUS+SIC+Dual '
-          '(${hhmm(crewTotal)}) != Block (${hhmm(block)}).',
-        );
-      }
-      final cappedFields = <(String, int)>[
-        ('Night', snapshot.timeNightMinutes),
-        ('Instrument', snapshot.timeInstrumentMinutes),
-        ('IFR', snapshot.timeIFRMinutes),
-        ('CrossCountry', snapshot.timeCrossCountryMinutes),
-        ('Flight', snapshot.timeFlightMinutes),
-      ];
-      for (final (label, minutes) in cappedFields) {
-        if (minutes > block) {
-          issues.add(
-            'Flight ${snapshot.id}: $label time '
-            '(${hhmm(minutes)}) is greater than Block (${hhmm(block)}).',
-          );
-        }
-      }
-      final customCappedFields = <(String, int)>[
-        ('Custom1', snapshot.timeCustom1Minutes),
-        ('Custom2', snapshot.timeCustom2Minutes),
-        ('Custom3', snapshot.timeCustom3Minutes),
-        ('Custom4', snapshot.timeCustom4Minutes),
-      ];
-      for (final (label, minutes) in customCappedFields) {
-        if (minutes > totalBlock) {
-          issues.add(
-            'Flight ${snapshot.id}: $label time '
-            '(${hhmm(minutes)}) is greater than '
-            'Total Block (${hhmm(totalBlock)}).',
-          );
-        }
-      }
-      if (snapshot.distanceNm < 0) {
-        issues.add('Flight ${snapshot.id}: negative distance.');
-      } else if (snapshot.fromLatitude != null &&
-          snapshot.fromLongitude != null &&
-          snapshot.toLatitude != null &&
-          snapshot.toLongitude != null &&
-          (snapshot.fromIcao != snapshot.toIcao) &&
-          snapshot.distanceNm > 0) {
-        final calcDistance = FlightCalculations(
-          latDep: snapshot.fromLatitude!,
-          longDep: snapshot.fromLongitude!,
-          latArr: snapshot.toLatitude!,
-          longArr: snapshot.toLongitude!,
-          depTimeEpochSeconds:
-              snapshot.departureUtc.millisecondsSinceEpoch ~/ 1000,
-          arrTimeEpochSeconds:
-              (snapshot.arrivalUtc ?? snapshot.departureUtc)
-                  .millisecondsSinceEpoch ~/
-              1000,
-        ).flightDistanceNm.round();
-        final diff = (snapshot.distanceNm - calcDistance).abs();
-        final tolerance = math.max(30, (calcDistance * 0.4).round());
-        if (diff > tolerance) {
-          issues.add(
-            'Flight ${snapshot.id}: distance seems incorrect '
-            '(stored ${snapshot.distanceNm}nm, '
-            'great-circle ${calcDistance}nm).',
-          );
-        }
-      }
-
-      final patternOk = PilotFunctionLogic.matchesTakeoffLandingPattern(
-        canonicalFunction,
-        takeoffCount: takeoffs,
-        landingCount: landings,
-      );
-      if (!patternOk) {
-        issues.add(
-          'Flight ${snapshot.id}: takeoff/landing mismatch for '
-          '$canonicalFunction (takeoffs=$takeoffs, landings=$landings; '
-          '${PilotFunctionLogic.takeoffLandingRule(canonicalFunction)}).',
-        );
+      await _showBatchIssues(issues);
+    } finally {
+      if (mounted) {
+        setState(() => _isCheckingBatchFlights = false);
       }
     }
-    await _showBatchIssues(issues);
   }
 
   Future<void> _batchSetCrewSelf() async {
@@ -3008,7 +3071,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         fromLongitude: depAirport?.longitude,
         toLatitude: arrAirport?.latitude,
         toLongitude: arrAirport?.longitude,
-        pilotFunction: flight.pilotFunction,
+        pilotFunction: PilotFunctionLogic.fromEnum(flight.pilotFunction),
         timeBlockMinutes: flight.timeBlockMinutes,
         timeTotalBlockMinutes: flight.timeTotalBlockMinutes,
         timePICMinutes: flight.timePICMinutes,
@@ -3017,6 +3080,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         timeDualMinutes: flight.timeDualMinutes,
         timeIFRMinutes: flight.timeIFRMinutes,
         timeInstrumentMinutes: flight.timeInstrumentMinutes,
+        timeSimulatedInstrumentMinutes: flight.timeSimulatedInstrumentMinutes,
         timeNightMinutes: flight.timeNightMinutes,
         timeCrossCountryMinutes: flight.timeCrossCountryMinutes,
         timeCustom1Minutes: flight.timeCustom1Minutes,
@@ -3175,7 +3239,27 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final parsedIssues = issues
         .map(_BatchIssueCardData.fromIssueLine)
         .toList(growable: false);
-    final flightIds = parsedIssues
+    final groupedIssues = <_BatchIssueGroupData>[];
+    final flightGroupIndex = <int, int>{};
+    for (final issue in parsedIssues) {
+      final flightId = issue.flightId;
+      if (flightId == null) {
+        groupedIssues.add(
+          _BatchIssueGroupData(flightId: null, messages: [issue.message]),
+        );
+        continue;
+      }
+      final existingIndex = flightGroupIndex[flightId];
+      if (existingIndex != null) {
+        groupedIssues[existingIndex].messages.add(issue.message);
+      } else {
+        flightGroupIndex[flightId] = groupedIssues.length;
+        groupedIssues.add(
+          _BatchIssueGroupData(flightId: flightId, messages: [issue.message]),
+        );
+      }
+    }
+    final flightIds = groupedIssues
         .map((issue) => issue.flightId)
         .whereType<int>()
         .toSet();
@@ -3188,17 +3272,25 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           title: const Text('Flight checks'),
           content: SizedBox(
             width: 760,
-            child: parsedIssues.isEmpty
+            child: groupedIssues.isEmpty
                 ? const Text('No flight issues found.')
                 : ListView.builder(
                     shrinkWrap: true,
-                    itemCount: parsedIssues.length,
+                    itemCount: groupedIssues.length,
                     itemBuilder: (context, index) {
-                      final issue = parsedIssues[index];
+                      final issue = groupedIssues[index];
                       final flightId = issue.flightId;
                       final entry = flightId == null
                           ? null
                           : entriesByFlight[flightId];
+                      final issueSummary = issue.messages.length == 1
+                          ? issue.messages.first
+                          : '${issue.messages.length} issues found';
+                      final issueTitle = entry == null
+                          ? issueSummary
+                          : '${DateFormat('yyyy-MM-dd').format(
+                              DbDateTime.dbToUtc(entry.timeLine.eventDateTime),
+                            )} - $issueSummary';
                       return Card(
                         margin: const EdgeInsets.only(bottom: 10),
                         child: Padding(
@@ -3207,34 +3299,36 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                issue.message,
+                                issueTitle,
                                 style: Theme.of(context).textTheme.titleSmall
                                     ?.copyWith(fontWeight: FontWeight.w700),
                               ),
+                              if (issue.messages.length > 1) ...[
+                                const SizedBox(height: 6),
+                                for (final message in issue.messages)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 4),
+                                    child: Text('• $message'),
+                                  ),
+                              ],
                               if (entry != null) ...[
                                 const SizedBox(height: 8),
-                                InkWell(
-                                  onTap: () => unawaited(
-                                    LogbookEntryDialogs.show(
-                                      context,
-                                      entry: entry,
-                                      useCases: ref.read(
-                                        logbookUseCasesProvider,
+                                Card(
+                                  margin: EdgeInsets.zero,
+                                  child: LogbookListItem(
+                                    entry: entry,
+                                    isCompact:
+                                        MediaQuery.of(context).size.width < 760,
+                                    enableSlideActions: false,
+                                    onOpen: (_) => unawaited(
+                                      LogbookEntryDialogs.show(
+                                        context,
+                                        entry: entry,
+                                        useCases: ref.read(
+                                          logbookUseCasesProvider,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  child: Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.outlineVariant,
-                                      ),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(_issueFlightSummary(entry)),
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -3279,8 +3373,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                                       },
                                       icon: Icon(
                                         (entry.flight?.isLocked ?? false)
-                                            ? Icons.lock_open_outlined
-                                            : Icons.lock_outline,
+                                            ? Icons.lock
+                                            : Icons.lock_open,
                                       ),
                                       label: Text(
                                         (entry.flight?.isLocked ?? false)
@@ -3288,47 +3382,49 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                                             : 'Lock',
                                       ),
                                     ),
-                                    OutlinedButton.icon(
-                                      onPressed: () => unawaited(
-                                        _openFlightEditFromIssue(
-                                          flightId!,
-                                          onChanged: () async {
-                                            final useCases = ref.read(
-                                              logbookUseCasesProvider,
-                                            );
-                                            final refreshed = await useCases
-                                                .fetchEntryByTimelineId(
-                                                  entry.timeLine.id,
-                                                );
-                                            if (refreshed != null &&
-                                                refreshed.flight != null) {
-                                              setStateDialog(() {
-                                                entriesByFlight[flightId] =
-                                                    refreshed;
-                                              });
-                                            }
-                                          },
+                                    if (!(entry.flight?.isLocked ?? false))
+                                      OutlinedButton.icon(
+                                        onPressed: () => unawaited(
+                                          _openFlightEditFromIssue(
+                                            flightId!,
+                                            onChanged: () async {
+                                              final useCases = ref.read(
+                                                logbookUseCasesProvider,
+                                              );
+                                              final refreshed = await useCases
+                                                  .fetchEntryByTimelineId(
+                                                    entry.timeLine.id,
+                                                  );
+                                              if (refreshed != null &&
+                                                  refreshed.flight != null) {
+                                                setStateDialog(() {
+                                                  entriesByFlight[flightId] =
+                                                      refreshed;
+                                                });
+                                              }
+                                            },
+                                          ),
                                         ),
+                                        icon: const Icon(Icons.edit_outlined),
+                                        label: const Text('Edit'),
                                       ),
-                                      icon: const Icon(Icons.edit_outlined),
-                                      label: const Text('Edit'),
-                                    ),
-                                    OutlinedButton.icon(
-                                      onPressed: () async {
-                                        final useCases = ref.read(
-                                          logbookUseCasesProvider,
-                                        );
-                                        await useCases.deleteEntry(entry);
-                                        if (!mounted || flightId == null) {
-                                          return;
-                                        }
-                                        setStateDialog(() {
-                                          entriesByFlight.remove(flightId);
-                                        });
-                                      },
-                                      icon: const Icon(Icons.delete_outline),
-                                      label: const Text('Delete'),
-                                    ),
+                                    if (!(entry.flight?.isLocked ?? false))
+                                      OutlinedButton.icon(
+                                        onPressed: () async {
+                                          final useCases = ref.read(
+                                            logbookUseCasesProvider,
+                                          );
+                                          await useCases.deleteEntry(entry);
+                                          if (!mounted || flightId == null) {
+                                            return;
+                                          }
+                                          setStateDialog(() {
+                                            entriesByFlight.remove(flightId);
+                                          });
+                                        },
+                                        icon: const Icon(Icons.delete_outline),
+                                        label: const Text('Delete'),
+                                      ),
                                   ],
                                 ),
                               ],
@@ -3390,20 +3486,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       includeEntries: false,
       includePilotNames: _needsPilotNamesForFilters(),
     );
-  }
-
-  String _issueFlightSummary(LogbookEntry entry) {
-    final dep = entry.timeLine.eventDateTime.toUtc();
-    final depDate = DateFormat('yyyy-MM-dd').format(dep);
-    final depTime = DateFormat('HH:mm').format(dep);
-    final arr = entry.flight?.arrivalDateTime;
-    final arrTime = arr == null ? '--:--' : DateFormat('HH:mm').format(arr);
-    final from = entry.departureAirport?.icao ?? '---';
-    final to = entry.arrivalAirport?.icao ?? '---';
-    final block = TimeInputField.formatMinutes(
-      entry.flight?.timeBlockMinutes ?? 0,
-    );
-    return '$depDate $from $depTime → $to $arrTime  Block $block';
   }
 
   Future<Map<int, LogbookEntry>> _loadIssueFlightEntries(
@@ -3503,6 +3585,111 @@ class _BatchIssueCardData {
 
   final int? flightId;
   final String message;
+}
+
+class _BatchIssueGroupData {
+  _BatchIssueGroupData({
+    required this.flightId,
+    required this.messages,
+  });
+
+  final int? flightId;
+  final List<String> messages;
+}
+
+enum _BatchFlightCheck {
+  timelineConsistency,
+  chocksEqualsTotalBlock,
+  pilotFunctionRequiresBlockEqualsTotalBlock,
+  flightElapsedMatchesTimes,
+  crewTimesEqualBlock,
+  cappedTimesWithinBlock,
+  customTimesWithinTotalBlock,
+  distanceValidation,
+  pilotFunctionPattern,
+}
+
+class _BatchFlightChecksDialog extends StatefulWidget {
+  const _BatchFlightChecksDialog();
+
+  static Future<Set<_BatchFlightCheck>?> show(BuildContext context) {
+    return showDialog<Set<_BatchFlightCheck>>(
+      context: context,
+      builder: (context) => const _BatchFlightChecksDialog(),
+    );
+  }
+
+  @override
+  State<_BatchFlightChecksDialog> createState() =>
+      _BatchFlightChecksDialogState();
+}
+
+class _BatchFlightChecksDialogState extends State<_BatchFlightChecksDialog> {
+  late final Set<_BatchFlightCheck> _selected = Set<_BatchFlightCheck>.from(
+    _BatchFlightCheck.values,
+  );
+
+  String _label(_BatchFlightCheck check) {
+    return switch (check) {
+      _BatchFlightCheck.timelineConsistency =>
+        'Timeline consistency (arrival/departure, negatives, airports)',
+      _BatchFlightCheck.chocksEqualsTotalBlock =>
+        'Chocks block matches Total Block',
+      _BatchFlightCheck.pilotFunctionRequiresBlockEqualsTotalBlock =>
+        'PF/PNF pattern requires Block = Total Block',
+      _BatchFlightCheck.flightElapsedMatchesTimes =>
+        'Takeoff/landing elapsed matches Flight time',
+      _BatchFlightCheck.crewTimesEqualBlock => 'PIC+PICUS+SIC+Dual = Block',
+      _BatchFlightCheck.cappedTimesWithinBlock =>
+        'Night/Instrument/IFR/CrossCountry/Flight <= Block',
+      _BatchFlightCheck.customTimesWithinTotalBlock =>
+        'Custom1-4 <= Total Block',
+      _BatchFlightCheck.distanceValidation => 'Distance validation',
+      _BatchFlightCheck.pilotFunctionPattern =>
+        'Pilot function takeoff/landing pattern',
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Check Flights Options'),
+      content: SizedBox(
+        width: 620,
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final check in _BatchFlightCheck.values)
+              CheckboxListTile(
+                value: _selected.contains(check),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text(_label(check)),
+                onChanged: (value) {
+                  setState(() {
+                    if (value == true) {
+                      _selected.add(check);
+                    } else {
+                      _selected.remove(check);
+                    }
+                  });
+                },
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_selected),
+          child: const Text('Run Checks'),
+        ),
+      ],
+    );
+  }
 }
 
 enum _BatchCalcField {
@@ -3658,6 +3845,7 @@ class _BatchFlightSnapshot {
     required this.timeDualMinutes,
     required this.timeIFRMinutes,
     required this.timeInstrumentMinutes,
+    required this.timeSimulatedInstrumentMinutes,
     required this.timeNightMinutes,
     required this.timeCrossCountryMinutes,
     required this.timeCustom1Minutes,
@@ -3693,6 +3881,7 @@ class _BatchFlightSnapshot {
   int timeDualMinutes;
   int timeIFRMinutes;
   int timeInstrumentMinutes;
+  int timeSimulatedInstrumentMinutes;
   int timeNightMinutes;
   int timeCrossCountryMinutes;
   int timeCustom1Minutes;
@@ -3729,6 +3918,7 @@ class _BatchFlightSnapshot {
       timeDualMinutes: timeDualMinutes,
       timeIFRMinutes: timeIFRMinutes,
       timeInstrumentMinutes: timeInstrumentMinutes,
+      timeSimulatedInstrumentMinutes: timeSimulatedInstrumentMinutes,
       timeNightMinutes: timeNightMinutes,
       timeCrossCountryMinutes: timeCrossCountryMinutes,
       timeCustom1Minutes: timeCustom1Minutes,

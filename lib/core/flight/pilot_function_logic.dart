@@ -1,3 +1,5 @@
+import 'package:simplelog/data/database/enums/pilot_function.dart';
+
 /// Canonical pilot-function labels used by the app.
 abstract final class PilotFunctionLogic {
   /// Pilot flying.
@@ -43,22 +45,9 @@ abstract final class PilotFunctionLogic {
     required int takeoffCount,
     required int landingCount,
   }) {
-    final normalized = raw.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
-    switch (normalized) {
-      case 'PF':
-        return pf;
-      case 'PNF':
-      case 'PM':
-        return pnf;
-      case 'PF/PNF':
-        return pfPnf;
-      case 'PNF/PF':
-      case 'PM/PF':
-        return pnfPf;
-      case 'IRP3':
-        return irp3;
-      case 'IRP4':
-        return irp4;
+    final parsed = parse(raw);
+    if (parsed != PilotFunction.other) {
+      return toLabel(parsed);
     }
     return fromTakeoffLanding(
       takeoffCount: takeoffCount,
@@ -98,23 +87,53 @@ abstract final class PilotFunctionLogic {
 
   /// Human-readable rule text for validation messages.
   static String takeoffLandingRule(String pilotFunction) {
-    final normalized = pilotFunction.trim().toUpperCase().replaceAll(' ', '');
-    switch (normalized) {
-      case 'PF':
+    switch (parse(pilotFunction)) {
+      case PilotFunction.pf:
         return 'takeoffs/landings must be > 0';
-      case 'PNF':
-      case 'PM':
+      case PilotFunction.pnf:
         return 'takeoffs/landings must be 0';
-      case 'PF/PNF':
+      case PilotFunction.pfPnf:
         return 'takeoffs must be > 0 and landings must be 0';
-      case 'PNF/PF':
-      case 'PM/PF':
+      case PilotFunction.pnfPf:
         return 'takeoffs must be 0 and landings must be > 0';
-      case 'IRP3':
-      case 'IRP4':
+      case PilotFunction.irp3:
+      case PilotFunction.irp4:
         return 'IRP rules';
-      default:
+      case PilotFunction.other:
         return 'pattern must match takeoff/landing counts';
     }
   }
+
+  /// Parses raw text (including legacy aliases) into [PilotFunction].
+  static PilotFunction parse(String raw) {
+    final normalized = raw.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
+    return switch (normalized) {
+      'PF' => PilotFunction.pf,
+      'PNF' => PilotFunction.pnf,
+      'PM' => PilotFunction.pnf,
+      'PF/PNF' => PilotFunction.pfPnf,
+      'PNF/PF' => PilotFunction.pnfPf,
+      'PM/PF' => PilotFunction.pnfPf,
+      'IRP3' => PilotFunction.irp3,
+      'IRP4' => PilotFunction.irp4,
+      'OTHER' => PilotFunction.other,
+      _ => PilotFunction.other,
+    };
+  }
+
+  /// Converts [value] to the display/storage text used by UI/import checks.
+  static String toLabel(PilotFunction value) {
+    return switch (value) {
+      PilotFunction.pf => pf,
+      PilotFunction.pnf => pnf,
+      PilotFunction.pfPnf => pfPnf,
+      PilotFunction.pnfPf => pnfPf,
+      PilotFunction.irp3 => irp3,
+      PilotFunction.irp4 => irp4,
+      PilotFunction.other => 'OTHER',
+    };
+  }
+
+  /// Converts an enum to canonical text used by check/pattern logic.
+  static String fromEnum(PilotFunction value) => toLabel(value);
 }

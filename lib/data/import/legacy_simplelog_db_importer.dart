@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:drift/drift.dart' as d;
 import 'package:path_provider/path_provider.dart';
+import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
@@ -366,7 +367,9 @@ class LegacySimpleLogDbImporter {
                   landingsDay: _asInt(row['landing_day']) ?? 0,
                   landingsNight: _asInt(row['landing_night']) ?? 0,
                   pilotFunction: d.Value(
-                    (_asString(row['pf_pnf']) ?? 'PF').trim().toUpperCase(),
+                    PilotFunctionLogic.parse(
+                      (_asString(row['pf_pnf']) ?? 'PF').trim().toUpperCase(),
+                    ),
                   ),
                   approachType: (_asString(row['approach_type']) ?? '').trim(),
                   remarks: (_asString(row['remarks']) ?? '').trim(),

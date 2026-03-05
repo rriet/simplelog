@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:simplelog/data/database/enums/pilot_function.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/report_pdf_models.dart';
 
@@ -1198,7 +1199,7 @@ class ReportPdfApplicationService {
     put('takeOffsNight', _emptyIfZeroInt(flight?.takeOffsNight ?? 0));
     put('landingsDay', _emptyIfZeroInt(flight?.landingsDay ?? 0));
     put('landingsNight', _emptyIfZeroInt(flight?.landingsNight ?? 0));
-    put('pilotFunction', flight?.pilotFunction ?? '');
+    put('pilotFunction', flight?.pilotFunction.label ?? '');
     put('approachType', flight?.approachType ?? '');
 
     put('simDate', isSimulator ? _formatDate(timeline, dateFormat) : '');
@@ -1358,7 +1359,7 @@ class ReportPdfApplicationService {
     put('flight.takeOffsNight', (flight?.takeOffsNight ?? 0).toString());
     put('flight.landingsDay', (flight?.landingsDay ?? 0).toString());
     put('flight.landingsNight', (flight?.landingsNight ?? 0).toString());
-    put('flight.pilotFunction', flight?.pilotFunction ?? '');
+    put('flight.pilotFunction', flight?.pilotFunction.label ?? '');
     put('flight.approachType', flight?.approachType ?? '');
     put('flight.remarks', flight?.remarks ?? '');
     put('flight.notes', flight?.notes ?? '');
