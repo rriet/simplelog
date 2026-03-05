@@ -15,10 +15,20 @@ class SimulatorCrewAssignments extends Table {
   IntColumn get id => integer().autoIncrement()();
 
   /// Referenced simulator training session.
-  IntColumn get simulatorId => integer().references(SimulatorTrainings, #id)();
+  IntColumn get simulatorId => integer().references(
+    SimulatorTrainings,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
 
   /// Referenced crew member.
-  IntColumn get crewId => integer().references(Crew, #id)();
+  IntColumn get crewId => integer().references(
+    Crew,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
 
   /// Crew role encoded using [CrewPositionConverter].
   TextColumn get position => text().map(const CrewPositionConverter())();

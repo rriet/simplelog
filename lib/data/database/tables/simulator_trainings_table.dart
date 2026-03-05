@@ -9,10 +9,20 @@ class SimulatorTrainings extends Table {
   IntColumn get id => integer().autoIncrement()();
 
   /// Linked aircraft id (simulator-capable aircraft row).
-  IntColumn get aircraftId => integer().references(Aircrafts, #id)();
+  IntColumn get aircraftId => integer().references(
+    Aircrafts,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
 
   /// Start timeline reference.
-  IntColumn get startTimeLineId => integer().references(TimeLines, #id)();
+  IntColumn get startTimeLineId => integer().references(
+    TimeLines,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
 
   /// Optional end datetime.
   DateTimeColumn get endDateTime => dateTime().nullable()();

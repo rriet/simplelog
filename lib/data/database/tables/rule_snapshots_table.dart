@@ -8,7 +8,12 @@ class RuleSnapshots extends Table {
   IntColumn get snapshotId => integer().autoIncrement()();
 
   /// Foreign key to the rule that produced this snapshot.
-  IntColumn get ruleId => integer().references(LimitRules, #ruleId)();
+  IntColumn get ruleId => integer().references(
+    LimitRules,
+    #ruleId,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
 
   /// UTC timestamp when this snapshot was computed.
   DateTimeColumn get computedAt => dateTime().withDefault(currentDateAndTime)();

@@ -136,6 +136,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   final _blockController = TextEditingController(
     text: TimeInputField.formatMinutes(0),
   );
+  final _totalBlockController = TextEditingController(
+    text: TimeInputField.formatMinutes(0),
+  );
   final _takeoffDayController = TextEditingController(text: '0');
   final _takeoffNightController = TextEditingController(text: '0');
   final _landingDayController = TextEditingController(text: '0');
@@ -163,7 +166,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   int? _fromAirportId;
   int? _toAirportId;
   String _pilotFunction = 'PF';
-  int _timeTotalBlockMinutes = 0;
   final List<CrewDraftSelection> _crewRows = [];
   final Map<int, String> _airportLabelCache = {};
   final Map<int, String> _crewLabelCache = {};
@@ -220,6 +222,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     _custom4Controller.dispose();
     _flightController.dispose();
     _blockController.dispose();
+    _totalBlockController.dispose();
     _takeoffDayController.dispose();
     _takeoffNightController.dispose();
     _landingDayController.dispose();
@@ -255,7 +258,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       _takeOff = null;
       _landing = null;
       _chocksOn = null;
-      _timeTotalBlockMinutes = 0;
       _endorsement = null;
       _chocksOffTimeController.text = prefill?.chocksOff == null
           ? ''
@@ -276,6 +278,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       } else {
         await _insertDefaultSelfCrewIfAny();
       }
+      _refreshTotalBlockController();
       if (!mounted) return;
       setState(() => _loading = false);
       return;
@@ -302,7 +305,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       fallbackTakeoffs: totalTakeoffs,
       fallbackLandings: totalLandings,
     );
-    _timeTotalBlockMinutes = flight.timeTotalBlockMinutes;
     _remarksController.text = flight.remarks;
     _notesController.text = flight.notes;
     _ifrApproachesController.text = '${flight.ifrApproaches}';
@@ -350,6 +352,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     _blockController.text = TimeInputField.formatMinutes(
       flight.timeBlockMinutes,
     );
+    _totalBlockController.text = TimeInputField.formatMinutes(
+      flight.timeTotalBlockMinutes,
+    );
     _picController.text = TimeInputField.formatMinutes(flight.timePICMinutes);
     _picusController.text = TimeInputField.formatMinutes(
       flight.timePICUSMinutes,
@@ -396,6 +401,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           (e) => CrewDraftSelection(crewId: e.crewId, position: e.position),
         ),
       );
+    _refreshTotalBlockController();
     setState(() => _loading = false);
   }
 
@@ -447,6 +453,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         hour,
         minute,
       );
+      _refreshTotalBlockController();
     });
   }
 
@@ -454,6 +461,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     setState(() {
       _chocksOff = DateTime(_chocksOff.year, _chocksOff.month, _chocksOff.day);
       _chocksOffTimeController.text = '';
+      _refreshTotalBlockController();
     });
   }
 
@@ -492,6 +500,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final minute = totalMinutes % 60;
     setState(() {
       _chocksOn = TimeOfDay(hour: hour, minute: minute);
+      _refreshTotalBlockController();
     });
   }
 
@@ -499,6 +508,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     setState(() {
       _chocksOn = null;
       _chocksOnTimeController.text = '';
+      _refreshTotalBlockController();
     });
   }
 
@@ -717,8 +727,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     _landingNightController.text = '$_landingsNight';
     _lastCalculatedNightMinutes = calc.nightMinutes;
     _lastCalculatedFlightMinutes = calc.flightMinutes;
-    _timeTotalBlockMinutes = calc.totalBlockMinutes;
     _blockController.text = TimeInputField.formatMinutes(calc.totalMinutes);
+    _totalBlockController.text = TimeInputField.formatMinutes(
+      calc.totalBlockMinutes,
+    );
     _distanceNmController.text = '${calc.distanceNm}';
     _applyChecksToControllers(
       totalMinutes: calc.totalMinutes,
@@ -1007,11 +1019,11 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         HourInputField.parseHours(_blockController.text) ??
         TimeInputField.parseMinutes(_blockController.text) ??
         0;
-    final totalBlock = arrival == null
-        ? (_timeTotalBlockMinutes > 0 ? _timeTotalBlockMinutes : block)
-        : (arrival.difference(departure).inMinutes < 0
-              ? 0
-              : arrival.difference(departure).inMinutes);
+    final totalBlock = _calculateTotalBlockMinutes(
+      blockMinutes: block,
+      departure: departure,
+      arrival: arrival,
+    );
     final pic = TimeInputField.parseMinutes(_picController.text) ?? 0;
     final picus = TimeInputField.parseMinutes(_picusController.text) ?? 0;
     final sic = TimeInputField.parseMinutes(_sicController.text) ?? 0;
@@ -1194,6 +1206,33 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       return sameDay.add(const Duration(days: 1));
     }
     return sameDay;
+  }
+
+  void _refreshTotalBlockController() {
+    final blockMinutes =
+        HourInputField.parseHours(_blockController.text) ??
+        TimeInputField.parseMinutes(_blockController.text) ??
+        0;
+    final totalBlock = _calculateTotalBlockMinutes(
+      blockMinutes: blockMinutes,
+      departure: _chocksOffMinute,
+      arrival: _resolveChocksOnDateTime(),
+    );
+    _totalBlockController.text = TimeInputField.formatMinutes(totalBlock);
+  }
+
+  int _calculateTotalBlockMinutes({
+    required int blockMinutes,
+    required DateTime departure,
+    required DateTime? arrival,
+  }) {
+    final hasChocksOff = _chocksOffTimeController.text.trim().isNotEmpty;
+    final hasChocksOn = _chocksOnTimeController.text.trim().isNotEmpty;
+    if (!hasChocksOff || !hasChocksOn || arrival == null) {
+      return blockMinutes;
+    }
+    final diffMinutes = arrival.difference(departure).inMinutes;
+    return diffMinutes < 0 ? 0 : diffMinutes;
   }
 
   int _applyPilotFunctionFactoring({
@@ -1667,7 +1706,28 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         const SizedBox(height: 8),
         const Divider(height: 1),
         const SizedBox(height: 8),
-        HourInputField(controller: _blockController, label: 'Total Block'),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _totalBlockController,
+                readOnly: true,
+                decoration: const InputDecoration(
+                  labelText: 'Total Block',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: HourInputField(
+                controller: _blockController,
+                label: 'Block Time',
+                onChangedMinutes: (_) => _refreshTotalBlockController(),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
         if (_logTakeoffLanding)
           _timeCheckPair(

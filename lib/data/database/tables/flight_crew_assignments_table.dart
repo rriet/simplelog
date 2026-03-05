@@ -15,10 +15,20 @@ class FlightCrewAssignments extends Table {
   IntColumn get id => integer().autoIncrement()();
 
   /// Referenced flight.
-  IntColumn get flightId => integer().references(Flights, #id)();
+  IntColumn get flightId => integer().references(
+    Flights,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
 
   /// Referenced crew member.
-  IntColumn get crewId => integer().references(Crew, #id)();
+  IntColumn get crewId => integer().references(
+    Crew,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
 
   /// Crew role encoded using [CrewPositionConverter].
   TextColumn get position => text().map(const CrewPositionConverter())();

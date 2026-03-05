@@ -54,11 +54,12 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: appDatabaseFileName));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (migrator, from, to) async {
+      await customStatement('PRAGMA foreign_keys = ON');
       if (from < 2) {
         await migrator.addColumn(flights, flights.endorsementData);
         await migrator.addColumn(flights, flights.endorsementHash);
@@ -71,27 +72,63 @@ class AppDatabase extends _$AppDatabase {
           simulatorTrainings.endorsementHash,
         );
       }
+      if (from < 3) {
+        await _createLockWriteBypassTableIfNeeded();
+        await _installLockProtectionTriggers();
+      }
+    },
+    beforeOpen: (details) async {
+      await customStatement('PRAGMA foreign_keys = ON');
+      await _createLockWriteBypassTableIfNeeded();
+      await _installLockProtectionTriggers();
+      await _assertForeignKeyIntegrity();
     },
   );
 
+  /// Runs [action] with lock-protection triggers bypassed for this connection.
+  ///
+  /// Intended for trusted full-replacement operations
+  /// (for example, db restore).
+  Future<T> runWithLockWriteBypass<T>(Future<T> Function() action) async {
+    await _createLockWriteBypassTableIfNeeded();
+    await customStatement(
+      '''
+INSERT OR IGNORE INTO lock_write_bypass(id, enabled)
+VALUES (1, 0)
+''',
+    );
+    await customStatement(
+      'UPDATE lock_write_bypass SET enabled = 1 WHERE id=1',
+    );
+    try {
+      return await action();
+    } finally {
+      await customStatement(
+        'UPDATE lock_write_bypass SET enabled = 0 WHERE id=1',
+      );
+    }
+  }
+
   /// Deletes user-managed data tables while preserving static templates.
   Future<void> clearAllData() async {
-    await transaction(() async {
-      await delete(flightCrewAssignments).go();
-      await delete(simulatorCrewAssignments).go();
-      await delete(ruleSnapshots).go();
-      await delete(limitRules).go();
-      await delete(previousExperiences).go();
-      await delete(flights).go();
-      await delete(simulatorTrainings).go();
-      await delete(positionings).go();
-      await delete(dutyPeriods).go();
-      await delete(timeLines).go();
-      await delete(aircrafts).go();
-      await delete(aircraftTypes).go();
-      await delete(airports).go();
-      await delete(crew).go();
-      await delete(userProfiles).go();
+    await runWithLockWriteBypass(() async {
+      await transaction(() async {
+        await delete(flightCrewAssignments).go();
+        await delete(simulatorCrewAssignments).go();
+        await delete(ruleSnapshots).go();
+        await delete(limitRules).go();
+        await delete(previousExperiences).go();
+        await delete(flights).go();
+        await delete(simulatorTrainings).go();
+        await delete(positionings).go();
+        await delete(dutyPeriods).go();
+        await delete(timeLines).go();
+        await delete(aircrafts).go();
+        await delete(aircraftTypes).go();
+        await delete(airports).go();
+        await delete(crew).go();
+        await delete(userProfiles).go();
+      });
     });
   }
 
@@ -157,5 +194,75 @@ class AppDatabase extends _$AppDatabase {
       ..where(column.equals(timeLineId));
     final row = await query.getSingle();
     return row.read(countExpression) ?? 0;
+  }
+
+  Future<void> _createLockWriteBypassTableIfNeeded() async {
+    await customStatement(
+      '''
+CREATE TABLE IF NOT EXISTS lock_write_bypass (
+  id INTEGER PRIMARY KEY CHECK(id = 1),
+  enabled INTEGER NOT NULL CHECK(enabled IN (0, 1))
+)
+''',
+    );
+    await customStatement(
+      '''
+INSERT OR IGNORE INTO lock_write_bypass(id, enabled)
+VALUES (1, 0)
+''',
+    );
+  }
+
+  Future<void> _installLockProtectionTriggers() async {
+    await _createLockProtectionTriggersForTable(tableName: 'aircraft_types');
+    await _createLockProtectionTriggersForTable(tableName: 'aircrafts');
+    await _createLockProtectionTriggersForTable(tableName: 'airports');
+    await _createLockProtectionTriggersForTable(tableName: 'crew');
+    await _createLockProtectionTriggersForTable(tableName: 'flights');
+    await _createLockProtectionTriggersForTable(tableName: 'positionings');
+    await _createLockProtectionTriggersForTable(
+      tableName: 'simulator_trainings',
+    );
+    await _createLockProtectionTriggersForTable(tableName: 'duty_periods');
+  }
+
+  Future<void> _assertForeignKeyIntegrity() async {
+    final rows = await customSelect('PRAGMA foreign_key_check').get();
+    if (rows.isEmpty) return;
+    throw StateError(
+      'Foreign key integrity check failed with ${rows.length} violation(s).',
+    );
+  }
+
+  Future<void> _createLockProtectionTriggersForTable({
+    required String tableName,
+  }) async {
+    final updateTrigger = 'trg_${tableName}_locked_update_block';
+    final deleteTrigger = 'trg_${tableName}_locked_delete_block';
+    await customStatement(
+      '''
+CREATE TRIGGER IF NOT EXISTS $updateTrigger
+BEFORE UPDATE ON $tableName
+FOR EACH ROW
+WHEN OLD.is_locked = 1
+  AND NEW.is_locked = OLD.is_locked
+  AND COALESCE((SELECT enabled FROM lock_write_bypass WHERE id = 1), 0) = 0
+BEGIN
+  SELECT RAISE(ABORT, 'Locked row cannot be modified');
+END
+''',
+    );
+    await customStatement(
+      '''
+CREATE TRIGGER IF NOT EXISTS $deleteTrigger
+BEFORE DELETE ON $tableName
+FOR EACH ROW
+WHEN OLD.is_locked = 1
+  AND COALESCE((SELECT enabled FROM lock_write_bypass WHERE id = 1), 0) = 0
+BEGIN
+  SELECT RAISE(ABORT, 'Locked row cannot be deleted');
+END
+''',
+    );
   }
 }

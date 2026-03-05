@@ -8,7 +8,12 @@ class PreviousExperiences extends Table {
   IntColumn get id => integer().autoIncrement()();
 
   /// Aircraft type these totals apply to.
-  IntColumn get aircraftTypeId => integer().references(AircraftTypes, #id)();
+  IntColumn get aircraftTypeId => integer().references(
+    AircraftTypes,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
 
   /// Earliest known flight date for this experience bucket.
   DateTimeColumn get dateTimeFirstFlight => dateTime().nullable()();

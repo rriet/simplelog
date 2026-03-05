@@ -49,6 +49,8 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   bool _hasMore = false;
   bool _filtersDialogOpen = false;
   bool _pendingReloadFromFiltersDialog = false;
+  ReportsRuntimeQueryState? _pendingRuntimeReloadQuery;
+  bool _pendingResetReload = false;
   int _reportsPanelVersion = 0;
   static const int _pageSize = 200;
   late final TabController _tabController;
@@ -56,10 +58,10 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   @override
   void initState() {
     super.initState();
-    final persistedTab = ref.read(logbookTopTabIndexProvider).clamp(0, 3);
+    final persistedTab = ref.read(logbookTopTabIndexProvider).clamp(0, 4);
     _selectedTabIndex = persistedTab;
     _tabController = TabController(
-      length: 4,
+      length: 5,
       vsync: this,
       initialIndex: persistedTab,
     )..addListener(_handleTabChanged);
@@ -79,11 +81,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   void _handleTabChanged() {
     if (!_tabController.indexIsChanging &&
         _selectedTabIndex != _tabController.index) {
+      final previousTabIndex = _selectedTabIndex;
       setState(() {
         _selectedTabIndex = _tabController.index;
         if (_selectedTabIndex != 0) _fabOpen = false;
       });
       ref.read(logbookTopTabIndexProvider.notifier).state = _selectedTabIndex;
+      if (previousTabIndex != 0 && _selectedTabIndex == 0) {
+        unawaited(_loadNextPage(reset: true));
+      }
     }
   }
 
@@ -96,6 +102,11 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   }
 
   Future<void> _reloadFromReportsQuery(ReportsRuntimeQueryState query) async {
+    if (_isLoading) {
+      _pendingRuntimeReloadQuery = query;
+      _pendingResetReload = true;
+      return;
+    }
     await _loadNextPage(reset: true, runtimeQuery: query);
   }
 
@@ -141,6 +152,11 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   }
 
   Future<void> _reload(LogbookFilters _) async {
+    if (_isLoading) {
+      _pendingRuntimeReloadQuery = null;
+      _pendingResetReload = true;
+      return;
+    }
     await _loadNextPage(reset: true);
   }
 
@@ -260,6 +276,12 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
       if (mounted) {
         setState(() => _isLoading = false);
       }
+      if (_pendingResetReload && mounted) {
+        final pendingQuery = _pendingRuntimeReloadQuery;
+        _pendingRuntimeReloadQuery = null;
+        _pendingResetReload = false;
+        unawaited(_loadNextPage(reset: true, runtimeQuery: pendingQuery));
+      }
     }
   }
 
@@ -376,6 +398,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
                         Tab(text: l10n.reportsTabTotals),
                         Tab(text: l10n.reportsTabAnalyses),
                         Tab(text: l10n.reportsTabReports),
+                        const Tab(text: 'Batch'),
                       ],
                     ),
                     if (_isLoading) ...[
@@ -437,6 +460,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
       1 => ReportsPanelSection.totals,
       2 => ReportsPanelSection.analizes,
       3 => ReportsPanelSection.reports,
+      4 => ReportsPanelSection.batch,
       _ => ReportsPanelSection.overview,
     };
 

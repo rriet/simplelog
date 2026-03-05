@@ -6,16 +6,32 @@ import 'package:simplelog/data/database/tables/timeline_table.dart';
 class DutyPeriods extends Table {
   /// Surrogate primary key.
   IntColumn get id => integer().autoIncrement()();
+
   /// Timeline id for duty start.
-  IntColumn get dutyStartTimeLineId => integer().references(TimeLines, #id)();
+  IntColumn get dutyStartTimeLineId => integer().references(
+    TimeLines,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
+
   /// Timeline id for duty end.
-  IntColumn get dutyEndTimeLineId => integer().references(TimeLines, #id)();
+  IntColumn get dutyEndTimeLineId => integer().references(
+    TimeLines,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
+
   /// Total duty minutes.
   IntColumn get timeDutyMinutes => integer()();
+
   /// Rest before duty in minutes.
   IntColumn get restBeforeMinutes => integer().withDefault(const Constant(0))();
+
   /// Factored duty minutes.
   IntColumn get timeFactoredDutyMinutes => integer()();
+
   /// Lock flag preventing edits.
   BoolColumn get isLocked => boolean()();
 

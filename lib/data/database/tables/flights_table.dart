@@ -10,16 +10,36 @@ class Flights extends Table {
   IntColumn get id => integer().autoIncrement()();
 
   /// Linked aircraft id.
-  IntColumn get aircraftId => integer().references(Aircrafts, #id)();
+  IntColumn get aircraftId => integer().references(
+    Aircrafts,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
 
   /// Departure airport id.
-  IntColumn get departureAirportId => integer().references(Airports, #id)();
+  IntColumn get departureAirportId => integer().references(
+    Airports,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
 
   /// Arrival airport id.
-  IntColumn get arrivalAirportId => integer().references(Airports, #id)();
+  IntColumn get arrivalAirportId => integer().references(
+    Airports,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
 
   /// Timeline id for departure/chocks-off event.
-  IntColumn get departureDateTimeId => integer().references(TimeLines, #id)();
+  IntColumn get departureDateTimeId => integer().references(
+    TimeLines,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.restrict,
+  )();
 
   /// Optional takeoff timestamp.
   DateTimeColumn get takeOffDateTime => dateTime().nullable()();

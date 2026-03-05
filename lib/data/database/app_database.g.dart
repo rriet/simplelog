@@ -878,7 +878,7 @@ class $AircraftsTable extends Aircrafts
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES aircraft_types (id)',
+      'REFERENCES aircraft_types (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _registrationMeta = const VerificationMeta(
@@ -2244,7 +2244,7 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES aircrafts (id)',
+      'REFERENCES aircrafts (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _departureAirportIdMeta =
@@ -2257,7 +2257,7 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES airports (id)',
+      'REFERENCES airports (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _arrivalAirportIdMeta = const VerificationMeta(
@@ -2271,7 +2271,7 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES airports (id)',
+      'REFERENCES airports (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _departureDateTimeIdMeta =
@@ -2284,7 +2284,7 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES time_lines (id)',
+      'REFERENCES time_lines (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _takeOffDateTimeMeta = const VerificationMeta(
@@ -5397,7 +5397,7 @@ class $RuleSnapshotsTable extends RuleSnapshots
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES limit_rules (rule_id)',
+      'REFERENCES limit_rules (rule_id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _computedAtMeta = const VerificationMeta(
@@ -5770,7 +5770,7 @@ class $PositioningsTable extends Positionings
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES airports (id)',
+      'REFERENCES airports (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _arrivalPlaceIdMeta = const VerificationMeta(
@@ -5784,7 +5784,7 @@ class $PositioningsTable extends Positionings
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES airports (id)',
+      'REFERENCES airports (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _departureDateTimeIdMeta =
@@ -5797,7 +5797,7 @@ class $PositioningsTable extends Positionings
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES time_lines (id)',
+      'REFERENCES time_lines (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _arrivalDateTimeMeta = const VerificationMeta(
@@ -6326,7 +6326,7 @@ class $PreviousExperiencesTable extends PreviousExperiences
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES aircraft_types (id)',
+      'REFERENCES aircraft_types (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _dateTimeFirstFlightMeta =
@@ -8306,7 +8306,7 @@ class $DutyPeriodsTable extends DutyPeriods
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES time_lines (id)',
+      'REFERENCES time_lines (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _dutyEndTimeLineIdMeta = const VerificationMeta(
@@ -8320,7 +8320,7 @@ class $DutyPeriodsTable extends DutyPeriods
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES time_lines (id)',
+      'REFERENCES time_lines (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _timeDutyMinutesMeta = const VerificationMeta(
@@ -9388,7 +9388,7 @@ class $FlightCrewAssignmentsTable extends FlightCrewAssignments
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES flights (id)',
+      'REFERENCES flights (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _crewIdMeta = const VerificationMeta('crewId');
@@ -9400,7 +9400,7 @@ class $FlightCrewAssignmentsTable extends FlightCrewAssignments
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES crew (id)',
+      'REFERENCES crew (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   @override
@@ -9704,7 +9704,7 @@ class $SimulatorTrainingsTable extends SimulatorTrainings
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES aircrafts (id)',
+      'REFERENCES aircrafts (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _startTimeLineIdMeta = const VerificationMeta(
@@ -9718,7 +9718,7 @@ class $SimulatorTrainingsTable extends SimulatorTrainings
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES time_lines (id)',
+      'REFERENCES time_lines (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _endDateTimeMeta = const VerificationMeta(
@@ -10420,7 +10420,7 @@ class $SimulatorCrewAssignmentsTable extends SimulatorCrewAssignments
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES simulator_trainings (id)',
+      'REFERENCES simulator_trainings (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   static const VerificationMeta _crewIdMeta = const VerificationMeta('crewId');
@@ -10432,7 +10432,7 @@ class $SimulatorCrewAssignmentsTable extends SimulatorCrewAssignments
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES crew (id)',
+      'REFERENCES crew (id) ON UPDATE RESTRICT ON DELETE RESTRICT',
     ),
   );
   @override

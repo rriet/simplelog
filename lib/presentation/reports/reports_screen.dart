@@ -12,6 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:simplelog/core/date/db_date_time.dart';
+import 'package:simplelog/core/flight/flight_calculations.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/maps/map_tile_caching.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
@@ -40,6 +42,7 @@ import 'package:simplelog/presentation/shared/widgets/inputs/time_input_field.da
 import 'package:simplelog/presentation/shared/widgets/square_outline_button.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
+import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Entry section to open directly when navigating into the reports module.
@@ -55,6 +58,9 @@ enum ReportsPanelSection {
 
   /// PDF report generation controls.
   reports,
+
+  /// Batch processing controls for filtered flights.
+  batch,
 
   /// Filter builder and saved filters.
   filters,
@@ -190,10 +196,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         setState(() => _selectedTemplate = template);
       },
     );
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     unawaited(_loadTemplateOptions());
     if (_shouldPreloadOverview(widget.section)) {
       unawaited(_loadOverviewData());
+    }
+    if (widget.section == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(
+          _ensureDetailsLoaded(
+            includeEntries: true,
+            includePilotNames: _needsPilotNamesForFilters(),
+          ),
+        );
+      });
     }
     if (_shouldPreloadDetails(widget.section)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -298,7 +315,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   bool _shouldPreloadDetails(ReportsPanelSection? section) {
     return section == ReportsPanelSection.flights ||
-        section == ReportsPanelSection.analizes;
+        section == ReportsPanelSection.analizes ||
+        section == ReportsPanelSection.batch;
   }
 
   bool get _isFiltersOnlySection {
@@ -316,7 +334,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (widget.section == ReportsPanelSection.flights) {
       return true;
     }
-    return widget.section == null && _tabController.index == 1;
+    return widget.section == null && _tabController.index == 0;
   }
 
   bool get _analysisSupportsPreviousExperience =>
@@ -701,12 +719,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<void> _onTabChanged(int index) async {
-    if (index == 1) {
+    if (index == 0) {
       await _ensureDetailsLoaded(
         includeEntries: true,
         includePilotNames: _needsPilotNamesForFilters(),
       );
-    } else if (index == 2) {
+    } else if (index == 2 || index == 3 || index == 4) {
       await _ensureDetailsLoaded(
         includeEntries: false,
         includePilotNames: _needsPilotNamesForFilters(),
@@ -1697,9 +1715,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                   tabAlignment: AppTabBarStyles.tabAlignment,
                   labelPadding: AppTabBarStyles.labelPadding,
                   tabs: [
-                    Tab(text: l10n.reportsTabOverview),
                     Tab(text: l10n.reportsTabFlights),
+                    Tab(text: l10n.reportsTabTotals),
                     Tab(text: l10n.reportsTabAnalyses),
+                    Tab(text: l10n.reportsTabReports),
+                    const Tab(text: 'Batch'),
                   ],
                 ),
               if (_loading) ...[
@@ -1719,20 +1739,26 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                     ? TabBarView(
                         controller: _tabController,
                         children: [
-                          _buildOverviewSection(
-                            compact: compact,
+                          _buildFlightsSection(logbookUseCases),
+                          _TotalsCard(
+                            totals: _data.totals,
+                            customTimeLabels: customTimeLabels,
+                            firstFlightDate: _firstFlightDate,
+                            lastFlightDate: _lastFlightDate,
                             includePreviousExperience:
                                 includePreviousExperience,
-                            eventTypes: eventTypes,
-                            savedQueries: savedQueries,
-                            customTimeLabels: customTimeLabels,
+                            onToggleIncludePreviousExperience: () =>
+                                _setIncludePreviousExperience(
+                                  !includePreviousExperience,
+                                ),
                           ),
-                          _buildFlightsSection(logbookUseCases),
                           _buildAnalizesSection(
                             compact: compact,
                             includePreviousExperience:
                                 includePreviousExperience,
                           ),
+                          _buildReportsSection(compact: compact),
+                          _buildBatchSection(compact: compact),
                         ],
                       )
                     : _buildPanelSection(
@@ -1784,6 +1810,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         );
       case ReportsPanelSection.reports:
         return _buildReportsSection(compact: compact);
+      case ReportsPanelSection.batch:
+        return _buildBatchSection(compact: compact);
       case ReportsPanelSection.flights:
         return _buildFlightsSection(logbookUseCases);
       case ReportsPanelSection.overview:
@@ -2095,8 +2123,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                   .toList(growable: false),
               selectedItemBuilder: (context) => _xslTemplateOptions
                   .map(
-                    (template) =>
-                        _dropdownSelectedItem(template.description),
+                    (template) => _dropdownSelectedItem(template.description),
                   )
                   .toList(growable: false),
               onChanged: (value) {
@@ -2147,13 +2174,26 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 ],
               ),
             ],
-          ],
-        ),
-        const SizedBox(height: 12),
-        _ReportsSectionCard(
-          title: 'Options',
-          subtitle: 'Adjust generation behavior and profile data.',
-          children: [
+            const SizedBox(height: 12),
+            Divider(
+              height: 1,
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Options',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Adjust generation behavior and profile data.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
             SizedBox(
               width: compact ? 200 : 240,
               child: EventTypeToggleButton(
@@ -2205,6 +2245,1235 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       ],
     );
   }
+
+  Widget _buildBatchSection({required bool compact}) {
+    final filteredCount = _data.flights.length;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _ReportsSectionCard(
+                title: 'Batch',
+                subtitle: 'Bulk processing for filtered flights.',
+                children: [
+                  Text(
+                    'Warning: this will modify all $filteredCount flights.\n'
+                    'Adjust filters to target specific flights',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _ReportsActionButton(
+                    icon: Icons.rule_folder_outlined,
+                    label: 'Check Flights',
+                    onPressed: filteredCount == 0 ? null : _checkBatchFlights,
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(
+                    height: 1,
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                  const SizedBox(height: 12),
+                  _ReportsActionButton(
+                    icon: Icons.groups_outlined,
+                    label: 'Set Crew',
+                    onPressed: filteredCount == 0 ? null : _batchSetCrewSelf,
+                  ),
+                  const SizedBox(height: 8),
+                  _ReportsActionButton(
+                    icon: Icons.lock_outline,
+                    label: 'Lock',
+                    onPressed: filteredCount == 0
+                        ? null
+                        : _batchSetLockStateTrue,
+                  ),
+                  const SizedBox(height: 8),
+                  _ReportsActionButton(
+                    icon: Icons.lock_open_outlined,
+                    label: 'Unlock',
+                    onPressed: filteredCount == 0
+                        ? null
+                        : _batchSetLockStateFalse,
+                  ),
+                  const SizedBox(height: 8),
+                  _ReportsActionButton(
+                    icon: Icons.calculate_outlined,
+                    label: 'Calculate All',
+                    onPressed: filteredCount == 0 ? null : _batchCalculateAll,
+                  ),
+                  const SizedBox(height: 8),
+                  _ReportsActionButton(
+                    icon: Icons.nights_stay_outlined,
+                    label: 'Calculate Night',
+                    onPressed: filteredCount == 0 ? null : _batchCalculateNight,
+                  ),
+                  const SizedBox(height: 8),
+                  _ReportsActionButton(
+                    icon: Icons.cloud_outlined,
+                    label: 'Calculate IFR',
+                    onPressed: filteredCount == 0 ? null : _batchCalculateIfr,
+                  ),
+                  const SizedBox(height: 8),
+                  _ReportsActionButton(
+                    icon: Icons.visibility_outlined,
+                    label: 'Calculate Instrument',
+                    onPressed: filteredCount == 0
+                        ? null
+                        : _batchCalculateInstrument,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _checkBatchFlights() async {
+    final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
+    final issues = <String>[];
+    for (final snapshot in snapshots.values) {
+      final block = snapshot.timeBlockMinutes;
+      if (snapshot.arrivalUtc != null &&
+          snapshot.arrivalUtc!.isBefore(snapshot.departureUtc)) {
+        issues.add(
+          'Flight ${snapshot.id}: arrival is before departure.',
+        );
+      }
+      if (block < 0 || snapshot.timeTotalBlockMinutes < 0) {
+        issues.add('Flight ${snapshot.id}: negative block values.');
+      }
+      if (snapshot.fromIcao.trim().isEmpty || snapshot.toIcao.trim().isEmpty) {
+        issues.add('Flight ${snapshot.id}: missing airport ICAO.');
+      }
+      final totalBlock = snapshot.timeTotalBlockMinutes;
+      final normalizedFunction = snapshot.pilotFunction.trim().toUpperCase();
+      if (snapshot.arrivalUtc != null) {
+        final chocksBlock = snapshot.arrivalUtc!
+            .difference(snapshot.departureUtc)
+            .inMinutes;
+        if (chocksBlock >= 0 && totalBlock != chocksBlock) {
+          issues.add(
+            'Flight ${snapshot.id}: chocks block ($chocksBlock) '
+            '!= Total Block ($totalBlock).',
+          );
+        }
+        if (chocksBlock >= 0 &&
+            (normalizedFunction == 'PF' ||
+                normalizedFunction == 'PNF' ||
+                normalizedFunction == 'PF/PNF' ||
+                normalizedFunction == 'PNF/PF')) {
+          if (block != totalBlock) {
+            issues.add(
+              'Flight ${snapshot.id}: pilot function $normalizedFunction '
+              'requires Block ($block) = Total Block ($totalBlock).',
+            );
+          }
+        }
+      }
+      if (snapshot.takeoffUtc != null && snapshot.landingUtc != null) {
+        final flightElapsed = snapshot.landingUtc!
+            .difference(snapshot.takeoffUtc!)
+            .inMinutes;
+        if (flightElapsed >= 0 && snapshot.timeFlightMinutes != flightElapsed) {
+          issues.add(
+            'Flight ${snapshot.id}: elapsed flight time ($flightElapsed) '
+            '!= Flight time (${snapshot.timeFlightMinutes}).',
+          );
+        }
+      }
+      final crewTotal =
+          snapshot.timePICMinutes +
+          snapshot.timePICUSMinutes +
+          snapshot.timeSICMinutes +
+          snapshot.timeDualMinutes;
+      if (crewTotal != block) {
+        issues.add(
+          'Flight ${snapshot.id}: PIC+PICUS+SIC+Dual '
+          '($crewTotal) != Block ($block).',
+        );
+      }
+      final cappedFields = <(String, int)>[
+        ('Night', snapshot.timeNightMinutes),
+        ('Instrument', snapshot.timeInstrumentMinutes),
+        ('IFR', snapshot.timeIFRMinutes),
+        ('CrossCountry', snapshot.timeCrossCountryMinutes),
+        ('Flight', snapshot.timeFlightMinutes),
+        ('Custom1', snapshot.timeCustom1Minutes),
+        ('Custom2', snapshot.timeCustom2Minutes),
+        ('Custom3', snapshot.timeCustom3Minutes),
+        ('Custom4', snapshot.timeCustom4Minutes),
+      ];
+      for (final (label, minutes) in cappedFields) {
+        if (minutes > block) {
+          issues.add(
+            'Flight ${snapshot.id}: $label time '
+            '($minutes) is greater than Block ($block).',
+          );
+        }
+      }
+      if (snapshot.distanceNm < 0) {
+        issues.add('Flight ${snapshot.id}: negative distance.');
+      } else if (snapshot.fromLatitude != null &&
+          snapshot.fromLongitude != null &&
+          snapshot.toLatitude != null &&
+          snapshot.toLongitude != null &&
+          (snapshot.fromIcao != snapshot.toIcao) &&
+          snapshot.distanceNm > 0) {
+        final calcDistance = FlightCalculations(
+          latDep: snapshot.fromLatitude!,
+          longDep: snapshot.fromLongitude!,
+          latArr: snapshot.toLatitude!,
+          longArr: snapshot.toLongitude!,
+          depTimeEpochSeconds:
+              snapshot.departureUtc.millisecondsSinceEpoch ~/ 1000,
+          arrTimeEpochSeconds:
+              (snapshot.arrivalUtc ?? snapshot.departureUtc)
+                  .millisecondsSinceEpoch ~/
+              1000,
+        ).flightDistanceNm.round();
+        final diff = (snapshot.distanceNm - calcDistance).abs();
+        final tolerance = math.max(30, (calcDistance * 0.4).round());
+        if (diff > tolerance) {
+          issues.add(
+            'Flight ${snapshot.id}: distance seems incorrect '
+            '(stored ${snapshot.distanceNm}nm, '
+            'great-circle ${calcDistance}nm).',
+          );
+        }
+      }
+
+      final function = normalizedFunction;
+      final takeoffs = snapshot.takeOffsDays + snapshot.takeOffsNight;
+      final landings = snapshot.landingsDay + snapshot.landingsNight;
+      final expected = switch (function) {
+        'PF' => (takeoffs: 1, landings: 1),
+        'PNF' => (takeoffs: 0, landings: 0),
+        'PF/PNF' => (takeoffs: 1, landings: 0),
+        'PNF/PF' => (takeoffs: 0, landings: 1),
+        _ => null,
+      };
+      if (expected == null) {
+        issues.add(
+          'Flight ${snapshot.id}: pilot function "$function" '
+          'is not one of PF, PNF, PF/PNF, PNF/PF.',
+        );
+      } else if (takeoffs != expected.takeoffs ||
+          landings != expected.landings) {
+        issues.add(
+          'Flight ${snapshot.id}: takeoff/landing mismatch for $function '
+          '(takeoffs=$takeoffs, landings=$landings).',
+        );
+      }
+    }
+    await _showBatchIssues(issues);
+  }
+
+  Future<void> _batchSetCrewSelf() async {
+    final db = ref.read(databaseProvider);
+    final selfCrew = await (db.select(
+      db.crew,
+    )..where((t) => t.isSelf.equals(true))).getSingleOrNull();
+    if (selfCrew == null) {
+      await _showInfoDialog('Select one crew member as self first.');
+      return;
+    }
+    if (!mounted) return;
+    var selectedPosition = CrewPosition.pic;
+    final selected = await showDialog<CrewPosition>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: const Text('Set Crew'),
+          content: DropdownButtonFormField<CrewPosition>(
+            initialValue: selectedPosition,
+            items: const [
+              DropdownMenuItem(value: CrewPosition.pic, child: Text('PIC')),
+              DropdownMenuItem(value: CrewPosition.sic, child: Text('SIC')),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setStateDialog(() => selectedPosition = value);
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(selectedPosition),
+              child: const Text('Apply'),
+            ),
+          ],
+        ),
+      ),
+    );
+    final finalPosition = selected ?? CrewPosition.pic;
+    final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
+    final modifiable = _unlockedBatchSnapshots(snapshots);
+    final skippedLocked = snapshots.length - modifiable.length;
+    if (modifiable.isEmpty) {
+      await _showInfoDialog('All filtered flights are locked.');
+      return;
+    }
+    await db.transaction(() async {
+      for (final id in modifiable.keys) {
+        await (db.delete(db.flightCrewAssignments)..where(
+              (t) => t.flightId.equals(id) & t.crewId.equals(selfCrew.id),
+            ))
+            .go();
+        await db
+            .into(db.flightCrewAssignments)
+            .insert(
+              FlightCrewAssignmentsCompanion.insert(
+                flightId: id,
+                crewId: selfCrew.id,
+                position: finalPosition,
+              ),
+            );
+      }
+    });
+    await _showInfoDialog(
+      'Set self crew as ${finalPosition.name.toUpperCase()} '
+      'for ${modifiable.length} flights.${_lockedSkipSuffix(skippedLocked)}',
+    );
+  }
+
+  Future<void> _batchCalculateAll() async {
+    if (!mounted) return;
+    final selected = await _BatchCalculateAllDialog.show(context);
+    if (selected == null || selected.isEmpty) return;
+    final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
+    final modifiable = _unlockedBatchSnapshots(snapshots);
+    final skippedLocked = snapshots.length - modifiable.length;
+    if (modifiable.isEmpty) {
+      await _showInfoDialog('All filtered flights are locked.');
+      return;
+    }
+    final settings = await ref.read(flightFactoringSettingsProvider.future);
+    final changes = <_BatchFlightChange>[];
+    final db = ref.read(databaseProvider);
+    await db.transaction(() async {
+      for (final snapshot in modifiable.values) {
+        final base = snapshot.timeTotalBlockMinutes > 0
+            ? snapshot.timeTotalBlockMinutes
+            : snapshot.timeBlockMinutes;
+        final next = snapshot.copy();
+        if (selected.contains(_BatchCalcField.pic)) next.timePICMinutes = base;
+        if (selected.contains(_BatchCalcField.picus)) {
+          next.timePICUSMinutes = base;
+        }
+        if (selected.contains(_BatchCalcField.sic)) next.timeSICMinutes = base;
+        if (selected.contains(_BatchCalcField.crossCountry)) {
+          next.timeCrossCountryMinutes =
+              snapshot.distanceNm >= settings.crossCountryThresholdNm
+              ? base
+              : 0;
+        }
+        if (selected.contains(_BatchCalcField.ifr)) next.timeIFRMinutes = base;
+        if (selected.contains(_BatchCalcField.instrument)) {
+          next.timeInstrumentMinutes = base;
+        }
+        if (selected.contains(_BatchCalcField.custom1)) {
+          next.timeCustom1Minutes = base;
+        }
+        if (selected.contains(_BatchCalcField.custom2)) {
+          next.timeCustom2Minutes = base;
+        }
+        if (selected.contains(_BatchCalcField.custom3)) {
+          next.timeCustom3Minutes = base;
+        }
+        if (selected.contains(_BatchCalcField.custom4)) {
+          next.timeCustom4Minutes = base;
+        }
+        final fieldChanges = _buildBatchFieldChanges(snapshot, next);
+        if (fieldChanges.isEmpty) continue;
+        changes.add(
+          _BatchFlightChange(snapshot: snapshot, fields: fieldChanges),
+        );
+        await _updateFlightFromSnapshot(next);
+      }
+    });
+    await _showBatchChanges(changes);
+    if (skippedLocked > 0) {
+      await _showInfoDialog(
+        'Skipped $skippedLocked locked flight'
+        '${skippedLocked == 1 ? '' : 's'}.',
+      );
+    }
+    await _ensureDetailsLoaded(
+      includeEntries: false,
+      includePilotNames: _needsPilotNamesForFilters(),
+    );
+  }
+
+  Future<void> _batchCalculateNight() async {
+    final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
+    final modifiable = _unlockedBatchSnapshots(snapshots);
+    final skippedLocked = snapshots.length - modifiable.length;
+    if (modifiable.isEmpty) {
+      await _showInfoDialog('All filtered flights are locked.');
+      return;
+    }
+    final changes = <_BatchFlightChange>[];
+    final db = ref.read(databaseProvider);
+    await db.transaction(() async {
+      for (final snapshot in modifiable.values) {
+        final calc = _calculateNightForSnapshot(snapshot);
+        if (calc == null) continue;
+        final next = snapshot.copy()
+          ..timeNightMinutes = calc.nightMinutes
+          ..takeOffsDays = calc.takeoffsDay
+          ..takeOffsNight = calc.takeoffsNight
+          ..landingsDay = calc.landingsDay
+          ..landingsNight = calc.landingsNight;
+        final fieldChanges = _buildBatchFieldChanges(snapshot, next);
+        if (fieldChanges.isEmpty) continue;
+        changes.add(
+          _BatchFlightChange(snapshot: snapshot, fields: fieldChanges),
+        );
+        await _updateFlightFromSnapshot(next);
+      }
+    });
+    await _showBatchChanges(changes);
+    if (skippedLocked > 0) {
+      await _showInfoDialog(
+        'Skipped $skippedLocked locked flight'
+        '${skippedLocked == 1 ? '' : 's'}.',
+      );
+    }
+    await _ensureDetailsLoaded(
+      includeEntries: false,
+      includePilotNames: _needsPilotNamesForFilters(),
+    );
+  }
+
+  Future<void> _batchCalculateIfr() async {
+    final settings = await ref.read(flightFactoringSettingsProvider.future);
+    await _batchApplySingleTimeField(
+      fieldName: 'IFR time',
+      mutate: (snapshot) {
+        final base = snapshot.timeTotalBlockMinutes > 0
+            ? snapshot.timeTotalBlockMinutes
+            : snapshot.timeBlockMinutes;
+        var minutes =
+            ((base - settings.ifrSubtractMinutes).clamp(
+                      0,
+                      24 * 60,
+                    ) *
+                    settings.ifrPercent /
+                    100)
+                .round();
+        minutes = math.max(minutes, settings.ifrMinimumMinutes);
+        return snapshot.copy()..timeIFRMinutes = minutes;
+      },
+    );
+  }
+
+  Future<void> _batchCalculateInstrument() async {
+    final settings = await ref.read(flightFactoringSettingsProvider.future);
+    await _batchApplySingleTimeField(
+      fieldName: 'Instrument time',
+      mutate: (snapshot) {
+        final base = snapshot.timeTotalBlockMinutes > 0
+            ? snapshot.timeTotalBlockMinutes
+            : snapshot.timeBlockMinutes;
+        var minutes =
+            ((base - settings.instrumentSubtractMinutes).clamp(
+                      0,
+                      24 * 60,
+                    ) *
+                    settings.instrumentPercent /
+                    100)
+                .round();
+        minutes = math.max(minutes, settings.instrumentMinimumMinutes);
+        return snapshot.copy()..timeInstrumentMinutes = minutes;
+      },
+    );
+  }
+
+  Future<void> _batchSetLockStateTrue() async {
+    await _batchSetLockState(lockState: true);
+  }
+
+  Future<void> _batchSetLockStateFalse() async {
+    await _batchSetLockState(lockState: false);
+  }
+
+  Future<void> _batchSetLockState({required bool lockState}) async {
+    final targets = await _loadBatchLockTargets(lockState: lockState);
+    final targetCount = targets.totalCount;
+    if (targetCount == 0) return;
+    if (targets.flightIds.isEmpty &&
+        targets.simulatorIds.isEmpty &&
+        targets.positioningIds.isEmpty &&
+        targets.dutyIds.isEmpty) {
+      await _showInfoDialog(
+        lockState
+            ? 'All filtered entries are already locked.'
+            : 'All filtered entries are already unlocked.',
+      );
+      return;
+    }
+    if (!mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(lockState ? 'Lock entries?' : 'Unlock entries?'),
+        content: Text(
+          'This will ${lockState ? 'lock' : 'unlock'} ${targets.changeCount} '
+          'filtered entries.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(lockState ? 'Lock' : 'Unlock'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final db = ref.read(databaseProvider);
+    var updatedFlights = 0;
+    var updatedSimulators = 0;
+    var updatedPositionings = 0;
+    var updatedDuty = 0;
+    await db.transaction(() async {
+      if (targets.flightIds.isNotEmpty) {
+        updatedFlights =
+            await (db.update(db.flights)
+                  ..where((t) => t.id.isIn(targets.flightIds)))
+                .write(FlightsCompanion(isLocked: d.Value(lockState)));
+      }
+      if (targets.simulatorIds.isNotEmpty) {
+        updatedSimulators =
+            await (db.update(
+              db.simulatorTrainings,
+            )..where((t) => t.id.isIn(targets.simulatorIds))).write(
+              SimulatorTrainingsCompanion(isLocked: d.Value(lockState)),
+            );
+      }
+      if (targets.positioningIds.isNotEmpty) {
+        updatedPositionings =
+            await (db.update(db.positionings)
+                  ..where((t) => t.id.isIn(targets.positioningIds)))
+                .write(PositioningsCompanion(isLocked: d.Value(lockState)));
+      }
+      if (targets.dutyIds.isNotEmpty) {
+        updatedDuty =
+            await (db.update(db.dutyPeriods)
+                  ..where((t) => t.id.isIn(targets.dutyIds)))
+                .write(DutyPeriodsCompanion(isLocked: d.Value(lockState)));
+      }
+    });
+    final updatedTotal =
+        updatedFlights + updatedSimulators + updatedPositionings + updatedDuty;
+    await _showInfoDialog(
+      '${lockState ? 'Locked' : 'Unlocked'} $updatedTotal entries '
+      '(Flights: $updatedFlights, Sim: $updatedSimulators, '
+      'Positioning: $updatedPositionings, Duty: $updatedDuty).',
+    );
+    await _ensureDetailsLoaded(
+      includeEntries: false,
+      includePilotNames: _needsPilotNamesForFilters(),
+    );
+  }
+
+  Future<void> _batchApplySingleTimeField({
+    required String fieldName,
+    required _BatchFlightSnapshot Function(_BatchFlightSnapshot snapshot)
+    mutate,
+  }) async {
+    final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
+    final modifiable = _unlockedBatchSnapshots(snapshots);
+    final skippedLocked = snapshots.length - modifiable.length;
+    if (modifiable.isEmpty) {
+      await _showInfoDialog('All filtered flights are locked.');
+      return;
+    }
+    final changes = <_BatchFlightChange>[];
+    final db = ref.read(databaseProvider);
+    await db.transaction(() async {
+      for (final snapshot in modifiable.values) {
+        final next = mutate(snapshot);
+        final fieldChanges = _buildBatchFieldChanges(snapshot, next);
+        if (fieldChanges.isEmpty) continue;
+        changes.add(
+          _BatchFlightChange(snapshot: snapshot, fields: fieldChanges),
+        );
+        await _updateFlightFromSnapshot(next);
+      }
+    });
+    await _showBatchChanges(changes);
+    await _showInfoDialog(
+      '$fieldName updated for ${changes.length} flights.'
+      '${_lockedSkipSuffix(skippedLocked)}',
+    );
+    await _ensureDetailsLoaded(
+      includeEntries: false,
+      includePilotNames: _needsPilotNamesForFilters(),
+    );
+  }
+
+  Set<int> _filteredFlightIds() {
+    return _data.flights.map((row) => row.flightId).toSet();
+  }
+
+  Future<_BatchLockTargets> _loadBatchLockTargets({
+    required bool lockState,
+  }) async {
+    final eventTypes = ref.read(reportsEventTypesProvider);
+    final includedFlightIds = _filters.isEmpty ? null : _filteredFlightIds();
+    final entries = await _fetchEntriesForRange(
+      includedFlightIds: includedFlightIds,
+      eventTypes: eventTypes,
+      from: _from,
+      to: _to,
+    );
+    final flightIds = <int>{};
+    final simulatorIds = <int>{};
+    final positioningIds = <int>{};
+    final dutyIds = <int>{};
+    for (final entry in entries) {
+      final flight = entry.flight;
+      if (flight != null) {
+        flightIds.add(flight.id);
+      }
+      final simulator = entry.simulatorTraining;
+      if (simulator != null) {
+        simulatorIds.add(simulator.id);
+      }
+      final positioning = entry.positioning;
+      if (positioning != null) {
+        positioningIds.add(positioning.id);
+      }
+      final dutyStart = entry.dutyStart;
+      if (dutyStart != null) {
+        dutyIds.add(dutyStart.id);
+      }
+      final dutyEnd = entry.dutyEnd;
+      if (dutyEnd != null) {
+        dutyIds.add(dutyEnd.id);
+      }
+    }
+
+    final db = ref.read(databaseProvider);
+    final unlockedFlightIds = flightIds.isEmpty
+        ? const <int>{}
+        : (await (db.select(
+                db.flights,
+              )..where((t) => t.id.isIn(flightIds.toList()))).get())
+              .where((row) => row.isLocked != lockState)
+              .map((row) => row.id)
+              .toSet();
+    final unlockedSimulatorIds = simulatorIds.isEmpty
+        ? const <int>{}
+        : (await (db.select(
+                db.simulatorTrainings,
+              )..where((t) => t.id.isIn(simulatorIds.toList()))).get())
+              .where((row) => row.isLocked != lockState)
+              .map((row) => row.id)
+              .toSet();
+    final unlockedPositioningIds = positioningIds.isEmpty
+        ? const <int>{}
+        : (await (db.select(
+                db.positionings,
+              )..where((t) => t.id.isIn(positioningIds.toList()))).get())
+              .where((row) => row.isLocked != lockState)
+              .map((row) => row.id)
+              .toSet();
+    final unlockedDutyIds = dutyIds.isEmpty
+        ? const <int>{}
+        : (await (db.select(
+                db.dutyPeriods,
+              )..where((t) => t.id.isIn(dutyIds.toList()))).get())
+              .where((row) => row.isLocked != lockState)
+              .map((row) => row.id)
+              .toSet();
+
+    return _BatchLockTargets(
+      totalCount:
+          flightIds.length +
+          simulatorIds.length +
+          positioningIds.length +
+          dutyIds.length,
+      flightIds: unlockedFlightIds.toList(growable: false),
+      simulatorIds: unlockedSimulatorIds.toList(growable: false),
+      positioningIds: unlockedPositioningIds.toList(growable: false),
+      dutyIds: unlockedDutyIds.toList(growable: false),
+    );
+  }
+
+  Map<int, _BatchFlightSnapshot> _unlockedBatchSnapshots(
+    Map<int, _BatchFlightSnapshot> snapshots,
+  ) {
+    return Map<int, _BatchFlightSnapshot>.fromEntries(
+      snapshots.entries.where((entry) => !entry.value.isLocked),
+    );
+  }
+
+  String _lockedSkipSuffix(int skippedLocked) {
+    if (skippedLocked <= 0) return '';
+    return ' Skipped $skippedLocked locked flight'
+        '${skippedLocked == 1 ? '' : 's'}.';
+  }
+
+  Future<Map<int, _BatchFlightSnapshot>> _loadBatchSnapshots(
+    Set<int> ids,
+  ) async {
+    if (ids.isEmpty) return const {};
+    final db = ref.read(databaseProvider);
+    final flights = await (db.select(
+      db.flights,
+    )..where((t) => t.id.isIn(ids.toList()))).get();
+    final depTimelineIds = flights
+        .map((flight) => flight.departureDateTimeId)
+        .toSet()
+        .toList(growable: false);
+    final timelines = await (db.select(
+      db.timeLines,
+    )..where((t) => t.id.isIn(depTimelineIds))).get();
+    final timelineById = <int, TimeLine>{
+      for (final timeline in timelines) timeline.id: timeline,
+    };
+    final airportIds = flights
+        .expand(
+          (flight) => [flight.departureAirportId, flight.arrivalAirportId],
+        )
+        .toSet()
+        .toList(growable: false);
+    final airports = await (db.select(
+      db.airports,
+    )..where((t) => t.id.isIn(airportIds))).get();
+    final airportById = <int, Airport>{
+      for (final airport in airports) airport.id: airport,
+    };
+    final result = <int, _BatchFlightSnapshot>{};
+    for (final flight in flights) {
+      final depTimeline = timelineById[flight.departureDateTimeId];
+      if (depTimeline == null) continue;
+      final depAirport = airportById[flight.departureAirportId];
+      final arrAirport = airportById[flight.arrivalAirportId];
+      result[flight.id] = _BatchFlightSnapshot(
+        id: flight.id,
+        isLocked: flight.isLocked,
+        departureUtc: DbDateTime.dbToUtc(depTimeline.eventDateTime),
+        arrivalUtc: DbDateTime.dbToUtcOrNull(flight.arrivalDateTime),
+        takeoffUtc: DbDateTime.dbToUtcOrNull(flight.takeOffDateTime),
+        landingUtc: DbDateTime.dbToUtcOrNull(flight.landingDateTime),
+        fromIcao: depAirport?.icao ?? '',
+        toIcao: arrAirport?.icao ?? '',
+        fromLatitude: depAirport?.latitude,
+        fromLongitude: depAirport?.longitude,
+        toLatitude: arrAirport?.latitude,
+        toLongitude: arrAirport?.longitude,
+        pilotFunction: flight.pilotFunction,
+        timeBlockMinutes: flight.timeBlockMinutes,
+        timeTotalBlockMinutes: flight.timeTotalBlockMinutes,
+        timePICMinutes: flight.timePICMinutes,
+        timePICUSMinutes: flight.timePICUSMinutes,
+        timeSICMinutes: flight.timeSICMinutes,
+        timeDualMinutes: flight.timeDualMinutes,
+        timeIFRMinutes: flight.timeIFRMinutes,
+        timeInstrumentMinutes: flight.timeInstrumentMinutes,
+        timeNightMinutes: flight.timeNightMinutes,
+        timeCrossCountryMinutes: flight.timeCrossCountryMinutes,
+        timeCustom1Minutes: flight.timeCustom1Minutes,
+        timeCustom2Minutes: flight.timeCustom2Minutes,
+        timeCustom3Minutes: flight.timeCustom3Minutes,
+        timeCustom4Minutes: flight.timeCustom4Minutes,
+        timeFlightMinutes: flight.timeFlightMinutes,
+        takeOffsDays: flight.takeOffsDays,
+        takeOffsNight: flight.takeOffsNight,
+        landingsDay: flight.landingsDay,
+        landingsNight: flight.landingsNight,
+        distanceNm: flight.distanceNM,
+      );
+    }
+    return result;
+  }
+
+  Future<void> _updateFlightFromSnapshot(_BatchFlightSnapshot snapshot) async {
+    final db = ref.read(databaseProvider);
+    await (db.update(db.flights)..where((t) => t.id.equals(snapshot.id))).write(
+      FlightsCompanion(
+        timePICMinutes: d.Value(snapshot.timePICMinutes),
+        timePICUSMinutes: d.Value(snapshot.timePICUSMinutes),
+        timeSICMinutes: d.Value(snapshot.timeSICMinutes),
+        timeIFRMinutes: d.Value(snapshot.timeIFRMinutes),
+        timeInstrumentMinutes: d.Value(snapshot.timeInstrumentMinutes),
+        timeNightMinutes: d.Value(snapshot.timeNightMinutes),
+        timeCrossCountryMinutes: d.Value(snapshot.timeCrossCountryMinutes),
+        timeCustom1Minutes: d.Value(snapshot.timeCustom1Minutes),
+        timeCustom2Minutes: d.Value(snapshot.timeCustom2Minutes),
+        timeCustom3Minutes: d.Value(snapshot.timeCustom3Minutes),
+        timeCustom4Minutes: d.Value(snapshot.timeCustom4Minutes),
+        takeOffsDays: d.Value(snapshot.takeOffsDays),
+        takeOffsNight: d.Value(snapshot.takeOffsNight),
+        landingsDay: d.Value(snapshot.landingsDay),
+        landingsNight: d.Value(snapshot.landingsNight),
+      ),
+    );
+  }
+
+  _BatchNightResult? _calculateNightForSnapshot(_BatchFlightSnapshot snapshot) {
+    final dep = snapshot.takeoffUtc ?? snapshot.departureUtc;
+    final arr = snapshot.landingUtc ?? snapshot.arrivalUtc;
+    if (arr == null) return null;
+    final latDep = snapshot.fromLatitude;
+    final lonDep = snapshot.fromLongitude;
+    final latArr = snapshot.toLatitude;
+    final lonArr = snapshot.toLongitude;
+    if (latDep == null || lonDep == null || latArr == null || lonArr == null) {
+      return null;
+    }
+    final calc = FlightCalculations(
+      latDep: latDep,
+      longDep: lonDep,
+      latArr: latArr,
+      longArr: lonArr,
+      depTimeEpochSeconds: dep.millisecondsSinceEpoch ~/ 1000,
+      arrTimeEpochSeconds: arr.millisecondsSinceEpoch ~/ 1000,
+    );
+    final normalized = snapshot.pilotFunction.trim().toUpperCase();
+    final takeoffCount = (normalized == 'PF' || normalized == 'PF/PNF') ? 1 : 0;
+    final landingCount = (normalized == 'PF' || normalized == 'PNF/PF') ? 1 : 0;
+    var takeoffsDay = 0;
+    var takeoffsNight = 0;
+    var landingsDay = 0;
+    var landingsNight = 0;
+    if (takeoffCount > 0) {
+      if (calc.dayTakeOff) {
+        takeoffsDay = takeoffCount;
+      } else {
+        takeoffsNight = takeoffCount;
+      }
+    }
+    if (landingCount > 0) {
+      if (calc.dayLanding) {
+        landingsDay = landingCount;
+      } else {
+        landingsNight = landingCount;
+      }
+    }
+    return _BatchNightResult(
+      nightMinutes: calc.nightTimeMinutes.clamp(0, snapshot.timeBlockMinutes),
+      takeoffsDay: takeoffsDay,
+      takeoffsNight: takeoffsNight,
+      landingsDay: landingsDay,
+      landingsNight: landingsNight,
+    );
+  }
+
+  List<_BatchFieldChange> _buildBatchFieldChanges(
+    _BatchFlightSnapshot before,
+    _BatchFlightSnapshot after,
+  ) {
+    final changes = <_BatchFieldChange>[];
+    void addTime(String label, int from, int to) {
+      if (from == to) return;
+      changes.add(
+        _BatchFieldChange(
+          label: label,
+          before: TimeInputField.formatMinutes(from),
+          after: TimeInputField.formatMinutes(to),
+        ),
+      );
+    }
+
+    void addCount(String label, int from, int to) {
+      if (from == to) return;
+      changes.add(
+        _BatchFieldChange(
+          label: label,
+          before: '$from',
+          after: '$to',
+        ),
+      );
+    }
+
+    addTime('PIC time', before.timePICMinutes, after.timePICMinutes);
+    addTime('PICUS time', before.timePICUSMinutes, after.timePICUSMinutes);
+    addTime('SIC time', before.timeSICMinutes, after.timeSICMinutes);
+    addTime('IFR time', before.timeIFRMinutes, after.timeIFRMinutes);
+    addTime(
+      'Instrument time',
+      before.timeInstrumentMinutes,
+      after.timeInstrumentMinutes,
+    );
+    addTime('Night time', before.timeNightMinutes, after.timeNightMinutes);
+    addTime(
+      'Cross-country',
+      before.timeCrossCountryMinutes,
+      after.timeCrossCountryMinutes,
+    );
+    addTime('Custom1', before.timeCustom1Minutes, after.timeCustom1Minutes);
+    addTime('Custom2', before.timeCustom2Minutes, after.timeCustom2Minutes);
+    addTime('Custom3', before.timeCustom3Minutes, after.timeCustom3Minutes);
+    addTime('Custom4', before.timeCustom4Minutes, after.timeCustom4Minutes);
+    addCount('Takeoffs day', before.takeOffsDays, after.takeOffsDays);
+    addCount('Takeoffs night', before.takeOffsNight, after.takeOffsNight);
+    addCount('Landings day', before.landingsDay, after.landingsDay);
+    addCount('Landings night', before.landingsNight, after.landingsNight);
+    return changes;
+  }
+
+  Future<void> _showBatchIssues(List<String> issues) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Flight checks'),
+        content: SizedBox(
+          width: 640,
+          child: issues.isEmpty
+              ? const Text('No flight issues found.')
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: issues.length,
+                  itemBuilder: (context, index) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(issues[index]),
+                  ),
+                ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showBatchChanges(List<_BatchFlightChange> changes) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Batch changes'),
+        content: SizedBox(
+          width: 760,
+          child: changes.isEmpty
+              ? const Text('No changes were applied.')
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: changes.length,
+                  itemBuilder: (context, index) {
+                    final change = changes[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            change.snapshot.summaryLine,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 4),
+                          for (final field in change.fields)
+                            Text(
+                              '${field.label} ${field.before} '
+                              'to ${field.after}',
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _BatchCalcField {
+  pic,
+  picus,
+  sic,
+  ifr,
+  instrument,
+  crossCountry,
+  custom1,
+  custom2,
+  custom3,
+  custom4,
+}
+
+class _BatchCalculateAllDialog extends StatefulWidget {
+  const _BatchCalculateAllDialog();
+
+  static Future<Set<_BatchCalcField>?> show(BuildContext context) {
+    return showDialog<Set<_BatchCalcField>>(
+      context: context,
+      builder: (context) => const _BatchCalculateAllDialog(),
+    );
+  }
+
+  @override
+  State<_BatchCalculateAllDialog> createState() =>
+      _BatchCalculateAllDialogState();
+}
+
+class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
+  final Set<_BatchCalcField> _selected = <_BatchCalcField>{
+    _BatchCalcField.pic,
+    _BatchCalcField.sic,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    String label(_BatchCalcField field) {
+      return switch (field) {
+        _BatchCalcField.pic => 'PIC',
+        _BatchCalcField.picus => 'PICUS',
+        _BatchCalcField.sic => 'SIC',
+        _BatchCalcField.ifr => 'IFR',
+        _BatchCalcField.instrument => 'Instrument',
+        _BatchCalcField.crossCountry => 'Cross-country',
+        _BatchCalcField.custom1 => 'Custom 1',
+        _BatchCalcField.custom2 => 'Custom 2',
+        _BatchCalcField.custom3 => 'Custom 3',
+        _BatchCalcField.custom4 => 'Custom 4',
+      };
+    }
+
+    return AlertDialog(
+      title: const Text('Calculate All'),
+      content: SizedBox(
+        width: 420,
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _BatchCalcField.values
+              .map((field) {
+                final selected = _selected.contains(field);
+                return FilterChip(
+                  label: Text(label(field)),
+                  selected: selected,
+                  onSelected: (value) {
+                    setState(() {
+                      if (value) {
+                        _selected.add(field);
+                      } else {
+                        _selected.remove(field);
+                      }
+                    });
+                  },
+                );
+              })
+              .toList(growable: false),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop({..._selected}),
+          child: const Text('Apply'),
+        ),
+      ],
+    );
+  }
+}
+
+class _BatchNightResult {
+  const _BatchNightResult({
+    required this.nightMinutes,
+    required this.takeoffsDay,
+    required this.takeoffsNight,
+    required this.landingsDay,
+    required this.landingsNight,
+  });
+
+  final int nightMinutes;
+  final int takeoffsDay;
+  final int takeoffsNight;
+  final int landingsDay;
+  final int landingsNight;
+}
+
+class _BatchLockTargets {
+  const _BatchLockTargets({
+    required this.totalCount,
+    required this.flightIds,
+    required this.simulatorIds,
+    required this.positioningIds,
+    required this.dutyIds,
+  });
+
+  final int totalCount;
+  final List<int> flightIds;
+  final List<int> simulatorIds;
+  final List<int> positioningIds;
+  final List<int> dutyIds;
+
+  int get changeCount =>
+      flightIds.length +
+      simulatorIds.length +
+      positioningIds.length +
+      dutyIds.length;
+}
+
+class _BatchFlightSnapshot {
+  _BatchFlightSnapshot({
+    required this.id,
+    required this.isLocked,
+    required this.departureUtc,
+    required this.arrivalUtc,
+    required this.takeoffUtc,
+    required this.landingUtc,
+    required this.fromIcao,
+    required this.toIcao,
+    required this.fromLatitude,
+    required this.fromLongitude,
+    required this.toLatitude,
+    required this.toLongitude,
+    required this.pilotFunction,
+    required this.timeBlockMinutes,
+    required this.timeTotalBlockMinutes,
+    required this.timePICMinutes,
+    required this.timePICUSMinutes,
+    required this.timeSICMinutes,
+    required this.timeDualMinutes,
+    required this.timeIFRMinutes,
+    required this.timeInstrumentMinutes,
+    required this.timeNightMinutes,
+    required this.timeCrossCountryMinutes,
+    required this.timeCustom1Minutes,
+    required this.timeCustom2Minutes,
+    required this.timeCustom3Minutes,
+    required this.timeCustom4Minutes,
+    required this.timeFlightMinutes,
+    required this.takeOffsDays,
+    required this.takeOffsNight,
+    required this.landingsDay,
+    required this.landingsNight,
+    required this.distanceNm,
+  });
+
+  final int id;
+  final bool isLocked;
+  final DateTime departureUtc;
+  final DateTime? arrivalUtc;
+  final DateTime? takeoffUtc;
+  final DateTime? landingUtc;
+  final String fromIcao;
+  final String toIcao;
+  final double? fromLatitude;
+  final double? fromLongitude;
+  final double? toLatitude;
+  final double? toLongitude;
+  final String pilotFunction;
+  final int timeBlockMinutes;
+  final int timeTotalBlockMinutes;
+  int timePICMinutes;
+  int timePICUSMinutes;
+  int timeSICMinutes;
+  int timeDualMinutes;
+  int timeIFRMinutes;
+  int timeInstrumentMinutes;
+  int timeNightMinutes;
+  int timeCrossCountryMinutes;
+  int timeCustom1Minutes;
+  int timeCustom2Minutes;
+  int timeCustom3Minutes;
+  int timeCustom4Minutes;
+  int timeFlightMinutes;
+  int takeOffsDays;
+  int takeOffsNight;
+  int landingsDay;
+  int landingsNight;
+  final int distanceNm;
+
+  _BatchFlightSnapshot copy() {
+    return _BatchFlightSnapshot(
+      id: id,
+      isLocked: isLocked,
+      departureUtc: departureUtc,
+      arrivalUtc: arrivalUtc,
+      takeoffUtc: takeoffUtc,
+      landingUtc: landingUtc,
+      fromIcao: fromIcao,
+      toIcao: toIcao,
+      fromLatitude: fromLatitude,
+      fromLongitude: fromLongitude,
+      toLatitude: toLatitude,
+      toLongitude: toLongitude,
+      pilotFunction: pilotFunction,
+      timeBlockMinutes: timeBlockMinutes,
+      timeTotalBlockMinutes: timeTotalBlockMinutes,
+      timePICMinutes: timePICMinutes,
+      timePICUSMinutes: timePICUSMinutes,
+      timeSICMinutes: timeSICMinutes,
+      timeDualMinutes: timeDualMinutes,
+      timeIFRMinutes: timeIFRMinutes,
+      timeInstrumentMinutes: timeInstrumentMinutes,
+      timeNightMinutes: timeNightMinutes,
+      timeCrossCountryMinutes: timeCrossCountryMinutes,
+      timeCustom1Minutes: timeCustom1Minutes,
+      timeCustom2Minutes: timeCustom2Minutes,
+      timeCustom3Minutes: timeCustom3Minutes,
+      timeCustom4Minutes: timeCustom4Minutes,
+      timeFlightMinutes: timeFlightMinutes,
+      takeOffsDays: takeOffsDays,
+      takeOffsNight: takeOffsNight,
+      landingsDay: landingsDay,
+      landingsNight: landingsNight,
+      distanceNm: distanceNm,
+    );
+  }
+
+  String get summaryLine {
+    final formatter = DateFormat('yyyy-MM-dd');
+    final dep = DateFormat('HH:mm').format(departureUtc);
+    final arr = arrivalUtc == null
+        ? '--:--'
+        : DateFormat('HH:mm').format(arrivalUtc!);
+    final total = TimeInputField.formatMinutes(timeTotalBlockMinutes);
+    return '${formatter.format(departureUtc)} $fromIcao $dep '
+        '$toIcao $arr total $total';
+  }
+}
+
+class _BatchFieldChange {
+  const _BatchFieldChange({
+    required this.label,
+    required this.before,
+    required this.after,
+  });
+
+  final String label;
+  final String before;
+  final String after;
+}
+
+class _BatchFlightChange {
+  const _BatchFlightChange({
+    required this.snapshot,
+    required this.fields,
+  });
+
+  final _BatchFlightSnapshot snapshot;
+  final List<_BatchFieldChange> fields;
 }
 
 class _ReportsSectionCard extends StatelessWidget {

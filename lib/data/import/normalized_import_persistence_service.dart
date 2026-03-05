@@ -56,6 +56,7 @@ class NormalizedImportPersistenceService {
     }
 
     final existingFlightKeys = await _loadExistingFlightDateKeys();
+    final existingPositioningKeys = await _loadExistingPositioningDateKeys();
     final counters = _ImportCounters(
       skipped: batch.skippedRows,
       errors: batch.errorRows,
@@ -81,6 +82,7 @@ class NormalizedImportPersistenceService {
               entityOptions: batch.entityOptions,
               counters: counters,
               airportCache: airportCache,
+              existingPositioningKeys: existingPositioningKeys,
             );
           } else if (record is NormalizedSimulatorRecord) {
             await _persistSimulator(
@@ -175,6 +177,10 @@ class NormalizedImportPersistenceService {
         ? existingFlightKeys[flightKey]
         : null;
     if (existing != null && !record.overrideMatchedFlight) {
+      counters.skipped += 1;
+      return;
+    }
+    if (existing != null && existing.isLocked) {
       counters.skipped += 1;
       return;
     }
@@ -287,6 +293,7 @@ class NormalizedImportPersistenceService {
       existingFlightKeys[flightKey] = _ExistingFlightData(
         flightId: flightId,
         departureTimelineId: departureTimelineId,
+        isLocked: false,
       );
     }
 
@@ -305,7 +312,19 @@ class NormalizedImportPersistenceService {
     required ImportedEntityOptions entityOptions,
     required _ImportCounters counters,
     required Map<String, Airport> airportCache,
+    required Set<String> existingPositioningKeys,
   }) async {
+    final positioningKey = _positioningDateKey(
+      record.departureAirport.icao,
+      record.arrivalAirport.icao,
+      record.departureDateTime,
+      record.arrivalDateTime,
+    );
+    if (existingPositioningKeys.contains(positioningKey)) {
+      counters.skipped += 1;
+      return;
+    }
+
     final depAirportId = await _getOrCreateAirport(
       draft: record.departureAirport,
       cache: airportCache,
@@ -338,6 +357,7 @@ class NormalizedImportPersistenceService {
             isLocked: false,
           ),
         );
+    existingPositioningKeys.add(positioningKey);
     counters.positionings += 1;
   }
 
@@ -495,6 +515,7 @@ class NormalizedImportPersistenceService {
     final query = db.customSelect(
       '''
 SELECT f.id AS flight_id,
+       f.is_locked AS is_locked,
        f.arrival_date_time AS arrival_date_time,
        f.departure_date_time_id AS departure_timeline_id,
        tl.event_date_time AS departure_date_time,
@@ -510,6 +531,7 @@ INNER JOIN airports arr ON arr.id = f.arrival_airport_id
     final rows = await query.get();
     for (final row in rows) {
       final flightId = row.read<int>('flight_id');
+      final isLocked = row.read<bool>('is_locked');
       final departureTimelineId = row.read<int>('departure_timeline_id');
       final departureAirportIcao = row.read<String>('departure_airport_icao');
       final arrivalAirportIcao = row.read<String>('arrival_airport_icao');
@@ -523,6 +545,40 @@ INNER JOIN airports arr ON arr.id = f.arrival_airport_id
       )] = _ExistingFlightData(
         flightId: flightId,
         departureTimelineId: departureTimelineId,
+        isLocked: isLocked,
+      );
+    }
+    return result;
+  }
+
+  Future<Set<String>> _loadExistingPositioningDateKeys() async {
+    final result = <String>{};
+    final query = db.customSelect(
+      '''
+SELECT p.arrival_date_time AS arrival_date_time,
+       tl.event_date_time AS departure_date_time,
+       dep.icao AS departure_airport_icao,
+       arr.icao AS arrival_airport_icao
+FROM positionings p
+INNER JOIN time_lines tl ON tl.id = p.departure_date_time_id
+INNER JOIN airports dep ON dep.id = p.departure_place_id
+INNER JOIN airports arr ON arr.id = p.arrival_place_id
+''',
+      readsFrom: {db.positionings, db.timeLines, db.airports},
+    );
+    final rows = await query.get();
+    for (final row in rows) {
+      final departureAirportIcao = row.read<String>('departure_airport_icao');
+      final arrivalAirportIcao = row.read<String>('arrival_airport_icao');
+      final departure = row.read<DateTime>('departure_date_time');
+      final arrival = row.readNullable<DateTime>('arrival_date_time');
+      result.add(
+        _positioningDateKey(
+          departureAirportIcao,
+          arrivalAirportIcao,
+          departure,
+          arrival,
+        ),
       );
     }
     return result;
@@ -646,6 +702,9 @@ INNER JOIN airports arr ON arr.id = f.arrival_airport_id
     final existing = cache[key];
     if (existing != null) {
       if (!options.overrideAircraftTypeValues) {
+        return _IdResult(id: existing.id, created: false);
+      }
+      if (existing.isLocked) {
         return _IdResult(id: existing.id, created: false);
       }
 
@@ -785,6 +844,9 @@ INNER JOIN airports arr ON arr.id = f.arrival_airport_id
       if (!options.overrideAircraftValues) {
         return _IdResult(id: existing.id, created: false);
       }
+      if (existing.isLocked) {
+        return _IdResult(id: existing.id, created: false);
+      }
 
       final mergedTypeId = aircraftTypeId;
       final mergedMtow = normalizedMtow ?? existing.mtow;
@@ -862,6 +924,9 @@ INNER JOIN airports arr ON arr.id = f.arrival_airport_id
     final existing = cache[key];
     if (existing != null) {
       if (!options.overrideCrewValues) {
+        return _IdResult(id: existing.id, created: false);
+      }
+      if (existing.isLocked) {
         return _IdResult(id: existing.id, created: false);
       }
 
@@ -992,10 +1057,12 @@ class _ExistingFlightData {
   const _ExistingFlightData({
     required this.flightId,
     required this.departureTimelineId,
+    required this.isLocked,
   });
 
   final int flightId;
   final int departureTimelineId;
+  final bool isLocked;
 }
 
 String _normalizeKey(String value) {
@@ -1007,6 +1074,18 @@ String _airportKey(String icao) => icao.trim().toLowerCase();
 String _crewKey(String name) => name.trim().toLowerCase();
 
 String _flightDateKey(
+  String departureAirportIcao,
+  String arrivalAirportIcao,
+  DateTime departure,
+  DateTime? arrival,
+) {
+  return '${departureAirportIcao.trim().toUpperCase()}|'
+      '${arrivalAirportIcao.trim().toUpperCase()}|'
+      '${departure.millisecondsSinceEpoch}|'
+      '${arrival?.millisecondsSinceEpoch ?? -1}';
+}
+
+String _positioningDateKey(
   String departureAirportIcao,
   String arrivalAirportIcao,
   DateTime departure,
