@@ -171,6 +171,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   );
   int _batchFlightCount = 0;
   bool _isCheckingBatchFlights = false;
+  bool _isPreparingBatchData = false;
   List<LogbookEntry> _entries = const [];
   DateTime? _firstFlightDate;
   DateTime? _lastFlightDate;
@@ -733,11 +734,32 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         includeEntries: true,
         includePilotNames: _needsPilotNamesForFilters(),
       );
-    } else if (index == 2 || index == 3 || index == 4) {
+    } else if (index == 2 || index == 3) {
       await _ensureDetailsLoaded(
         includeEntries: false,
         includePilotNames: _needsPilotNamesForFilters(),
       );
+    } else if (index == 4) {
+      unawaited(_primeBatchDataIfNeeded());
+    }
+  }
+
+  Future<void> _primeBatchDataIfNeeded() async {
+    if (!mounted) return;
+    if (_batchFlightCount <= 0) return;
+    if (_data.flights.isNotEmpty) return;
+    if (_isPreparingBatchData) return;
+    setState(() => _isPreparingBatchData = true);
+    await Future<void>.delayed(Duration.zero);
+    try {
+      await _ensureDetailsLoaded(
+        includeEntries: false,
+        includePilotNames: _needsPilotNamesForFilters(),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPreparingBatchData = false);
+      }
     }
   }
 
@@ -2257,6 +2279,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   Widget _buildBatchSection({required bool compact}) {
     final filteredCount = _batchFlightCount;
+    final actionsDisabled =
+        filteredCount == 0 || _isPreparingBatchData || _isCheckingBatchFlights;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760),
@@ -2280,6 +2304,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                     const SizedBox(height: 8),
                     const LinearProgressIndicator(minHeight: 3),
                   ],
+                  if (_isPreparingBatchData) ...[
+                    const SizedBox(height: 8),
+                    const LinearProgressIndicator(minHeight: 3),
+                    const SizedBox(height: 6),
+                    const Text('Preparing batch data...'),
+                  ],
                   const SizedBox(height: 8),
                   _ReportsActionButton(
                     icon: _isCheckingBatchFlights
@@ -2288,9 +2318,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                     label: _isCheckingBatchFlights
                         ? 'Checking...'
                         : 'Check Flights',
-                    onPressed: filteredCount == 0 || _isCheckingBatchFlights
-                        ? null
-                        : _checkBatchFlights,
+                    onPressed: actionsDisabled ? null : _checkBatchFlights,
                   ),
                   const SizedBox(height: 12),
                   Divider(
@@ -2301,47 +2329,43 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                   _ReportsActionButton(
                     icon: Icons.groups_outlined,
                     label: 'Set Crew',
-                    onPressed: filteredCount == 0 ? null : _batchSetCrewSelf,
+                    onPressed: actionsDisabled ? null : _batchSetCrewSelf,
                   ),
                   const SizedBox(height: 8),
                   _ReportsActionButton(
                     icon: Icons.lock_outline,
                     label: 'Lock',
-                    onPressed: filteredCount == 0
-                        ? null
-                        : _batchSetLockStateTrue,
+                    onPressed: actionsDisabled ? null : _batchSetLockStateTrue,
                   ),
                   const SizedBox(height: 8),
                   _ReportsActionButton(
                     icon: Icons.lock_open_outlined,
                     label: 'Unlock',
-                    onPressed: filteredCount == 0
-                        ? null
-                        : _batchSetLockStateFalse,
+                    onPressed: actionsDisabled ? null : _batchSetLockStateFalse,
                   ),
                   const SizedBox(height: 8),
                   _ReportsActionButton(
                     icon: Icons.calculate_outlined,
                     label: 'Calculate All',
-                    onPressed: filteredCount == 0 ? null : _batchCalculateAll,
+                    onPressed: actionsDisabled ? null : _batchCalculateAll,
                   ),
                   const SizedBox(height: 8),
                   _ReportsActionButton(
                     icon: Icons.nights_stay_outlined,
                     label: 'Calculate Night',
-                    onPressed: filteredCount == 0 ? null : _batchCalculateNight,
+                    onPressed: actionsDisabled ? null : _batchCalculateNight,
                   ),
                   const SizedBox(height: 8),
                   _ReportsActionButton(
                     icon: Icons.cloud_outlined,
                     label: 'Calculate IFR',
-                    onPressed: filteredCount == 0 ? null : _batchCalculateIfr,
+                    onPressed: actionsDisabled ? null : _batchCalculateIfr,
                   ),
                   const SizedBox(height: 8),
                   _ReportsActionButton(
                     icon: Icons.visibility_outlined,
                     label: 'Calculate Instrument',
-                    onPressed: filteredCount == 0
+                    onPressed: actionsDisabled
                         ? null
                         : _batchCalculateInstrument,
                   ),
@@ -2917,10 +2941,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   Future<void> _ensureBatchFlightsReadyForActions() async {
     if (_batchFlightCount <= 0) return;
     if (_data.flights.isNotEmpty) return;
-    await _ensureDetailsLoaded(
-      includeEntries: false,
-      includePilotNames: _needsPilotNamesForFilters(),
-    );
+    await _primeBatchDataIfNeeded();
   }
 
   Future<_BatchLockTargets> _loadBatchLockTargets({
