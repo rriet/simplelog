@@ -18,7 +18,7 @@ class FlightFactoringSettings {
     this.ifrPercent = 100,
     this.ifrMinimumMinutes = 0,
     this.ifrSubtractMinutes = 0,
-    this.irp3Percent = 33,
+    this.irp3Percent = 66,
     this.irp3SubtractMinutes = 0,
     this.irp4Percent = 50,
     this.irp4SubtractMinutes = 0,

@@ -80,6 +80,30 @@ const _pilotFilterFields = <ReportsFilterField>{
   ReportsFilterField.pilotTrainee,
 };
 
+class _CoverSummaryColumn {
+  const _CoverSummaryColumn({
+    required this.key,
+    required this.label,
+  });
+
+  final String key;
+  final String label;
+}
+
+const _defaultCoverSummaryColumns = <_CoverSummaryColumn>[
+  _CoverSummaryColumn(key: 'type', label: 'TYPE'),
+  _CoverSummaryColumn(key: 'night', label: 'NIGHT'),
+  _CoverSummaryColumn(key: 'ifr', label: 'IFR'),
+  _CoverSummaryColumn(key: 'pic', label: 'PIC'),
+  _CoverSummaryColumn(key: 'picus', label: 'PICUS'),
+  _CoverSummaryColumn(key: 'picPicus', label: 'PIC+PICUS'),
+  _CoverSummaryColumn(key: 'sic', label: 'SIC'),
+  _CoverSummaryColumn(key: 'dual', label: 'DUAL'),
+  _CoverSummaryColumn(key: 'instructor', label: 'INSTRUCTOR'),
+  _CoverSummaryColumn(key: 'examiner', label: 'EXAMINER'),
+  _CoverSummaryColumn(key: 'total', label: 'TOTAL'),
+];
+
 class _XslTemplateOption {
   /// Creates a selectable template entry for the PDF generator UI.
   const _XslTemplateOption({
@@ -1069,6 +1093,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         entries: entriesForPdf,
         startingTotals: startingTotals,
         coverValues: _buildCoverValues(
+          template: templateConfig,
           entriesForPdf: entriesForPdf,
           startingTotals: startingTotals,
         ),
@@ -1328,6 +1353,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Map<String, String> _buildCoverValues({
+    required ReportPdfTemplate template,
     required List<LogbookEntry> entriesForPdf,
     required ReportTemplateTotals startingTotals,
   }) {
@@ -1337,6 +1363,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final toDate = dateFormat.format(_to.toUtc());
     final rangeLabel = '$fromDate to $toDate';
     final summaryTable = _buildCoverSummaryTable(
+      template: template,
       entriesForPdf: entriesForPdf,
       startingTotals: startingTotals,
     );
@@ -1355,6 +1382,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   String _buildCoverSummaryTable({
+    required ReportPdfTemplate template,
     required List<LogbookEntry> entriesForPdf,
     required ReportTemplateTotals startingTotals,
   }) {
@@ -1378,24 +1406,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final totalBefore = _CoverFleetTotals.fromTemplateTotals(startingTotals);
     final grandTotal = _CoverFleetTotals.from(totalBefore)..add(logbookTotals);
 
+    final columns = _resolveCoverSummaryColumns(template);
     String line(String name, _CoverFleetTotals totals) {
-      return [
-        name,
-        _formatMinutes(totals.night),
-        _formatMinutes(totals.ifr),
-        _formatMinutes(totals.pic),
-        _formatMinutes(totals.picus),
-        _formatMinutes(totals.pic + totals.picus),
-        _formatMinutes(totals.sic),
-        _formatMinutes(totals.dual),
-        _formatMinutes(totals.instructor),
-        _formatMinutes(totals.examiner),
-        _formatMinutes(totals.total),
-      ].join('\t');
+      return columns
+          .map((column) => _coverSummaryCellValue(column.key, name, totals))
+          .join('\t');
     }
 
-    const header = 'TYPE\tNIGHT\tIFR\tPIC\tPICUS\tPIC+PICUS\tSIC\tDUAL\t'
-        'INSTRUCTOR\tEXAMINER\tTOTAL';
+    final header = columns.map((column) => column.label).join('\t');
     final lines = <String>[
       header,
       for (final row in familyRows) line(row.key, row.value),
@@ -1404,6 +1422,78 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       line('Total', grandTotal),
     ];
     return lines.join('\n');
+  }
+
+  List<_CoverSummaryColumn> _resolveCoverSummaryColumns(
+    ReportPdfTemplate template,
+  ) {
+    final block = template.coverPage?.blocks
+        .where((b) => b.valueKey?.trim() == 'cover.summaryTable')
+        .firstOrNull;
+    if (block == null || block.items.isEmpty) {
+      return _defaultCoverSummaryColumns;
+    }
+    final columns = block.items
+        .map(
+          (item) => _CoverSummaryColumn(
+            key: item.valueKey.trim(),
+            label: item.label.trim().isEmpty
+                ? item.valueKey.trim().toUpperCase()
+                : item.label.trim(),
+          ),
+        )
+        .where((column) => _isSupportedCoverSummaryColumn(column.key))
+        .toList(growable: false);
+    return columns.isEmpty ? _defaultCoverSummaryColumns : columns;
+  }
+
+  bool _isSupportedCoverSummaryColumn(String key) {
+    return const {
+      'type',
+      'night',
+      'ifr',
+      'pic',
+      'picus',
+      'picPicus',
+      'sic',
+      'dual',
+      'instructor',
+      'examiner',
+      'total',
+    }.contains(key);
+  }
+
+  String _coverSummaryCellValue(
+    String key,
+    String typeName,
+    _CoverFleetTotals totals,
+  ) {
+    switch (key) {
+      case 'type':
+        return typeName;
+      case 'night':
+        return _formatMinutes(totals.night);
+      case 'ifr':
+        return _formatMinutes(totals.ifr);
+      case 'pic':
+        return _formatMinutes(totals.pic);
+      case 'picus':
+        return _formatMinutes(totals.picus);
+      case 'picPicus':
+        return _formatMinutes(totals.pic + totals.picus);
+      case 'sic':
+        return _formatMinutes(totals.sic);
+      case 'dual':
+        return _formatMinutes(totals.dual);
+      case 'instructor':
+        return _formatMinutes(totals.instructor);
+      case 'examiner':
+        return _formatMinutes(totals.examiner);
+      case 'total':
+        return _formatMinutes(totals.total);
+      default:
+        return '';
+    }
   }
 
   Future<Map<String, Uint8List>> _buildCoverImages() async {
@@ -2546,9 +2636,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         if (snapshot.arrivalUtc != null &&
             (selectedChecks.contains(
                   _BatchFlightCheck.chocksEqualsTotalBlock,
-                ) ||
-                selectedChecks.contains(
-                  _BatchFlightCheck.pilotFunctionRequiresBlockEqualsTotalBlock,
                 ))) {
           final chocksBlock = snapshot.arrivalUtc!
               .difference(snapshot.departureUtc)
@@ -2561,21 +2648,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             issues.add(
               'Flight ${snapshot.id}: chocks block (${hhmm(chocksBlock)}) '
               '!= Total Block (${hhmm(totalBlock)}).',
-            );
-          }
-          if (selectedChecks.contains(
-                _BatchFlightCheck.pilotFunctionRequiresBlockEqualsTotalBlock,
-              ) &&
-              chocksBlock >= 0 &&
-              (canonicalFunction == PilotFunctionLogic.pf ||
-                  canonicalFunction == PilotFunctionLogic.pnf ||
-                  canonicalFunction == PilotFunctionLogic.pfPnf ||
-                  canonicalFunction == PilotFunctionLogic.pnfPf) &&
-              block != totalBlock) {
-            issues.add(
-              'Flight ${snapshot.id}: pilot function $canonicalFunction '
-              'requires Block (${hhmm(block)}) = '
-              'Total Block (${hhmm(totalBlock)}).',
             );
           }
         }
@@ -3723,7 +3795,6 @@ class _BatchIssueGroupData {
 enum _BatchFlightCheck {
   timelineConsistency,
   chocksEqualsTotalBlock,
-  pilotFunctionRequiresBlockEqualsTotalBlock,
   flightElapsedMatchesTimes,
   crewTimesEqualBlock,
   cappedTimesWithinBlock,
@@ -3758,8 +3829,6 @@ class _BatchFlightChecksDialogState extends State<_BatchFlightChecksDialog> {
         'Timeline consistency (arrival/departure, negatives, airports)',
       _BatchFlightCheck.chocksEqualsTotalBlock =>
         'Chocks block matches Total Block',
-      _BatchFlightCheck.pilotFunctionRequiresBlockEqualsTotalBlock =>
-        'PF/PNF pattern requires Block = Total Block',
       _BatchFlightCheck.flightElapsedMatchesTimes =>
         'Takeoff/landing elapsed matches Flight time',
       _BatchFlightCheck.crewTimesEqualBlock => 'PIC+PICUS+SIC+Dual = Block',

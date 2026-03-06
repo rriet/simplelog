@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/presentation/database/database_screen.dart';
 import 'package:simplelog/presentation/settings/widgets/flight_factoring_settings_card.dart';
-import 'package:simplelog/presentation/settings/widgets/flight_takeoff_landing_switch.dart';
 import 'package:simplelog/presentation/settings/widgets/pilot_profile_settings_card.dart';
 import 'package:simplelog/presentation/settings/widgets/previous_experience_settings_tab.dart';
 import 'package:simplelog/presentation/settings/widgets/simulator_default_position_selector.dart';
@@ -40,54 +39,23 @@ class SettingsScreen extends ConsumerWidget {
                     constraints: const BoxConstraints(maxWidth: 760),
                     child: ListView(
                       padding: const EdgeInsets.all(16),
-                      children: [
-                        Text(
-                          'General Settings',
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Appearance, defaults, and profile preferences.',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                        const SizedBox(height: 16),
-                        const _SettingsSectionCard(
+                      children: const [
+                        _SettingsSectionCard(
                           title: 'Appearance',
                           subtitle: 'Theme and display preferences.',
                           children: [
                             ThemeModeSelector(),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        const _SettingsSectionCard(
-                          title: 'Defaults',
-                          subtitle:
-                              'Default values used when creating entries.',
-                          children: [
-                            FlightTakeoffLandingSwitch(),
-                            SizedBox(height: 8),
-                            SimulatorDefaultPositionSelector(),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        const _SettingsSectionCard(
-                          title: 'Calculation Rules',
-                          subtitle: 'Automatic time and threshold rules.',
-                          children: [
-                            FlightFactoringSettingsCard(),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        const _SettingsSectionCard(
-                          title: 'Pilot Profile',
+                        SizedBox(height: 12),
+                        _SettingsSectionCard(
+                          title: 'Calculation & Pilot Profile',
                           subtitle: 'Pilot identity and signature preferences.',
                           children: [
+                            SimulatorDefaultPositionSelector(),
+                            SizedBox(height: 8),
                             PilotProfileSettingsCard(),
+                            FlightFactoringSettingsCard(),
                           ],
                         ),
                       ],
@@ -109,12 +77,12 @@ class SettingsScreen extends ConsumerWidget {
 class _SettingsSectionCard extends StatelessWidget {
   const _SettingsSectionCard({
     required this.title,
-    required this.subtitle,
     required this.children,
+    this.subtitle,
   });
 
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final List<Widget> children;
 
   @override
@@ -135,13 +103,15 @@ class _SettingsSectionCard extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+            if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                subtitle!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: 10),
             ...children,
           ],

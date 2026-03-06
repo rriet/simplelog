@@ -20,33 +20,12 @@ class PilotProfileSettingsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(reportPilotInfoProvider);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Pilot profile',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              profile.name.isEmpty ? 'Not configured' : profile.name,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: SquareOutlineButton(
-                label: 'Edit profile',
-                icon: Icons.edit_outlined,
-                onPressed: () => showPilotProfileEditorDialog(context),
-              ),
-            ),
-          ],
-        ),
+    return SizedBox(
+      width: double.infinity,
+      child: SquareOutlineButton(
+        label: 'Edit profile',
+        icon: Icons.edit_outlined,
+        onPressed: () => showPilotProfileEditorDialog(context),
       ),
     );
   }
@@ -117,6 +96,7 @@ class _PilotProfileEditorDialogState
 
   @override
   Widget build(BuildContext context) {
+    final maxDialogHeight = MediaQuery.of(context).size.height * 0.9;
     final profile = ref.watch(reportPilotInfoProvider);
     if (!_userEditedText) {
       _nameController.text = profile.name;
@@ -129,8 +109,12 @@ class _PilotProfileEditorDialogState
 
     return Dialog(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 640),
+        constraints: BoxConstraints(
+          maxWidth: 760,
+          maxHeight: maxDialogHeight,
+        ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
@@ -157,7 +141,7 @@ class _PilotProfileEditorDialogState
               ),
             ),
             const Divider(height: 1),
-            Expanded(
+            Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(

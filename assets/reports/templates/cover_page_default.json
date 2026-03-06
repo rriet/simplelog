@@ -45,7 +45,49 @@
       "type": "multiline",
       "title": "",
       "valueKey": "cover.summaryTable",
-      "showBorder": true
+      "showBorder": true,
+      "items": [
+        {
+          "label": "TYPE",
+          "valueKey": "type"
+        },
+        {
+          "label": "NIGHT",
+          "valueKey": "night"
+        },
+        {
+          "label": "IFR",
+          "valueKey": "ifr"
+        },
+        {
+          "label": "PIC",
+          "valueKey": "pic"
+        },
+        {
+          "label": "PICUS",
+          "valueKey": "picus"
+        },
+        {
+          "label": "PIC+PICUS",
+          "valueKey": "picPicus"
+        },
+        {
+          "label": "SIC",
+          "valueKey": "sic"
+        },
+        {
+          "label": "DUAL",
+          "valueKey": "dual"
+        },
+        {
+          "label": "INSTRUCTOR",
+          "valueKey": "instructor"
+        },
+        {
+          "label": "TOTAL",
+          "valueKey": "total"
+        }
+      ]
     },
     {
       "type": "multiline",

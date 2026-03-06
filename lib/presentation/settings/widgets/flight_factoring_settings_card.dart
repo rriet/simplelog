@@ -13,7 +13,13 @@ import 'package:simplelog/state/providers/flight_factoring_settings_provider.dar
 /// [flightFactoringSettingsProvider].
 class FlightFactoringSettingsCard extends ConsumerStatefulWidget {
   /// Creates the card widget.
-  const FlightFactoringSettingsCard({super.key});
+  const FlightFactoringSettingsCard({
+    super.key,
+    this.showTitle = true,
+  });
+
+  /// Whether the internal expansion tile title should be shown.
+  final bool showTitle;
 
   @override
   ConsumerState<FlightFactoringSettingsCard> createState() =>
@@ -133,7 +139,12 @@ class _FlightFactoringSettingsCardState
 
     return Card(
       child: ExpansionTile(
-        title: const Text('Calculation Rules'),
+        title: widget.showTitle
+            ? const Text('Calculation Rules')
+            : const SizedBox.shrink(),
+        tilePadding: widget.showTitle ? null : const EdgeInsets.symmetric(
+          horizontal: 8,
+        ),
         childrenPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         children: [
           _compactFieldRow(
@@ -179,35 +190,27 @@ class _FlightFactoringSettingsCardState
           const Divider(height: 20),
           _compactFieldRow(
             fields: [
+              _CompactFieldSpec.time(
+                label: 'IRP3 Time Reduction',
+                controller: _irp3SubtractController,
+              ),
               _CompactFieldSpec.number(
                 label: 'IRP3 %',
                 controller: _irp3PercentController,
-              ),
-              _CompactFieldSpec.time(
-                label: 'IRP3 Time',
-                controller: _irp3SubtractController,
               ),
             ],
           ),
           _compactFieldRow(
             fields: [
+              _CompactFieldSpec.time(
+                label: 'IRP4 Time Reduction',
+                controller: _irp4SubtractController,
+              ),
               _CompactFieldSpec.number(
                 label: 'IRP4 %',
                 controller: _irp4PercentController,
               ),
-              _CompactFieldSpec.time(
-                label: 'IRP4 Time',
-                controller: _irp4SubtractController,
-              ),
             ],
-          ),
-          const SizedBox(height: 6),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Calculation rules are saved automatically.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
           ),
         ],
       ),

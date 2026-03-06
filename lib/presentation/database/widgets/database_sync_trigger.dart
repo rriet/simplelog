@@ -62,13 +62,6 @@ class DatabaseSyncTrigger extends ConsumerWidget {
               'Database Tools',
               style: theme.textTheme.headlineSmall,
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Sync, import/export, and backup/restore your data.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
             const SizedBox(height: 16),
             _DatabaseSectionCard(
               title: 'Sync',
@@ -101,7 +94,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
                 const SizedBox(height: 8),
                 _DatabaseActionButton(
                   icon: Icons.download_outlined,
-                  label: 'Export Flights/Simulator CSV',
+                  label: 'Export CSV',
                   onPressed: () => _exportCsv(context, ref),
                 ),
               ],

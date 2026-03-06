@@ -1035,7 +1035,7 @@ class ReportPdfApplicationService {
             _ => const ReportEntryCrewNames(),
           };
 
-          final totalMinutes = flight?.timeBlockMinutes ?? sim?.timeTotal ?? 0;
+          final totalMinutes = flight?.timeBlockMinutes ?? 0;
 
           /// Night portion of the total block time.
           final nightMinutes = flight?.timeNightMinutes ?? 0;
@@ -1756,7 +1756,7 @@ class ReportPdfApplicationService {
       final sim = entry.simulatorTraining;
       final type = entry.aircraftType;
 
-      final rowTotalMinutes = flight?.timeBlockMinutes ?? sim?.timeTotal ?? 0;
+      final rowTotalMinutes = flight?.timeBlockMinutes ?? 0;
       final rowNightMinutes = flight?.timeNightMinutes ?? 0;
       final rowDayMinutes = math.max(0, rowTotalMinutes - rowNightMinutes);
       final isSeaplane = type?.category.name == 'seaplane';
