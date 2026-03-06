@@ -261,7 +261,7 @@ class _SignaturePadDialog extends StatefulWidget {
 class _SignaturePadDialogState extends State<_SignaturePadDialog> {
   final List<List<Offset>> _strokes = <List<Offset>>[];
   Size _canvasSize = const Size(520, 240);
-  static const _strokeWidth = 2.0;
+  static const _strokeWidth = 3.5;
 
   @override
   Widget build(BuildContext context) {

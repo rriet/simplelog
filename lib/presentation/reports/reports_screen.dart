@@ -1011,13 +1011,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (_isGeneratingPdf) {
       return;
     }
-    final selectedTemplate = _selectedTemplate;
+    var selectedTemplate = _selectedTemplate;
+    selectedTemplate = await _resolveLatestSelectedTemplate(selectedTemplate);
     if (selectedTemplate == null) {
+      if (!mounted) return;
       await _showInfoDialog(
         AppLocalizations.of(context)!.reportsNoTemplateAvailable,
       );
       return;
     }
+    if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
     await _setPdfGenerationProgress(l10n.reportsPdfPreparing, progress: 0.1);
 
@@ -1069,7 +1072,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           entriesForPdf: entriesForPdf,
           startingTotals: startingTotals,
         ),
-        coverImages: _buildCoverImages(),
+        coverImages: await _buildCoverImages(),
         flightCrewById: crewMaps.$1,
         simulatorCrewById: crewMaps.$2,
       );
@@ -1102,6 +1105,48 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _pdfGenerationProgress = null;
         });
       }
+    }
+  }
+
+  Future<_XslTemplateOption?> _resolveLatestSelectedTemplate(
+    _XslTemplateOption? current,
+  ) async {
+    final selectedFileName =
+        current?.fileName ??
+        ref.read(selectedReportTemplateFileNameProvider) ??
+        '';
+    if (selectedFileName.isEmpty) {
+      return current;
+    }
+    try {
+      final db = ref.read(databaseProvider);
+      final templates = await ReportXslTemplateLoader(db).load();
+      final options = templates
+          .map(
+            (template) => _XslTemplateOption(
+              fileName: template.fileName,
+              description: template.displayName,
+              numberOfLines: template.rowsPerPage,
+              template: template,
+            ),
+          )
+          .toList(growable: false);
+      if (options.isEmpty) {
+        return current;
+      }
+      final matched = options.where(
+        (option) => option.fileName == selectedFileName,
+      );
+      final resolved = matched.isNotEmpty ? matched.first : options.first;
+      if (mounted) {
+        setState(() {
+          _xslTemplateOptions = options;
+          _selectedTemplate = resolved;
+        });
+      }
+      return resolved;
+    } on Object {
+      return current;
     }
   }
 
@@ -1361,8 +1406,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     return lines.join('\n');
   }
 
-  Map<String, Uint8List> _buildCoverImages() {
-    final signatureImage = ref.read(reportPilotInfoProvider).signatureImage;
+  Future<Map<String, Uint8List>> _buildCoverImages() async {
+    Uint8List? signatureImage;
+    try {
+      final db = ref.read(databaseProvider);
+      final profile = await db.select(db.userProfiles).getSingleOrNull();
+      signatureImage = profile?.signatureImage;
+    } on Object {
+      signatureImage = null;
+    }
+    signatureImage ??= ref.read(reportPilotInfoProvider).signatureImage;
     if (signatureImage == null || signatureImage.isEmpty) {
       return const <String, Uint8List>{};
     }

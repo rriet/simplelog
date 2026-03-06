@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:simplelog/data/database/enums/pilot_function.dart';
+import 'package:simplelog/data/models/endorsement_data.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/report_pdf_models.dart';
 
@@ -27,6 +28,10 @@ class ReportTemplateRow {
     required this.landingsNight,
     required this.selMinutes,
     required this.melMinutes,
+    required this.sSelMinutes,
+    required this.sMelMinutes,
+    required this.mSelMinutes,
+    required this.mMelMinutes,
     required this.xcMinutes,
     required this.dayMinutes,
     required this.nightMinutes,
@@ -91,6 +96,18 @@ class ReportTemplateRow {
 
   /// Multi‑engine land (MEL) time in minutes.
   final int melMinutes;
+
+  /// Single‑engine land time in minutes logged as single pilot.
+  final int sSelMinutes;
+
+  /// Multi‑engine land time in minutes logged as single pilot.
+  final int sMelMinutes;
+
+  /// Single‑engine land time in minutes logged as multi-pilot.
+  final int mSelMinutes;
+
+  /// Multi‑engine land time in minutes logged as multi-pilot.
+  final int mMelMinutes;
 
   /// Cross‑country time in minutes.
   final int xcMinutes;
@@ -174,6 +191,18 @@ class ReportTemplateTotals {
     /// Multi‑engine land minutes.
     this.melMinutes = 0,
 
+    /// Single-pilot single-engine land minutes.
+    this.sSelMinutes = 0,
+
+    /// Single-pilot multi-engine land minutes.
+    this.sMelMinutes = 0,
+
+    /// Multi-pilot single-engine land minutes.
+    this.mSelMinutes = 0,
+
+    /// Multi-pilot multi-engine land minutes.
+    this.mMelMinutes = 0,
+
     /// Cross‑country minutes.
     this.xcMinutes = 0,
 
@@ -222,6 +251,18 @@ class ReportTemplateTotals {
 
   /// Multi‑engine land minutes.
   final int melMinutes;
+
+  /// Single-pilot single-engine land minutes.
+  final int sSelMinutes;
+
+  /// Single-pilot multi-engine land minutes.
+  final int sMelMinutes;
+
+  /// Multi-pilot single-engine land minutes.
+  final int mSelMinutes;
+
+  /// Multi-pilot multi-engine land minutes.
+  final int mMelMinutes;
 
   /// Cross‑country minutes.
   final int xcMinutes;
@@ -274,6 +315,10 @@ class ReportTemplateTotals {
       landingsNight: landingsNight + row.landingsNight,
       selMinutes: selMinutes + row.selMinutes,
       melMinutes: melMinutes + row.melMinutes,
+      sSelMinutes: sSelMinutes + row.sSelMinutes,
+      sMelMinutes: sMelMinutes + row.sMelMinutes,
+      mSelMinutes: mSelMinutes + row.mSelMinutes,
+      mMelMinutes: mMelMinutes + row.mMelMinutes,
       xcMinutes: xcMinutes + row.xcMinutes,
       dayMinutes: dayMinutes + row.dayMinutes,
       nightMinutes: nightMinutes + row.nightMinutes,
@@ -302,6 +347,10 @@ class ReportTemplateTotals {
       landingsNight: landingsNight + other.landingsNight,
       selMinutes: selMinutes + other.selMinutes,
       melMinutes: melMinutes + other.melMinutes,
+      sSelMinutes: sSelMinutes + other.sSelMinutes,
+      sMelMinutes: sMelMinutes + other.sMelMinutes,
+      mSelMinutes: mSelMinutes + other.mSelMinutes,
+      mMelMinutes: mMelMinutes + other.mMelMinutes,
       xcMinutes: xcMinutes + other.xcMinutes,
       dayMinutes: dayMinutes + other.dayMinutes,
       nightMinutes: nightMinutes + other.nightMinutes,
@@ -343,6 +392,10 @@ class ReportPdfApplicationService {
     'landingNight',
     'sel',
     'mel',
+    'sSel',
+    'sMel',
+    'mSel',
+    'mMel',
     'xc',
     'day',
     'night',
@@ -467,6 +520,10 @@ class ReportPdfApplicationService {
             landingsNight: 0,
             selMinutes: 0,
             melMinutes: 0,
+            sSelMinutes: 0,
+            sMelMinutes: 0,
+            mSelMinutes: 0,
+            mMelMinutes: 0,
             xcMinutes: 0,
             dayMinutes: 0,
             nightMinutes: 0,
@@ -502,10 +559,11 @@ class ReportPdfApplicationService {
       );
 
       for (final table in template.tables) {
+        final pageMargin = _tablePageMargin(table.pageSuffix);
         document.addPage(
           pw.Page(
             pageFormat: pageFormat,
-            margin: const pw.EdgeInsets.all(14),
+            margin: pageMargin,
             build: (context) {
               return pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.stretch,
@@ -525,6 +583,7 @@ class ReportPdfApplicationService {
                     pageTotals: pageTotalsMap,
                     totalsBefore: carryMap,
                     totalsAfter: afterMap,
+                    sharedImages: coverImages,
                   ),
                 ],
               );
@@ -536,6 +595,29 @@ class ReportPdfApplicationService {
     }
 
     return document.save();
+  }
+
+  pw.EdgeInsets _tablePageMargin(String pageSuffix) {
+    const defaultMargin = 14.0;
+    const inchMargin = 72.0;
+    final normalizedSuffix = pageSuffix.trim().toUpperCase();
+    if (normalizedSuffix == 'A') {
+      return const pw.EdgeInsets.only(
+        left: defaultMargin,
+        top: defaultMargin,
+        right: inchMargin,
+        bottom: defaultMargin,
+      );
+    }
+    if (normalizedSuffix == 'B') {
+      return const pw.EdgeInsets.only(
+        left: inchMargin,
+        top: defaultMargin,
+        right: defaultMargin,
+        bottom: defaultMargin,
+      );
+    }
+    return const pw.EdgeInsets.all(defaultMargin);
   }
 
   pw.Widget _buildCoverPage({
@@ -958,11 +1040,6 @@ class ReportPdfApplicationService {
           /// Night portion of the total block time.
           final nightMinutes = flight?.timeNightMinutes ?? 0;
           final dayMinutes = math.max(0, totalMinutes - nightMinutes);
-          final isSeaplane = type?.category.name == 'seaplane';
-          final isMultiEngine = (type?.engineCount ?? 0) > 1;
-          final selMinutes = (!isSeaplane && !isMultiEngine) ? totalMinutes : 0;
-          final melMinutes = (!isSeaplane && isMultiEngine) ? totalMinutes : 0;
-
           final takeoffDay = flight?.takeOffsDays ?? 0;
           final takeoffNight = flight?.takeOffsNight ?? 0;
           final landingDay = flight?.landingsDay ?? 0;
@@ -970,20 +1047,27 @@ class ReportPdfApplicationService {
           final takeoffsTotal = takeoffDay + takeoffNight;
           final landingsTotal = landingDay + landingNight;
           final blockMinutes = flight?.timeBlockMinutes ?? 0;
+          final isLandplane = type?.category.name == 'landplane';
+          final isMultiEngine = (type?.engineCount ?? 0) > 1;
+          final isMultiPilot = type?.multiPilot ?? false;
           final singlePilotSelMinutes =
-              type != null &&
-                  type.engineCount == 1 &&
-                  !type.multiPilot &&
-                  type.category.name == 'landplane'
+              isLandplane && !isMultiEngine && !isMultiPilot
               ? blockMinutes
               : 0;
           final singlePilotMelMinutes =
-              type != null &&
-                  type.engineCount > 1 &&
-                  !type.multiPilot &&
-                  type.category.name == 'landplane'
+              isLandplane && isMultiEngine && !isMultiPilot
               ? blockMinutes
               : 0;
+          final multiPilotSelMinutes =
+              isLandplane && !isMultiEngine && isMultiPilot
+              ? blockMinutes
+              : 0;
+          final multiPilotMelMinutes =
+              isLandplane && isMultiEngine && isMultiPilot
+              ? blockMinutes
+              : 0;
+          final selMinutes = singlePilotSelMinutes + multiPilotSelMinutes;
+          final melMinutes = singlePilotMelMinutes + multiPilotMelMinutes;
           final complexMinutes = (type?.complex ?? false) ? blockMinutes : 0;
           final efisMinutes = (type?.efis ?? false) ? blockMinutes : 0;
           final highPerformanceMinutes = (type?.highPerformance ?? false)
@@ -1010,6 +1094,10 @@ class ReportPdfApplicationService {
             landingsNight: landingNight,
             selMinutes: selMinutes,
             melMinutes: melMinutes,
+            sSelMinutes: singlePilotSelMinutes,
+            sMelMinutes: singlePilotMelMinutes,
+            mSelMinutes: multiPilotSelMinutes,
+            mMelMinutes: multiPilotMelMinutes,
             xcMinutes: flight?.timeCrossCountryMinutes ?? 0,
             dayMinutes: dayMinutes,
             nightMinutes: nightMinutes,
@@ -1086,7 +1174,13 @@ class ReportPdfApplicationService {
         ? entry.simulatorTraining?.signatureImage
         : null;
     final anySignature = flightSignature ?? simSignature;
-    put('anySignature', anySignature);
+    final hasAnyRemarksColumn = requiredExtraKeys.contains('anyRemarks');
+    final hasAnySignatureColumn = requiredExtraKeys.contains('anySignature');
+    if (hasAnyRemarksColumn) {
+      put('anyRemarks', anySignature);
+    } else if (hasAnySignatureColumn) {
+      put('anySignature', anySignature);
+    }
     put('flightSignature', flightSignature);
     put('simSignature', simSignature);
     return map;
@@ -1130,7 +1224,14 @@ class ReportPdfApplicationService {
     final landingTime = flight?.landingDateTime?.toUtc();
     final simEndTime = sim?.endDateTime?.toUtc();
     final anyEndTime = arrTime ?? simEndTime;
-    final anyRemarks = (flight?.remarks ?? sim?.remarks ?? '').trim();
+    final endorsement = EndorsementData.fromJsonString(
+      flight?.endorsementData ?? sim?.endorsementData,
+      signatureImage: flight?.signatureImage ?? sim?.signatureImage,
+    );
+    final anyRemarks = _composeRemarksWithEndorsement(
+      remarks: (flight?.remarks ?? sim?.remarks ?? '').trim(),
+      endorsement: endorsement,
+    );
     final anyNotes = (flight?.notes ?? sim?.notes ?? '').trim();
     final typeCode = type?.code ?? '';
     final typeFamily = type?.family ?? '';
@@ -1454,6 +1555,29 @@ class ReportPdfApplicationService {
     return map;
   }
 
+  String _composeRemarksWithEndorsement({
+    required String remarks,
+    required EndorsementData? endorsement,
+  }) {
+    if (endorsement == null || !endorsement.hasSignature) {
+      return remarks;
+    }
+    final headerParts = <String>[
+      if (endorsement.name.trim().isNotEmpty)
+        'Name: ${endorsement.name.trim()}',
+      if (endorsement.certificate.trim().isNotEmpty)
+        'License: ${endorsement.certificate.trim()}',
+    ];
+    final header = headerParts.join(' | ');
+    if (header.isEmpty) {
+      return remarks;
+    }
+    if (remarks.isEmpty) {
+      return header;
+    }
+    return '$header - $remarks';
+  }
+
   String _formatDate(DateTime value, ReportPdfDateFormat dateFormat) {
     final pattern = switch (dateFormat) {
       ReportPdfDateFormat.ddMmYyyy => _datePatternDdMmYyyy,
@@ -1527,6 +1651,10 @@ class ReportPdfApplicationService {
           landingsNight: row.landingsNight,
           selMinutes: _minutesToDecimalHundredths(row.selMinutes),
           melMinutes: _minutesToDecimalHundredths(row.melMinutes),
+          sSelMinutes: _minutesToDecimalHundredths(row.sSelMinutes),
+          sMelMinutes: _minutesToDecimalHundredths(row.sMelMinutes),
+          mSelMinutes: _minutesToDecimalHundredths(row.mSelMinutes),
+          mMelMinutes: _minutesToDecimalHundredths(row.mMelMinutes),
           xcMinutes: _minutesToDecimalHundredths(row.xcMinutes),
           dayMinutes: _minutesToDecimalHundredths(row.dayMinutes),
           nightMinutes: _minutesToDecimalHundredths(row.nightMinutes),
@@ -1564,6 +1692,10 @@ class ReportPdfApplicationService {
       landingsNight: totals.landingsNight,
       selMinutes: _minutesToDecimalHundredths(totals.selMinutes),
       melMinutes: _minutesToDecimalHundredths(totals.melMinutes),
+      sSelMinutes: _minutesToDecimalHundredths(totals.sSelMinutes),
+      sMelMinutes: _minutesToDecimalHundredths(totals.sMelMinutes),
+      mSelMinutes: _minutesToDecimalHundredths(totals.mSelMinutes),
+      mMelMinutes: _minutesToDecimalHundredths(totals.mMelMinutes),
       xcMinutes: _minutesToDecimalHundredths(totals.xcMinutes),
       dayMinutes: _minutesToDecimalHundredths(totals.dayMinutes),
       nightMinutes: _minutesToDecimalHundredths(totals.nightMinutes),
@@ -1595,6 +1727,10 @@ class ReportPdfApplicationService {
     var landingsNight = 0;
     var selMinutes = 0;
     var melMinutes = 0;
+    var sSelMinutes = 0;
+    var sMelMinutes = 0;
+    var mSelMinutes = 0;
+    var mMelMinutes = 0;
     var xcMinutes = 0;
     var dayMinutes = 0;
     var nightMinutes = 0;
@@ -1625,10 +1761,23 @@ class ReportPdfApplicationService {
       final rowDayMinutes = math.max(0, rowTotalMinutes - rowNightMinutes);
       final isSeaplane = type?.category.name == 'seaplane';
       final isMultiEngine = (type?.engineCount ?? 0) > 1;
+      final isMultiPilot = type?.multiPilot ?? false;
       final rowSelMinutes = (!isSeaplane && !isMultiEngine)
           ? rowTotalMinutes
           : 0;
       final rowMelMinutes = (!isSeaplane && isMultiEngine)
+          ? rowTotalMinutes
+          : 0;
+      final rowSSelMinutes = (!isSeaplane && !isMultiEngine && !isMultiPilot)
+          ? rowTotalMinutes
+          : 0;
+      final rowSMelMinutes = (!isSeaplane && isMultiEngine && !isMultiPilot)
+          ? rowTotalMinutes
+          : 0;
+      final rowMSelMinutes = (!isSeaplane && !isMultiEngine && isMultiPilot)
+          ? rowTotalMinutes
+          : 0;
+      final rowMMelMinutes = (!isSeaplane && isMultiEngine && isMultiPilot)
           ? rowTotalMinutes
           : 0;
       final rowTakeoffDay = flight?.takeOffsDays ?? 0;
@@ -1649,6 +1798,18 @@ class ReportPdfApplicationService {
       melMinutes += useDecimalUnits
           ? _minutesToDecimalHundredths(rowMelMinutes)
           : rowMelMinutes;
+      sSelMinutes += useDecimalUnits
+          ? _minutesToDecimalHundredths(rowSSelMinutes)
+          : rowSSelMinutes;
+      sMelMinutes += useDecimalUnits
+          ? _minutesToDecimalHundredths(rowSMelMinutes)
+          : rowSMelMinutes;
+      mSelMinutes += useDecimalUnits
+          ? _minutesToDecimalHundredths(rowMSelMinutes)
+          : rowMSelMinutes;
+      mMelMinutes += useDecimalUnits
+          ? _minutesToDecimalHundredths(rowMMelMinutes)
+          : rowMMelMinutes;
       xcMinutes += useDecimalUnits
           ? _minutesToDecimalHundredths(flight?.timeCrossCountryMinutes ?? 0)
           : (flight?.timeCrossCountryMinutes ?? 0);
@@ -1706,6 +1867,10 @@ class ReportPdfApplicationService {
       landingsNight: landingsNight,
       selMinutes: selMinutes,
       melMinutes: melMinutes,
+      sSelMinutes: sSelMinutes,
+      sMelMinutes: sMelMinutes,
+      mSelMinutes: mSelMinutes,
+      mMelMinutes: mMelMinutes,
       xcMinutes: xcMinutes,
       dayMinutes: dayMinutes,
       nightMinutes: nightMinutes,
@@ -1766,6 +1931,14 @@ class ReportPdfApplicationService {
         return _emptyIfZeroTime(row.selMinutes, timeFormat);
       case 'mel':
         return _emptyIfZeroTime(row.melMinutes, timeFormat);
+      case 'sSel':
+        return _emptyIfZeroTime(row.sSelMinutes, timeFormat);
+      case 'sMel':
+        return _emptyIfZeroTime(row.sMelMinutes, timeFormat);
+      case 'mSel':
+        return _emptyIfZeroTime(row.mSelMinutes, timeFormat);
+      case 'mMel':
+        return _emptyIfZeroTime(row.mMelMinutes, timeFormat);
       case 'xc':
         return _emptyIfZeroTime(row.xcMinutes, timeFormat);
       case 'day':
@@ -1802,6 +1975,15 @@ class ReportPdfApplicationService {
     ReportPdfTimeFormat timeFormat,
     bool valuesAreDecimalHundredths,
   ) {
+    String totalTime(int minutes) {
+      return _emptyIfZeroTime(
+        minutes,
+        timeFormat,
+        valueIsDecimalHundredths: valuesAreDecimalHundredths,
+        groupHourThousands: true,
+      );
+    }
+
     return {
       'ifrApproaches': _emptyIfZeroInt(totals.ifrApproaches),
       'landings': _emptyIfZeroInt(totals.landingsTotal),
@@ -1810,91 +1992,28 @@ class ReportPdfApplicationService {
       'landingNight': _emptyIfZeroInt(totals.landingsNight),
       'takeoffDay': _emptyIfZeroInt(totals.takeoffsDay),
       'takeoffNight': _emptyIfZeroInt(totals.takeoffsNight),
-      'sel': _emptyIfZeroTime(
-        totals.selMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'mel': _emptyIfZeroTime(
-        totals.melMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'xc': _emptyIfZeroTime(
-        totals.xcMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'day': _emptyIfZeroTime(
-        totals.dayMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'night': _emptyIfZeroTime(
-        totals.nightMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'ifr': _emptyIfZeroTime(
-        totals.ifrMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'simInst': _emptyIfZeroTime(
-        totals.simInstMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'fstd': _emptyIfZeroTime(
-        totals.fstdMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'simSessionTotal': _emptyIfZeroTime(
-        totals.fstdMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'dual': _emptyIfZeroTime(
-        totals.dualMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'pic': _emptyIfZeroTime(
-        totals.picMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'picus': _emptyIfZeroTime(
-        totals.picusMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'picPicus': _emptyIfZeroTime(
-        totals.picPicusMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'picPlusPicus': _emptyIfZeroTime(
-        totals.picPicusMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'sic': _emptyIfZeroTime(
-        totals.sicMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'instructor': _emptyIfZeroTime(
-        totals.instructorMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
-      'total': _emptyIfZeroTime(
-        totals.totalMinutes,
-        timeFormat,
-        valueIsDecimalHundredths: valuesAreDecimalHundredths,
-      ),
+      'sel': totalTime(totals.selMinutes),
+      'sSel': totalTime(totals.sSelMinutes),
+      'mel': totalTime(totals.melMinutes),
+      'sMel': totalTime(totals.sMelMinutes),
+      'mSel': totalTime(totals.mSelMinutes),
+      'mMel': totalTime(totals.mMelMinutes),
+      'multiPilotTime': totalTime(totals.mSelMinutes + totals.mMelMinutes),
+      'xc': totalTime(totals.xcMinutes),
+      'day': totalTime(totals.dayMinutes),
+      'night': totalTime(totals.nightMinutes),
+      'ifr': totalTime(totals.ifrMinutes),
+      'simInst': totalTime(totals.simInstMinutes),
+      'fstd': totalTime(totals.fstdMinutes),
+      'simSessionTotal': totalTime(totals.fstdMinutes),
+      'dual': totalTime(totals.dualMinutes),
+      'pic': totalTime(totals.picMinutes),
+      'picus': totalTime(totals.picusMinutes),
+      'picPicus': totalTime(totals.picPicusMinutes),
+      'picPlusPicus': totalTime(totals.picPicusMinutes),
+      'sic': totalTime(totals.sicMinutes),
+      'instructor': totalTime(totals.instructorMinutes),
+      'total': totalTime(totals.totalMinutes),
     };
   }
 
@@ -1902,6 +2021,7 @@ class ReportPdfApplicationService {
     int timeValue,
     ReportPdfTimeFormat timeFormat, {
     bool valueIsDecimalHundredths = false,
+    bool groupHourThousands = false,
   }) {
     if (timeValue <= 0) return '';
     if (timeFormat == ReportPdfTimeFormat.decimalHours) {
@@ -1911,11 +2031,14 @@ class ReportPdfApplicationService {
       return _formatDecimalHundredths(hundredths);
     }
     final hours = timeValue ~/ 60;
+    final hoursText = groupHourThousands
+        ? NumberFormat.decimalPattern().format(hours)
+        : hours.toString();
     final mins = (timeValue % 60).toString().padLeft(2, '0');
     if (timeFormat == ReportPdfTimeFormat.hhMm) {
-      return '${hours.toString().padLeft(2, '0')}:$mins';
+      return '$hoursText:$mins';
     }
-    return '$hours:$mins';
+    return '$hoursText:$mins';
   }
 
   String _emptyIfZeroInt(int value) {
@@ -1930,6 +2053,7 @@ class ReportPdfApplicationService {
     required Map<String, String> pageTotals,
     required Map<String, String> totalsBefore,
     required Map<String, String> totalsAfter,
+    required Map<String, Uint8List> sharedImages,
   }) {
     final layout = _buildTableLayout(
       table: table,
@@ -1938,6 +2062,7 @@ class ReportPdfApplicationService {
       pageTotals: pageTotals,
       totalsBefore: totalsBefore,
       totalsAfter: totalsAfter,
+      sharedImages: sharedImages,
     );
     return pw.LayoutBuilder(
       builder: (context, constraints) {
@@ -2038,6 +2163,7 @@ class ReportPdfApplicationService {
     required Map<String, String> pageTotals,
     required Map<String, String> totalsBefore,
     required Map<String, String> totalsAfter,
+    required Map<String, Uint8List> sharedImages,
   }) {
     final cells = <_PlacedPdfCell>[];
     final columnCount = table.columns.length;
@@ -2078,6 +2204,7 @@ class ReportPdfApplicationService {
           fallback: template.rowHeight,
         ),
         dataRowIndex: null,
+        sourceImages: const <String, Uint8List>{},
       );
     }
 
@@ -2089,7 +2216,9 @@ class ReportPdfApplicationService {
               final imageBytes = _isSignatureKey(key)
                   ? row.extraImages[key]
                   : null;
-              final textValue = imageBytes == null
+              final shouldKeepTextWithImage = key == 'anyRemarks';
+              final textValue =
+                  imageBytes == null || shouldKeepTextWithImage
                   ? _rowValueForKey(row, key, template.timeFormat)
                   : '';
               return ReportPdfCellConfig(
@@ -2115,6 +2244,7 @@ class ReportPdfApplicationService {
         outRowHeights: rowHeights,
         rowHeight: template.rowHeight,
         dataRowIndex: dataRowIndex,
+        sourceImages: const <String, Uint8List>{},
       );
       dataRowIndex++;
     }
@@ -2128,6 +2258,9 @@ class ReportPdfApplicationService {
       pageTotals: pageTotals,
       totalsBefore: totalsBefore,
       totalsAfter: totalsAfter,
+    );
+    final footerImageTokenMap = _buildFooterImageTokenMap(
+      sharedImages: sharedImages,
     );
     for (final footer in table.footer) {
       rowIndex = _placeSpanRow(
@@ -2143,6 +2276,7 @@ class ReportPdfApplicationService {
           fallback: template.rowHeight,
         ),
         dataRowIndex: null,
+        sourceImages: footerImageTokenMap,
       );
     }
 
@@ -2166,6 +2300,7 @@ class ReportPdfApplicationService {
             fallback: template.rowHeight,
           ),
           dataRowIndex: null,
+          sourceImages: footerImageTokenMap,
         );
         continue;
       }
@@ -2215,6 +2350,7 @@ class ReportPdfApplicationService {
           fallback: template.rowHeight,
         ),
         dataRowIndex: null,
+        sourceImages: footerImageTokenMap,
       );
     }
 
@@ -2251,6 +2387,17 @@ class ReportPdfApplicationService {
     return map;
   }
 
+  Map<String, Uint8List> _buildFooterImageTokenMap({
+    required Map<String, Uint8List> sharedImages,
+  }) {
+    final map = <String, Uint8List>{};
+    final pilotSignature = sharedImages['pilot.signatureImage'];
+    if (pilotSignature != null && pilotSignature.isNotEmpty) {
+      map['pilot.signatureImage'] = pilotSignature;
+    }
+    return map;
+  }
+
   int _placeSpanRow({
     required int rowIndex,
     required List<ReportPdfCellConfig> rowCells,
@@ -2261,6 +2408,7 @@ class ReportPdfApplicationService {
     required List<double> outRowHeights,
     required double rowHeight,
     required int? dataRowIndex,
+    required Map<String, Uint8List> sourceImages,
   }) {
     final totalColumns = columns.length;
     var cursor = 0;
@@ -2277,6 +2425,9 @@ class ReportPdfApplicationService {
       final text = cell.valueToken == null
           ? (cell.text ?? '')
           : (sourceMap[cell.valueToken!] ?? '');
+      final imageBytes =
+          cell.imageBytes ??
+          (cell.imageToken == null ? null : sourceImages[cell.imageToken!]);
       final alignment = cell.alignment ?? columns[cursor].alignment;
       final verticalAlignment =
           cell.verticalAlignment ?? columns[cursor].verticalAlignment;
@@ -2290,10 +2441,11 @@ class ReportPdfApplicationService {
           alignment: alignment,
           verticalAlignment: verticalAlignment,
           style: _textStyleFrom(cell.textStyle, fallbackSize: 6.2),
-          imageBytes: cell.imageBytes,
+          imageBytes: imageBytes,
           imageWidth: cell.imageWidth,
           imageHeight: cell.imageHeight,
           imageShowBorder: cell.imageShowBorder,
+          imageBelowText: cell.imageBelowText,
           dataRowIndex: dataRowIndex,
         ),
       );
@@ -2399,8 +2551,17 @@ class ReportPdfApplicationService {
     return pw.Alignment(x, y);
   }
 
+  pw.TextAlign _textAlignFor(ReportPdfColumnAlignment alignment) {
+    return switch (alignment) {
+      ReportPdfColumnAlignment.left => pw.TextAlign.left,
+      ReportPdfColumnAlignment.center => pw.TextAlign.center,
+      ReportPdfColumnAlignment.right => pw.TextAlign.right,
+    };
+  }
+
   bool _isSignatureKey(String key) {
     return key == 'anySignature' ||
+        key == 'anyRemarks' ||
         key == 'flightSignature' ||
         key == 'simSignature';
   }
@@ -2408,13 +2569,46 @@ class ReportPdfApplicationService {
   pw.Widget _buildCellContent(_PlacedPdfCell cell) {
     final imageBytes = cell.imageBytes;
     if (imageBytes == null || imageBytes.isEmpty) {
-      return pw.Text(cell.text, style: cell.style);
+      return pw.Text(
+        cell.text,
+        style: cell.style,
+        textAlign: _textAlignFor(cell.alignment),
+      );
     }
-    final image = pw.Image(
+    final imageWidget = pw.Image(
       pw.MemoryImage(imageBytes),
       width: cell.imageWidth,
       height: cell.imageHeight,
     );
+    final hasText = cell.text.trim().isNotEmpty;
+    final image = hasText
+        ? (cell.imageBelowText
+              ? pw.Column(
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  children: [
+                    pw.Text(
+                      cell.text,
+                      style: cell.style,
+                      textAlign: _textAlignFor(cell.alignment),
+                    ),
+                    pw.SizedBox(height: 3),
+                    imageWidget,
+                  ],
+                )
+              : pw.Row(
+                  children: [
+                    imageWidget,
+                    pw.SizedBox(width: 4),
+                    pw.Expanded(
+                      child: pw.Text(
+                        cell.text,
+                        style: cell.style,
+                        textAlign: _textAlignFor(cell.alignment),
+                      ),
+                    ),
+                  ],
+                ))
+        : imageWidget;
     if (!cell.imageShowBorder) {
       return image;
     }
@@ -2472,6 +2666,7 @@ class _PlacedPdfCell {
     required this.imageWidth,
     required this.imageHeight,
     required this.imageShowBorder,
+    required this.imageBelowText,
     required this.dataRowIndex,
   });
 
@@ -2487,5 +2682,6 @@ class _PlacedPdfCell {
   final double? imageWidth;
   final double? imageHeight;
   final bool imageShowBorder;
+  final bool imageBelowText;
   final int? dataRowIndex;
 }

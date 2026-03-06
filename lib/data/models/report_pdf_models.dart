@@ -164,6 +164,7 @@ class ReportPdfCellConfig {
   const ReportPdfCellConfig({
     this.text,
     this.valueToken,
+    this.imageToken,
     this.hspan = 1,
     this.vspan = 1,
     this.alignment,
@@ -173,6 +174,7 @@ class ReportPdfCellConfig {
     this.imageWidth,
     this.imageHeight,
     this.imageShowBorder = false,
+    this.imageBelowText = false,
   });
 
   /// Literal text to display in the cell, if any.
@@ -180,6 +182,9 @@ class ReportPdfCellConfig {
 
   /// Token used to look up a value from the row data.
   final String? valueToken;
+
+  /// Token used to look up an image from the row or footer context.
+  final String? imageToken;
 
   /// Number of columns this cell should span.
   final int hspan;
@@ -207,6 +212,9 @@ class ReportPdfCellConfig {
 
   /// Whether image should draw a border.
   final bool imageShowBorder;
+
+  /// Whether image should be shown below text instead of beside it.
+  final bool imageBelowText;
 }
 
 /// Configuration for a header row shown above table data.

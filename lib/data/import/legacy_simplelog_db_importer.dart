@@ -60,10 +60,16 @@ class LegacySimpleLogDbImporter {
   /// Imports from raw sqlite bytes.
   Future<LegacySimpleLogDbImportResult> importFromBytes(Uint8List bytes) async {
     final dir = await getTemporaryDirectory();
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+    }
     final tempPath =
         '${dir.path}${Platform.pathSeparator}'
         'legacy_simplelog_${DateTime.now().microsecondsSinceEpoch}.sqlite';
     final tempFile = File(tempPath);
+    if (!tempFile.parent.existsSync()) {
+      tempFile.parent.createSync(recursive: true);
+    }
     await tempFile.writeAsBytes(bytes, flush: true);
     try {
       return await importFromPath(tempPath);

@@ -383,11 +383,22 @@ class ReportPdfTemplateLoader {
     return ReportPdfCellConfig(
       text: json['text']?.toString(),
       valueToken: json['valueToken']?.toString() ?? json['key']?.toString(),
+      imageToken: json['imageToken']?.toString(),
       hspan: (json['hspan'] as num?)?.toInt() ?? 1,
       vspan: (json['vspan'] as num?)?.toInt() ?? 1,
       alignment: alignment,
       verticalAlignment: verticalAlignment,
       textStyle: _parseTextStyle(json),
+      imageWidth:
+          (json['imageWidth'] as num?)?.toDouble() ??
+          (json['signatureWidth'] as num?)?.toDouble(),
+      imageHeight:
+          (json['imageHeight'] as num?)?.toDouble() ??
+          (json['signatureHeight'] as num?)?.toDouble(),
+      imageShowBorder:
+          json['imageShowBorder'] == true ||
+          json['signatureShowBorder'] == true,
+      imageBelowText: json['imageBelowText'] == true,
     );
   }
 

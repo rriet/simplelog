@@ -13,6 +13,8 @@ class EntryEndorsementHashService {
     required Flight flight,
     required DateTime departureDateTime,
     required List<FlightCrewAssignment> crewAssignments,
+    String? pilotFunctionValue,
+    bool? isLockedValue,
   }) {
     final payload = <String, Object?>{
       'kind': 'flight',
@@ -47,11 +49,13 @@ class EntryEndorsementHashService {
       'takeOffsNight': flight.takeOffsNight,
       'landingsDay': flight.landingsDay,
       'landingsNight': flight.landingsNight,
-      'pilotFunction': _pilotFunctionConverter.toSql(flight.pilotFunction),
+      'pilotFunction':
+          pilotFunctionValue ??
+          _pilotFunctionConverter.toSql(flight.pilotFunction),
       'approachType': flight.approachType,
       'remarks': flight.remarks,
       'notes': flight.notes,
-      'isLocked': flight.isLocked,
+      'isLocked': isLockedValue ?? flight.isLocked,
       'signatureImage': _bytesToBase64(flight.signatureImage),
       'endorsementData': _normalizeEndorsementJson(flight.endorsementData),
       'crewAssignments': crewAssignments
@@ -71,6 +75,7 @@ class EntryEndorsementHashService {
     required SimulatorTraining simulator,
     required DateTime startDateTime,
     required List<SimulatorCrewAssignment> crewAssignments,
+    bool? isLockedValue,
   }) {
     final payload = <String, Object?>{
       'kind': 'simulator',
@@ -81,7 +86,7 @@ class EntryEndorsementHashService {
       'timeTotal': simulator.timeTotal,
       'remarks': simulator.remarks,
       'notes': simulator.notes,
-      'isLocked': simulator.isLocked,
+      'isLocked': isLockedValue ?? simulator.isLocked,
       'signatureImage': _bytesToBase64(simulator.signatureImage),
       'endorsementData': _normalizeEndorsementJson(simulator.endorsementData),
       'crewAssignments': crewAssignments
