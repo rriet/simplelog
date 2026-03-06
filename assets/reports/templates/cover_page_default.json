@@ -1,0 +1,63 @@
+{
+  "enabled": true,
+  "title": "Pilot Logbook",
+  "blocks": [
+    {
+      "type": "kvGrid",
+      "title": "",
+      "columns": 1,
+      "items": [
+        {
+          "label": "Name",
+          "valueKey": "pilot.name",
+          "x": 0,
+          "y": 0,
+          "width": 560,
+          "height": 18
+        },
+        {
+          "label": "From",
+          "valueKey": "report.rangeLabel",
+          "x": 0,
+          "y": 20,
+          "width": 560,
+          "height": 18
+        },
+        {
+          "label": "Address",
+          "valueKey": "pilot.address",
+          "x": 0,
+          "y": 48,
+          "width": 330,
+          "height": 52
+        },
+        {
+          "label": "Licence",
+          "valueKey": "pilot.licenses",
+          "x": 340,
+          "y": 48,
+          "width": 220,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "type": "multiline",
+      "title": "",
+      "valueKey": "cover.summaryTable"
+    },
+    {
+      "type": "multiline",
+      "title": "",
+      "valueKey": "cover.certification"
+    },
+    {
+      "type": "signature",
+      "title": "",
+      "valueKey": "pilot.signatureImage",
+      "width": 300,
+      "height": 70,
+      "showBorder": false
+    }
+  ]
+}

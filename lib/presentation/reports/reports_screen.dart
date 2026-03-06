@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'package:drift/drift.dart' as d;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -1065,7 +1065,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         template: templateConfig,
         entries: entriesForPdf,
         startingTotals: startingTotals,
-        coverValues: _buildCoverValues(),
+        coverValues: _buildCoverValues(
+          entriesForPdf: entriesForPdf,
+          startingTotals: startingTotals,
+        ),
         coverImages: _buildCoverImages(),
         flightCrewById: crewMaps.$1,
         simulatorCrewById: crewMaps.$2,
@@ -1279,9 +1282,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
   }
 
-  Map<String, String> _buildCoverValues() {
+  Map<String, String> _buildCoverValues({
+    required List<LogbookEntry> entriesForPdf,
+    required ReportTemplateTotals startingTotals,
+  }) {
     final pilotInfo = ref.read(reportPilotInfoProvider);
-    final dateFormat = DateFormat('yyyy-MM-dd');
+    final dateFormat = DateFormat('MMMM d, yyyy');
+    final fromDate = dateFormat.format(_from.toUtc());
+    final toDate = dateFormat.format(_to.toUtc());
+    final rangeLabel = '$fromDate to $toDate';
+    final summaryTable = _buildCoverSummaryTable(
+      entriesForPdf: entriesForPdf,
+      startingTotals: startingTotals,
+    );
     return {
       'pilot.name': pilotInfo.name,
       'pilot.licenses': pilotInfo.licenses,
@@ -1289,7 +1302,63 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       'pilot.address': pilotInfo.address,
       'report.fromDate': dateFormat.format(_from.toUtc()),
       'report.toDate': dateFormat.format(_to.toUtc()),
+      'report.rangeLabel': rangeLabel,
+      'cover.summaryTable': summaryTable,
+      'cover.certification':
+          'I certify that statements made by me in this log book are true.\n\n'
+          "Pilot's signature",
     };
+  }
+
+  String _buildCoverSummaryTable({
+    required List<LogbookEntry> entriesForPdf,
+    required ReportTemplateTotals startingTotals,
+  }) {
+    final byFamily = <String, _CoverFleetTotals>{};
+    for (final entry in entriesForPdf) {
+      final flight = entry.flight;
+      if (flight == null) continue;
+      final rawFamily = entry.aircraftType?.family ?? entry.aircraftType?.code;
+      final family = (rawFamily ?? '').trim().toUpperCase();
+      if (family.isEmpty) continue;
+      byFamily.putIfAbsent(family, _CoverFleetTotals.new).addFlight(flight);
+    }
+
+    final familyRows = byFamily.entries.toList(growable: false)
+      ..sort((a, b) => a.key.compareTo(b.key));
+    final logbookTotals = _CoverFleetTotals();
+    for (final entry in familyRows) {
+      logbookTotals.add(entry.value);
+    }
+
+    final totalBefore = _CoverFleetTotals.fromTemplateTotals(startingTotals);
+    final grandTotal = _CoverFleetTotals.from(totalBefore)..add(logbookTotals);
+
+    String line(String name, _CoverFleetTotals totals) {
+      return '${name.padRight(12)} '
+          '${_formatMinutes(totals.night).padLeft(9)} '
+          '${_formatMinutes(totals.ifr).padLeft(9)} '
+          '${_formatMinutes(totals.pic).padLeft(9)} '
+          '${_formatMinutes(totals.picus).padLeft(9)} '
+          '${_formatMinutes(totals.pic + totals.picus).padLeft(11)} '
+          '${_formatMinutes(totals.sic).padLeft(9)} '
+          '${_formatMinutes(totals.dual).padLeft(9)} '
+          '${_formatMinutes(totals.instructor).padLeft(11)} '
+          '${_formatMinutes(totals.examiner).padLeft(10)} '
+          '${_formatMinutes(totals.total).padLeft(9)}';
+    }
+
+    const header =
+        'TYPE            NIGHT       IFR       PIC     PICUS   PIC+PICUS'
+        '       SIC      DUAL  INSTRUCTOR   EXAMINER     TOTAL';
+    final lines = <String>[
+      header,
+      for (final row in familyRows) line(row.key, row.value),
+      line('Total Before', totalBefore),
+      line('Logbook Total', logbookTotals),
+      line('Total', grandTotal),
+    ];
+    return lines.join('\n');
   }
 
   Map<String, Uint8List> _buildCoverImages() {
@@ -3969,6 +4038,69 @@ class _BatchFlightChange {
   final List<_BatchFieldChange> fields;
 }
 
+class _CoverFleetTotals {
+  _CoverFleetTotals();
+
+  factory _CoverFleetTotals.fromTemplateTotals(ReportTemplateTotals totals) {
+    return _CoverFleetTotals()
+      ..night = totals.nightMinutes
+      ..ifr = totals.ifrMinutes
+      ..pic = totals.picMinutes
+      ..picus = totals.picusMinutes
+      ..sic = totals.sicMinutes
+      ..dual = totals.dualMinutes
+      ..instructor = totals.instructorMinutes
+      ..examiner = 0
+      ..total = totals.totalMinutes;
+  }
+
+  factory _CoverFleetTotals.from(_CoverFleetTotals source) {
+    return _CoverFleetTotals()
+      ..night = source.night
+      ..ifr = source.ifr
+      ..pic = source.pic
+      ..picus = source.picus
+      ..sic = source.sic
+      ..dual = source.dual
+      ..instructor = source.instructor
+      ..examiner = source.examiner
+      ..total = source.total;
+  }
+
+  int night = 0;
+  int ifr = 0;
+  int pic = 0;
+  int picus = 0;
+  int sic = 0;
+  int dual = 0;
+  int instructor = 0;
+  int examiner = 0;
+  int total = 0;
+
+  void add(_CoverFleetTotals other) {
+    night += other.night;
+    ifr += other.ifr;
+    pic += other.pic;
+    picus += other.picus;
+    sic += other.sic;
+    dual += other.dual;
+    instructor += other.instructor;
+    examiner += other.examiner;
+    total += other.total;
+  }
+
+  void addFlight(Flight flight) {
+    night += flight.timeNightMinutes;
+    ifr += flight.timeIFRMinutes;
+    pic += flight.timePICMinutes;
+    picus += flight.timePICUSMinutes;
+    sic += flight.timeSICMinutes;
+    dual += flight.timeDualMinutes;
+    instructor += flight.timeInstructorMinutes;
+    total += flight.timeBlockMinutes;
+  }
+}
+
 class _ReportsSectionCard extends StatelessWidget {
   const _ReportsSectionCard({
     required this.title,
@@ -6266,11 +6398,17 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
   }
 
   Future<void> _downloadTemplate(_TemplateEntryItem item) async {
-    final decoded = jsonDecode(item.templateJson);
-    if (decoded is! Map<String, dynamic>) {
+    final decodedRaw = jsonDecode(item.templateJson);
+    if (decodedRaw is! Map<String, dynamic>) {
       if (!mounted) return;
       await showAppMessageDialog(context, message: 'Template JSON is invalid.');
       return;
+    }
+    final decoded = await _resolveTemplateJsonForExport(
+      Map<String, dynamic>.from(decodedRaw),
+    );
+    if (decoded['coverPage'] is Map<String, dynamic>) {
+      decoded.remove('coverPageImport');
     }
     decoded['templateName'] ??= item.templateName;
     decoded
@@ -6290,6 +6428,32 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
       return;
     }
     await showAppMessageDialog(context, message: 'Template exported.');
+  }
+
+  Future<Map<String, dynamic>> _resolveTemplateJsonForExport(
+    Map<String, dynamic> templateJson,
+  ) async {
+    final importKey = (templateJson['coverPageImport'] ?? '').toString().trim();
+    if (importKey.isEmpty ||
+        templateJson['coverPage'] is Map<String, dynamic>) {
+      return templateJson;
+    }
+    try {
+      final importedRaw = await rootBundle.loadString(
+        'assets/reports/templates/$importKey.json',
+      );
+      final importedJson = jsonDecode(importedRaw);
+      if (importedJson is Map<String, dynamic>) {
+        if (importedJson['coverPage'] is Map<String, dynamic>) {
+          templateJson['coverPage'] = importedJson['coverPage'];
+        } else {
+          templateJson['coverPage'] = importedJson;
+        }
+      }
+    } on Object {
+      // Best-effort export expansion.
+    }
+    return templateJson;
   }
 
   Future<void> _deleteTemplate(_TemplateEntryItem item) async {

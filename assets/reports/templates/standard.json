@@ -6,31 +6,7 @@
   "timeFormat": "H:mm",
   "rowHeight": 16,
   "alternateRowBackgroundColor": "#E6E8EB",
-  "coverPage": {
-    "enabled": true,
-    "title": "Pilot Logbook",
-    "blocks": [
-      {
-        "type": "kvGrid",
-        "title": "Pilot details",
-        "columns": 2,
-        "items": [
-          { "label": "Name", "valueKey": "pilot.name" },
-          { "label": "Licenses", "valueKey": "pilot.licenses" },
-          { "label": "Address", "valueKey": "pilot.address" },
-          { "label": "From", "valueKey": "report.fromDate" },
-          { "label": "To", "valueKey": "report.toDate" }
-        ]
-      },
-      {
-        "type": "signature",
-        "title": "Signature",
-        "valueKey": "pilot.signatureImage",
-        "width": 220,
-        "height": 90
-      }
-    ]
-  },
+  "coverPageImport": "cover_page_default",
   "labels": {
     "pageTotal": "PAGE TOTAL",
     "amountForward": "AMT. FORWARD",

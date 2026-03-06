@@ -65,7 +65,7 @@ class ReportPdfTemplateLoader {
         if (json is! Map<String, dynamic>) {
           continue;
         }
-        templates.add(_parseTemplate(fileName, json));
+        templates.add(await _parseTemplate(fileName, json));
       } on Object {
         continue;
       }
@@ -84,13 +84,23 @@ class ReportPdfTemplateLoader {
     return _parseTemplate(fileName, json);
   }
 
-  ReportPdfTemplate _parseTemplate(String fileName, Map<String, dynamic> json) {
-    final rowsPerPage = (json['rowsPerPage'] as num?)?.toInt() ?? 26;
-    final defaultPageSize = _parsePageSize(json['defaultPageSize']?.toString());
-    final dateFormat = _parseDateFormat(json['dateFormat']?.toString());
-    final timeFormat = _parseTimeFormat(json['timeFormat']?.toString());
-    final rowHeight = (json['rowHeight'] as num?)?.toDouble() ?? 11;
-    final tablesJson = json['tables'];
+  Future<ReportPdfTemplate> _parseTemplate(
+    String fileName,
+    Map<String, dynamic> json,
+  ) async {
+    final templateJson = Map<String, dynamic>.from(json);
+    final importedCover = await _loadImportedCoverPage(templateJson);
+    if (importedCover != null) {
+      templateJson['coverPage'] = importedCover;
+    }
+    final rowsPerPage = (templateJson['rowsPerPage'] as num?)?.toInt() ?? 26;
+    final defaultPageSize = _parsePageSize(
+      templateJson['defaultPageSize']?.toString(),
+    );
+    final dateFormat = _parseDateFormat(templateJson['dateFormat']?.toString());
+    final timeFormat = _parseTimeFormat(templateJson['timeFormat']?.toString());
+    final rowHeight = (templateJson['rowHeight'] as num?)?.toDouble() ?? 11;
+    final tablesJson = templateJson['tables'];
     if (tablesJson is! List) {
       throw FormatException('Template $fileName has no tables.');
     }
@@ -99,20 +109,38 @@ class ReportPdfTemplateLoader {
       fileName: fileName,
       displayName: fileName,
       rowsPerPage: rowsPerPage <= 0 ? 26 : rowsPerPage,
-      coverPage: _parseCoverPage(json['coverPage']),
-      forceLandscape: json['forceLandscape'] == true,
+      coverPage: _parseCoverPage(templateJson['coverPage']),
+      forceLandscape: templateJson['forceLandscape'] == true,
       defaultPageSize: defaultPageSize,
       dateFormat: dateFormat,
       timeFormat: timeFormat,
       rowHeight: rowHeight <= 0 ? 11 : rowHeight,
-      alternateRowBackgroundColorHex: json['alternateRowBackgroundColor']
-          ?.toString(),
-      labels: _parseLabels(json['labels']),
+      alternateRowBackgroundColorHex:
+          templateJson['alternateRowBackgroundColor']?.toString(),
+      labels: _parseLabels(templateJson['labels']),
       tables: tablesJson
           .whereType<Map<String, dynamic>>()
           .map(_parseTable)
           .toList(growable: false),
     );
+  }
+
+  Future<Map<String, dynamic>?> _loadImportedCoverPage(
+    Map<String, dynamic> templateJson,
+  ) async {
+    final importKey = (templateJson['coverPageImport'] ?? '').toString().trim();
+    if (importKey.isEmpty) return null;
+    final importedRaw = await rootBundle.loadString(
+      'assets/reports/templates/$importKey.json',
+    );
+    final importedJson = jsonDecode(importedRaw);
+    if (importedJson is Map<String, dynamic>) {
+      if (importedJson['coverPage'] is Map<String, dynamic>) {
+        return importedJson['coverPage'] as Map<String, dynamic>;
+      }
+      return importedJson;
+    }
+    throw FormatException('Invalid coverPageImport format for $importKey.');
   }
 
   ReportPdfCoverPageConfig? _parseCoverPage(Object? raw) {
