@@ -93,21 +93,6 @@ enum ReportsFilterField {
   /// Full aircraft type name.
   aircraftTypeName,
 
-  /// Name of a pilot on the flight.
-  pilotName,
-
-  /// Any pilot is on board.
-  pilotOnBoard,
-
-  /// Pilot in command.
-  pilotPic,
-
-  /// Second in command.
-  pilotSic,
-
-  /// Trainee pilot.
-  pilotTrainee,
-
   /// Approach type string.
   approachType,
 
@@ -260,11 +245,6 @@ extension ReportsFilterFieldMeta on ReportsFilterField {
       case ReportsFilterField.aircraftTypeCode:
       case ReportsFilterField.aircraftTypeFamily:
       case ReportsFilterField.aircraftTypeName:
-      case ReportsFilterField.pilotName:
-      case ReportsFilterField.pilotOnBoard:
-      case ReportsFilterField.pilotPic:
-      case ReportsFilterField.pilotSic:
-      case ReportsFilterField.pilotTrainee:
       case ReportsFilterField.approachType:
       case ReportsFilterField.remarks:
       case ReportsFilterField.notes:
@@ -333,16 +313,6 @@ extension ReportsFilterFieldMeta on ReportsFilterField {
         return 'Aircraft Type Family';
       case ReportsFilterField.aircraftTypeName:
         return 'Aircraft Type Name';
-      case ReportsFilterField.pilotName:
-        return 'Pilot Name';
-      case ReportsFilterField.pilotOnBoard:
-        return 'Pilot On Board';
-      case ReportsFilterField.pilotPic:
-        return 'Pilot PIC';
-      case ReportsFilterField.pilotSic:
-        return 'Pilot SIC';
-      case ReportsFilterField.pilotTrainee:
-        return 'Pilot Trainee';
       case ReportsFilterField.approachType:
         return 'Approach Type';
       case ReportsFilterField.remarks:

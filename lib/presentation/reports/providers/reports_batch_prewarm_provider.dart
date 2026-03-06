@@ -25,6 +25,5 @@ final reportsBatchPrewarmProvider = FutureProvider<void>((ref) async {
       filterMatchMode: runtimeQuery.matchMode,
       filters: runtimeQuery.filters,
     ),
-    includePilotNames: false,
   );
 });

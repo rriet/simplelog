@@ -36,7 +36,6 @@ import 'package:simplelog/features/reports/application/report_pdf_application_se
 import 'package:simplelog/presentation/reports/providers/report_pdf_application_service_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
-import 'package:simplelog/presentation/settings/widgets/pilot_profile_settings_card.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/event_type_toggle_button.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
@@ -71,14 +70,6 @@ enum ReportsPanelSection {
   /// Totals-focused panel.
   totals,
 }
-
-const _pilotFilterFields = <ReportsFilterField>{
-  ReportsFilterField.pilotName,
-  ReportsFilterField.pilotOnBoard,
-  ReportsFilterField.pilotPic,
-  ReportsFilterField.pilotSic,
-  ReportsFilterField.pilotTrainee,
-};
 
 class _CoverSummaryColumn {
   const _CoverSummaryColumn({
@@ -164,10 +155,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   bool _loading = false;
   bool _detailsLoaded = false;
   bool _entriesLoaded = false;
-  bool _pilotNamesLoaded = false;
   bool _pendingDetailsLoad = false;
   bool _pendingIncludeEntries = false;
-  bool _pendingIncludePilotNames = false;
+  bool _pendingOverviewLoad = false;
   String? _error;
   bool _analysisLoading = false;
   int _analysisBuildToken = 0;
@@ -188,6 +178,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   ProviderSubscription<String?>? _selectedTemplateSubscription;
   final _fromTimeController = TextEditingController();
   final _toTimeController = TextEditingController();
+  int _lastHandledTabIndex = 0;
 
   ReportsData _data = const ReportsData(
     totals: ReportsTotals.zero(),
@@ -227,31 +218,25 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       },
     );
     _tabController = TabController(length: 5, vsync: this);
+    _lastHandledTabIndex = _tabController.index;
+    _tabController.addListener(_handleTabIndexChange);
     unawaited(_loadTemplateOptions());
-    if (_shouldPreloadOverview(widget.section)) {
-      unawaited(_loadOverviewData());
-    }
     if (widget.section == null) {
+      if (_shouldPreloadOverview(widget.section)) {
+        unawaited(_loadOverviewData());
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         unawaited(
           _ensureDetailsLoaded(
             includeEntries: true,
-            includePilotNames: _needsPilotNamesForFilters(),
           ),
         );
       });
-    }
-    if (_shouldPreloadDetails(widget.section)) {
+    } else {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final includeEntries = widget.section == ReportsPanelSection.flights;
-        unawaited(
-          _ensureDetailsLoaded(
-            includeEntries: includeEntries,
-            includePilotNames: _needsPilotNamesForFilters(),
-          ),
-        );
+        unawaited(_preloadForSection(widget.section!));
       });
     }
   }
@@ -325,28 +310,44 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   @override
   void didUpdateWidget(covariant ReportsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.section != widget.section &&
-        widget.section != null &&
-        _shouldPreloadDetails(widget.section)) {
-      final includeEntries = widget.section == ReportsPanelSection.flights;
-      unawaited(
-        _ensureDetailsLoaded(
-          includeEntries: includeEntries,
-          includePilotNames: _needsPilotNamesForFilters(),
-        ),
-      );
+    if (oldWidget.section != widget.section && widget.section != null) {
+      unawaited(_preloadForSection(widget.section!));
+    }
+  }
+
+  Future<void> _preloadForSection(ReportsPanelSection section) async {
+    switch (section) {
+      case ReportsPanelSection.totals:
+      case ReportsPanelSection.overview:
+        if (_loading) {
+          _pendingOverviewLoad = true;
+          return;
+        }
+        await _loadOverviewData();
+        return;
+      case ReportsPanelSection.flights:
+        await _ensureDetailsLoaded(includeEntries: true);
+        return;
+      case ReportsPanelSection.analizes:
+        final wasLoaded = _detailsLoaded;
+        await _ensureDetailsLoaded(includeEntries: false);
+        if (!mounted) return;
+        if (wasLoaded) {
+          unawaited(_refreshAnalysisGroups());
+        }
+        return;
+      case ReportsPanelSection.batch:
+        // Keep Batch entry responsive; load details lazily on action.
+        return;
+      case ReportsPanelSection.reports:
+      case ReportsPanelSection.filters:
+        return;
     }
   }
 
   bool _shouldPreloadOverview(ReportsPanelSection? section) {
     return section != ReportsPanelSection.reports &&
         section != ReportsPanelSection.filters;
-  }
-
-  bool _shouldPreloadDetails(ReportsPanelSection? section) {
-    return section == ReportsPanelSection.flights ||
-        section == ReportsPanelSection.analizes ||
-        section == ReportsPanelSection.batch;
   }
 
   bool get _isFiltersOnlySection {
@@ -390,8 +391,22 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     _fromTimeController.dispose();
     _toTimeController.dispose();
     _selectedTemplateSubscription?.close();
-    _tabController.dispose();
+    _tabController
+      ..removeListener(_handleTabIndexChange)
+      ..dispose();
     super.dispose();
+  }
+
+  void _handleTabIndexChange() {
+    if (_tabController.indexIsChanging) {
+      return;
+    }
+    final index = _tabController.index;
+    if (index == _lastHandledTabIndex) {
+      return;
+    }
+    _lastHandledTabIndex = index;
+    unawaited(_onTabChanged(index));
   }
 
   Future<void> _loadOverviewData() async {
@@ -437,7 +452,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _entries = const [];
           _detailsLoaded = false;
           _entriesLoaded = false;
-          _pilotNamesLoaded = false;
           _analysisGroups = const [];
           _analysisLoading = false;
           _invalidateAnalysisCache();
@@ -445,7 +459,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _lastFlightDate = range.$2;
         });
       } else {
-        final includePilotNames = _needsPilotNamesForFilters();
         final result = await repo.load(
           ReportsQuery(
             from: _from,
@@ -454,7 +467,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             filterMatchMode: _filterMatchMode,
             filters: _filters,
           ),
-          includePilotNames: includePilotNames,
         );
         final flights = eventTypes.flights
             ? result.flights
@@ -474,7 +486,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _entries = const [];
           _detailsLoaded = true;
           _entriesLoaded = false;
-          _pilotNamesLoaded = includePilotNames;
           _invalidateAnalysisCache();
           _firstFlightDate = range.$1;
           _lastFlightDate = range.$2;
@@ -487,16 +498,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     } finally {
       if (mounted) {
         setState(() => _loading = false);
-        if (_pendingDetailsLoad) {
+        if (_pendingOverviewLoad) {
+          _pendingOverviewLoad = false;
+          unawaited(_loadOverviewData());
+        } else if (_pendingDetailsLoad) {
           final includeEntries = _pendingIncludeEntries;
-          final includePilotNames = _pendingIncludePilotNames;
           _pendingDetailsLoad = false;
           _pendingIncludeEntries = false;
-          _pendingIncludePilotNames = false;
           unawaited(
             _ensureDetailsLoaded(
               includeEntries: includeEntries,
-              includePilotNames: includePilotNames,
             ),
           );
         }
@@ -534,13 +545,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     return _ReportDateRangePreset.sinceBeginning;
   }
 
-  bool _needsPilotNamesForFilters() {
-    return false;
-  }
-
   Future<void> _loadDetailed({
     required bool includeEntries,
-    required bool includePilotNames,
   }) async {
     if (_from.isAfter(_to)) {
       setState(
@@ -561,29 +567,38 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     try {
       final repo = ref.read(reportsRepositoryProvider);
       if (!includeEntries && _filters.isEmpty) {
-        final flights = eventTypes.flights
-            ? await repo.loadFlightsForAnalysis(
+        final totalsFuture = repo.loadQuickTotals(
+          from: _from,
+          to: _to,
+          includePreviousExperience: includePreviousExperience,
+        );
+        final flightsFuture = eventTypes.flights
+            ? repo.loadFlightsForAnalysis(
                 from: _from,
                 to: _to,
-                includePilotNames: includePilotNames,
               )
-            : const <ReportsFlightRow>[];
-        final flightRange = await repo.loadFlightDateRange(
+            : Future.value(const <ReportsFlightRow>[]);
+        final flightRangeFuture = repo.loadFlightDateRange(
           from: _from,
           to: _to,
         );
+        final totals = await totalsFuture;
+        final flights = await flightsFuture;
+        final flightRange = await flightRangeFuture;
         final range = await _resolveDisplayedDateRange(
           baseRange: flightRange,
           includePreviousExperience: includePreviousExperience,
         );
         if (!mounted) return;
         setState(() {
-          _data = ReportsData(totals: _data.totals, flights: flights);
+          _data = ReportsData(
+            totals: _applyTypeSelectionToTotals(totals, eventTypes),
+            flights: flights,
+          );
           _batchFlightCount = eventTypes.flights ? flights.length : 0;
           _entries = const [];
           _detailsLoaded = true;
           _entriesLoaded = false;
-          _pilotNamesLoaded = includePilotNames;
           _invalidateAnalysisCache();
           _firstFlightDate = range.$1;
           _lastFlightDate = range.$2;
@@ -598,7 +613,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             filterMatchMode: _filterMatchMode,
             filters: _filters,
           ),
-          includePilotNames: includePilotNames,
         );
         final flights = eventTypes.flights
             ? result.flights
@@ -621,7 +635,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           _entries = entries;
           _detailsLoaded = true;
           _entriesLoaded = includeEntries;
-          _pilotNamesLoaded = includePilotNames;
           _invalidateAnalysisCache();
           _firstFlightDate = range.$1;
           _lastFlightDate = range.$2;
@@ -634,6 +647,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     } finally {
       if (mounted) {
         setState(() => _loading = false);
+        if (_pendingOverviewLoad) {
+          _pendingOverviewLoad = false;
+          unawaited(_loadOverviewData());
+        }
       }
     }
   }
@@ -732,23 +749,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   Future<void> _ensureDetailsLoaded({
     required bool includeEntries,
-    required bool includePilotNames,
   }) async {
-    if (_detailsLoaded &&
-        (!includeEntries || _entriesLoaded) &&
-        (!includePilotNames || _pilotNamesLoaded)) {
+    if (_detailsLoaded && (!includeEntries || _entriesLoaded)) {
       return;
     }
     if (_loading) {
       _pendingDetailsLoad = true;
       _pendingIncludeEntries = _pendingIncludeEntries || includeEntries;
-      _pendingIncludePilotNames =
-          _pendingIncludePilotNames || includePilotNames;
       return;
     }
     await _loadDetailed(
       includeEntries: includeEntries,
-      includePilotNames: includePilotNames,
     );
   }
 
@@ -756,15 +767,28 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (index == 0) {
       await _ensureDetailsLoaded(
         includeEntries: true,
-        includePilotNames: _needsPilotNamesForFilters(),
       );
-    } else if (index == 2 || index == 3) {
+    } else if (index == 1) {
+      if (_loading) {
+        _pendingOverviewLoad = true;
+        return;
+      }
+      await _loadOverviewData();
+    } else if (index == 2) {
+      final wasLoaded = _detailsLoaded;
       await _ensureDetailsLoaded(
         includeEntries: false,
-        includePilotNames: _needsPilotNamesForFilters(),
       );
+      if (!mounted) return;
+      if (wasLoaded) {
+        await _refreshAnalysisGroups();
+      }
+    } else if (index == 3) {
+      // Reports tab does not require preloading analysis details.
+      // Keep current analysis cache untouched to avoid transient empty states
+      // when switching back to Analyses.
     } else if (index == 4) {
-      unawaited(_primeBatchDataIfNeeded());
+      // Keep Batch tab fast on first open; do not preload details here.
     }
   }
 
@@ -778,7 +802,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     try {
       await _ensureDetailsLoaded(
         includeEntries: false,
-        includePilotNames: _needsPilotNamesForFilters(),
       );
     } finally {
       if (mounted) {
@@ -941,7 +964,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       } else {
         await _ensureDetailsLoaded(
           includeEntries: false,
-          includePilotNames: _needsPilotNamesForFilters(),
         );
       }
       return;
@@ -952,12 +974,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       if (_isAnalysesVisible) {
         await _ensureDetailsLoaded(
           includeEntries: false,
-          includePilotNames: _needsPilotNamesForFilters(),
         );
       } else if (_isFlightsVisible) {
         await _ensureDetailsLoaded(
           includeEntries: true,
-          includePilotNames: _needsPilotNamesForFilters(),
         );
       }
     }
@@ -1018,7 +1038,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   Future<void> _openMapDialog() async {
     await _loadDetailed(
       includeEntries: false,
-      includePilotNames: _needsPilotNamesForFilters(),
     );
     if (!mounted) return;
     await showDialog<void>(
@@ -1051,7 +1070,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     try {
       await _ensureDetailsLoaded(
         includeEntries: false,
-        includePilotNames: _needsPilotNamesForFilters(),
       );
       if (!mounted) return;
       final templateConfig = selectedTemplate.template;
@@ -1953,7 +1971,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
               if (showTabbedLayout)
                 TabBar(
                   controller: _tabController,
-                  onTap: _onTabChanged,
                   isScrollable: AppTabBarStyles.isScrollable,
                   tabAlignment: AppTabBarStyles.tabAlignment,
                   labelPadding: AppTabBarStyles.labelPadding,
@@ -2195,7 +2212,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                       unawaited(
                         _ensureDetailsLoaded(
                           includeEntries: false,
-                          includePilotNames: _needsPilotNamesForFilters(),
                         ),
                       );
                     }
@@ -2282,7 +2298,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Widget _buildReportsSection({required bool compact}) {
-    return Center(
+    return Align(
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760),
         child: SingleChildScrollView(
@@ -2308,13 +2325,93 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
   }
 
-  Widget _buildReportsControls({required bool compact}) {
+  Future<void> _openPdfOptionsAndGenerate() async {
+    if (_isGeneratingPdf) return;
+    var openPdfAfterSaving = ref.read(openPdfAfterSavingProvider);
+    var includeHoursBefore = ref.read(includeHoursBeforeProvider);
+    var includePreviousExperience = ref.read(includePreviousExperienceProvider);
+    if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    final includePreviousExperience = ref.watch(
+    final shouldGenerate = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('PDF options'),
+              content: SizedBox(
+                width: 420,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SwitchListTile.adaptive(
+                      value: openPdfAfterSaving,
+                      title: const Text('Open PDF after saving'),
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        setDialogState(() => openPdfAfterSaving = value);
+                      },
+                    ),
+                    SwitchListTile.adaptive(
+                      value: includeHoursBefore,
+                      title: Text(l10n.reportsIncludeHoursBefore),
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        setDialogState(() => includeHoursBefore = value);
+                      },
+                    ),
+                    SwitchListTile.adaptive(
+                      value: includePreviousExperience,
+                      title: Text(l10n.reportsPreviousExperienceLabel),
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        setDialogState(() => includePreviousExperience = value);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(l10n.reportsGeneratePdf),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (shouldGenerate != true || !mounted) return;
+    final openNotifier = ref.read(openPdfAfterSavingProvider.notifier);
+    final hoursNotifier = ref.read(includeHoursBeforeProvider.notifier);
+    final previousNotifier = ref.read(
+      includePreviousExperienceProvider.notifier,
+    );
+    final currentOpenPdfAfterSaving = ref.read(openPdfAfterSavingProvider);
+    final currentIncludeHoursBefore = ref.read(includeHoursBeforeProvider);
+    final currentIncludePreviousExperience = ref.read(
       includePreviousExperienceProvider,
     );
-    final includeHoursBefore = ref.watch(includeHoursBeforeProvider);
-    final openPdfAfterSaving = ref.watch(openPdfAfterSavingProvider);
+    if (currentOpenPdfAfterSaving != openPdfAfterSaving) {
+      await openNotifier.setValue(value: openPdfAfterSaving);
+    }
+    if (currentIncludeHoursBefore != includeHoursBefore) {
+      await hoursNotifier.setValue(value: includeHoursBefore);
+    }
+    if (currentIncludePreviousExperience != includePreviousExperience) {
+      await previousNotifier.setValue(value: includePreviousExperience);
+    }
+    if (!mounted) return;
+    await _generatePdf();
+  }
+
+  Widget _buildReportsControls({required bool compact}) {
+    final l10n = AppLocalizations.of(context)!;
     final onSurface = Theme.of(context).colorScheme.onSurface;
 
     return Column(
@@ -2324,21 +2421,28 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           title: 'Map',
           subtitle: 'Preview the filtered routes and path overlay.',
           children: [
-            _ReportsActionButton(
-              icon: Icons.map_outlined,
-              label: l10n.reportsShowMap,
-              onPressed: _isGeneratingPdf ? null : _openMapDialog,
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: compact ? 170 : 210,
-              child: EventTypeToggleButton(
-                label: l10n.reportsShowPath,
-                selected: _showPathOnMap,
-                onTap: _isGeneratingPdf
-                    ? () {}
-                    : () => setState(() => _showPathOnMap = !_showPathOnMap),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: _ReportsActionButton(
+                    icon: Icons.map_outlined,
+                    label: l10n.reportsShowMap,
+                    onPressed: _isGeneratingPdf ? null : _openMapDialog,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: compact ? 160 : 180,
+                  child: EventTypeToggleButton(
+                    label: l10n.reportsShowPath,
+                    selected: _showPathOnMap,
+                    onTap: _isGeneratingPdf
+                        ? () {}
+                        : () =>
+                              setState(() => _showPathOnMap = !_showPathOnMap),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -2347,44 +2451,64 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           title: 'PDF Generation',
           subtitle: 'Select template and export the report PDF.',
           children: [
-            DropdownButtonFormField<_XslTemplateOption>(
-              key: ValueKey(_selectedTemplate?.fileName ?? 'template_selector'),
-              initialValue: _selectedTemplate,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: l10n.reportsXmlTemplateLabel,
-                border: const OutlineInputBorder(),
-                isDense: true,
-              ),
-              items: _xslTemplateOptions
-                  .map(
-                    (template) => DropdownMenuItem<_XslTemplateOption>(
-                      value: template,
-                      child: _overflowText(template.description),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<_XslTemplateOption>(
+                    key: ValueKey(
+                      _selectedTemplate?.fileName ?? 'template_selector',
                     ),
-                  )
-                  .toList(growable: false),
-              selectedItemBuilder: (context) => _xslTemplateOptions
-                  .map(
-                    (template) => _dropdownSelectedItem(template.description),
-                  )
-                  .toList(growable: false),
-              onChanged: (value) {
-                if (_isGeneratingPdf) return;
-                if (value == null) return;
-                setState(() => _selectedTemplate = value);
-                unawaited(
-                  ref
-                      .read(selectedReportTemplateFileNameProvider.notifier)
-                      .setValue(value: value.fileName),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-            _ReportsActionButton(
-              icon: Icons.edit_note_rounded,
-              label: 'Edit Templates',
-              onPressed: _isGeneratingPdf ? null : _openTemplateEditorDialog,
+                    initialValue: _selectedTemplate,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: l10n.reportsXmlTemplateLabel,
+                      border: const OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    items: _xslTemplateOptions
+                        .map(
+                          (template) => DropdownMenuItem<_XslTemplateOption>(
+                            value: template,
+                            child: _overflowText(template.description),
+                          ),
+                        )
+                        .toList(growable: false),
+                    selectedItemBuilder: (context) => _xslTemplateOptions
+                        .map(
+                          (template) =>
+                              _dropdownSelectedItem(template.description),
+                        )
+                        .toList(growable: false),
+                    onChanged: (value) {
+                      if (_isGeneratingPdf) return;
+                      if (value == null) return;
+                      setState(() => _selectedTemplate = value);
+                      unawaited(
+                        ref
+                            .read(
+                              selectedReportTemplateFileNameProvider.notifier,
+                            )
+                            .setValue(value: value.fileName),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  height: 48,
+                  width: 48,
+                  child: OutlinedButton(
+                    onPressed: _isGeneratingPdf
+                        ? null
+                        : _openTemplateEditorDialog,
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                    ),
+                    child: const Icon(Icons.edit_outlined),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             _ReportsActionButton(
@@ -2392,7 +2516,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
               label: _isGeneratingPdf
                   ? l10n.reportsGeneratingShort
                   : l10n.reportsGeneratePdf,
-              onPressed: _isGeneratingPdf ? null : _generatePdf,
+              onPressed: _isGeneratingPdf ? null : _openPdfOptionsAndGenerate,
               filled: true,
             ),
             if (_isGeneratingPdf) ...[
@@ -2417,72 +2541,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 ],
               ),
             ],
-            const SizedBox(height: 12),
-            Divider(
-              height: 1,
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Options',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'Adjust generation behavior and profile data.',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: compact ? 200 : 240,
-              child: EventTypeToggleButton(
-                label: 'Open PDF after saving',
-                selected: openPdfAfterSaving,
-                onTap: _isGeneratingPdf
-                    ? () {}
-                    : () => ref
-                          .read(openPdfAfterSavingProvider.notifier)
-                          .setValue(value: !openPdfAfterSaving),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: compact ? 200 : 240,
-              child: EventTypeToggleButton(
-                label: l10n.reportsIncludeHoursBefore,
-                selected: includeHoursBefore,
-                onTap: _isGeneratingPdf
-                    ? () {}
-                    : () => ref
-                          .read(includeHoursBeforeProvider.notifier)
-                          .setValue(value: !includeHoursBefore),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: compact ? 200 : 240,
-              child: EventTypeToggleButton(
-                label: l10n.reportsPreviousExperienceLabel,
-                selected: includePreviousExperience,
-                onTap: _isGeneratingPdf
-                    ? () {}
-                    : () => unawaited(
-                        _setIncludePreviousExperience(
-                          !includePreviousExperience,
-                        ),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            _ReportsActionButton(
-              icon: Icons.person_outline,
-              label: 'Pilot profile',
-              onPressed: () => unawaited(showPilotProfileEditorDialog(context)),
-            ),
           ],
         ),
       ],
@@ -2493,7 +2551,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final filteredCount = _batchFlightCount;
     final actionsDisabled =
         filteredCount == 0 || _isPreparingBatchData || _isCheckingBatchFlights;
-    return Center(
+    return Align(
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760),
         child: SingleChildScrollView(
@@ -2635,8 +2694,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         );
         if (snapshot.arrivalUtc != null &&
             (selectedChecks.contains(
-                  _BatchFlightCheck.chocksEqualsTotalBlock,
-                ))) {
+              _BatchFlightCheck.chocksEqualsTotalBlock,
+            ))) {
           final chocksBlock = snapshot.arrivalUtc!
               .difference(snapshot.departureUtc)
               .inMinutes;
@@ -2910,7 +2969,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     }
     await _ensureDetailsLoaded(
       includeEntries: false,
-      includePilotNames: _needsPilotNamesForFilters(),
     );
   }
 
@@ -2952,7 +3010,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     }
     await _ensureDetailsLoaded(
       includeEntries: false,
-      includePilotNames: _needsPilotNamesForFilters(),
     );
   }
 
@@ -3087,7 +3144,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
     await _ensureDetailsLoaded(
       includeEntries: false,
-      includePilotNames: _needsPilotNamesForFilters(),
     );
   }
 
@@ -3124,7 +3180,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
     await _ensureDetailsLoaded(
       includeEntries: false,
-      includePilotNames: _needsPilotNamesForFilters(),
     );
   }
 
@@ -3679,7 +3734,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (!mounted) return;
     await _ensureDetailsLoaded(
       includeEntries: false,
-      includePilotNames: _needsPilotNamesForFilters(),
     );
   }
 
@@ -4388,16 +4442,6 @@ String _reportFilterFieldLabel(
       return l10n.reportsFilterFieldAircraftTypeFamily;
     case ReportsFilterField.aircraftTypeName:
       return l10n.reportsFilterFieldAircraftTypeName;
-    case ReportsFilterField.pilotName:
-      return l10n.reportsFilterFieldPilotName;
-    case ReportsFilterField.pilotOnBoard:
-      return l10n.reportsFilterFieldPilotOnBoard;
-    case ReportsFilterField.pilotPic:
-      return l10n.reportsFilterFieldPilotPic;
-    case ReportsFilterField.pilotSic:
-      return l10n.reportsFilterFieldPilotSic;
-    case ReportsFilterField.pilotTrainee:
-      return l10n.reportsFilterFieldPilotTrainee;
     case ReportsFilterField.approachType:
       return l10n.reportsFilterFieldApproachType;
     case ReportsFilterField.remarks:
@@ -5578,22 +5622,10 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
   }
 
   List<ReportsFilterField> _availableFields() {
-    return ReportsFilterField.values
-        .where((field) => !_pilotFilterFields.contains(field))
-        .toList(growable: false);
+    return ReportsFilterField.values.toList(growable: false);
   }
 
   List<ReportsFilterOperator> _operatorsForField(ReportsFilterField field) {
-    if (field == ReportsFilterField.pilotName ||
-        field == ReportsFilterField.pilotOnBoard ||
-        field == ReportsFilterField.pilotPic ||
-        field == ReportsFilterField.pilotSic ||
-        field == ReportsFilterField.pilotTrainee) {
-      return const [
-        ReportsFilterOperator.contains,
-        ReportsFilterOperator.doesNotContain,
-      ];
-    }
     return field.valueType.supportedOperators;
   }
 
@@ -6522,7 +6554,9 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
     for (final name in _sharedCoverTemplateNames) {
       if (existingNames.contains(name)) continue;
       try {
-        final raw = await rootBundle.loadString('assets/reports/templates/$name.json');
+        final raw = await rootBundle.loadString(
+          'assets/reports/templates/$name.json',
+        );
         final parsed = jsonDecode(raw);
         if (parsed is! Map<String, dynamic>) continue;
         items.add(
@@ -6584,10 +6618,9 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
       return templateJson;
     }
     try {
-      final dbRow =
-          await (widget.db.select(widget.db.reportTemplates)
-                ..where((t) => t.templateName.equals(importKey)))
-              .getSingleOrNull();
+      final dbRow = await (widget.db.select(
+        widget.db.reportTemplates,
+      )..where((t) => t.templateName.equals(importKey))).getSingleOrNull();
       if (dbRow != null && dbRow.templateJson.trim().isNotEmpty) {
         final dbJson = jsonDecode(dbRow.templateJson);
         if (dbJson is Map<String, dynamic>) {

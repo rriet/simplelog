@@ -245,7 +245,6 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
             filterMatchMode: query.matchMode,
             filters: query.filters,
           ),
-          includePilotNames: false,
         );
         final flights = eventTypes.flights
             ? result.flights
