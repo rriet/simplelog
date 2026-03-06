@@ -130,6 +130,22 @@ class ReportPdfTemplateLoader {
   ) async {
     final importKey = (templateJson['coverPageImport'] ?? '').toString().trim();
     if (importKey.isEmpty) return null;
+    final dbRow =
+        await (db.select(db.reportTemplates)
+              ..where((t) => t.templateName.equals(importKey)))
+            .getSingleOrNull();
+    if (dbRow != null && dbRow.templateJson.trim().isNotEmpty) {
+      final dbJson = jsonDecode(dbRow.templateJson);
+      if (dbJson is Map<String, dynamic>) {
+        if (dbJson['coverPage'] is Map<String, dynamic>) {
+          return dbJson['coverPage'] as Map<String, dynamic>;
+        }
+        return dbJson;
+      }
+      throw FormatException(
+        'Invalid DB coverPageImport format for $importKey.',
+      );
+    }
     final importedRaw = await rootBundle.loadString(
       'assets/reports/templates/$importKey.json',
     );

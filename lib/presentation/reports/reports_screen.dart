@@ -1305,8 +1305,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       'report.rangeLabel': rangeLabel,
       'cover.summaryTable': summaryTable,
       'cover.certification':
-          'I certify that statements made by me in this log book are true.\n\n'
-          "Pilot's signature",
+          'I certify that statements made by me in this log book are true.',
     };
   }
 
@@ -1335,22 +1334,23 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final grandTotal = _CoverFleetTotals.from(totalBefore)..add(logbookTotals);
 
     String line(String name, _CoverFleetTotals totals) {
-      return '${name.padRight(12)} '
-          '${_formatMinutes(totals.night).padLeft(9)} '
-          '${_formatMinutes(totals.ifr).padLeft(9)} '
-          '${_formatMinutes(totals.pic).padLeft(9)} '
-          '${_formatMinutes(totals.picus).padLeft(9)} '
-          '${_formatMinutes(totals.pic + totals.picus).padLeft(11)} '
-          '${_formatMinutes(totals.sic).padLeft(9)} '
-          '${_formatMinutes(totals.dual).padLeft(9)} '
-          '${_formatMinutes(totals.instructor).padLeft(11)} '
-          '${_formatMinutes(totals.examiner).padLeft(10)} '
-          '${_formatMinutes(totals.total).padLeft(9)}';
+      return [
+        name,
+        _formatMinutes(totals.night),
+        _formatMinutes(totals.ifr),
+        _formatMinutes(totals.pic),
+        _formatMinutes(totals.picus),
+        _formatMinutes(totals.pic + totals.picus),
+        _formatMinutes(totals.sic),
+        _formatMinutes(totals.dual),
+        _formatMinutes(totals.instructor),
+        _formatMinutes(totals.examiner),
+        _formatMinutes(totals.total),
+      ].join('\t');
     }
 
-    const header =
-        'TYPE            NIGHT       IFR       PIC     PICUS   PIC+PICUS'
-        '       SIC      DUAL  INSTRUCTOR   EXAMINER     TOTAL';
+    const header = 'TYPE\tNIGHT\tIFR\tPIC\tPICUS\tPIC+PICUS\tSIC\tDUAL\t'
+        'INSTRUCTOR\tEXAMINER\tTOTAL';
     final lines = <String>[
       header,
       for (final row in familyRows) line(row.key, row.value),
@@ -6356,6 +6356,8 @@ class _EditTemplatesDialog extends StatefulWidget {
 }
 
 class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
+  static const _sharedCoverTemplateNames = <String>['cover_page_default'];
+
   final _templateNameController = TextEditingController();
   List<_TemplateEntryItem> _items = const [];
   bool _isBusy = false;
@@ -6391,6 +6393,27 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
         ),
       );
     }
+    final existingNames = items
+        .map((item) => item.templateName.trim())
+        .where((name) => name.isNotEmpty)
+        .toSet();
+    for (final name in _sharedCoverTemplateNames) {
+      if (existingNames.contains(name)) continue;
+      try {
+        final raw = await rootBundle.loadString('assets/reports/templates/$name.json');
+        final parsed = jsonDecode(raw);
+        if (parsed is! Map<String, dynamic>) continue;
+        items.add(
+          _TemplateEntryItem(
+            templateName: name,
+            templateJson: const JsonEncoder.withIndent('  ').convert(parsed),
+          ),
+        );
+      } on Object {
+        continue;
+      }
+    }
+    items.sort((a, b) => a.templateName.compareTo(b.templateName));
     setState(() {
       _items = items;
       _isBusy = false;
@@ -6439,6 +6462,21 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
       return templateJson;
     }
     try {
+      final dbRow =
+          await (widget.db.select(widget.db.reportTemplates)
+                ..where((t) => t.templateName.equals(importKey)))
+              .getSingleOrNull();
+      if (dbRow != null && dbRow.templateJson.trim().isNotEmpty) {
+        final dbJson = jsonDecode(dbRow.templateJson);
+        if (dbJson is Map<String, dynamic>) {
+          if (dbJson['coverPage'] is Map<String, dynamic>) {
+            templateJson['coverPage'] = dbJson['coverPage'];
+          } else {
+            templateJson['coverPage'] = dbJson;
+          }
+          return templateJson;
+        }
+      }
       final importedRaw = await rootBundle.loadString(
         'assets/reports/templates/$importKey.json',
       );
@@ -6488,6 +6526,73 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
     );
     _changed = true;
     await _loadItems();
+  }
+
+  Future<void> _editTemplate(_TemplateEntryItem item) async {
+    final prettyJson = () {
+      try {
+        final decoded = jsonDecode(item.templateJson);
+        if (decoded is Map<String, dynamic>) {
+          return const JsonEncoder.withIndent('  ').convert(decoded);
+        }
+      } on Object {
+        // Keep original text when JSON cannot be parsed.
+      }
+      return item.templateJson;
+    }();
+
+    final editedJson = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return _TemplateJsonEditorDialog(
+          templateName: item.templateName,
+          initialJson: prettyJson,
+        );
+      },
+    );
+    if (editedJson == null) {
+      return;
+    }
+
+    final raw = editedJson.trim();
+    if (raw.isEmpty) {
+      if (!mounted) return;
+      await showAppMessageDialog(context, message: 'Template JSON is empty.');
+      return;
+    }
+
+    late final Map<String, dynamic> decoded;
+    try {
+      final parsed = jsonDecode(raw);
+      if (parsed is! Map<String, dynamic>) {
+        throw const FormatException('Template JSON must be an object.');
+      }
+      decoded = parsed;
+    } on Object {
+      if (!mounted) return;
+      await showAppMessageDialog(
+        context,
+        message: 'Template JSON is invalid. Fix the JSON and try again.',
+      );
+      return;
+    }
+
+    decoded
+      ..remove('reportName')
+      ..remove('displayName')
+      ..['templateName'] = item.templateName;
+
+    await widget.db.customStatement(
+      'INSERT INTO report_templates (template_name, template_json) '
+      'VALUES (?, ?) '
+      'ON CONFLICT(template_name) DO UPDATE SET '
+      'template_json = excluded.template_json',
+      [item.templateName, jsonEncode(decoded)],
+    );
+    _changed = true;
+    await _loadItems();
+    if (!mounted) return;
+    await showAppMessageDialog(context, message: 'Template updated.');
   }
 
   Future<void> _uploadAsNewTemplate() async {
@@ -6623,6 +6728,12 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
                                     children: [
                                       SquareOutlineButton(
                                         onPressed: () =>
+                                            unawaited(_editTemplate(item)),
+                                        icon: Icons.edit_note,
+                                        label: 'Edit',
+                                      ),
+                                      SquareOutlineButton(
+                                        onPressed: () =>
                                             unawaited(_downloadTemplate(item)),
                                         icon: Icons.download,
                                         label: 'Download',
@@ -6644,6 +6755,98 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TemplateJsonEditorDialog extends StatefulWidget {
+  const _TemplateJsonEditorDialog({
+    required this.templateName,
+    required this.initialJson,
+  });
+
+  final String templateName;
+  final String initialJson;
+
+  @override
+  State<_TemplateJsonEditorDialog> createState() =>
+      _TemplateJsonEditorDialogState();
+}
+
+class _TemplateJsonEditorDialogState extends State<_TemplateJsonEditorDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialJson);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 980, maxHeight: 760),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Edit Template: ${widget.templateName}',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  expands: true,
+                  maxLines: null,
+                  textAlignVertical: TextAlignVertical.top,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Template JSON',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      MaterialLocalizations.of(context).cancelButtonLabel,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: () =>
+                        Navigator.of(context).pop(_controller.text),
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

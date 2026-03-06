@@ -770,18 +770,101 @@ class ReportPdfApplicationService {
     final value = (block.valueKey == null || block.valueKey!.isEmpty)
         ? ''
         : (coverValues[block.valueKey!] ?? '');
+    final showBorder =
+        block.showBorder && block.valueKey?.trim() != 'cover.certification';
+    if (block.valueKey == 'cover.summaryTable') {
+      return _buildCoverSummaryHoursTable(
+        block: block,
+        rawValue: value,
+        titleWidgets: children,
+      );
+    }
     children.add(
       pw.Container(
         width: double.infinity,
         constraints: const pw.BoxConstraints(minHeight: 70),
         padding: const pw.EdgeInsets.all(8),
-        decoration: pw.BoxDecoration(border: pw.Border.all()),
+        decoration: showBorder
+            ? pw.BoxDecoration(border: pw.Border.all())
+            : null,
         child: pw.Text(value, style: const pw.TextStyle(fontSize: 10)),
       ),
     );
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: children,
+    );
+  }
+
+  pw.Widget _buildCoverSummaryHoursTable({
+    required ReportPdfCoverBlockConfig block,
+    required String rawValue,
+    required List<pw.Widget> titleWidgets,
+  }) {
+    final rows = rawValue
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .map((line) => line.split('\t').map((cell) => cell.trim()).toList())
+        .toList(growable: false);
+    if (rows.isEmpty) {
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: titleWidgets,
+      );
+    }
+    final columnCount = rows
+        .map((row) => row.length)
+        .fold<int>(0, math.max);
+    final normalizedRows = rows
+        .map((row) {
+          if (row.length == columnCount) {
+            return row;
+          }
+          return [
+            ...row,
+            ...List<String>.filled(columnCount - row.length, ''),
+          ];
+        })
+        .toList(growable: false);
+    final table = pw.Table(
+      border: block.showBorder ? pw.TableBorder.all(width: 0.7) : null,
+      columnWidths: <int, pw.TableColumnWidth>{
+        for (var i = 0; i < columnCount; i++)
+          i: pw.FlexColumnWidth(i == 0 ? 2.0 : 1.2),
+      },
+      children: [
+        for (var rowIndex = 0; rowIndex < normalizedRows.length; rowIndex++)
+          pw.TableRow(
+            children: [
+              for (var columnIndex = 0;
+                  columnIndex < normalizedRows[rowIndex].length;
+                  columnIndex++)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 3,
+                  ),
+                  child: pw.Text(
+                    normalizedRows[rowIndex][columnIndex],
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: rowIndex == 0
+                          ? pw.FontWeight.bold
+                          : pw.FontWeight.normal,
+                    ),
+                    textAlign: columnIndex == 0
+                        ? pw.TextAlign.left
+                        : pw.TextAlign.right,
+                  ),
+                ),
+            ],
+          ),
+      ],
+    );
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [...titleWidgets, table],
     );
   }
 

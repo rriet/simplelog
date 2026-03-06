@@ -2,9 +2,12 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/database/converters/pilot_function_converter.dart';
 
 /// Computes stable endorsement hashes for signed logbook entries.
 class EntryEndorsementHashService {
+  static const _pilotFunctionConverter = PilotFunctionConverter();
+
   /// Returns SHA-256 hash for a flight entry payload.
   String hashFlight({
     required Flight flight,
@@ -44,7 +47,7 @@ class EntryEndorsementHashService {
       'takeOffsNight': flight.takeOffsNight,
       'landingsDay': flight.landingsDay,
       'landingsNight': flight.landingsNight,
-      'pilotFunction': flight.pilotFunction,
+      'pilotFunction': _pilotFunctionConverter.toSql(flight.pilotFunction),
       'approachType': flight.approachType,
       'remarks': flight.remarks,
       'notes': flight.notes,

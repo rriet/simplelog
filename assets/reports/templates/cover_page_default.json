@@ -44,19 +44,21 @@
     {
       "type": "multiline",
       "title": "",
-      "valueKey": "cover.summaryTable"
+      "valueKey": "cover.summaryTable",
+      "showBorder": true
     },
     {
       "type": "multiline",
       "title": "",
-      "valueKey": "cover.certification"
+      "valueKey": "cover.certification",
+      "showBorder": false
     },
     {
       "type": "signature",
-      "title": "",
+      "title": "Pilot's signature",
       "valueKey": "pilot.signatureImage",
-      "width": 300,
-      "height": 70,
+      "width": 250,
+      "height": 55,
       "showBorder": false
     }
   ]
