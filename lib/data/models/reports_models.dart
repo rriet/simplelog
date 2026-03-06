@@ -818,6 +818,90 @@ class ReportsPreviousExperienceRow {
   final DateTime? lastFlightUtc;
 }
 
+/// Grouping modes for SQL-backed analysis aggregation.
+enum ReportsAnalysisGroupBy {
+  /// Group by aircraft registration.
+  aircraft,
+
+  /// Group by aircraft type code.
+  type,
+
+  /// Group by aircraft family.
+  family,
+
+  /// Group by airport ICAO.
+  airport,
+
+  /// Group by departure year.
+  year,
+
+  /// Group by departure month (YYYY-MM).
+  month,
+}
+
+/// Aggregated analysis totals for a single group key.
+class ReportsAnalysisAggregateRow {
+  /// Creates a grouped analysis row.
+  const ReportsAnalysisAggregateRow({
+    required this.groupKey,
+    required this.totalMinutes,
+    required this.picMinutes,
+    required this.picusMinutes,
+    required this.sicMinutes,
+    required this.dualMinutes,
+    required this.ifrMinutes,
+    required this.instrumentMinutes,
+    required this.nightMinutes,
+    required this.takeoffs,
+    required this.landings,
+    required this.operations,
+    required this.firstFlightUtc,
+    required this.lastFlightUtc,
+  });
+
+  /// Group identifier shown as title in Analyses.
+  final String groupKey;
+
+  /// Total block minutes.
+  final int totalMinutes;
+
+  /// PIC minutes.
+  final int picMinutes;
+
+  /// PICUS minutes.
+  final int picusMinutes;
+
+  /// SIC minutes.
+  final int sicMinutes;
+
+  /// Dual minutes.
+  final int dualMinutes;
+
+  /// IFR minutes.
+  final int ifrMinutes;
+
+  /// Instrument minutes (actual + simulated).
+  final int instrumentMinutes;
+
+  /// Night minutes.
+  final int nightMinutes;
+
+  /// Total takeoffs in bucket.
+  final int takeoffs;
+
+  /// Total landings in bucket.
+  final int landings;
+
+  /// Number of operations in bucket.
+  final int operations;
+
+  /// First flight UTC in bucket.
+  final DateTime? firstFlightUtc;
+
+  /// Last flight UTC in bucket.
+  final DateTime? lastFlightUtc;
+}
+
 /// Container for report totals and the underlying flight rows.
 class ReportsData {
   /// Creates a bundle of [totals] and [flights].

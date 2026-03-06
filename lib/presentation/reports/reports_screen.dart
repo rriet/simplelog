@@ -184,6 +184,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     totals: ReportsTotals.zero(),
     flights: [],
   );
+  String? _flightRowsCacheKey;
+  List<ReportsFlightRow> _flightRowsCache = const [];
   int _batchFlightCount = 0;
   bool _isCheckingBatchFlights = false;
   bool _isPreparingBatchData = false;
@@ -329,15 +331,24 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         await _ensureDetailsLoaded(includeEntries: true);
         return;
       case ReportsPanelSection.analizes:
-        final wasLoaded = _detailsLoaded;
-        await _ensureDetailsLoaded(includeEntries: false);
-        if (!mounted) return;
-        if (wasLoaded) {
-          unawaited(_refreshAnalysisGroups());
+        if (_filters.isEmpty) {
+          if (_loading) {
+            _pendingOverviewLoad = true;
+            return;
+          }
+          await _loadOverviewData();
+        } else {
+          await _ensureDetailsLoaded(includeEntries: false);
         }
+        if (!mounted) return;
+        unawaited(_refreshAnalysisGroups());
         return;
       case ReportsPanelSection.batch:
-        // Keep Batch entry responsive; load details lazily on action.
+        if (_loading) {
+          _pendingOverviewLoad = true;
+          return;
+        }
+        await _loadOverviewData();
         return;
       case ReportsPanelSection.reports:
       case ReportsPanelSection.filters:
@@ -582,6 +593,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           from: _from,
           to: _to,
         );
+
         final totals = await totalsFuture;
         final flights = await flightsFuture;
         final flightRange = await flightRangeFuture;
@@ -589,7 +601,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           baseRange: flightRange,
           includePreviousExperience: includePreviousExperience,
         );
+
         if (!mounted) return;
+
         setState(() {
           _data = ReportsData(
             totals: _applyTypeSelectionToTotals(totals, eventTypes),
@@ -775,20 +789,29 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       }
       await _loadOverviewData();
     } else if (index == 2) {
-      final wasLoaded = _detailsLoaded;
-      await _ensureDetailsLoaded(
-        includeEntries: false,
-      );
-      if (!mounted) return;
-      if (wasLoaded) {
-        await _refreshAnalysisGroups();
+      if (_filters.isEmpty) {
+        if (_loading) {
+          _pendingOverviewLoad = true;
+          return;
+        }
+        await _loadOverviewData();
+      } else {
+        await _ensureDetailsLoaded(
+          includeEntries: false,
+        );
       }
+      if (!mounted) return;
+      await _refreshAnalysisGroups();
     } else if (index == 3) {
       // Reports tab does not require preloading analysis details.
       // Keep current analysis cache untouched to avoid transient empty states
       // when switching back to Analyses.
     } else if (index == 4) {
-      // Keep Batch tab fast on first open; do not preload details here.
+      if (_loading) {
+        _pendingOverviewLoad = true;
+        return;
+      }
+      await _loadOverviewData();
     }
   }
 
@@ -1036,14 +1059,18 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<void> _openMapDialog() async {
-    await _loadDetailed(
-      includeEntries: false,
-    );
+    final flights = await _loadFlightsForCurrentQuery(flightsEnabled: true);
     if (!mounted) return;
+    if (flights.isEmpty) {
+      await _showInfoDialog(
+        AppLocalizations.of(context)!.reportsNoFlightsInPeriod,
+      );
+      return;
+    }
     await showDialog<void>(
       context: context,
       builder: (context) => _FlightsMapDialog(
-        flights: _data.flights,
+        flights: flights,
         fullscreen: true,
         initialShowLines: _showPathOnMap,
       ),
@@ -1068,18 +1095,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     await _setPdfGenerationProgress(l10n.reportsPdfPreparing, progress: 0.1);
 
     try {
-      await _ensureDetailsLoaded(
-        includeEntries: false,
-      );
-      if (!mounted) return;
       final templateConfig = selectedTemplate.template;
       final pdfService = ref.read(reportPdfApplicationServiceProvider);
       final pdfEventTypes = _eventTypesForPdf(
         ref.read(reportsEventTypesProvider),
       );
-      final entriesForPdf = await _fetchEntriesForFlights(
-        _data.flights,
-        pdfEventTypes,
+      final flightsForPdf = await _loadFlightsForCurrentQuery(
+        flightsEnabled: pdfEventTypes.flights,
+      );
+      final entriesForPdf = await _fetchEntriesForRange(
+        includedFlightIds: pdfEventTypes.flights
+            ? flightsForPdf.map((flight) => flight.flightId).toSet()
+            : null,
+        eventTypes: pdfEventTypes,
+        from: _from,
+        to: _to,
       );
 
       await _setPdfGenerationProgress(l10n.reportsPdfGenerating, progress: 0.5);
@@ -1191,6 +1221,60 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     } on Object {
       return current;
     }
+  }
+
+  String _flightRowsQueryKey({
+    required bool flightsEnabled,
+  }) {
+    final filtersKey = _filters
+        .map(
+          (condition) {
+            final textValue = condition.textValue ?? '';
+            final numberValue = condition.numberValue?.toString() ?? '';
+            return '${condition.field.name}:${condition.operator.name}:'
+                '$textValue:$numberValue';
+          },
+        )
+        .join('|');
+    final parts = <Object>[
+      _from.microsecondsSinceEpoch,
+      _to.microsecondsSinceEpoch,
+      _filterMatchMode.name,
+      if (flightsEnabled) '1' else '0',
+      filtersKey,
+    ];
+    return parts.join('::');
+  }
+
+  Future<List<ReportsFlightRow>> _loadFlightsForCurrentQuery({
+    required bool flightsEnabled,
+  }) async {
+    if (!flightsEnabled) {
+      return const [];
+    }
+    final cacheKey = _flightRowsQueryKey(flightsEnabled: flightsEnabled);
+    if (_flightRowsCacheKey == cacheKey) {
+      return _flightRowsCache;
+    }
+    final repo = ref.read(reportsRepositoryProvider);
+    final List<ReportsFlightRow> flights;
+    if (_filters.isEmpty) {
+      flights = await repo.loadFlightsForAnalysis(from: _from, to: _to);
+    } else {
+      final result = await repo.load(
+        ReportsQuery(
+          from: _from,
+          to: _to,
+          includePreviousExperience: false,
+          filterMatchMode: _filterMatchMode,
+          filters: _filters,
+        ),
+      );
+      flights = result.flights;
+    }
+    _flightRowsCacheKey = cacheKey;
+    _flightRowsCache = flights;
+    return flights;
   }
 
   bool _templateUsesCrewColumns(ReportPdfTemplate template) {
@@ -1690,29 +1774,47 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final bucketsKey = _analysisBucketsKey();
 
     if (_analysisBaseBucketsKey != bucketsKey) {
-      final groups = <String, _AnalysisGroupAccumulator>{};
-      for (var i = 0; i < _data.flights.length; i++) {
-        final flight = _data.flights[i];
-        final keys = _analysisGroupKeysForFlight(flight, l10n);
-        for (final key in keys) {
-          final bucket = groups.putIfAbsent(key, _AnalysisGroupAccumulator.new);
-          if (_analysisGroupBy == _AnalysisGroupBy.airport) {
-            bucket.addForAirport(
-              flight,
-              airportIcao: key,
-              unknownAirportLabel: l10n.reportsUnknownAirport,
+      if (_filters.isEmpty) {
+        final rows = await ref
+            .read(reportsRepositoryProvider)
+            .loadFlightAnalysisAggregates(
+              from: _from,
+              to: _to,
+              groupBy: _analysisGroupBy.toRepoGroupBy(),
+              unknownAircraft: l10n.reportsUnknown,
+              unknownType: l10n.reportsUnknownType,
+              unknownFamily: l10n.reportsUnknownFamily,
+              unknownAirport: l10n.reportsUnknownAirport,
             );
-          } else {
-            bucket.add(flight);
+        if (!mounted || token != _analysisBuildToken) return;
+        _analysisBaseBuckets = _aggregateBucketsFromRows(rows);
+      } else {
+        final groups = <String, _AnalysisGroupAccumulator>{};
+        for (var i = 0; i < _data.flights.length; i++) {
+          final flight = _data.flights[i];
+          final keys = _analysisGroupKeysForFlight(flight, l10n);
+          for (final key in keys) {
+            final bucket = groups.putIfAbsent(
+              key,
+              _AnalysisGroupAccumulator.new,
+            );
+            if (_analysisGroupBy == _AnalysisGroupBy.airport) {
+              bucket.addForAirport(
+                flight,
+                airportIcao: key,
+                unknownAirportLabel: l10n.reportsUnknownAirport,
+              );
+            } else {
+              bucket.add(flight);
+            }
+          }
+          if (i % 250 == 0) {
+            await Future<void>.delayed(Duration.zero);
+            if (!mounted || token != _analysisBuildToken) return;
           }
         }
-
-        if (i % 250 == 0) {
-          await Future<void>.delayed(Duration.zero);
-          if (!mounted || token != _analysisBuildToken) return;
-        }
+        _analysisBaseBuckets = groups;
       }
-      _analysisBaseBuckets = groups;
       _analysisBaseBucketsKey = bucketsKey;
       _analysisPreviousBuckets = const {};
       _analysisPreviousBucketsKey = '';
@@ -1720,20 +1822,34 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
     if (includePreviousExperience && _analysisSupportsPreviousExperience) {
       if (_analysisPreviousBucketsKey != bucketsKey) {
-        final previousRows = await ref
-            .read(reportsRepositoryProvider)
-            .loadPreviousExperienceForAnalysis(from: _from, to: _to);
-        if (!mounted || token != _analysisBuildToken) return;
-        final previousGroups = <String, _AnalysisGroupAccumulator>{};
-        for (final row in previousRows) {
-          final keys = _analysisGroupKeysForPreviousExperience(row, l10n);
-          for (final key in keys) {
-            previousGroups
-                .putIfAbsent(key, _AnalysisGroupAccumulator.new)
-                .addPreviousExperience(row);
+        if (_filters.isEmpty) {
+          final previousRows = await ref
+              .read(reportsRepositoryProvider)
+              .loadPreviousExperienceAnalysisAggregates(
+                from: _from,
+                to: _to,
+                groupBy: _analysisGroupBy.toRepoGroupBy(),
+                unknownType: l10n.reportsUnknownType,
+                unknownFamily: l10n.reportsUnknownFamily,
+              );
+          if (!mounted || token != _analysisBuildToken) return;
+          _analysisPreviousBuckets = _aggregateBucketsFromRows(previousRows);
+        } else {
+          final previousRows = await ref
+              .read(reportsRepositoryProvider)
+              .loadPreviousExperienceForAnalysis(from: _from, to: _to);
+          if (!mounted || token != _analysisBuildToken) return;
+          final previousGroups = <String, _AnalysisGroupAccumulator>{};
+          for (final row in previousRows) {
+            final keys = _analysisGroupKeysForPreviousExperience(row, l10n);
+            for (final key in keys) {
+              previousGroups
+                  .putIfAbsent(key, _AnalysisGroupAccumulator.new)
+                  .addPreviousExperience(row);
+            }
           }
+          _analysisPreviousBuckets = previousGroups;
         }
-        _analysisPreviousBuckets = previousGroups;
         _analysisPreviousBucketsKey = bucketsKey;
       }
     }
@@ -1763,6 +1879,18 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       _analysisGroups = builtGroups;
       _analysisLoading = false;
     });
+  }
+
+  Map<String, _AnalysisGroupAccumulator> _aggregateBucketsFromRows(
+    List<ReportsAnalysisAggregateRow> rows,
+  ) {
+    final groups = <String, _AnalysisGroupAccumulator>{};
+    for (final row in rows) {
+      final key = row.groupKey.trim();
+      if (key.isEmpty) continue;
+      groups[key] = _AnalysisGroupAccumulator.fromAggregateRow(row);
+    }
+    return groups;
   }
 
   List<String> _analysisGroupKeysForFlight(
@@ -4540,6 +4668,23 @@ String _reportFilterOperatorLabel(
 }
 
 extension on _AnalysisGroupBy {
+  ReportsAnalysisGroupBy toRepoGroupBy() {
+    switch (this) {
+      case _AnalysisGroupBy.aircraft:
+        return ReportsAnalysisGroupBy.aircraft;
+      case _AnalysisGroupBy.type:
+        return ReportsAnalysisGroupBy.type;
+      case _AnalysisGroupBy.family:
+        return ReportsAnalysisGroupBy.family;
+      case _AnalysisGroupBy.airport:
+        return ReportsAnalysisGroupBy.airport;
+      case _AnalysisGroupBy.year:
+        return ReportsAnalysisGroupBy.year;
+      case _AnalysisGroupBy.month:
+        return ReportsAnalysisGroupBy.month;
+    }
+  }
+
   String keyFor(
     ReportsFlightRow row, {
     required String unknownAircraft,
@@ -4575,6 +4720,27 @@ extension on _AnalysisGroupBy {
 }
 
 class _AnalysisGroupAccumulator {
+  _AnalysisGroupAccumulator();
+
+  factory _AnalysisGroupAccumulator.fromAggregateRow(
+    ReportsAnalysisAggregateRow row,
+  ) {
+    return _AnalysisGroupAccumulator()
+      ..totalMinutes = row.totalMinutes
+      ..picMinutes = row.picMinutes
+      ..picusMinutes = row.picusMinutes
+      ..sicMinutes = row.sicMinutes
+      ..dualMinutes = row.dualMinutes
+      ..ifrMinutes = row.ifrMinutes
+      ..instrumentMinutes = row.instrumentMinutes
+      ..nightMinutes = row.nightMinutes
+      ..takeoffs = row.takeoffs
+      ..landings = row.landings
+      ..operations = row.operations
+      ..firstFlightUtc = row.firstFlightUtc
+      ..lastFlightUtc = row.lastFlightUtc;
+  }
+
   int totalMinutes = 0;
   int picMinutes = 0;
   int picusMinutes = 0;

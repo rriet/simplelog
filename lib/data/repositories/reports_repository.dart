@@ -635,6 +635,258 @@ class ReportsRepository {
     return flights;
   }
 
+  /// Loads SQL-aggregated analysis totals grouped by [groupBy].
+  Future<List<ReportsAnalysisAggregateRow>> loadFlightAnalysisAggregates({
+    required DateTime from,
+    required DateTime to,
+    required ReportsAnalysisGroupBy groupBy,
+    required String unknownAircraft,
+    required String unknownType,
+    required String unknownFamily,
+    required String unknownAirport,
+  }) async {
+    final variables = <Variable<Object>>[];
+    String buildKeyExpr() {
+      switch (groupBy) {
+        case ReportsAnalysisGroupBy.aircraft:
+          variables.add(Variable<String>(unknownAircraft));
+          return "COALESCE(NULLIF(TRIM(ac.registration), ''), ?)";
+        case ReportsAnalysisGroupBy.type:
+          variables.add(Variable<String>(unknownType));
+          return "COALESCE(NULLIF(TRIM(at.code), ''), ?)";
+        case ReportsAnalysisGroupBy.family:
+          variables.add(Variable<String>(unknownFamily));
+          return "COALESCE(NULLIF(TRIM(at.family), ''), ?)";
+        case ReportsAnalysisGroupBy.year:
+          return "STRFTIME('%Y', dep_tl.event_date_time, 'unixepoch')";
+        case ReportsAnalysisGroupBy.month:
+          return "STRFTIME('%Y-%m', dep_tl.event_date_time, 'unixepoch')";
+        case ReportsAnalysisGroupBy.airport:
+          return '';
+      }
+    }
+
+    if (groupBy == ReportsAnalysisGroupBy.airport) {
+      variables.addAll([
+        Variable<String>(unknownAirport),
+        Variable<String>(unknownAirport),
+        Variable<DateTime>(from),
+        Variable<DateTime>(to),
+      ]);
+      final rows = await _db
+          .customSelect(
+            '''
+WITH flight_keys AS (
+  SELECT
+    dep_tl.event_date_time AS dep_time,
+    COALESCE(NULLIF(TRIM(dep_ap.icao), ''), ?) AS dep_key,
+    COALESCE(NULLIF(TRIM(arr_ap.icao), ''), ?) AS arr_key,
+    f.time_block_minutes AS total_minutes,
+    f.time_p_i_c_minutes AS pic_minutes,
+    f.time_p_i_c_u_s_minutes AS picus_minutes,
+    f.time_s_i_c_minutes AS sic_minutes,
+    f.time_dual_minutes AS dual_minutes,
+    f.time_i_f_r_minutes AS ifr_minutes,
+    (f.time_instrument_minutes + f.time_simulated_instrument_minutes) AS instrument_minutes,
+    f.time_night_minutes AS night_minutes,
+    (f.take_offs_days + f.take_offs_night) AS takeoffs,
+    (f.landings_day + f.landings_night) AS landings
+  FROM flights f
+  JOIN time_lines dep_tl ON dep_tl.id = f.departure_date_time_id
+  JOIN aircrafts ac ON ac.id = f.aircraft_id
+  LEFT JOIN aircraft_types at ON at.id = ac.aircraft_type_id
+  LEFT JOIN airports dep_ap ON dep_ap.id = f.departure_airport_id
+  LEFT JOIN airports arr_ap ON arr_ap.id = f.arrival_airport_id
+  WHERE dep_tl.event_date_time >= ? AND dep_tl.event_date_time <= ?
+),
+airport_rows AS (
+  SELECT
+    dep_key AS group_key,
+    dep_time AS dep_time,
+    total_minutes,
+    pic_minutes,
+    picus_minutes,
+    sic_minutes,
+    dual_minutes,
+    ifr_minutes,
+    instrument_minutes,
+    night_minutes,
+    takeoffs,
+    0 AS landings,
+    1 AS operations
+  FROM flight_keys
+  WHERE dep_key <> arr_key
+  UNION ALL
+  SELECT
+    arr_key AS group_key,
+    dep_time AS dep_time,
+    total_minutes,
+    pic_minutes,
+    picus_minutes,
+    sic_minutes,
+    dual_minutes,
+    ifr_minutes,
+    instrument_minutes,
+    night_minutes,
+    0 AS takeoffs,
+    landings,
+    1 AS operations
+  FROM flight_keys
+  WHERE dep_key <> arr_key
+  UNION ALL
+  SELECT
+    dep_key AS group_key,
+    dep_time AS dep_time,
+    total_minutes,
+    pic_minutes,
+    picus_minutes,
+    sic_minutes,
+    dual_minutes,
+    ifr_minutes,
+    instrument_minutes,
+    night_minutes,
+    takeoffs,
+    landings,
+    1 AS operations
+  FROM flight_keys
+  WHERE dep_key = arr_key
+)
+SELECT
+  group_key,
+  SUM(total_minutes) AS total_minutes,
+  SUM(pic_minutes) AS pic_minutes,
+  SUM(picus_minutes) AS picus_minutes,
+  SUM(sic_minutes) AS sic_minutes,
+  SUM(dual_minutes) AS dual_minutes,
+  SUM(ifr_minutes) AS ifr_minutes,
+  SUM(instrument_minutes) AS instrument_minutes,
+  SUM(night_minutes) AS night_minutes,
+  SUM(takeoffs) AS takeoffs,
+  SUM(landings) AS landings,
+  SUM(operations) AS operations,
+  MIN(dep_time) AS first_flight_utc,
+  MAX(dep_time) AS last_flight_utc
+FROM airport_rows
+GROUP BY group_key
+''',
+            variables: variables,
+            readsFrom: {
+              _db.flights,
+              _db.timeLines,
+              _db.aircrafts,
+              _db.aircraftTypes,
+              _db.airports,
+            },
+          )
+          .get();
+      return rows.map(_analysisAggregateFromSqlRow).toList(growable: false);
+    }
+
+    final groupKeyExpr = buildKeyExpr();
+    variables.addAll([Variable<DateTime>(from), Variable<DateTime>(to)]);
+    final rows = await _db
+        .customSelect(
+          '''
+SELECT
+  $groupKeyExpr AS group_key,
+  SUM(f.time_block_minutes) AS total_minutes,
+  SUM(f.time_p_i_c_minutes) AS pic_minutes,
+  SUM(f.time_p_i_c_u_s_minutes) AS picus_minutes,
+  SUM(f.time_s_i_c_minutes) AS sic_minutes,
+  SUM(f.time_dual_minutes) AS dual_minutes,
+  SUM(f.time_i_f_r_minutes) AS ifr_minutes,
+  SUM(f.time_instrument_minutes + f.time_simulated_instrument_minutes) AS instrument_minutes,
+  SUM(f.time_night_minutes) AS night_minutes,
+  SUM(f.take_offs_days + f.take_offs_night) AS takeoffs,
+  SUM(f.landings_day + f.landings_night) AS landings,
+  COUNT(*) AS operations,
+  MIN(dep_tl.event_date_time) AS first_flight_utc,
+  MAX(dep_tl.event_date_time) AS last_flight_utc
+FROM flights f
+JOIN time_lines dep_tl ON dep_tl.id = f.departure_date_time_id
+JOIN aircrafts ac ON ac.id = f.aircraft_id
+LEFT JOIN aircraft_types at ON at.id = ac.aircraft_type_id
+LEFT JOIN airports dep_ap ON dep_ap.id = f.departure_airport_id
+LEFT JOIN airports arr_ap ON arr_ap.id = f.arrival_airport_id
+WHERE dep_tl.event_date_time >= ? AND dep_tl.event_date_time <= ?
+GROUP BY group_key
+''',
+          variables: variables,
+          readsFrom: {
+            _db.flights,
+            _db.timeLines,
+            _db.aircrafts,
+            _db.aircraftTypes,
+            _db.airports,
+          },
+        )
+        .get();
+    return rows.map(_analysisAggregateFromSqlRow).toList(growable: false);
+  }
+
+  /// Loads SQL-aggregated previous-experience totals grouped by [groupBy].
+  Future<List<ReportsAnalysisAggregateRow>>
+  loadPreviousExperienceAnalysisAggregates({
+    required DateTime from,
+    required DateTime to,
+    required ReportsAnalysisGroupBy groupBy,
+    required String unknownType,
+    required String unknownFamily,
+  }) async {
+    if (groupBy != ReportsAnalysisGroupBy.type &&
+        groupBy != ReportsAnalysisGroupBy.family) {
+      return const [];
+    }
+    final variables = <Variable<Object>>[];
+    final groupExpr = switch (groupBy) {
+      ReportsAnalysisGroupBy.type => () {
+          variables.add(Variable<String>(unknownType));
+          return "COALESCE(NULLIF(TRIM(at.code), ''), ?)";
+        }(),
+      ReportsAnalysisGroupBy.family => () {
+          variables.add(Variable<String>(unknownFamily));
+          return "COALESCE(NULLIF(TRIM(at.family), ''), ?)";
+        }(),
+      ReportsAnalysisGroupBy.aircraft ||
+      ReportsAnalysisGroupBy.airport ||
+      ReportsAnalysisGroupBy.year ||
+      ReportsAnalysisGroupBy.month => '',
+    };
+    variables.addAll([Variable<DateTime>(from), Variable<DateTime>(to)]);
+    final rows = await _db
+        .customSelect(
+          '''
+SELECT
+  $groupExpr AS group_key,
+  SUM(pe.time_block_minutes) AS total_minutes,
+  SUM(pe.time_p_i_c_minutes) AS pic_minutes,
+  SUM(pe.time_p_i_c_u_s_minutes) AS picus_minutes,
+  SUM(pe.time_s_i_c_minutes) AS sic_minutes,
+  SUM(pe.time_dual_minutes) AS dual_minutes,
+  SUM(pe.time_i_f_r_minutes) AS ifr_minutes,
+  SUM(pe.time_instrument_minutes + pe.time_simulated_instrument_minutes) AS instrument_minutes,
+  SUM(pe.time_night_minutes) AS night_minutes,
+  SUM(pe.take_offs_days + pe.take_offs_night) AS takeoffs,
+  SUM(pe.landings_day + pe.landings_night) AS landings,
+  SUM(pe.flight_count) AS operations,
+  MIN(pe.date_time_first_flight) AS first_flight_utc,
+  MAX(pe.date_time_last_flight) AS last_flight_utc
+FROM previous_experiences pe
+JOIN aircraft_types at ON at.id = pe.aircraft_type_id
+WHERE (pe.date_time_first_flight IS NULL OR pe.date_time_first_flight >= ?)
+  AND (pe.date_time_last_flight IS NULL OR pe.date_time_last_flight <= ?)
+GROUP BY group_key
+''',
+          variables: variables,
+          readsFrom: {
+            _db.previousExperiences,
+            _db.aircraftTypes,
+          },
+        )
+        .get();
+    return rows.map(_analysisAggregateFromSqlRow).toList(growable: false);
+  }
+
   /// Loads previous experience rows shaped for analysis grouping.
   Future<List<ReportsPreviousExperienceRow>> loadPreviousExperienceForAnalysis({
     required DateTime from,
@@ -681,6 +933,33 @@ class ReportsRepository {
         })
         .whereType<ReportsPreviousExperienceRow>()
         .toList(growable: false);
+  }
+
+  ReportsAnalysisAggregateRow _analysisAggregateFromSqlRow(QueryRow row) {
+    final firstRaw = row.read<int?>('first_flight_utc');
+    final lastRaw = row.read<int?>('last_flight_utc');
+    return ReportsAnalysisAggregateRow(
+      groupKey: (row.read<String?>('group_key') ?? '').trim(),
+      totalMinutes: row.read<int?>('total_minutes') ?? 0,
+      picMinutes: row.read<int?>('pic_minutes') ?? 0,
+      picusMinutes: row.read<int?>('picus_minutes') ?? 0,
+      sicMinutes: row.read<int?>('sic_minutes') ?? 0,
+      dualMinutes: row.read<int?>('dual_minutes') ?? 0,
+      ifrMinutes: row.read<int?>('ifr_minutes') ?? 0,
+      instrumentMinutes: row.read<int?>('instrument_minutes') ?? 0,
+      nightMinutes: row.read<int?>('night_minutes') ?? 0,
+      takeoffs: row.read<int?>('takeoffs') ?? 0,
+      landings: row.read<int?>('landings') ?? 0,
+      operations: row.read<int?>('operations') ?? 0,
+      firstFlightUtc: _fromEpochValue(firstRaw),
+      lastFlightUtc: _fromEpochValue(lastRaw),
+    );
+  }
+
+  DateTime? _fromEpochValue(int? raw) {
+    if (raw == null) return null;
+    final milliseconds = raw > 100000000000 ? raw : raw * 1000;
+    return DateTime.fromMillisecondsSinceEpoch(milliseconds, isUtc: true);
   }
 
   ReportsTotals _sumFlightData(List<_ReportFlightData> rows) {
