@@ -375,6 +375,15 @@ class _CoordinateEditDialogState extends State<_CoordinateEditDialog> {
     return isLatitude ? pair.split('/').first : pair.split('/').last;
   }
 
+  List<TextInputFormatter> _inputFormatters({required bool isLatitude}) {
+    if (_selectedFormat == _CoordinateInputFormat.degMin) {
+      return [
+        _CoordinateDegMinMaskFormatter(isLatitude: isLatitude),
+      ];
+    }
+    return [_CoordinateDecimalFormatter()];
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -421,6 +430,7 @@ class _CoordinateEditDialogState extends State<_CoordinateEditDialog> {
                 Expanded(
                   child: TextField(
                     controller: _latController,
+                    inputFormatters: _inputFormatters(isLatitude: true),
                     decoration: InputDecoration(
                       labelText: l10n.fieldLatitude,
                       border: const OutlineInputBorder(),
@@ -432,6 +442,7 @@ class _CoordinateEditDialogState extends State<_CoordinateEditDialog> {
                 Expanded(
                   child: TextField(
                     controller: _lonController,
+                    inputFormatters: _inputFormatters(isLatitude: false),
                     decoration: InputDecoration(
                       labelText: l10n.fieldLongitude,
                       border: const OutlineInputBorder(),
@@ -476,6 +487,106 @@ class _CoordinateEditDialogState extends State<_CoordinateEditDialog> {
           child: Text(l10n.saveAction),
         ),
       ],
+    );
+  }
+}
+
+class _CoordinateDegMinMaskFormatter extends TextInputFormatter {
+  _CoordinateDegMinMaskFormatter({required this.isLatitude});
+
+  final bool isLatitude;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final upper = newValue.text.toUpperCase();
+    final allowed = upper.replaceAll(RegExp('[^0-9NSEW]'), '');
+    if (allowed.isEmpty) {
+      return TextEditingValue.empty;
+    }
+
+    final validDirections = isLatitude ? const {'N', 'S'} : const {'E', 'W'};
+    final first = allowed[0];
+    if (!validDirections.contains(first)) {
+      return oldValue;
+    }
+    final prefix = first;
+    final rest = allowed.substring(1).replaceAll(RegExp('[NSEW]'), '');
+
+    final digitOnly = rest.replaceAll(RegExp('[^0-9]'), '');
+    final degreeDigits = isLatitude ? 2 : 3;
+    final maxDigits = degreeDigits + 4; // MMmm
+    final trimmedDigits = digitOnly.substring(
+      0,
+      digitOnly.length.clamp(0, maxDigits),
+    );
+
+    final formatted = StringBuffer(prefix);
+    if (trimmedDigits.length <= degreeDigits) {
+      formatted.write(trimmedDigits);
+    } else {
+      final degrees = trimmedDigits.substring(0, degreeDigits);
+      final minuteAndFraction = trimmedDigits.substring(degreeDigits);
+      formatted
+        ..write(degrees)
+        ..write('°');
+      if (minuteAndFraction.length <= 2) {
+        formatted.write(minuteAndFraction);
+      } else {
+        final minute = minuteAndFraction.substring(0, 2);
+        final fraction = minuteAndFraction.substring(2);
+        formatted
+          ..write(minute)
+          ..write('.')
+          ..write(fraction);
+      }
+    }
+
+    final text = formatted.toString();
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+}
+
+class _CoordinateDecimalFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final upper = newValue.text.toUpperCase();
+    if (upper.isEmpty) return TextEditingValue.empty;
+
+    final filtered = upper.replaceAll(RegExp(r'[^0-9+\-.]'), '');
+    final buffer = StringBuffer();
+    var hasSign = false;
+    var hasDot = false;
+
+    for (final char in filtered.split('')) {
+      final isDigit = char.codeUnitAt(0) >= 48 && char.codeUnitAt(0) <= 57;
+      if (isDigit) {
+        buffer.write(char);
+        continue;
+      }
+      if ((char == '+' || char == '-') && !hasSign && buffer.isEmpty) {
+        hasSign = true;
+        buffer.write(char);
+        continue;
+      }
+      if (char == '.' && !hasDot) {
+        hasDot = true;
+        buffer.write(char);
+      }
+    }
+
+    final text = buffer.toString();
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }

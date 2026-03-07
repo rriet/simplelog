@@ -64,28 +64,41 @@
       ],
       "footerRows": [
         {
-          "labelToken": "pageTotal",
           "source": "pageTotals",
-          "values": {
-            "ifrApproaches": "ifrApproaches",
-            "landingsTotal": "landings"
-          }
+          "cells": [
+            {
+              "text": "I certify that statements made by me in this log book are true.",
+              "vspan": 3,
+              "hspan": 6,
+              "align": "center",
+              "valign": "middle",
+              "fontSize": 5.8,
+              "imageToken": "pilot.signatureImage",
+              "imageBelowText": true,
+              "imageWidth": 100,
+              "imageHeight": 30,
+              "imageShowBorder": false
+            },
+            { "text": "PAGE TOTAL", "weight": "bold", "align": "left" },
+            { "key": "ifrApproaches", "weight": "bold" },
+            { "valueToken": "landings", "weight": "bold" }
+          ]
         },
         {
-          "labelToken": "amountForward",
           "source": "totalsBefore",
-          "values": {
-            "ifrApproaches": "ifrApproaches",
-            "landingsTotal": "landings"
-          }
+          "cells": [
+            { "text": "AMT. FORWARD", "weight": "bold", "align": "left" },
+            { "key": "ifrApproaches", "weight": "bold" },
+            { "valueToken": "landings", "weight": "bold" }
+          ]
         },
         {
-          "labelToken": "totalToDate",
           "source": "totalsAfter",
-          "values": {
-            "ifrApproaches": "ifrApproaches",
-            "landingsTotal": "landings"
-          }
+          "cells": [
+            { "text": "TOTAL TO DATE", "weight": "bold", "align": "left" },
+            { "key": "ifrApproaches", "weight": "bold" },
+            { "valueToken": "landings", "weight": "bold" }
+          ]
         }
       ]
     },

@@ -18,6 +18,7 @@ import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/maps/map_tile_caching.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
+import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
@@ -37,6 +38,7 @@ import 'package:simplelog/features/reports/application/report_pdf_application_se
 import 'package:simplelog/presentation/reports/providers/report_pdf_application_service_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
+import 'package:simplelog/presentation/settings/widgets/pilot_profile_settings_card.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/event_type_toggle_button.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
@@ -2501,6 +2503,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                         setDialogState(() => includePreviousExperience = value);
                       },
                     ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: () => showPilotProfileEditorDialog(context),
+                        icon: const Icon(Icons.person_outline),
+                        label: const Text('Edit Pilot Profile'),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -2546,6 +2557,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   Widget _buildReportsControls({required bool compact}) {
     final l10n = AppLocalizations.of(context)!;
     final onSurface = Theme.of(context).colorScheme.onSurface;
+    final controlsTheme = Theme.of(context).extension<AppFormControlsTheme>();
+    final addButtonSize = controlsTheme?.pickerAddButtonSize ?? 40;
+    final addIconSize = controlsTheme?.pickerAddIconSize ?? 20;
+    final addBorderRadius = controlsTheme?.pickerAddBorderRadius ?? 8;
+    final addBorderColor = Theme.of(context).colorScheme.outline;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2628,17 +2644,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                   ),
                 ),
                 const SizedBox(width: 8),
-                SizedBox(
-                  height: 48,
-                  width: 48,
-                  child: OutlinedButton(
-                    onPressed: _isGeneratingPdf
-                        ? null
-                        : _openTemplateEditorDialog,
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.zero,
+                Tooltip(
+                  message: 'Edit templates',
+                  child: InkWell(
+                    onTap: _isGeneratingPdf ? null : _openTemplateEditorDialog,
+                    borderRadius: BorderRadius.circular(addBorderRadius),
+                    child: Container(
+                      width: addButtonSize,
+                      height: addButtonSize,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: addBorderColor),
+                        borderRadius: BorderRadius.circular(addBorderRadius),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(Icons.edit_outlined, size: addIconSize),
                     ),
-                    child: const Icon(Icons.edit_outlined),
                   ),
                 ),
               ],
