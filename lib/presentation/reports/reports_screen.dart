@@ -21,6 +21,7 @@ import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
+import 'package:simplelog/data/database/user_settings_json.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
 import 'package:simplelog/data/models/report_pdf_models.dart';
@@ -45,7 +46,11 @@ import 'package:simplelog/presentation/shared/widgets/square_outline_button.dart
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
+import 'package:simplelog/state/providers/flight_form_settings_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+const _batchCalculateAllPreferencesKey =
+    'reports_batch_calculate_all_preferences_v1';
 
 /// Entry section to open directly when navigating into the reports module.
 enum ReportsPanelSection {
@@ -2748,26 +2753,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                     label: 'Calculate All',
                     onPressed: actionsDisabled ? null : _batchCalculateAll,
                   ),
-                  const SizedBox(height: 8),
-                  _ReportsActionButton(
-                    icon: Icons.nights_stay_outlined,
-                    label: 'Calculate Night',
-                    onPressed: actionsDisabled ? null : _batchCalculateNight,
-                  ),
-                  const SizedBox(height: 8),
-                  _ReportsActionButton(
-                    icon: Icons.cloud_outlined,
-                    label: 'Calculate IFR',
-                    onPressed: actionsDisabled ? null : _batchCalculateIfr,
-                  ),
-                  const SizedBox(height: 8),
-                  _ReportsActionButton(
-                    icon: Icons.visibility_outlined,
-                    label: 'Calculate Instrument',
-                    onPressed: actionsDisabled
-                        ? null
-                        : _batchCalculateInstrument,
-                  ),
                 ],
               ),
             ],
@@ -3000,7 +2985,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         ),
       ),
     );
-    final finalPosition = selected ?? CrewPosition.pic;
+    if (selected == null) return;
+    final finalPosition = selected;
     await _ensureBatchFlightsReadyForActions();
     final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
     final modifiable = _unlockedBatchSnapshots(snapshots);
@@ -3034,8 +3020,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   Future<void> _batchCalculateAll() async {
     if (!mounted) return;
-    final selected = await _BatchCalculateAllDialog.show(context);
-    if (selected == null || selected.isEmpty) return;
+    final initialPreferences = await _loadBatchCalculateAllPreferences();
+    if (!mounted) return;
+    final selection = await _BatchCalculateAllDialog.show(
+      context,
+      initialPreferences: initialPreferences,
+    );
+    if (selection == null) return;
+    await _saveBatchCalculateAllPreferences(selection);
     await _ensureBatchFlightsReadyForActions();
     final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
     final modifiable = _unlockedBatchSnapshots(snapshots);
@@ -3049,37 +3041,159 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final db = ref.read(databaseProvider);
     await db.transaction(() async {
       for (final snapshot in modifiable.values) {
-        final base = snapshot.timeTotalBlockMinutes > 0
-            ? snapshot.timeTotalBlockMinutes
-            : snapshot.timeBlockMinutes;
         final next = snapshot.copy();
-        if (selected.contains(_BatchCalcField.pic)) next.timePICMinutes = base;
-        if (selected.contains(_BatchCalcField.picus)) {
-          next.timePICUSMinutes = base;
+        final blockMode = selection.modeFor(_BatchCalcField.block);
+        if (blockMode == _BatchFieldMode.recalculate) {
+          final calculatedBlock = _calculateBlockMinutesFromChocks(snapshot);
+          if (calculatedBlock != null) {
+            next
+              ..timeBlockMinutes = calculatedBlock
+              ..timeTotalBlockMinutes = calculatedBlock;
+          }
+        } else if (blockMode == _BatchFieldMode.setZero) {
+          next
+            ..timeBlockMinutes = 0
+            ..timeTotalBlockMinutes = 0;
         }
-        if (selected.contains(_BatchCalcField.sic)) next.timeSICMinutes = base;
-        if (selected.contains(_BatchCalcField.crossCountry)) {
+        final base = next.timeBlockMinutes;
+
+        if (selection.crewMode == _BatchFieldMode.recalculate) {
+          final role = selection.crewRole;
+          next
+            ..timePICMinutes = role == _BatchCrewRole.pic ? base : 0
+            ..timePICUSMinutes = role == _BatchCrewRole.picus ? base : 0
+            ..timeSICMinutes = role == _BatchCrewRole.sic ? base : 0
+            ..timeDualMinutes = role == _BatchCrewRole.dual ? base : 0;
+        } else if (selection.crewMode == _BatchFieldMode.setZero) {
+          next
+            ..timePICMinutes = 0
+            ..timePICUSMinutes = 0
+            ..timeSICMinutes = 0
+            ..timeDualMinutes = 0;
+        }
+
+        _applyTimeMode(
+          mode: selection.modeFor(_BatchCalcField.instructor),
+          recalculateValue: base,
+          assign: (value) => next.timeInstructorMinutes = value,
+        );
+        _applyTimeMode(
+          mode: selection.modeFor(_BatchCalcField.ifr),
+          recalculateValue: base,
+          assign: (value) => next.timeIFRMinutes = value,
+        );
+        _applyTimeMode(
+          mode: selection.modeFor(_BatchCalcField.instrument),
+          recalculateValue: base,
+          assign: (value) => next.timeInstrumentMinutes = value,
+        );
+        _applyTimeMode(
+          mode: selection.modeFor(_BatchCalcField.simInstrument),
+          recalculateValue: base,
+          assign: (value) => next.timeSimulatedInstrumentMinutes = value,
+        );
+        _applyTimeMode(
+          mode: selection.modeFor(_BatchCalcField.flight),
+          recalculateValue: base,
+          assign: (value) => next.timeFlightMinutes = value,
+        );
+
+        final distanceMode = selection.modeFor(_BatchCalcField.distanceNm);
+        if (distanceMode == _BatchFieldMode.recalculate) {
+          final distance = _calculateDistanceForSnapshot(snapshot);
+          if (distance != null) {
+            next.distanceNm = distance;
+          }
+        } else if (distanceMode == _BatchFieldMode.setZero) {
+          next.distanceNm = 0;
+        }
+
+        final crossMode = selection.modeFor(_BatchCalcField.crossCountry);
+        if (crossMode == _BatchFieldMode.recalculate) {
           next.timeCrossCountryMinutes =
-              snapshot.distanceNm >= settings.crossCountryThresholdNm
-              ? base
-              : 0;
+              next.distanceNm >= settings.crossCountryThresholdNm ? base : 0;
+        } else if (crossMode == _BatchFieldMode.setZero) {
+          next.timeCrossCountryMinutes = 0;
         }
-        if (selected.contains(_BatchCalcField.ifr)) next.timeIFRMinutes = base;
-        if (selected.contains(_BatchCalcField.instrument)) {
-          next.timeInstrumentMinutes = base;
+
+        final applyNightDerivedValues =
+            selection.modeFor(_BatchCalcField.night) ==
+                _BatchFieldMode.recalculate ||
+            selection.modeFor(_BatchCalcField.takeoffDay) ==
+                _BatchFieldMode.recalculate ||
+            selection.modeFor(_BatchCalcField.takeoffNight) ==
+                _BatchFieldMode.recalculate ||
+            selection.modeFor(_BatchCalcField.landingDay) ==
+                _BatchFieldMode.recalculate ||
+            selection.modeFor(_BatchCalcField.landingNight) ==
+                _BatchFieldMode.recalculate;
+        if (applyNightDerivedValues) {
+          final calc = _calculateNightForSnapshot(snapshot);
+          if (calc != null) {
+            if (selection.modeFor(_BatchCalcField.night) ==
+                _BatchFieldMode.recalculate) {
+              next.timeNightMinutes = calc.nightMinutes;
+            }
+            if (selection.modeFor(_BatchCalcField.takeoffDay) ==
+                _BatchFieldMode.recalculate) {
+              next.takeOffsDays = calc.takeoffsDay;
+            }
+            if (selection.modeFor(_BatchCalcField.takeoffNight) ==
+                _BatchFieldMode.recalculate) {
+              next.takeOffsNight = calc.takeoffsNight;
+            }
+            if (selection.modeFor(_BatchCalcField.landingDay) ==
+                _BatchFieldMode.recalculate) {
+              next.landingsDay = calc.landingsDay;
+            }
+            if (selection.modeFor(_BatchCalcField.landingNight) ==
+                _BatchFieldMode.recalculate) {
+              next.landingsNight = calc.landingsNight;
+            }
+          }
         }
-        if (selected.contains(_BatchCalcField.custom1)) {
-          next.timeCustom1Minutes = base;
+
+        if (selection.modeFor(_BatchCalcField.night) ==
+            _BatchFieldMode.setZero) {
+          next.timeNightMinutes = 0;
         }
-        if (selected.contains(_BatchCalcField.custom2)) {
-          next.timeCustom2Minutes = base;
+        if (selection.modeFor(_BatchCalcField.takeoffDay) ==
+            _BatchFieldMode.setZero) {
+          next.takeOffsDays = 0;
         }
-        if (selected.contains(_BatchCalcField.custom3)) {
-          next.timeCustom3Minutes = base;
+        if (selection.modeFor(_BatchCalcField.takeoffNight) ==
+            _BatchFieldMode.setZero) {
+          next.takeOffsNight = 0;
         }
-        if (selected.contains(_BatchCalcField.custom4)) {
-          next.timeCustom4Minutes = base;
+        if (selection.modeFor(_BatchCalcField.landingDay) ==
+            _BatchFieldMode.setZero) {
+          next.landingsDay = 0;
         }
+        if (selection.modeFor(_BatchCalcField.landingNight) ==
+            _BatchFieldMode.setZero) {
+          next.landingsNight = 0;
+        }
+
+        _applyTimeMode(
+          mode: selection.modeFor(_BatchCalcField.custom1),
+          recalculateValue: base,
+          assign: (value) => next.timeCustom1Minutes = value,
+        );
+        _applyTimeMode(
+          mode: selection.modeFor(_BatchCalcField.custom2),
+          recalculateValue: base,
+          assign: (value) => next.timeCustom2Minutes = value,
+        );
+        _applyTimeMode(
+          mode: selection.modeFor(_BatchCalcField.custom3),
+          recalculateValue: base,
+          assign: (value) => next.timeCustom3Minutes = value,
+        );
+        _applyTimeMode(
+          mode: selection.modeFor(_BatchCalcField.custom4),
+          recalculateValue: base,
+          assign: (value) => next.timeCustom4Minutes = value,
+        );
         final fieldChanges = _buildBatchFieldChanges(snapshot, next);
         if (fieldChanges.isEmpty) continue;
         changes.add(
@@ -3100,89 +3214,141 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
   }
 
-  Future<void> _batchCalculateNight() async {
-    await _ensureBatchFlightsReadyForActions();
-    final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
-    final modifiable = _unlockedBatchSnapshots(snapshots);
-    final skippedLocked = snapshots.length - modifiable.length;
-    if (modifiable.isEmpty) {
-      await _showInfoDialog('All filtered flights are locked.');
-      return;
-    }
-    final changes = <_BatchFlightChange>[];
+  List<_BatchCalcField> get _batchCalcFieldOrder => const [
+    _BatchCalcField.block,
+    _BatchCalcField.ifr,
+    _BatchCalcField.instrument,
+    _BatchCalcField.simInstrument,
+    _BatchCalcField.crossCountry,
+    _BatchCalcField.distanceNm,
+    _BatchCalcField.flight,
+    _BatchCalcField.night,
+    _BatchCalcField.takeoffDay,
+    _BatchCalcField.takeoffNight,
+    _BatchCalcField.landingDay,
+    _BatchCalcField.landingNight,
+    _BatchCalcField.instructor,
+    _BatchCalcField.custom1,
+    _BatchCalcField.custom2,
+    _BatchCalcField.custom3,
+    _BatchCalcField.custom4,
+  ];
+
+  Future<_BatchCalculateAllPreferences>
+  _loadBatchCalculateAllPreferences() async {
     final db = ref.read(databaseProvider);
-    await db.transaction(() async {
-      for (final snapshot in modifiable.values) {
-        final calc = _calculateNightForSnapshot(snapshot);
-        if (calc == null) continue;
-        final next = snapshot.copy()
-          ..timeNightMinutes = calc.nightMinutes
-          ..takeOffsDays = calc.takeoffsDay
-          ..takeOffsNight = calc.takeoffsNight
-          ..landingsDay = calc.landingsDay
-          ..landingsNight = calc.landingsNight;
-        final fieldChanges = _buildBatchFieldChanges(snapshot, next);
-        if (fieldChanges.isEmpty) continue;
-        changes.add(
-          _BatchFlightChange(snapshot: snapshot, fields: fieldChanges),
-        );
-        await _updateFlightFromSnapshot(next);
-      }
-    });
-    await _showBatchChanges(changes);
-    if (skippedLocked > 0) {
-      await _showInfoDialog(
-        'Skipped $skippedLocked locked flight'
-        '${skippedLocked == 1 ? '' : 's'}.',
+    final store = UserSettingsJsonStore(db);
+    final settings = await store.load();
+    final raw = settings[_batchCalculateAllPreferencesKey];
+    if (raw is Map<String, dynamic>) {
+      return _BatchCalculateAllPreferences.fromJson(
+        raw,
+        fallbackFields: _batchCalcFieldOrder,
       );
     }
-    await _ensureDetailsLoaded(
-      includeEntries: false,
+    final checks = await ref.read(flightFormTimeChecksProvider.future);
+    return _batchPreferencesFromFlightChecks(checks);
+  }
+
+  Future<void> _saveBatchCalculateAllPreferences(
+    _BatchCalculateAllPreferences preferences,
+  ) async {
+    final db = ref.read(databaseProvider);
+    final store = UserSettingsJsonStore(db);
+    await store.patch(
+      (json) => json[_batchCalculateAllPreferencesKey] = preferences.toJson(),
     );
   }
 
-  Future<void> _batchCalculateIfr() async {
-    final settings = await ref.read(flightFactoringSettingsProvider.future);
-    await _batchApplySingleTimeField(
-      fieldName: 'IFR time',
-      mutate: (snapshot) {
-        final base = snapshot.timeTotalBlockMinutes > 0
-            ? snapshot.timeTotalBlockMinutes
-            : snapshot.timeBlockMinutes;
-        var minutes =
-            ((base - settings.ifrSubtractMinutes).clamp(
-                      0,
-                      24 * 60,
-                    ) *
-                    settings.ifrPercent /
-                    100)
-                .round();
-        minutes = math.max(minutes, settings.ifrMinimumMinutes);
-        return snapshot.copy()..timeIFRMinutes = minutes;
-      },
+  _BatchCalculateAllPreferences _batchPreferencesFromFlightChecks(
+    FlightFormTimeChecks checks,
+  ) {
+    final modes = <_BatchCalcField, _BatchFieldMode>{
+      for (final field in _batchCalcFieldOrder)
+        field: _BatchFieldMode.dontChange,
+    };
+    if (checks.ifr) modes[_BatchCalcField.ifr] = _BatchFieldMode.recalculate;
+    if (checks.instrument) {
+      modes[_BatchCalcField.instrument] = _BatchFieldMode.recalculate;
+    }
+    if (checks.simInstrument) {
+      modes[_BatchCalcField.simInstrument] = _BatchFieldMode.recalculate;
+    }
+    if (checks.crossCountry) {
+      modes[_BatchCalcField.crossCountry] = _BatchFieldMode.recalculate;
+    }
+    if (checks.night) {
+      modes[_BatchCalcField.night] = _BatchFieldMode.recalculate;
+    }
+    if (checks.instructor) {
+      modes[_BatchCalcField.instructor] = _BatchFieldMode.recalculate;
+    }
+    if (checks.custom1) {
+      modes[_BatchCalcField.custom1] = _BatchFieldMode.recalculate;
+    }
+    if (checks.custom2) {
+      modes[_BatchCalcField.custom2] = _BatchFieldMode.recalculate;
+    }
+    if (checks.custom3) {
+      modes[_BatchCalcField.custom3] = _BatchFieldMode.recalculate;
+    }
+    if (checks.custom4) {
+      modes[_BatchCalcField.custom4] = _BatchFieldMode.recalculate;
+    }
+    final crewRole = checks.pic
+        ? _BatchCrewRole.pic
+        : checks.picus
+        ? _BatchCrewRole.picus
+        : checks.sic
+        ? _BatchCrewRole.sic
+        : _BatchCrewRole.dual;
+    final hasCrew = checks.pic || checks.picus || checks.sic || checks.dual;
+    return _BatchCalculateAllPreferences(
+      crewMode: hasCrew
+          ? _BatchFieldMode.recalculate
+          : _BatchFieldMode.dontChange,
+      crewRole: crewRole,
+      fieldModes: modes,
     );
   }
 
-  Future<void> _batchCalculateInstrument() async {
-    final settings = await ref.read(flightFactoringSettingsProvider.future);
-    await _batchApplySingleTimeField(
-      fieldName: 'Instrument time',
-      mutate: (snapshot) {
-        final base = snapshot.timeTotalBlockMinutes > 0
-            ? snapshot.timeTotalBlockMinutes
-            : snapshot.timeBlockMinutes;
-        var minutes =
-            ((base - settings.instrumentSubtractMinutes).clamp(
-                      0,
-                      24 * 60,
-                    ) *
-                    settings.instrumentPercent /
-                    100)
-                .round();
-        minutes = math.max(minutes, settings.instrumentMinimumMinutes);
-        return snapshot.copy()..timeInstrumentMinutes = minutes;
-      },
-    );
+  void _applyTimeMode({
+    required _BatchFieldMode mode,
+    required int recalculateValue,
+    required void Function(int value) assign,
+  }) {
+    if (mode == _BatchFieldMode.recalculate) {
+      assign(recalculateValue);
+    } else if (mode == _BatchFieldMode.setZero) {
+      assign(0);
+    }
+  }
+
+  int? _calculateDistanceForSnapshot(_BatchFlightSnapshot snapshot) {
+    if (snapshot.fromLatitude == null ||
+        snapshot.fromLongitude == null ||
+        snapshot.toLatitude == null ||
+        snapshot.toLongitude == null) {
+      return null;
+    }
+    return FlightCalculations(
+      latDep: snapshot.fromLatitude!,
+      longDep: snapshot.fromLongitude!,
+      latArr: snapshot.toLatitude!,
+      longArr: snapshot.toLongitude!,
+      depTimeEpochSeconds: snapshot.departureUtc.millisecondsSinceEpoch ~/ 1000,
+      arrTimeEpochSeconds:
+          (snapshot.arrivalUtc ?? snapshot.departureUtc)
+              .millisecondsSinceEpoch ~/
+          1000,
+    ).flightDistanceNm.round();
+  }
+
+  int? _calculateBlockMinutesFromChocks(_BatchFlightSnapshot snapshot) {
+    final arrival = snapshot.arrivalUtc;
+    if (arrival == null) return null;
+    final diffMinutes = arrival.difference(snapshot.departureUtc).inMinutes;
+    return diffMinutes < 0 ? 0 : diffMinutes;
   }
 
   Future<void> _batchSetLockStateTrue() async {
@@ -3269,42 +3435,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       '${lockState ? 'Locked' : 'Unlocked'} $updatedTotal entries '
       '(Flights: $updatedFlights, Sim: $updatedSimulators, '
       'Positioning: $updatedPositionings, Duty: $updatedDuty).',
-    );
-    await _ensureDetailsLoaded(
-      includeEntries: false,
-    );
-  }
-
-  Future<void> _batchApplySingleTimeField({
-    required String fieldName,
-    required _BatchFlightSnapshot Function(_BatchFlightSnapshot snapshot)
-    mutate,
-  }) async {
-    await _ensureBatchFlightsReadyForActions();
-    final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
-    final modifiable = _unlockedBatchSnapshots(snapshots);
-    final skippedLocked = snapshots.length - modifiable.length;
-    if (modifiable.isEmpty) {
-      await _showInfoDialog('All filtered flights are locked.');
-      return;
-    }
-    final changes = <_BatchFlightChange>[];
-    final db = ref.read(databaseProvider);
-    await db.transaction(() async {
-      for (final snapshot in modifiable.values) {
-        final next = mutate(snapshot);
-        final fieldChanges = _buildBatchFieldChanges(snapshot, next);
-        if (fieldChanges.isEmpty) continue;
-        changes.add(
-          _BatchFlightChange(snapshot: snapshot, fields: fieldChanges),
-        );
-        await _updateFlightFromSnapshot(next);
-      }
-    });
-    await _showBatchChanges(changes);
-    await _showInfoDialog(
-      '$fieldName updated for ${changes.length} flights.'
-      '${_lockedSkipSuffix(skippedLocked)}',
     );
     await _ensureDetailsLoaded(
       includeEntries: false,
@@ -3476,6 +3606,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         timePICUSMinutes: flight.timePICUSMinutes,
         timeSICMinutes: flight.timeSICMinutes,
         timeDualMinutes: flight.timeDualMinutes,
+        timeInstructorMinutes: flight.timeInstructorMinutes,
         timeIFRMinutes: flight.timeIFRMinutes,
         timeInstrumentMinutes: flight.timeInstrumentMinutes,
         timeSimulatedInstrumentMinutes: flight.timeSimulatedInstrumentMinutes,
@@ -3500,11 +3631,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final db = ref.read(databaseProvider);
     await (db.update(db.flights)..where((t) => t.id.equals(snapshot.id))).write(
       FlightsCompanion(
+        timeBlockMinutes: d.Value(snapshot.timeBlockMinutes),
+        timeTotalBlockMinutes: d.Value(snapshot.timeTotalBlockMinutes),
         timePICMinutes: d.Value(snapshot.timePICMinutes),
         timePICUSMinutes: d.Value(snapshot.timePICUSMinutes),
         timeSICMinutes: d.Value(snapshot.timeSICMinutes),
+        timeDualMinutes: d.Value(snapshot.timeDualMinutes),
+        timeInstructorMinutes: d.Value(snapshot.timeInstructorMinutes),
         timeIFRMinutes: d.Value(snapshot.timeIFRMinutes),
         timeInstrumentMinutes: d.Value(snapshot.timeInstrumentMinutes),
+        timeSimulatedInstrumentMinutes: d.Value(
+          snapshot.timeSimulatedInstrumentMinutes,
+        ),
+        timeFlightMinutes: d.Value(snapshot.timeFlightMinutes),
         timeNightMinutes: d.Value(snapshot.timeNightMinutes),
         timeCrossCountryMinutes: d.Value(snapshot.timeCrossCountryMinutes),
         timeCustom1Minutes: d.Value(snapshot.timeCustom1Minutes),
@@ -3515,6 +3654,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         takeOffsNight: d.Value(snapshot.takeOffsNight),
         landingsDay: d.Value(snapshot.landingsDay),
         landingsNight: d.Value(snapshot.landingsNight),
+        distanceNM: d.Value(snapshot.distanceNm),
       ),
     );
   }
@@ -3607,15 +3747,33 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       );
     }
 
+    addTime('Block time', before.timeBlockMinutes, after.timeBlockMinutes);
+    addTime(
+      'Total Block time',
+      before.timeTotalBlockMinutes,
+      after.timeTotalBlockMinutes,
+    );
     addTime('PIC time', before.timePICMinutes, after.timePICMinutes);
     addTime('PICUS time', before.timePICUSMinutes, after.timePICUSMinutes);
     addTime('SIC time', before.timeSICMinutes, after.timeSICMinutes);
+    addTime('Dual time', before.timeDualMinutes, after.timeDualMinutes);
+    addTime(
+      'Instructor time',
+      before.timeInstructorMinutes,
+      after.timeInstructorMinutes,
+    );
     addTime('IFR time', before.timeIFRMinutes, after.timeIFRMinutes);
     addTime(
       'Instrument time',
       before.timeInstrumentMinutes,
       after.timeInstrumentMinutes,
     );
+    addTime(
+      'Sim Instrument time',
+      before.timeSimulatedInstrumentMinutes,
+      after.timeSimulatedInstrumentMinutes,
+    );
+    addTime('Flight time', before.timeFlightMinutes, after.timeFlightMinutes);
     addTime('Night time', before.timeNightMinutes, after.timeNightMinutes);
     addTime(
       'Cross-country',
@@ -3630,6 +3788,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     addCount('Takeoffs night', before.takeOffsNight, after.takeOffsNight);
     addCount('Landings day', before.landingsDay, after.landingsDay);
     addCount('Landings night', before.landingsNight, after.landingsNight);
+    addCount('Distance NM', before.distanceNm, after.distanceNm);
     return changes;
   }
 
@@ -4067,25 +4226,118 @@ class _BatchFlightChecksDialogState extends State<_BatchFlightChecksDialog> {
 }
 
 enum _BatchCalcField {
-  pic,
-  picus,
-  sic,
+  block,
+  instructor,
+  night,
+  takeoffDay,
+  takeoffNight,
+  landingDay,
+  landingNight,
+  distanceNm,
   ifr,
   instrument,
+  simInstrument,
   crossCountry,
+  flight,
   custom1,
   custom2,
   custom3,
   custom4,
 }
 
-class _BatchCalculateAllDialog extends StatefulWidget {
-  const _BatchCalculateAllDialog();
+enum _BatchFieldMode { dontChange, recalculate, setZero }
 
-  static Future<Set<_BatchCalcField>?> show(BuildContext context) {
-    return showDialog<Set<_BatchCalcField>>(
+enum _BatchCrewRole { pic, picus, sic, dual }
+
+class _BatchCalculateAllPreferences {
+  const _BatchCalculateAllPreferences({
+    required this.crewMode,
+    required this.crewRole,
+    required this.fieldModes,
+  });
+
+  factory _BatchCalculateAllPreferences.fromJson(
+    Map<String, dynamic> json, {
+    required List<_BatchCalcField> fallbackFields,
+  }) {
+    final rawFieldModes = json['fieldModes'];
+    final fieldModes = <_BatchCalcField, _BatchFieldMode>{
+      for (final field in fallbackFields) field: _BatchFieldMode.dontChange,
+    };
+    if (rawFieldModes is Map) {
+      for (final field in fallbackFields) {
+        final raw = rawFieldModes[field.name];
+        fieldModes[field] = _modeFromRaw(raw) ?? _BatchFieldMode.dontChange;
+      }
+    }
+    return _BatchCalculateAllPreferences(
+      crewMode: _modeFromRaw(json['crewMode']) ?? _BatchFieldMode.dontChange,
+      crewRole: _crewRoleFromRaw(json['crewRole']) ?? _BatchCrewRole.sic,
+      fieldModes: fieldModes,
+    );
+  }
+
+  final _BatchFieldMode crewMode;
+  final _BatchCrewRole crewRole;
+  final Map<_BatchCalcField, _BatchFieldMode> fieldModes;
+
+  _BatchCalculateAllPreferences copyWith({
+    _BatchFieldMode? crewMode,
+    _BatchCrewRole? crewRole,
+    Map<_BatchCalcField, _BatchFieldMode>? fieldModes,
+  }) {
+    return _BatchCalculateAllPreferences(
+      crewMode: crewMode ?? this.crewMode,
+      crewRole: crewRole ?? this.crewRole,
+      fieldModes: fieldModes ?? this.fieldModes,
+    );
+  }
+
+  _BatchFieldMode modeFor(_BatchCalcField field) {
+    return fieldModes[field] ?? _BatchFieldMode.dontChange;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'crewMode': crewMode.name,
+      'crewRole': crewRole.name,
+      'fieldModes': {
+        for (final entry in fieldModes.entries)
+          entry.key.name: entry.value.name,
+      },
+    };
+  }
+
+  static _BatchFieldMode? _modeFromRaw(Object? raw) {
+    if (raw is! String) return null;
+    for (final mode in _BatchFieldMode.values) {
+      if (mode.name == raw) return mode;
+    }
+    return null;
+  }
+
+  static _BatchCrewRole? _crewRoleFromRaw(Object? raw) {
+    if (raw is! String) return null;
+    for (final role in _BatchCrewRole.values) {
+      if (role.name == raw) return role;
+    }
+    return null;
+  }
+}
+
+class _BatchCalculateAllDialog extends StatefulWidget {
+  const _BatchCalculateAllDialog({required this.initialPreferences});
+
+  final _BatchCalculateAllPreferences initialPreferences;
+
+  static Future<_BatchCalculateAllPreferences?> show(
+    BuildContext context, {
+    required _BatchCalculateAllPreferences initialPreferences,
+  }) {
+    return showDialog<_BatchCalculateAllPreferences>(
       context: context,
-      builder: (context) => const _BatchCalculateAllDialog(),
+      builder: (context) =>
+          _BatchCalculateAllDialog(initialPreferences: initialPreferences),
     );
   }
 
@@ -4095,21 +4347,45 @@ class _BatchCalculateAllDialog extends StatefulWidget {
 }
 
 class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
-  final Set<_BatchCalcField> _selected = <_BatchCalcField>{
-    _BatchCalcField.pic,
-    _BatchCalcField.sic,
-  };
+  late _BatchCalculateAllPreferences _preferences = widget.initialPreferences;
+
+  static const _fields = <_BatchCalcField>[
+    _BatchCalcField.block,
+    _BatchCalcField.ifr,
+    _BatchCalcField.instrument,
+    _BatchCalcField.simInstrument,
+    _BatchCalcField.crossCountry,
+    _BatchCalcField.distanceNm,
+    _BatchCalcField.flight,
+    _BatchCalcField.night,
+    _BatchCalcField.takeoffDay,
+    _BatchCalcField.takeoffNight,
+    _BatchCalcField.landingDay,
+    _BatchCalcField.landingNight,
+    _BatchCalcField.instructor,
+    _BatchCalcField.custom1,
+    _BatchCalcField.custom2,
+    _BatchCalcField.custom3,
+    _BatchCalcField.custom4,
+  ];
 
   @override
   Widget build(BuildContext context) {
     String label(_BatchCalcField field) {
       return switch (field) {
-        _BatchCalcField.pic => 'PIC',
-        _BatchCalcField.picus => 'PICUS',
-        _BatchCalcField.sic => 'SIC',
+        _BatchCalcField.block => 'Block',
+        _BatchCalcField.instructor => 'Instructor',
+        _BatchCalcField.night => 'Night',
+        _BatchCalcField.takeoffDay => 'Takeoff Day',
+        _BatchCalcField.takeoffNight => 'Takeoff Night',
+        _BatchCalcField.landingDay => 'Landing Day',
+        _BatchCalcField.landingNight => 'Landing Night',
+        _BatchCalcField.distanceNm => 'Distance NM',
         _BatchCalcField.ifr => 'IFR',
         _BatchCalcField.instrument => 'Instrument',
+        _BatchCalcField.simInstrument => 'Sim Instrument',
         _BatchCalcField.crossCountry => 'Cross-country',
+        _BatchCalcField.flight => 'Flight',
         _BatchCalcField.custom1 => 'Custom 1',
         _BatchCalcField.custom2 => 'Custom 2',
         _BatchCalcField.custom3 => 'Custom 3',
@@ -4117,31 +4393,120 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
       };
     }
 
+    String modeLabel(_BatchFieldMode mode) {
+      return switch (mode) {
+        _BatchFieldMode.dontChange => "Don't change",
+        _BatchFieldMode.recalculate => 'Recalculate',
+        _BatchFieldMode.setZero => 'Set Zero',
+      };
+    }
+
+    String crewRoleLabel(_BatchCrewRole role) {
+      return switch (role) {
+        _BatchCrewRole.pic => 'PIC',
+        _BatchCrewRole.picus => 'PICUS',
+        _BatchCrewRole.sic => 'SIC',
+        _BatchCrewRole.dual => 'Dual',
+      };
+    }
+
     return AlertDialog(
       title: const Text('Calculate All'),
       content: SizedBox(
-        width: 420,
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _BatchCalcField.values
-              .map((field) {
-                final selected = _selected.contains(field);
-                return FilterChip(
-                  label: Text(label(field)),
-                  selected: selected,
-                  onSelected: (value) {
-                    setState(() {
-                      if (value) {
-                        _selected.add(field);
-                      } else {
-                        _selected.remove(field);
-                      }
-                    });
-                  },
-                );
-              })
-              .toList(growable: false),
+        width: 560,
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Row(
+              children: [
+                const Expanded(child: Text('Crew position')),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 190,
+                  child: DropdownButtonFormField<_BatchFieldMode>(
+                    initialValue: _preferences.crewMode,
+                    items: _BatchFieldMode.values
+                        .map(
+                          (mode) => DropdownMenuItem(
+                            value: mode,
+                            child: Text(modeLabel(mode)),
+                          ),
+                        )
+                        .toList(growable: false),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _preferences = _preferences.copyWith(crewMode: value);
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 120,
+                  child: DropdownButtonFormField<_BatchCrewRole>(
+                    initialValue: _preferences.crewRole,
+                    items: _BatchCrewRole.values
+                        .map(
+                          (role) => DropdownMenuItem(
+                            value: role,
+                            child: Text(crewRoleLabel(role)),
+                          ),
+                        )
+                        .toList(growable: false),
+                    onChanged:
+                        _preferences.crewMode == _BatchFieldMode.recalculate
+                        ? (value) {
+                            if (value == null) return;
+                            setState(() {
+                              _preferences = _preferences.copyWith(
+                                crewRole: value,
+                              );
+                            });
+                          }
+                        : null,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            for (final field in _fields)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Expanded(child: Text(label(field))),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: 190,
+                      child: DropdownButtonFormField<_BatchFieldMode>(
+                        initialValue: _preferences.modeFor(field),
+                        items: _BatchFieldMode.values
+                            .map(
+                              (mode) => DropdownMenuItem(
+                                value: mode,
+                                child: Text(modeLabel(mode)),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          final nextModes =
+                              Map<_BatchCalcField, _BatchFieldMode>.from(
+                                _preferences.fieldModes,
+                              )..[field] = value;
+                          setState(() {
+                            _preferences = _preferences.copyWith(
+                              fieldModes: nextModes,
+                            );
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
       actions: [
@@ -4150,7 +4515,7 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop({..._selected}),
+          onPressed: () => Navigator.of(context).pop(_preferences),
           child: const Text('Apply'),
         ),
       ],
@@ -4217,6 +4582,7 @@ class _BatchFlightSnapshot {
     required this.timePICUSMinutes,
     required this.timeSICMinutes,
     required this.timeDualMinutes,
+    required this.timeInstructorMinutes,
     required this.timeIFRMinutes,
     required this.timeInstrumentMinutes,
     required this.timeSimulatedInstrumentMinutes,
@@ -4247,12 +4613,13 @@ class _BatchFlightSnapshot {
   final double? toLatitude;
   final double? toLongitude;
   final String pilotFunction;
-  final int timeBlockMinutes;
-  final int timeTotalBlockMinutes;
+  int timeBlockMinutes;
+  int timeTotalBlockMinutes;
   int timePICMinutes;
   int timePICUSMinutes;
   int timeSICMinutes;
   int timeDualMinutes;
+  int timeInstructorMinutes;
   int timeIFRMinutes;
   int timeInstrumentMinutes;
   int timeSimulatedInstrumentMinutes;
@@ -4267,7 +4634,7 @@ class _BatchFlightSnapshot {
   int takeOffsNight;
   int landingsDay;
   int landingsNight;
-  final int distanceNm;
+  int distanceNm;
 
   _BatchFlightSnapshot copy() {
     return _BatchFlightSnapshot(
@@ -4290,6 +4657,7 @@ class _BatchFlightSnapshot {
       timePICUSMinutes: timePICUSMinutes,
       timeSICMinutes: timeSICMinutes,
       timeDualMinutes: timeDualMinutes,
+      timeInstructorMinutes: timeInstructorMinutes,
       timeIFRMinutes: timeIFRMinutes,
       timeInstrumentMinutes: timeInstrumentMinutes,
       timeSimulatedInstrumentMinutes: timeSimulatedInstrumentMinutes,

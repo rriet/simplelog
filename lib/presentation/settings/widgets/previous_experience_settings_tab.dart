@@ -58,18 +58,9 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
                 const SizedBox(height: 10),
                 rowsAsync.when(
                   data: (rows) {
-                    final totalFlightCount = rows.fold<int>(
-                      0,
-                      (sum, row) => sum + row.previousExperience.flightCount,
-                    );
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Flight count: $totalFlightCount',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 8),
                         if (rows.isEmpty)
                           const Text('No previous experience entries yet.'),
                         ...rows.map<Widget>((row) {
@@ -678,6 +669,8 @@ class _TimeGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fields = <(String, String)>[
+      ('Flight', 'flight'),
+      ('Block', 'block'),
       ('PIC', 'pic'),
       ('PICUS', 'picus'),
       ('SIC', 'sic'),
@@ -692,8 +685,6 @@ class _TimeGrid extends StatelessWidget {
       ('Custom 2', 'custom2'),
       ('Custom 3', 'custom3'),
       ('Custom 4', 'custom4'),
-      ('Flight', 'flight'),
-      ('Block', 'block'),
       ('Simulator', 'sim'),
     ];
     return LayoutBuilder(
@@ -734,13 +725,13 @@ class _IntGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fields = <(String, String)>[
-      ('Distance NM', 'distance'),
-      ('Flight count', 'flightCount'),
-      ('IFR Approaches', 'ifrApproaches'),
       ('Takeoffs Day', 'takeoffDay'),
       ('Takeoffs Night', 'takeoffNight'),
       ('Landings Day', 'landingDay'),
       ('Landings Night', 'landingNight'),
+      ('IFR Approaches', 'ifrApproaches'),
+      ('Distance NM', 'distance'),
+      ('Flight count', 'flightCount'),
     ];
     return LayoutBuilder(
       builder: (context, constraints) {
