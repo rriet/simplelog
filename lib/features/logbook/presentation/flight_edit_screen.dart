@@ -32,6 +32,7 @@ import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.
 import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/endorsement_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
@@ -1321,7 +1322,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         ),
       ),
     );
-    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
     final actions = <Widget>[
       if (_page == 0) ...[
         TextButton(
@@ -1344,44 +1344,20 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       ],
     ];
 
-    if (isInDialog) {
-      return Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: _page > 0
-                  ? IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => setState(() => _page -= 1),
-                    )
-                  : IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).maybePop(),
-                    ),
-              title: Text(title),
-              trailing: Wrap(spacing: 4, children: actions),
-            ),
-            const Divider(height: 1),
-            Flexible(child: formBody),
-          ],
-        ),
-      );
+    void handleCloseOrBack() {
+      if (_page > 0) {
+        setState(() => _page -= 1);
+        return;
+      }
+      unawaited(Navigator.of(context).maybePop());
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: _page > 0
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => setState(() => _page -= 1),
-              )
-            : null,
-        title: Text(title),
-        actions: actions,
-      ),
-      body: formBody,
+    return AdaptiveFormShell(
+      onClose: handleCloseOrBack,
+      longTitle: title,
+      shortTitle: title,
+      actions: actions,
+      contentView: formBody,
     );
   }
 

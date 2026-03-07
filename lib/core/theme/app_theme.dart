@@ -64,8 +64,23 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: SquareOutlineButton.filledStyle(colorScheme),
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          minimumSize: const Size(0, 40),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: SquareOutlineButton.elevatedStyle(colorScheme),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          minimumSize: const Size(40, 40),
+          padding: const EdgeInsets.all(8),
+        ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: colorScheme.primary,
@@ -128,8 +143,23 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: SquareOutlineButton.filledStyle(colorScheme),
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          minimumSize: const Size(0, 40),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: SquareOutlineButton.elevatedStyle(colorScheme),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          minimumSize: const Size(40, 40),
+          padding: const EdgeInsets.all(8),
+        ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: colorScheme.primary,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
+import 'package:simplelog/presentation/shared/widgets/dialog_adaptive_presenter.dart';
 
 /// Missing simulator aircraft identified during Qatar Airways preflight.
 class QatarAirwaysMissingAircraft {
@@ -156,9 +158,10 @@ class QatarAirwaysMissingAircraftDialog extends StatefulWidget {
     required Future<bool> Function(QatarAirwaysMissingAircraft aircraft)
     onCreateAircraft,
   }) async {
-    final result = await showDialog<bool>(
+    final result = await showLargeDialogScreen<bool>(
       context: context,
       barrierDismissible: false,
+      maxWidth: 700,
       builder: (context) => QatarAirwaysMissingAircraftDialog(
         missingAircraft: missingAircraft,
         onCreateAircraft: onCreateAircraft,
@@ -201,63 +204,65 @@ class _QatarAirwaysMissingAircraftDialogState
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Missing Aircraft'),
-      content: SizedBox(
-        width: 560,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Create the missing simulator aircraft before continuing '
-              'the Qatar Airways import.',
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 280,
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    for (final aircraft in _pendingAircraft)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${aircraft.registration} '
-                                '(${aircraft.aircraftTypeCode})',
-                              ),
-                            ),
-                            FilledButton(
-                              onPressed: _busy
-                                  ? null
-                                  : () => _createAircraft(aircraft),
-                              child: const Text('Create aircraft'),
-                            ),
-                          ],
+    final body = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Create the missing simulator aircraft before continuing '
+                'the Qatar Airways import.',
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: _pendingAircraft.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final aircraft = _pendingAircraft[index];
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${aircraft.registration} '
+                            '(${aircraft.aircraftTypeCode})',
+                          ),
                         ),
-                      ),
-                  ],
+                        FilledButton(
+                          onPressed: _busy
+                              ? null
+                              : () => _createAircraft(aircraft),
+                          child: const Text('Create aircraft'),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+
+    return AdaptiveFormShell(
+      onClose: _busy ? () {} : () => Navigator.of(context).pop(false),
+      longTitle: 'Missing Aircraft',
+      shortTitle: 'Missing Aircraft',
       actions: [
         TextButton(
-          onPressed: _busy ? null : () => Navigator.of(context).pop(false),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
           onPressed: _busy || _pendingAircraft.isNotEmpty
               ? null
               : () => Navigator.of(context).pop(true),
           child: const Text('Continue'),
         ),
       ],
+      contentView: body,
     );
   }
 }

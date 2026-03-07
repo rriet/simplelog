@@ -252,8 +252,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     final normalizedLocalName = _normalizedServiceName(_localDeviceName ?? '');
     final isSelfByName =
         _localDeviceName != null &&
-        (device.name == _localDeviceName ||
-            device.name == normalizedLocalName);
+        (device.name == _localDeviceName || device.name == normalizedLocalName);
     final isSelfByIp =
         _localIps.contains(trimmedHost) || _localIps.contains(host);
     return isSelfByName || isSelfByIp;
@@ -790,10 +789,6 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     List<DiscoveredDevice> devices,
   ) {
     final actionButtons = [
-      TextButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: Text(l10n.cancelAction),
-      ),
       OutlinedButton(
         onPressed: (_selected == null || _isBusy) ? null : _pullFromDevice,
         child: Text(l10n.databaseSyncPullAction),
@@ -808,9 +803,20 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.databaseSyncFoundTitle,
-          style: Theme.of(context).textTheme.titleMedium,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.databaseSyncFoundTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            IconButton(
+              tooltip: l10n.cancelAction,
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         if (_isBusy) const LinearProgressIndicator(),
@@ -858,9 +864,20 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.databaseSyncConnected(_connectedName ?? '-'),
-          style: Theme.of(context).textTheme.titleMedium,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.databaseSyncConnected(_connectedName ?? '-'),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            IconButton(
+              tooltip: l10n.cancelAction,
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Text(l10n.databaseSyncWaiting),
@@ -885,10 +902,6 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
                   ? null
                   : _sendToDevice,
               child: Text(l10n.databaseSyncSendAction),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.cancelAction),
             ),
           ],
         ),

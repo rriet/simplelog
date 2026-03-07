@@ -11,6 +11,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
+import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
+import 'package:simplelog/presentation/shared/widgets/dialog_adaptive_presenter.dart';
+import 'package:simplelog/presentation/shared/widgets/dialog_header_bar.dart';
 import 'package:simplelog/presentation/shared/widgets/square_outline_button.dart';
 
 /// Compact settings card that opens the pilot profile editor popup.
@@ -53,7 +56,7 @@ class PilotProfileEditButton extends ConsumerWidget {
 Future<void> showPilotProfileEditorDialog(
   BuildContext context,
 ) async {
-  await showDialog<void>(
+  await showLargeDialogScreen<void>(
     context: context,
     builder: (_) => const _PilotProfileEditorDialog(),
   );
@@ -96,7 +99,6 @@ class _PilotProfileEditorDialogState
 
   @override
   Widget build(BuildContext context) {
-    final maxDialogHeight = MediaQuery.of(context).size.height * 0.9;
     final profile = ref.watch(reportPilotInfoProvider);
     if (!_userEditedText) {
       _nameController.text = profile.name;
@@ -107,117 +109,87 @@ class _PilotProfileEditorDialogState
       _signatureImage = profile.signatureImage;
     }
 
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 760,
-          maxHeight: maxDialogHeight,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  const Expanded(
-                    child: Text(
-                      'Pilot profile',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: _save,
-                    child: const Text('Save'),
-                  ),
-                ],
-              ),
+    final body = SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            controller: _nameController,
+            onChanged: (_) => _userEditedText = true,
+            decoration: const InputDecoration(
+              labelText: 'Name',
+              border: OutlineInputBorder(),
+              isDense: true,
             ),
-            const Divider(height: 1),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      onChanged: (_) => _userEditedText = true,
-                      decoration: const InputDecoration(
-                        labelText: 'Name',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _addressController,
-                      onChanged: (_) => _userEditedText = true,
-                      minLines: 2,
-                      maxLines: null,
-                      decoration: const InputDecoration(
-                        labelText: 'Address',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _licensesController,
-                      onChanged: (_) => _userEditedText = true,
-                      minLines: 2,
-                      maxLines: null,
-                      decoration: const InputDecoration(
-                        labelText: 'Licenses',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Signature',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: double.infinity,
-                      height: 150,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: _signatureImage == null
-                          ? const Center(child: Text('No signature'))
-                          : Padding(
-                              padding: const EdgeInsets.all(6),
-                              child: Image.memory(
-                                _signatureImage!,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                    ),
-                    const SizedBox(height: 8),
-                    SquareOutlineButton(
-                      label: 'Signature options',
-                      icon: Icons.draw_outlined,
-                      onPressed: _showSignatureOptions,
-                    ),
-                  ],
-                ),
-              ),
+          ),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _addressController,
+            onChanged: (_) => _userEditedText = true,
+            minLines: 2,
+            maxLines: null,
+            decoration: const InputDecoration(
+              labelText: 'Address',
+              border: OutlineInputBorder(),
+              isDense: true,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _licensesController,
+            onChanged: (_) => _userEditedText = true,
+            minLines: 2,
+            maxLines: null,
+            decoration: const InputDecoration(
+              labelText: 'Licenses',
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Signature',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            height: 150,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: _signatureImage == null
+                ? const Center(child: Text('No signature'))
+                : Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Image.memory(
+                      _signatureImage!,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 8),
+          SquareOutlineButton(
+            label: 'Signature options',
+            icon: Icons.draw_outlined,
+            onPressed: _showSignatureOptions,
+          ),
+        ],
       ),
+    );
+
+    return AdaptiveFormShell(
+      onClose: () => Navigator.of(context).pop(),
+      longTitle: 'Pilot profile',
+      shortTitle: 'Profile',
+      actions: [
+        TextButton(onPressed: _save, child: const Text('Save')),
+      ],
+      contentView: body,
     );
   }
 
@@ -274,7 +246,7 @@ class _PilotProfileEditorDialogState
 
     switch (action) {
       case _SignatureAction.sign:
-        final bytes = await showDialog<Uint8List>(
+        final bytes = await showSmallDialogScreen<Uint8List>(
           context: context,
           builder: (_) => const _SignaturePadDialog(),
         );
@@ -476,25 +448,12 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
         constraints: const BoxConstraints(maxWidth: 760, maxHeight: 420),
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Sign on screen',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: _save,
-                    child: const Text('Save'),
-                  ),
-                ],
-              ),
+            DialogHeaderBar(
+              title: 'Sign on screen',
+              onClose: () => Navigator.of(context).pop(),
+              actions: [
+                TextButton(onPressed: _save, child: const Text('Save')),
+              ],
             ),
             const Divider(height: 1),
             Expanded(

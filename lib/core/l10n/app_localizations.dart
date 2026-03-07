@@ -451,7 +451,7 @@ abstract class AppLocalizations {
   /// No description provided for @themeSystem.
   ///
   /// In en, this message translates to:
-  /// **'Follow system'**
+  /// **'System'**
   String get themeSystem;
 
   /// No description provided for @themeLight.

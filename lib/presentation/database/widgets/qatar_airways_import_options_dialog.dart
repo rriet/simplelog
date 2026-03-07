@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/import/qatar_airways_import_options.dart';
 import 'package:simplelog/data/import/qatar_airways_workbook_inspector.dart';
+import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
+import 'package:simplelog/presentation/shared/widgets/dialog_adaptive_presenter.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 
 /// Configuration dialog shown before importing a Qatar Airways workbook.
@@ -30,7 +32,7 @@ class QatarAirwaysImportOptionsDialog extends StatefulWidget {
     required QatarAirwaysWorkbookInspection inspection,
     required QatarAirwaysImportOptions initial,
   }) {
-    return showDialog<QatarAirwaysImportOptions>(
+    return showLargeDialogScreen<QatarAirwaysImportOptions>(
       context: context,
       builder: (context) => QatarAirwaysImportOptionsDialog(
         fileName: fileName,
@@ -79,98 +81,53 @@ class _QatarAirwaysImportOptionsDialogState
   @override
   Widget build(BuildContext context) {
     final showMyName = _defaultPosition == CrewPosition.pic;
-    return Dialog(
-      child: SizedBox(
-        width: 640,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Import Qatar Airways',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
+    final body = SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('File: ${widget.fileName}'),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<CrewPosition>(
+            initialValue: _defaultPosition,
+            decoration: const InputDecoration(
+              labelText: 'Default position',
+              border: OutlineInputBorder(),
+            ),
+            items: const [
+              DropdownMenuItem(
+                value: CrewPosition.pic,
+                child: Text('PIC'),
               ),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('File: ${widget.fileName}'),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<CrewPosition>(
-                        initialValue: _defaultPosition,
-                        decoration: const InputDecoration(
-                          labelText: 'Default position',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: CrewPosition.pic,
-                            child: Text('PIC'),
-                          ),
-                          DropdownMenuItem(
-                            value: CrewPosition.sic,
-                            child: Text('SIC'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _defaultPosition = value);
-                          }
-                        },
-                      ),
-                      if (showMyName) ...[
-                        const SizedBox(height: 12),
-                        TextInputField(
-                          controller: _myNameController,
-                          label: 'Pilot name as written on file',
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed: _submit,
-                      child: const Text('Import'),
-                    ),
-                  ],
-                ),
+              DropdownMenuItem(
+                value: CrewPosition.sic,
+                child: Text('SIC'),
               ),
             ],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => _defaultPosition = value);
+              }
+            },
           ),
-        ),
+          if (showMyName) ...[
+            const SizedBox(height: 12),
+            TextInputField(
+              controller: _myNameController,
+              label: 'Pilot name as written on file',
+            ),
+          ],
+        ],
       ),
+    );
+    return AdaptiveFormShell(
+      onClose: () => Navigator.of(context).pop(),
+      longTitle: 'Import Qatar Airways',
+      shortTitle: 'Import Qatar',
+      actions: [
+        TextButton(onPressed: _submit, child: const Text('Import')),
+      ],
+      contentView: body,
     );
   }
 }

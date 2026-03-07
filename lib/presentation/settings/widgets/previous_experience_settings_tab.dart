@@ -8,6 +8,8 @@ import 'package:simplelog/data/models/previous_experience_row.dart';
 import 'package:simplelog/features/aircraft_types/application/providers/aircraft_type_repository_provider.dart';
 import 'package:simplelog/presentation/settings/providers/previous_experience_providers.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/dialog_adaptive_presenter.dart';
+import 'package:simplelog/presentation/shared/widgets/dialog_header_bar.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
@@ -159,9 +161,9 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
       return;
     }
     if (!context.mounted) return;
-    await showDialog<void>(
+    await showLargeDialogScreen<void>(
       context: context,
-      builder: (context) => _PreviousExperienceEditDialog(
+      builder: (_) => _PreviousExperienceEditDialog(
         aircraftTypes: typesAsync.map((e) => e.type).toList(),
         initial: initial,
       ),
@@ -510,95 +512,142 @@ class _PreviousExperienceEditDialogState
     final title = widget.initial == null
         ? 'Add Previous Experience'
         : 'Edit Previous Experience';
-    return Dialog(
-      child: SizedBox(
-        width: 760,
-        height: MediaQuery.of(context).size.height * 0.85,
-        child: Column(
-          children: [
-            ListTile(
-              title: Text(title),
-              trailing: TextButton(onPressed: _save, child: const Text('Save')),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      DropdownInputField<int>(
-                        value: _aircraftTypeId,
-                        label: 'Aircraft Type',
-                        items: widget.aircraftTypes
-                            .map(
-                              (type) => DropdownMenuItem<int>(
-                                value: type.id,
-                                child: Text('${type.code} - ${type.longName}'),
-                              ),
-                            )
-                            .toList(growable: false),
-                        onChanged: (value) => setState(() {
-                          _aircraftTypeId = value;
-                          _showRequiredErrors = false;
-                        }),
-                        errorText:
-                            _showRequiredErrors && _aircraftTypeId == null
-                            ? 'Select aircraft type.'
-                            : null,
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _DateField(
-                              label: 'First Flight',
-                              value: _firstFlight,
-                              onPick: () => _pickDateTime(first: true),
-                              onClear: () => setState(() {
-                                _firstFlight = null;
-                                _showRequiredErrors = true;
-                              }),
-                              errorText:
-                                  _showRequiredErrors && _firstFlight == null
-                                  ? 'First Flight is required.'
-                                  : null,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _DateField(
-                              label: 'Last Flight',
-                              value: _lastFlight,
-                              onPick: () => _pickDateTime(first: false),
-                              onClear: () => setState(() {
-                                _lastFlight = null;
-                                _showRequiredErrors = true;
-                              }),
-                              errorText:
-                                  _showRequiredErrors && _lastFlight == null
-                                  ? 'Last Flight is required.'
-                                  : null,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _IntGrid(controllers: _intControllers),
-                      const SizedBox(height: 12),
-                      const Divider(height: 1),
-                      const SizedBox(height: 12),
-                      _TimeGrid(controllers: _timeControllers),
-                    ],
-                  ),
+    final isCompact = isCompactDialogScreen(context);
+    final displayTitle = isCompact ? 'Previous Experience' : title;
+    final dateFields = isCompact
+        ? Column(
+            children: [
+              _DateField(
+                label: 'First Flight',
+                value: _firstFlight,
+                onPick: () => _pickDateTime(first: true),
+                onClear: () => setState(() {
+                  _firstFlight = null;
+                  _showRequiredErrors = true;
+                }),
+                errorText: _showRequiredErrors && _firstFlight == null
+                    ? 'First Flight is required.'
+                    : null,
+              ),
+              const SizedBox(height: 12),
+              _DateField(
+                label: 'Last Flight',
+                value: _lastFlight,
+                onPick: () => _pickDateTime(first: false),
+                onClear: () => setState(() {
+                  _lastFlight = null;
+                  _showRequiredErrors = true;
+                }),
+                errorText: _showRequiredErrors && _lastFlight == null
+                    ? 'Last Flight is required.'
+                    : null,
+              ),
+            ],
+          )
+        : Row(
+            children: [
+              Expanded(
+                child: _DateField(
+                  label: 'First Flight',
+                  value: _firstFlight,
+                  onPick: () => _pickDateTime(first: true),
+                  onClear: () => setState(() {
+                    _firstFlight = null;
+                    _showRequiredErrors = true;
+                  }),
+                  errorText: _showRequiredErrors && _firstFlight == null
+                      ? 'First Flight is required.'
+                      : null,
                 ),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _DateField(
+                  label: 'Last Flight',
+                  value: _lastFlight,
+                  onPick: () => _pickDateTime(first: false),
+                  onClear: () => setState(() {
+                    _lastFlight = null;
+                    _showRequiredErrors = true;
+                  }),
+                  errorText: _showRequiredErrors && _lastFlight == null
+                      ? 'Last Flight is required.'
+                      : null,
+                ),
+              ),
+            ],
+          );
+    final formBody = SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DropdownInputField<int>(
+              value: _aircraftTypeId,
+              label: 'Aircraft Type',
+              items: widget.aircraftTypes
+                  .map(
+                    (type) => DropdownMenuItem<int>(
+                      value: type.id,
+                      child: Text('${type.code} - ${type.longName}'),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (value) => setState(() {
+                _aircraftTypeId = value;
+                _showRequiredErrors = false;
+              }),
+              errorText: _showRequiredErrors && _aircraftTypeId == null
+                  ? 'Select aircraft type.'
+                  : null,
             ),
+            const SizedBox(height: 12),
+            dateFields,
+            const SizedBox(height: 12),
+            _IntGrid(controllers: _intControllers),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            _TimeGrid(controllers: _timeControllers),
           ],
         ),
       ),
+    );
+
+    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
+    if (isInDialog) {
+      return Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          children: [
+            DialogHeaderBar(
+              title: displayTitle,
+              onClose: () => Navigator.of(context).maybePop(),
+              actions: [
+                TextButton(onPressed: _save, child: const Text('Save')),
+              ],
+            ),
+            const Divider(height: 1),
+            Expanded(child: formBody),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: Text(displayTitle),
+        actions: [
+          TextButton(onPressed: _save, child: const Text('Save')),
+        ],
+      ),
+      body: formBody,
     );
   }
 }

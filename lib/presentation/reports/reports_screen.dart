@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
@@ -40,6 +41,8 @@ import 'package:simplelog/presentation/reports/providers/reports_preferences_pro
 import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
 import 'package:simplelog/presentation/settings/widgets/pilot_profile_settings_card.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/dialog_adaptive_presenter.dart';
+import 'package:simplelog/presentation/shared/widgets/dialog_header_bar.dart';
 import 'package:simplelog/presentation/shared/widgets/event_type_toggle_button.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
@@ -285,7 +288,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   Future<void> _openTemplateEditorDialog() async {
     final db = ref.read(databaseProvider);
-    final changed = await showDialog<bool>(
+    final changed = await showLargeDialogScreen<bool>(
       context: context,
       builder: (_) => _EditTemplatesDialog(
         db: db,
@@ -953,7 +956,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<void> _addFilter() async {
-    final added = await showDialog<ReportsFilterCondition>(
+    final added = await showSmallDialogScreen<ReportsFilterCondition>(
       context: context,
       builder: (context) => const _AddFilterDialog(),
     );
@@ -1022,7 +1025,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<void> _saveCurrentQuery() async {
-    final name = await showDialog<String>(
+    final name = await showSmallDialogScreen<String>(
       context: context,
       builder: (context) => const _SaveQueryDialog(),
     );
@@ -1074,8 +1077,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       );
       return;
     }
-    await showDialog<void>(
+    await showLargeDialogScreen<void>(
       context: context,
+      maxWidth: 1100,
       builder: (context) => _FlightsMapDialog(
         flights: flights,
         fullscreen: true,
@@ -6222,22 +6226,9 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.reportsAddFilter,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
+              DialogHeaderBar(
+                title: l10n.reportsAddFilter,
+                onClose: () => Navigator.of(context).pop(),
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<ReportsFilterField>(
@@ -6379,22 +6370,9 @@ class _SaveQueryDialogState extends State<_SaveQueryDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.reportsSaveQuery,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
+              DialogHeaderBar(
+                title: l10n.reportsSaveQuery,
+                onClose: () => Navigator.of(context).pop(),
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -6878,127 +6856,118 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
     }
     final airportCount = airports.length;
 
-    final screen = MediaQuery.of(context).size;
-    final dialogWidth = widget.fullscreen ? screen.width * 0.98 : 900.0;
-    final dialogHeight = widget.fullscreen ? screen.height * 0.96 : 620.0;
-
-    return Dialog(
-      insetPadding: widget.fullscreen
-          ? const EdgeInsets.all(8)
-          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-      child: SizedBox(
-        width: dialogWidth,
-        height: dialogHeight,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
+    final mapBody = markers.isEmpty
+        ? Center(child: Text(l10n.reportsNoCoordinatesAvailable))
+        : Stack(
+            children: [
+              FlutterMap(
+                mapController: _mapController,
+                options: const MapOptions(
+                  initialCenter: LatLng(20, 0),
+                  initialZoom: 2,
+                ),
                 children: [
-                  Expanded(
-                    child: Text(
-                      l10n.reportsFlightMapTitle,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.rietlabs.simplelog',
+                    tileProvider: NetworkTileProvider(
+                      cachingProvider: appMapCachingProvider(),
                     ),
                   ),
-                  IconButton(
-                    tooltip: _showLines
-                        ? l10n.reportsHideLines
-                        : l10n.reportsShowLines,
-                    onPressed: () => setState(() => _showLines = !_showLines),
-                    icon: Icon(_showLines ? Icons.route : Icons.scatter_plot),
-                  ),
-                  IconButton(
-                    tooltip: 'Export interactive map',
-                    onPressed: _exportInteractiveHtmlMap,
-                    icon: const Icon(Icons.ios_share_outlined),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(l10n.reportsDone),
-                  ),
+                  PolylineLayer(polylines: lines),
+                  MarkerLayer(markers: markers),
                 ],
               ),
+              Positioned(
+                left: 12,
+                top: 12,
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      l10n.reportsAirportsCount(airportCount),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 12,
+                top: 12,
+                child: Card(
+                  child: Column(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          _zoom += 1;
+                          _mapController.move(
+                            _mapController.camera.center,
+                            _zoom,
+                          );
+                        },
+                        icon: const Icon(Icons.add),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          _zoom -= 1;
+                          _mapController.move(
+                            _mapController.camera.center,
+                            _zoom,
+                          );
+                        },
+                        icon: const Icon(Icons.remove),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+
+    final actions = <Widget>[
+      IconButton(
+        tooltip: _showLines ? l10n.reportsHideLines : l10n.reportsShowLines,
+        onPressed: () => setState(() => _showLines = !_showLines),
+        icon: Icon(_showLines ? Icons.route : Icons.scatter_plot),
+      ),
+      IconButton(
+        tooltip: 'Export interactive map',
+        onPressed: _exportInteractiveHtmlMap,
+        icon: const Icon(Icons.ios_share_outlined),
+      ),
+    ];
+
+    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
+    if (isInDialog) {
+      return Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          children: [
+            DialogHeaderBar(
+              title: l10n.reportsFlightMapTitle,
+              onClose: () => Navigator.of(context).pop(),
+              actions: actions,
             ),
             const Divider(height: 1),
-            Expanded(
-              child: markers.isEmpty
-                  ? Center(child: Text(l10n.reportsNoCoordinatesAvailable))
-                  : Stack(
-                      children: [
-                        FlutterMap(
-                          mapController: _mapController,
-                          options: const MapOptions(
-                            initialCenter: LatLng(20, 0),
-                            initialZoom: 2,
-                          ),
-                          children: [
-                            TileLayer(
-                              urlTemplate:
-                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              userAgentPackageName: 'com.rietlabs.simplelog',
-                              tileProvider: NetworkTileProvider(
-                                cachingProvider: appMapCachingProvider(),
-                              ),
-                            ),
-                            PolylineLayer(polylines: lines),
-                            MarkerLayer(markers: markers),
-                          ],
-                        ),
-                        Positioned(
-                          left: 12,
-                          top: 12,
-                          child: Card(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 8,
-                              ),
-                              child: Text(
-                                l10n.reportsAirportsCount(airportCount),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 12,
-                          top: 12,
-                          child: Card(
-                            child: Column(
-                              children: [
-                                IconButton(
-                                  onPressed: () {
-                                    _zoom += 1;
-                                    _mapController.move(
-                                      _mapController.camera.center,
-                                      _zoom,
-                                    );
-                                  },
-                                  icon: const Icon(Icons.add),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    _zoom -= 1;
-                                    _mapController.move(
-                                      _mapController.camera.center,
-                                      _zoom,
-                                    );
-                                  },
-                                  icon: const Icon(Icons.remove),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
+            Expanded(child: mapBody),
           ],
         ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(l10n.reportsFlightMapTitle),
+        actions: actions,
       ),
+      body: mapBody,
     );
   }
 }
@@ -7082,6 +7051,13 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
   void dispose() {
     _templateNameController.dispose();
     super.dispose();
+  }
+
+  String _displayTemplateName(String rawName) {
+    if (rawName == 'cover_page_default') {
+      return 'Cover Page Default';
+    }
+    return rawName;
   }
 
   Future<void> _loadItems() async {
@@ -7250,14 +7226,13 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
       return item.templateJson;
     }();
 
-    final editedJson = await showDialog<String>(
+    final editedJson = await showLargeDialogScreen<String>(
       context: context,
-      builder: (dialogContext) {
-        return _TemplateJsonEditorDialog(
-          templateName: item.templateName,
-          initialJson: prettyJson,
-        );
-      },
+      maxWidth: 980,
+      builder: (_) => _TemplateJsonEditorDialog(
+        templateName: item.templateName,
+        initialJson: prettyJson,
+      ),
     );
     if (editedJson == null) {
       return;
@@ -7363,109 +7338,146 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 620),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(_changed),
+    final isCompact = MediaQuery.sizeOf(context).width < 600;
+    final body = Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _templateNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Template name',
+                    border: OutlineInputBorder(),
+                    isDense: true,
                   ),
-                  const Expanded(
-                    child: Text(
-                      'Edit Templates',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(_changed),
-                    child: const Text('Done'),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _templateNameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Template name',
-                              border: OutlineInputBorder(),
-                              isDense: true,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SquareOutlineButton(
-                          onPressed: _uploadAsNewTemplate,
-                          icon: Icons.upload_file,
-                          label: 'Upload JSON',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Divider(height: 1),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: _isBusy
-                          ? const Center(child: CircularProgressIndicator())
-                          : ListView.separated(
-                              itemCount: _items.length,
-                              separatorBuilder: (_, _) =>
-                                  const Divider(height: 1),
-                              itemBuilder: (context, index) {
-                                final item = _items[index];
-                                return ListTile(
-                                  title: Text(item.templateName),
-                                  trailing: Wrap(
-                                    spacing: 8,
-                                    children: [
-                                      SquareOutlineButton(
-                                        onPressed: () =>
-                                            unawaited(_editTemplate(item)),
-                                        icon: Icons.edit_note,
-                                        label: 'Edit',
-                                      ),
-                                      SquareOutlineButton(
-                                        onPressed: () =>
-                                            unawaited(_downloadTemplate(item)),
-                                        icon: Icons.download,
-                                        label: 'Download',
-                                      ),
-                                      SquareOutlineButton(
-                                        onPressed: () =>
-                                            unawaited(_deleteTemplate(item)),
-                                        icon: Icons.delete_outline,
-                                        label: 'Delete',
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                  ],
                 ),
               ),
+              const SizedBox(width: 8),
+              SquareOutlineButton(
+                onPressed: _uploadAsNewTemplate,
+                icon: Icons.upload_file,
+                label: 'Upload JSON',
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Divider(height: 1),
+          const SizedBox(height: 8),
+          Expanded(
+            child: _isBusy
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.separated(
+                    itemCount: _items.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final item = _items[index];
+                      final tile = ListTile(
+                        title: Text(_displayTemplateName(item.templateName)),
+                      );
+                      if (isCompact) {
+                        return Slidable(
+                          key: ValueKey(item.templateName),
+                          endActionPane: ActionPane(
+                            motion: const ScrollMotion(),
+                            children: [
+                              SlidableAction(
+                                onPressed: (_) =>
+                                    unawaited(_editTemplate(item)),
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimary,
+                                icon: Icons.edit_note,
+                              ),
+                              SlidableAction(
+                                onPressed: (_) =>
+                                    unawaited(_downloadTemplate(item)),
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primaryContainer,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                                icon: Icons.download,
+                              ),
+                              SlidableAction(
+                                onPressed: (_) =>
+                                    unawaited(_deleteTemplate(item)),
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.error,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onError,
+                                icon: Icons.delete_outline,
+                              ),
+                            ],
+                          ),
+                          child: tile,
+                        );
+                      }
+                      return ListTile(
+                        title: Text(_displayTemplateName(item.templateName)),
+                        trailing: Wrap(
+                          spacing: 8,
+                          children: [
+                            SquareOutlineButton(
+                              onPressed: () => unawaited(_editTemplate(item)),
+                              icon: Icons.edit_note,
+                              label: 'Edit',
+                            ),
+                            SquareOutlineButton(
+                              onPressed: () =>
+                                  unawaited(_downloadTemplate(item)),
+                              icon: Icons.download,
+                              label: 'Download',
+                            ),
+                            SquareOutlineButton(
+                              onPressed: () => unawaited(_deleteTemplate(item)),
+                              icon: Icons.delete_outline,
+                              label: 'Delete',
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+
+    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
+    if (isInDialog) {
+      return Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          children: [
+            DialogHeaderBar(
+              title: 'Edit Templates',
+              onClose: () => Navigator.of(context).pop(_changed),
             ),
+            const Divider(height: 1),
+            Expanded(child: body),
           ],
         ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(_changed),
+        ),
+        title: const Text('Edit Templates'),
       ),
+      body: body,
     );
   }
 }
@@ -7501,63 +7513,71 @@ class _TemplateJsonEditorDialogState extends State<_TemplateJsonEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 980, maxHeight: 760),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Edit Template: ${widget.templateName}',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
+    final body = Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              expands: true,
+              maxLines: null,
+              textAlignVertical: TextAlignVertical.top,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'Template JSON',
               ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  expands: true,
-                  maxLines: null,
-                  textAlignVertical: TextAlignVertical.top,
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: 'Template JSON',
-                  ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  MaterialLocalizations.of(context).cancelButtonLabel,
                 ),
               ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(
-                      MaterialLocalizations.of(context).cancelButtonLabel,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: () =>
-                        Navigator.of(context).pop(_controller.text),
-                    child: const Text('Save'),
-                  ),
-                ],
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(_controller.text),
+                child: const Text('Save'),
               ),
             ],
           ),
-        ),
+        ],
       ),
+    );
+
+    final title = 'Edit Template: ${widget.templateName}';
+    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
+    if (isInDialog) {
+      return Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          children: [
+            DialogHeaderBar(
+              title: title,
+              onClose: () => Navigator.of(context).pop(),
+            ),
+            const Divider(height: 1),
+            Expanded(child: body),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(title),
+      ),
+      body: body,
     );
   }
 }
