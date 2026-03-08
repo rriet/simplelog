@@ -554,12 +554,12 @@ final reportsRuntimeQueryProvider =
 
 /// Which types of logbook events are included when generating reports.
 class ReportsEventTypesSelection {
-  /// Creates a new selection; all fields default to `true` except [positioning]
+  /// Creates a new selection; all fields default to `true`.
   const ReportsEventTypesSelection({
     this.flights = true,
     this.simulator = true,
     this.duty = true,
-    this.positioning = false,
+    this.positioning = true,
   });
 
   /// Builds a selection from a JSON map.
@@ -568,7 +568,7 @@ class ReportsEventTypesSelection {
       flights: json['flights'] != false,
       simulator: json['simulator'] != false,
       duty: json['duty'] != false,
-      positioning: json['positioning'] == true,
+      positioning: json['positioning'] != false,
     );
   }
 

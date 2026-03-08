@@ -7,18 +7,21 @@
         {
             "name": "simplelog",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "program": "lib/main.dart"
         },
         {
             "name": "simplelog (profile mode)",
             "request": "launch",
             "type": "dart",
+            "program": "lib/main.dart",
             "flutterMode": "profile"
         },
         {
             "name": "simplelog (release mode)",
             "request": "launch",
             "type": "dart",
+            "program": "lib/main.dart",
             "flutterMode": "release"
         },
         {

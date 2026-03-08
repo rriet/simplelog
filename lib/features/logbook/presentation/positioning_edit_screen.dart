@@ -15,6 +15,7 @@ import 'package:simplelog/features/airports/presentation/airport_edit_screen.dar
 import 'package:simplelog/features/airports/presentation/widgets/airport_picker_dialog.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
+import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
@@ -460,38 +461,12 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     );
 
     final title = widget.isCreate ? 'New Positioning' : 'Edit Positioning';
-    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
-
-    if (isInDialog) {
-      return Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-              title: Text(title),
-              trailing: TextButton(
-                onPressed: _save,
-                child: Text(l10n.saveAction),
-              ),
-            ),
-            const Divider(height: 1),
-            Flexible(child: form),
-          ],
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
-      ),
-      body: form,
+    return AdaptiveFormShell(
+      onClose: () => unawaited(Navigator.of(context).maybePop()),
+      longTitle: title,
+      shortTitle: title,
+      actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
+      contentView: form,
     );
   }
 

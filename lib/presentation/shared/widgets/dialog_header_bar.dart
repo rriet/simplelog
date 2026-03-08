@@ -8,6 +8,7 @@ class DialogHeaderBar extends StatelessWidget {
     required this.onClose,
     super.key,
     this.actions = const <Widget>[],
+    this.forceCloseIcon = false,
   });
 
   /// Header title text.
@@ -19,15 +20,19 @@ class DialogHeaderBar extends StatelessWidget {
   /// Optional widgets shown on the right side.
   final List<Widget> actions;
 
+  /// Forces the close (`X`) icon even on compact screens.
+  final bool forceCloseIcon;
+
   @override
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.sizeOf(context).width < 600;
+    final useCloseIcon = forceCloseIcon || !isCompact;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
       child: Row(
         children: [
           IconButton(
-            icon: Icon(isCompact ? Icons.arrow_back_ios : Icons.close),
+            icon: Icon(useCloseIcon ? Icons.close : Icons.arrow_back_ios),
             onPressed: onClose,
           ),
           Expanded(

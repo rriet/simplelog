@@ -22,6 +22,7 @@ import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.
 import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/endorsement_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
@@ -498,41 +499,20 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       ),
     );
 
-    final title = widget.isCreate
+    final longTitle = widget.isCreate
         ? 'New Simulator Training'
         : 'Edit Simulator Training';
-    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
-
-    if (isInDialog) {
-      return Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-              title: Text(title),
-              trailing: TextButton(
-                onPressed: _save,
-                child: Text(l10n.saveAction),
-              ),
-            ),
-            const Divider(height: 1),
-            Flexible(child: form),
-          ],
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
-      ),
-      body: form,
+    final shortTitle = widget.isCreate
+        ? 'New Sim Training'
+        : 'Edit Sim Training';
+    
+    
+    return AdaptiveFormShell(
+      onClose: () => unawaited(Navigator.of(context).maybePop()),
+      longTitle: longTitle,
+      shortTitle: shortTitle,
+      actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
+      contentView: form,
     );
   }
 
