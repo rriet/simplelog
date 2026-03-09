@@ -26,39 +26,57 @@ class EntityPickerDialog<T> extends ConsumerStatefulWidget {
     this.emptyText = 'No results found',
     this.loadingWidget,
     this.errorBuilder,
+    this.showHeader = true,
   });
 
   /// Dialog title.
   final String title;
+
   /// Static search label (when [searchLabelBuilder] is not provided).
   final String? searchLabel;
+
   /// Dynamic search label builder.
   final String Function(WidgetRef ref)? searchLabelBuilder;
+
   /// Builds async items list for the current search query.
   final AsyncValue<List<T>> Function(WidgetRef ref, String query) itemsBuilder;
+
   /// Returns title text for each item row.
   final String Function(T item) itemTitle;
+
   /// Returns stable key value used for item identity.
   final Object Function(T item) itemKey;
+
   /// Optional subtitle text per item.
   final String? Function(T item)? itemSubtitle;
+
   /// Optional extra filter applied after loading items.
   final bool Function(T item)? itemFilter;
+
   /// Optional trailing widget builder for the search row.
   final Widget? Function(BuildContext context, WidgetRef ref)?
-      searchTrailingBuilder;
+  searchTrailingBuilder;
+
   /// Optional trailing widget builder per item row.
   final Widget? Function(BuildContext context, T item)? itemTrailingBuilder;
+
   /// Optional favorite-state resolver.
   final bool Function(T item)? isFavorite;
+
   /// Optional callback to toggle favorite state.
   final Future<void> Function(WidgetRef ref, T item)? onToggleFavorite;
+
   /// Empty-state message.
   final String emptyText;
+
   /// Optional loading replacement widget.
   final Widget? loadingWidget;
+
   /// Optional custom error builder.
   final Widget Function(BuildContext context, Object error)? errorBuilder;
+
+  /// Whether to render built-in title/close header.
+  final bool showHeader;
 
   @override
   ConsumerState<EntityPickerDialog<T>> createState() =>
@@ -155,23 +173,24 @@ class _EntityPickerDialogState<T> extends ConsumerState<EntityPickerDialog<T>> {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  widget.title,
-                  style: Theme.of(context).textTheme.titleMedium,
+        if (widget.showHeader)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
-              ),
-              IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close),
-              ),
-            ],
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
           ),
-        ),
         PickerSearchBar(
           controller: _searchController,
           focusNode: _searchFocusNode,
