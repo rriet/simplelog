@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -410,6 +412,7 @@ class ReportPdfApplicationService {
     'instructor',
     'total',
   };
+  static Future<pw.ThemeData?>? _unicodeThemeFuture;
 
   /// Generates a PDF document based on the
   /// given [template] and logbook [entries].
@@ -465,7 +468,10 @@ class ReportPdfApplicationService {
     required Map<String, Uint8List> coverImages,
     required PdfPageFormat pageFormat,
   }) async {
-    final document = pw.Document();
+    final unicodeTheme = await _loadUnicodeTheme();
+    final document = unicodeTheme == null
+        ? pw.Document()
+        : pw.Document(theme: unicodeTheme);
     final coverPage = template.coverPage;
     if (coverPage != null && coverPage.enabled) {
       document.addPage(
@@ -595,6 +601,34 @@ class ReportPdfApplicationService {
     }
 
     return document.save();
+  }
+
+  Future<pw.ThemeData?> _loadUnicodeTheme() {
+    return _unicodeThemeFuture ??= () async {
+      try {
+        final regular = pw.Font.ttf(
+          await rootBundle.load('assets/fonts/Roboto-Regular.ttf'),
+        );
+        final bold = pw.Font.ttf(
+          await rootBundle.load('assets/fonts/Roboto-Bold.ttf'),
+        );
+        final italic = pw.Font.ttf(
+          await rootBundle.load('assets/fonts/Roboto-Italic.ttf'),
+        );
+        final boldItalic = pw.Font.ttf(
+          await rootBundle.load('assets/fonts/Roboto-BoldItalic.ttf'),
+        );
+        return pw.ThemeData.withFont(
+          base: regular,
+          bold: bold,
+          italic: italic,
+          boldItalic: boldItalic,
+        );
+      } on Object {
+        debugPrint('PDF Unicode font load failed. Falling back to defaults.');
+        return null;
+      }
+    }();
   }
 
   pw.EdgeInsets _tablePageMargin(String pageSuffix) {
@@ -895,9 +929,7 @@ class ReportPdfApplicationService {
         children: titleWidgets,
       );
     }
-    final columnCount = rows
-        .map((row) => row.length)
-        .fold<int>(0, math.max);
+    final columnCount = rows.map((row) => row.length).fold<int>(0, math.max);
     final normalizedRows = rows
         .map((row) {
           if (row.length == columnCount) {
@@ -919,9 +951,11 @@ class ReportPdfApplicationService {
         for (var rowIndex = 0; rowIndex < normalizedRows.length; rowIndex++)
           pw.TableRow(
             children: [
-              for (var columnIndex = 0;
-                  columnIndex < normalizedRows[rowIndex].length;
-                  columnIndex++)
+              for (
+                var columnIndex = 0;
+                columnIndex < normalizedRows[rowIndex].length;
+                columnIndex++
+              )
                 pw.Padding(
                   padding: const pw.EdgeInsets.symmetric(
                     horizontal: 5,
@@ -1051,21 +1085,13 @@ class ReportPdfApplicationService {
           final isMultiEngine = (type?.engineCount ?? 0) > 1;
           final isMultiPilot = type?.multiPilot ?? false;
           final singlePilotSelMinutes =
-              isLandplane && !isMultiEngine && !isMultiPilot
-              ? blockMinutes
-              : 0;
+              isLandplane && !isMultiEngine && !isMultiPilot ? blockMinutes : 0;
           final singlePilotMelMinutes =
-              isLandplane && isMultiEngine && !isMultiPilot
-              ? blockMinutes
-              : 0;
+              isLandplane && isMultiEngine && !isMultiPilot ? blockMinutes : 0;
           final multiPilotSelMinutes =
-              isLandplane && !isMultiEngine && isMultiPilot
-              ? blockMinutes
-              : 0;
+              isLandplane && !isMultiEngine && isMultiPilot ? blockMinutes : 0;
           final multiPilotMelMinutes =
-              isLandplane && isMultiEngine && isMultiPilot
-              ? blockMinutes
-              : 0;
+              isLandplane && isMultiEngine && isMultiPilot ? blockMinutes : 0;
           final selMinutes = singlePilotSelMinutes + multiPilotSelMinutes;
           final melMinutes = singlePilotMelMinutes + multiPilotMelMinutes;
           final complexMinutes = (type?.complex ?? false) ? blockMinutes : 0;
@@ -2217,8 +2243,7 @@ class ReportPdfApplicationService {
                   ? row.extraImages[key]
                   : null;
               final shouldKeepTextWithImage = key == 'anyRemarks';
-              final textValue =
-                  imageBytes == null || shouldKeepTextWithImage
+              final textValue = imageBytes == null || shouldKeepTextWithImage
                   ? _rowValueForKey(row, key, template.timeFormat)
                   : '';
               return ReportPdfCellConfig(

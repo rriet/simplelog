@@ -40,6 +40,7 @@ import 'package:simplelog/presentation/reports/providers/report_pdf_application_
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
 import 'package:simplelog/presentation/settings/widgets/pilot_profile_settings_card.dart';
+import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
 import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/presentation/shared/widgets/dialog_adaptive_presenter.dart';
 import 'package:simplelog/presentation/shared/widgets/dialog_header_bar.dart';
@@ -196,6 +197,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   );
   String? _flightRowsCacheKey;
   List<ReportsFlightRow> _flightRowsCache = const [];
+  String? _mapDataCacheKey;
+  ReportsMapData _mapDataCache = const ReportsMapData(airports: [], routes: []);
   int _batchFlightCount = 0;
   bool _isCheckingBatchFlights = false;
   bool _isPreparingBatchData = false;
@@ -741,34 +744,65 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (selectedTypes.isEmpty) {
       return const [];
     }
-    final logbookEntries = await logbookUseCases.fetchLogbookPage(
-      LogbookFilters(from: from, to: to, types: selectedTypes),
-      limit: 10000,
-      offset: 0,
-    );
-    return logbookEntries
-        .where((entry) {
-          if (entry.flight != null) {
-            if (!eventTypes.flights) {
-              return false;
-            }
-            if (includedFlightIds == null) {
-              return true;
-            }
-            return includedFlightIds.contains(entry.flight!.id);
+    if (eventTypes.flights &&
+        includedFlightIds != null &&
+        includedFlightIds.isEmpty) {
+      return const [];
+    }
+    const pageSize = 500;
+    var offset = 0;
+    final filteredEntries = <LogbookEntry>[];
+    final queryFlightIds =
+        includedFlightIds != null && includedFlightIds.length <= 800
+        ? includedFlightIds
+        : null;
+    while (true) {
+      final page = await logbookUseCases.fetchLogbookPage(
+        LogbookFilters(from: from, to: to, types: selectedTypes),
+        limit: pageSize,
+        offset: offset,
+        includedFlightIds: queryFlightIds,
+      );
+      if (page.isEmpty) {
+        break;
+      }
+      for (final entry in page) {
+        if (entry.flight != null) {
+          if (!eventTypes.flights) {
+            continue;
           }
-          if (entry.simulatorTraining != null) {
-            return eventTypes.simulator;
+          if (includedFlightIds != null &&
+              !includedFlightIds.contains(entry.flight!.id)) {
+            continue;
           }
-          if (entry.positioning != null) {
-            return eventTypes.positioning;
+          filteredEntries.add(entry);
+          continue;
+        }
+        if (entry.simulatorTraining != null) {
+          if (eventTypes.simulator) {
+            filteredEntries.add(entry);
           }
-          if (entry.dutyStart != null || entry.dutyEnd != null) {
-            return eventTypes.duty;
+          continue;
+        }
+        if (entry.positioning != null) {
+          if (eventTypes.positioning) {
+            filteredEntries.add(entry);
           }
-          return false;
-        })
-        .toList(growable: false);
+          continue;
+        }
+        if (entry.dutyStart != null || entry.dutyEnd != null) {
+          if (eventTypes.duty) {
+            filteredEntries.add(entry);
+          }
+        }
+      }
+      if (page.length < pageSize) {
+        break;
+      }
+      offset += page.length;
+      await Future<void>.delayed(Duration.zero);
+    }
+    return filteredEntries;
   }
 
   Future<void> _ensureDetailsLoaded({
@@ -1069,9 +1103,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Future<void> _openMapDialog() async {
-    final flights = await _loadFlightsForCurrentQuery(flightsEnabled: true);
+    final mapData = await _loadMapDataForCurrentQuery();
     if (!mounted) return;
-    if (flights.isEmpty) {
+    if (mapData.airports.isEmpty) {
       await _showInfoDialog(
         AppLocalizations.of(context)!.reportsNoFlightsInPeriod,
       );
@@ -1081,7 +1115,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       context: context,
       maxWidth: 1100,
       builder: (context) => _FlightsMapDialog(
-        flights: flights,
+        mapData: mapData,
         fullscreen: true,
         initialShowLines: _showPathOnMap,
       ),
@@ -1111,13 +1145,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       final pdfEventTypes = _eventTypesForPdf(
         ref.read(reportsEventTypesProvider),
       );
-      final flightsForPdf = await _loadFlightsForCurrentQuery(
-        flightsEnabled: pdfEventTypes.flights,
-      );
+      Set<int>? includedFlightIds;
+      if (pdfEventTypes.flights && _filters.isNotEmpty) {
+        final flightsForPdf = await _loadFlightsForCurrentQuery(
+          flightsEnabled: true,
+        );
+        includedFlightIds = flightsForPdf
+            .map((flight) => flight.flightId)
+            .toSet();
+      }
       final entriesForPdf = await _fetchEntriesForRange(
-        includedFlightIds: pdfEventTypes.flights
-            ? flightsForPdf.map((flight) => flight.flightId).toSet()
-            : null,
+        includedFlightIds: includedFlightIds,
         eventTypes: pdfEventTypes,
         from: _from,
         to: _to,
@@ -1160,6 +1198,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         flightCrewById: crewMaps.$1,
         simulatorCrewById: crewMaps.$2,
       );
+      if (bytes.isEmpty) {
+        throw StateError('Generated PDF is empty.');
+      }
 
       await _setPdfGenerationProgress(l10n.reportsPdfSaving, progress: 0.85);
       final path = await _savePdfBytes(
@@ -1255,6 +1296,45 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       filtersKey,
     ];
     return parts.join('::');
+  }
+
+  String _mapDataQueryKey() {
+    final filtersKey = _filters
+        .map(
+          (condition) {
+            final textValue = condition.textValue ?? '';
+            final numberValue = condition.numberValue?.toString() ?? '';
+            return '${condition.field.name}:${condition.operator.name}:'
+                '$textValue:$numberValue';
+          },
+        )
+        .join('|');
+    return <Object>[
+      _from.microsecondsSinceEpoch,
+      _to.microsecondsSinceEpoch,
+      _filterMatchMode.name,
+      filtersKey,
+    ].join('::');
+  }
+
+  Future<ReportsMapData> _loadMapDataForCurrentQuery() async {
+    final cacheKey = _mapDataQueryKey();
+    if (_mapDataCacheKey == cacheKey) {
+      return _mapDataCache;
+    }
+    final repo = ref.read(reportsRepositoryProvider);
+    final mapData = await repo.loadMapData(
+      ReportsQuery(
+        from: _from,
+        to: _to,
+        includePreviousExperience: false,
+        filterMatchMode: _filterMatchMode,
+        filters: _filters,
+      ),
+    );
+    _mapDataCacheKey = cacheKey;
+    _mapDataCache = mapData;
+    return mapData;
   }
 
   Future<List<ReportsFlightRow>> _loadFlightsForCurrentQuery({
@@ -1737,6 +1817,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     required String fileName,
   }) async {
     final l10n = AppLocalizations.of(context)!;
+    final isMobile = Platform.isIOS || Platform.isAndroid;
     String? path;
     try {
       path = await FilePicker.platform.saveFile(
@@ -1744,11 +1825,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         fileName: fileName,
         type: FileType.custom,
         allowedExtensions: const ['pdf'],
-        bytes: bytes,
+        bytes: isMobile ? bytes : null,
       );
     } on Object {
       // On some desktop providers saveFile may not be implemented.
-      if (Platform.isIOS || Platform.isAndroid) {
+      if (isMobile) {
         return null;
       }
       final directory = await FilePicker.platform.getDirectoryPath(
@@ -1762,6 +1843,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
     if (path == null || path.isEmpty) {
       return null;
+    }
+
+    if (isMobile) {
+      try {
+        final exportedFile = File(path);
+        if (exportedFile.existsSync() && exportedFile.lengthSync() > 0) {
+          return path;
+        }
+      } on Object {
+        // Provider path can be inaccessible (for example SAF URI).
+      }
+      final docsDir = await getApplicationDocumentsDirectory();
+      final fallbackPath = '${docsDir.path}${Platform.pathSeparator}$fileName';
+      await File(fallbackPath).writeAsBytes(bytes, flush: true);
+      return fallbackPath;
     }
 
     try {
@@ -2476,59 +2572,64 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('PDF options'),
-              content: SizedBox(
-                width: 420,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SwitchListTile.adaptive(
-                      value: openPdfAfterSaving,
-                      title: const Text('Open PDF after saving'),
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (value) {
-                        setDialogState(() => openPdfAfterSaving = value);
-                      },
-                    ),
-                    SwitchListTile.adaptive(
-                      value: includeHoursBefore,
-                      title: Text(l10n.reportsIncludeHoursBefore),
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (value) {
-                        setDialogState(() => includeHoursBefore = value);
-                      },
-                    ),
-                    SwitchListTile.adaptive(
-                      value: includePreviousExperience,
-                      title: Text(l10n.reportsPreviousExperienceLabel),
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (value) {
-                        setDialogState(() => includePreviousExperience = value);
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: OutlinedButton.icon(
-                        onPressed: () => showPilotProfileEditorDialog(context),
-                        icon: const Icon(Icons.person_outline),
-                        label: const Text('Edit Pilot Profile'),
+            return SizedBox(
+              width: 460,
+              child: AdaptiveFormShell(
+                onClose: () => Navigator.of(context).pop(false),
+                longTitle: 'PDF options',
+                shortTitle: 'PDF',
+                fullScreen: false,
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: Text(l10n.reportsGeneratePdf),
+                  ),
+                ],
+                contentView: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SwitchListTile.adaptive(
+                        value: openPdfAfterSaving,
+                        title: const Text('Open PDF after saving'),
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (value) {
+                          setDialogState(() => openPdfAfterSaving = value);
+                        },
                       ),
-                    ),
-                  ],
+                      SwitchListTile.adaptive(
+                        value: includeHoursBefore,
+                        title: Text(l10n.reportsIncludeHoursBefore),
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (value) {
+                          setDialogState(() => includeHoursBefore = value);
+                        },
+                      ),
+                      SwitchListTile.adaptive(
+                        value: includePreviousExperience,
+                        title: Text(l10n.reportsPreviousExperienceLabel),
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (value) {
+                          setDialogState(
+                            () => includePreviousExperience = value,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          onPressed: () =>
+                              showPilotProfileEditorDialog(context),
+                          icon: const Icon(Icons.person_outline),
+                          label: const Text('Edit Pilot Profile'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: Text(l10n.reportsGeneratePdf),
-                ),
-              ],
             );
           },
         );
@@ -2585,7 +2686,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 ),
                 const SizedBox(width: 8),
                 SizedBox(
-                  width: compact ? 160 : 180,
+                  width: compact ? 132 : 180,
                   child: EventTypeToggleButton(
                     label: l10n.reportsShowPath,
                     selected: _showPathOnMap,
@@ -2983,29 +3084,40 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final selected = await showDialog<CrewPosition>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setStateDialog) => AlertDialog(
-          title: const Text('Set Crew'),
-          content: DropdownButtonFormField<CrewPosition>(
-            initialValue: selectedPosition,
-            items: const [
-              DropdownMenuItem(value: CrewPosition.pic, child: Text('PIC')),
-              DropdownMenuItem(value: CrewPosition.sic, child: Text('SIC')),
+        builder: (context, setStateDialog) => SizedBox(
+          width: 420,
+          child: AdaptiveFormShell(
+            onClose: () => Navigator.of(context).pop(),
+            longTitle: 'Set Crew',
+            shortTitle: 'Set Crew',
+            fullScreen: false,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(selectedPosition),
+                child: const Text('Apply'),
+              ),
             ],
-            onChanged: (value) {
-              if (value == null) return;
-              setStateDialog(() => selectedPosition = value);
-            },
+            contentView: Padding(
+              padding: const EdgeInsets.all(16),
+              child: DropdownButtonFormField<CrewPosition>(
+                initialValue: selectedPosition,
+                items: const [
+                  DropdownMenuItem(
+                    value: CrewPosition.pic,
+                    child: Text('PIC'),
+                  ),
+                  DropdownMenuItem(
+                    value: CrewPosition.sic,
+                    child: Text('SIC'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+                  setStateDialog(() => selectedPosition = value);
+                },
+              ),
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(selectedPosition),
-              child: const Text('Apply'),
-            ),
-          ],
         ),
       ),
     );
@@ -4025,15 +4137,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       changed =
           await showDialog<bool>(
             context: context,
-            builder: (context) => Dialog(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 640,
-                  maxHeight: MediaQuery.of(context).size.height * 0.9,
-                ),
-                child: SizedBox(width: 640, child: screen),
-              ),
-            ),
+            builder: (context) => screen,
           ) ??
           false;
     }
@@ -4188,63 +4292,197 @@ class _BatchFlightChecksDialogState extends State<_BatchFlightChecksDialog> {
     _BatchFlightCheck.values,
   );
 
-  String _label(_BatchFlightCheck check) {
+  (String, String) _copy(_BatchFlightCheck check) {
     return switch (check) {
-      _BatchFlightCheck.timelineConsistency =>
-        'Timeline consistency (arrival/departure, negatives, airports)',
-      _BatchFlightCheck.chocksEqualsTotalBlock =>
+      _BatchFlightCheck.timelineConsistency => (
+        'Timeline consistency',
+        'Arrival/departure order, negatives and airport consistency',
+      ),
+      _BatchFlightCheck.chocksEqualsTotalBlock => (
         'Chocks block matches Total Block',
-      _BatchFlightCheck.flightElapsedMatchesTimes =>
-        'Takeoff/landing elapsed matches Flight time',
-      _BatchFlightCheck.crewTimesEqualBlock => 'PIC+PICUS+SIC+Dual = Block',
-      _BatchFlightCheck.cappedTimesWithinBlock =>
-        'Night/Instrument/IFR/CrossCountry/Flight <= Block',
-      _BatchFlightCheck.customTimesWithinTotalBlock =>
-        'Custom1-4 <= Total Block',
-      _BatchFlightCheck.distanceValidation => 'Distance validation',
-      _BatchFlightCheck.pilotFunctionPattern =>
-        'Pilot function takeoff/landing pattern',
+        'Checks if chocks elapsed equals total block time',
+      ),
+      _BatchFlightCheck.flightElapsedMatchesTimes => (
+        'Takeoff/landing elapsed = Flight',
+        'Compares airborne elapsed time against Flight field',
+      ),
+      _BatchFlightCheck.crewTimesEqualBlock => (
+        'PIC + PICUS + SIC + Dual = Block',
+        'Validates crew position times add up to block',
+      ),
+      _BatchFlightCheck.cappedTimesWithinBlock => (
+        'Time caps within Block',
+        'Night, Instrument, IFR, CrossCountry and Flight cannot exceed Block',
+      ),
+      _BatchFlightCheck.customTimesWithinTotalBlock => (
+        'Custom1-4 within Total Block',
+        'Custom time fields must not exceed total block',
+      ),
+      _BatchFlightCheck.distanceValidation => (
+        'Distance validation',
+        'Validates distance consistency and allowed values',
+      ),
+      _BatchFlightCheck.pilotFunctionPattern => (
+        'Pilot function pattern',
+        'Validates takeoff/landing function sequence',
+      ),
     };
+  }
+
+  void _toggleCheck(_BatchFlightCheck check, bool enabled) {
+    setState(() {
+      if (enabled) {
+        _selected.add(check);
+      } else {
+        _selected.remove(check);
+      }
+    });
+  }
+
+  Widget _buildCheckTile({
+    required _BatchFlightCheck check,
+    required ThemeData theme,
+    required Color cardColor,
+    required Color borderColor,
+  }) {
+    final copy = _copy(check);
+    final isSelected = _selected.contains(check);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: borderColor),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => _toggleCheck(check, !isSelected),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        copy.$1,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        copy.$2,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Checkbox.adaptive(
+                  value: isSelected,
+                  onChanged: (value) => _toggleCheck(check, value ?? false),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Check Flights Options'),
-      content: SizedBox(
-        width: 620,
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            for (final check in _BatchFlightCheck.values)
-              CheckboxListTile(
-                value: _selected.contains(check),
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                title: Text(_label(check)),
-                onChanged: (value) {
-                  setState(() {
-                    if (value == true) {
-                      _selected.add(check);
-                    } else {
-                      _selected.remove(check);
-                    }
-                  });
-                },
-              ),
-          ],
+    final theme = Theme.of(context);
+    final cardColor = theme.colorScheme.surfaceContainerHighest.withValues(
+      alpha: 0.45,
+    );
+    final borderColor = theme.colorScheme.outline.withValues(alpha: 0.35);
+    return SizedBox(
+      width: 680,
+      child: AdaptiveFormShell(
+        onClose: () => Navigator.of(context).pop(),
+        longTitle: 'Check Flights',
+        shortTitle: 'Checks',
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(_selected),
+            child: const Text('Run'),
+          ),
+        ],
+        contentView: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.30,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.rule_folder_outlined,
+                        size: 18,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${_selected.length} of '
+                          '${_BatchFlightCheck.values.length} checks selected',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    OutlinedButton(
+                      onPressed: () {
+                        setState(() {
+                          _selected
+                            ..clear()
+                            ..addAll(_BatchFlightCheck.values);
+                        });
+                      },
+                      child: const Text('Select all'),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      onPressed: () {
+                        setState(_selected.clear);
+                      },
+                      child: const Text('Clear'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                for (final check in _BatchFlightCheck.values)
+                  _buildCheckTile(
+                    check: check,
+                    theme: theme,
+                    cardColor: cardColor,
+                    borderColor: borderColor,
+                  ),
+            ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(_selected),
-          child: const Text('Run Checks'),
-        ),
-      ],
     );
   }
 }
@@ -4395,6 +4633,8 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isNarrow = MediaQuery.of(context).size.width < 400;
+
     String label(_BatchCalcField field) {
       return switch (field) {
         _BatchCalcField.block => 'Block',
@@ -4425,6 +4665,14 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
       };
     }
 
+    String compactModeLabel(_BatchFieldMode mode) {
+      return switch (mode) {
+        _BatchFieldMode.dontChange => 'No change',
+        _BatchFieldMode.recalculate => 'Recalc',
+        _BatchFieldMode.setZero => 'Zero',
+      };
+    }
+
     String crewRoleLabel(_BatchCrewRole role) {
       return switch (role) {
         _BatchCrewRole.pic => 'PIC',
@@ -4434,29 +4682,54 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
       };
     }
 
-    return AlertDialog(
-      title: const Text('Calculate All'),
-      content: SizedBox(
-        width: 560,
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            Row(
-              children: [
-                const Expanded(child: Text('Crew position')),
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 190,
-                  child: DropdownButtonFormField<_BatchFieldMode>(
-                    initialValue: _preferences.crewMode,
-                    items: _BatchFieldMode.values
-                        .map(
-                          (mode) => DropdownMenuItem(
-                            value: mode,
-                            child: Text(modeLabel(mode)),
-                          ),
-                        )
-                        .toList(growable: false),
+    Widget modeDropdown({
+      required _BatchFieldMode value,
+      required ValueChanged<_BatchFieldMode?> onChanged,
+    }) {
+      return DropdownButtonFormField<_BatchFieldMode>(
+        isExpanded: true,
+        initialValue: value,
+        items: _BatchFieldMode.values
+            .map(
+              (mode) => DropdownMenuItem(
+                value: mode,
+                child: Text(modeLabel(mode)),
+              ),
+            )
+            .toList(growable: false),
+        selectedItemBuilder: (context) {
+          return _BatchFieldMode.values
+              .map((mode) => Text(compactModeLabel(mode)))
+              .toList(growable: false);
+        },
+        decoration: const InputDecoration(isDense: true),
+        onChanged: onChanged,
+      );
+    }
+
+    return SizedBox(
+      width: 620,
+      child: AdaptiveFormShell(
+        onClose: () => Navigator.of(context).pop(),
+        longTitle: 'Calculate All',
+        shortTitle: 'Calculate',
+        fullScreen: false,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(_preferences),
+            child: const Text('Apply'),
+          ),
+        ],
+        contentView: SizedBox(
+          width: 560,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+                const Text('Crew position'),
+                const SizedBox(height: 8),
+                if (isNarrow) ...[
+                  modeDropdown(
+                    value: _preferences.crewMode,
                     onChanged: (value) {
                       if (value == null) return;
                       setState(() {
@@ -4464,11 +4737,9 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
                       });
                     },
                   ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 120,
-                  child: DropdownButtonFormField<_BatchCrewRole>(
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<_BatchCrewRole>(
+                    isExpanded: true,
                     initialValue: _preferences.crewRole,
                     items: _BatchCrewRole.values
                         .map(
@@ -4478,8 +4749,9 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
                           ),
                         )
                         .toList(growable: false),
-                    onChanged:
-                        _preferences.crewMode == _BatchFieldMode.recalculate
+                    decoration: const InputDecoration(isDense: true),
+                    onChanged: _preferences.crewMode ==
+                            _BatchFieldMode.recalculate
                         ? (value) {
                             if (value == null) return;
                             setState(() {
@@ -4490,59 +4762,110 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
                           }
                         : null,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            for (final field in _fields)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    Expanded(child: Text(label(field))),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 190,
-                      child: DropdownButtonFormField<_BatchFieldMode>(
-                        initialValue: _preferences.modeFor(field),
-                        items: _BatchFieldMode.values
-                            .map(
-                              (mode) => DropdownMenuItem(
-                                value: mode,
-                                child: Text(modeLabel(mode)),
-                              ),
-                            )
-                            .toList(growable: false),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          final nextModes =
-                              Map<_BatchCalcField, _BatchFieldMode>.from(
-                                _preferences.fieldModes,
-                              )..[field] = value;
-                          setState(() {
-                            _preferences = _preferences.copyWith(
-                              fieldModes: nextModes,
-                            );
-                          });
-                        },
+                ] else
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: modeDropdown(
+                          value: _preferences.crewMode,
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() {
+                              _preferences = _preferences.copyWith(
+                                crewMode: value,
+                              );
+                            });
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: DropdownButtonFormField<_BatchCrewRole>(
+                          isExpanded: true,
+                          initialValue: _preferences.crewRole,
+                          items: _BatchCrewRole.values
+                              .map(
+                                (role) => DropdownMenuItem(
+                                  value: role,
+                                  child: Text(crewRoleLabel(role)),
+                                ),
+                              )
+                              .toList(growable: false),
+                          decoration: const InputDecoration(isDense: true),
+                          onChanged:
+                              _preferences.crewMode ==
+                                  _BatchFieldMode.recalculate
+                              ? (value) {
+                                  if (value == null) return;
+                                  setState(() {
+                                    _preferences = _preferences.copyWith(
+                                      crewRole: value,
+                                    );
+                                  });
+                                }
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 12),
+                for (final field in _fields)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: isNarrow
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(label(field)),
+                              const SizedBox(height: 6),
+                              modeDropdown(
+                                value: _preferences.modeFor(field),
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  final nextModes = Map<
+                                    _BatchCalcField,
+                                    _BatchFieldMode
+                                  >.from(_preferences.fieldModes)
+                                    ..[field] = value;
+                                  setState(() {
+                                    _preferences = _preferences.copyWith(
+                                      fieldModes: nextModes,
+                                    );
+                                  });
+                                },
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Expanded(child: Text(label(field))),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: modeDropdown(
+                                  value: _preferences.modeFor(field),
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    final nextModes = Map<
+                                      _BatchCalcField,
+                                      _BatchFieldMode
+                                    >.from(_preferences.fieldModes)
+                                      ..[field] = value;
+                                    setState(() {
+                                      _preferences = _preferences.copyWith(
+                                        fieldModes: nextModes,
+                                      );
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+            ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(_preferences),
-          child: const Text('Apply'),
-        ),
-      ],
     );
   }
 }
@@ -4863,7 +5186,12 @@ class _ReportsActionButton extends StatelessWidget {
         child: FilledButton.icon(
           onPressed: onPressed,
           icon: Icon(icon),
-          label: Text(label),
+          label: Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       );
     }
@@ -4872,7 +5200,12 @@ class _ReportsActionButton extends StatelessWidget {
       child: OutlinedButton.icon(
         onPressed: onPressed,
         icon: Icon(icon),
-        label: Text(label),
+        label: Text(
+          label,
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
     );
   }
@@ -6448,12 +6781,12 @@ class _EntriesPanel extends StatelessWidget {
 
 class _FlightsMapDialog extends StatefulWidget {
   const _FlightsMapDialog({
-    required this.flights,
+    required this.mapData,
     this.fullscreen = false,
     this.initialShowLines = true,
   });
 
-  final List<ReportsFlightRow> flights;
+  final ReportsMapData mapData;
   final bool fullscreen;
   final bool initialShowLines;
 
@@ -6565,109 +6898,44 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
   }
 
   String _buildInteractiveMapHtml() {
-    final routeBuckets = <String, _RouteBucket>{};
     final points = <Map<String, dynamic>>[];
-    final seenPointKeys = <String>{};
     final bounds = _BoundsAccumulator();
-
-    for (final row in widget.flights) {
-      final fromIcao = row.fromIcao.trim().toUpperCase();
-      final toIcao = row.toIcao.trim().toUpperCase();
-      final hasLine =
-          row.fromLatitude != null &&
-          row.fromLongitude != null &&
-          row.toLatitude != null &&
-          row.toLongitude != null;
-
-      if (hasLine) {
-        final fromPoint = LatLng(row.fromLatitude!, row.fromLongitude!);
-        final toPoint = LatLng(row.toLatitude!, row.toLongitude!);
-        final pairCodes = [fromIcao, toIcao]..sort();
-        final routeKey = pairCodes.join('↔');
-        routeBuckets.putIfAbsent(
-          routeKey,
-          () {
-            final greatCircle = _greatCirclePoints(
-              fromPoint,
-              toPoint,
-              segments: 24,
-            );
-            final coordinates = greatCircle
-                .map(
-                  (p) => [
-                    _roundCoord(p.longitude),
-                    _roundCoord(p.latitude),
-                  ],
-                )
-                .toList(growable: false);
-            for (final p in greatCircle) {
-              bounds.extend(p.latitude, p.longitude);
-            }
-            return _RouteBucket(
-              route: '${pairCodes.first} ↔ ${pairCodes.last}',
-              fromIcao: pairCodes.first,
-              toIcao: pairCodes.last,
-              coordinates: coordinates,
-            );
-          },
-        ).count += 1;
+    final routeFeatures = widget.mapData.routes.map((route) {
+      final fromPoint = LatLng(route.airportALatitude, route.airportALongitude);
+      final toPoint = LatLng(route.airportBLatitude, route.airportBLongitude);
+      final greatCircle = _greatCirclePoints(fromPoint, toPoint, segments: 24);
+      for (final p in greatCircle) {
+        bounds.extend(p.latitude, p.longitude);
       }
+      final coordinates = greatCircle
+          .map((p) => [_roundCoord(p.longitude), _roundCoord(p.latitude)])
+          .toList(growable: false);
+      return <String, dynamic>{
+        'type': 'Feature',
+        'geometry': {'type': 'LineString', 'coordinates': coordinates},
+        'properties': {
+          'route': '${route.airportAIcao} ↔ ${route.airportBIcao}',
+          'fromIcao': route.airportAIcao,
+          'toIcao': route.airportBIcao,
+          'count': route.flightsTotal,
+        },
+      };
+    }).toList();
 
-      if (row.fromLatitude != null && row.fromLongitude != null) {
-        final key =
-            '${row.fromLatitude!.toStringAsFixed(4)}_'
-            '${row.fromLongitude!.toStringAsFixed(4)}';
-        if (seenPointKeys.add(key)) {
-          points.add({
-            'type': 'Feature',
-            'geometry': {
-              'type': 'Point',
-              'coordinates': [
-                _roundCoord(row.fromLongitude!),
-                _roundCoord(row.fromLatitude!),
-              ],
-            },
-            'properties': {'icao': fromIcao},
-          });
-        }
-      }
-      if (row.toLatitude != null && row.toLongitude != null) {
-        final key =
-            '${row.toLatitude!.toStringAsFixed(4)}_'
-            '${row.toLongitude!.toStringAsFixed(4)}';
-        if (seenPointKeys.add(key)) {
-          points.add({
-            'type': 'Feature',
-            'geometry': {
-              'type': 'Point',
-              'coordinates': [
-                _roundCoord(row.toLongitude!),
-                _roundCoord(row.toLatitude!),
-              ],
-            },
-            'properties': {'icao': toIcao},
-          });
-        }
-      }
+    for (final airport in widget.mapData.airports) {
+      points.add({
+        'type': 'Feature',
+        'geometry': {
+          'type': 'Point',
+          'coordinates': [
+            _roundCoord(airport.longitude),
+            _roundCoord(airport.latitude),
+          ],
+        },
+        'properties': {'icao': airport.icao},
+      });
+      bounds.extend(airport.latitude, airport.longitude);
     }
-
-    final routeFeatures = routeBuckets.values
-        .map((bucket) {
-          return <String, dynamic>{
-            'type': 'Feature',
-            'geometry': {
-              'type': 'LineString',
-              'coordinates': bucket.coordinates,
-            },
-            'properties': {
-              'route': bucket.route,
-              'fromIcao': bucket.fromIcao,
-              'toIcao': bucket.toIcao,
-              'count': bucket.count,
-            },
-          };
-        })
-        .toList(growable: false);
 
     final collection = {
       'type': 'FeatureCollection',
@@ -6801,23 +7069,10 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
     final l10n = AppLocalizations.of(context)!;
     final lines = <Polyline>[];
     final markers = <Marker>[];
-    final airports = <String>{};
-    final markerKeys = <String>{};
 
-    for (final row in widget.flights) {
-      final fromIcao = row.fromIcao.trim().toUpperCase();
-      final toIcao = row.toIcao.trim().toUpperCase();
-      if (fromIcao.isNotEmpty) airports.add(fromIcao);
-      if (toIcao.isNotEmpty) airports.add(toIcao);
-      if (row.fromLatitude == null ||
-          row.fromLongitude == null ||
-          row.toLatitude == null ||
-          row.toLongitude == null) {
-        continue;
-      }
-
-      final fromPoint = LatLng(row.fromLatitude!, row.fromLongitude!);
-      final toPoint = LatLng(row.toLatitude!, row.toLongitude!);
+    for (final route in widget.mapData.routes) {
+      final fromPoint = LatLng(route.airportALatitude, route.airportALongitude);
+      final toPoint = LatLng(route.airportBLatitude, route.airportBLongitude);
       if (_showLines) {
         lines.add(
           Polyline(
@@ -6827,34 +7082,18 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
           ),
         );
       }
-      final fromKey =
-          '${fromPoint.latitude.toStringAsFixed(4)}_'
-          '${fromPoint.longitude.toStringAsFixed(4)}';
-      if (markerKeys.add(fromKey)) {
-        markers.add(
-          Marker(
-            point: fromPoint,
-            width: 14,
-            height: 14,
-            child: const Icon(Icons.circle, size: 9, color: _mapDotColor),
-          ),
-        );
-      }
-      final toKey =
-          '${toPoint.latitude.toStringAsFixed(4)}_'
-          '${toPoint.longitude.toStringAsFixed(4)}';
-      if (markerKeys.add(toKey)) {
-        markers.add(
-          Marker(
-            point: toPoint,
-            width: 14,
-            height: 14,
-            child: const Icon(Icons.circle, size: 9, color: _mapDotColor),
-          ),
-        );
-      }
     }
-    final airportCount = airports.length;
+    for (final airport in widget.mapData.airports) {
+      markers.add(
+        Marker(
+          point: LatLng(airport.latitude, airport.longitude),
+          width: 14,
+          height: 14,
+          child: const Icon(Icons.circle, size: 9, color: _mapDotColor),
+        ),
+      );
+    }
+    final airportCount = widget.mapData.airports.length;
 
     final mapBody = markers.isEmpty
         ? Center(child: Text(l10n.reportsNoCoordinatesAvailable))
@@ -6992,21 +7231,6 @@ class _BoundsAccumulator {
     final maxLon = _maxLon ?? 90;
     return (minLat, minLon, maxLat, maxLon);
   }
-}
-
-class _RouteBucket {
-  _RouteBucket({
-    required this.route,
-    required this.fromIcao,
-    required this.toIcao,
-    required this.coordinates,
-  });
-
-  final String route;
-  final String fromIcao;
-  final String toIcao;
-  final List<List<double>> coordinates;
-  int count = 0;
 }
 
 class _TemplateEntryItem {

@@ -22,6 +22,7 @@ abstract class LogbookRepositoryContract {
     LogbookFilters filters, {
     required int limit,
     required int offset,
+    Set<int>? includedFlightIds,
   });
 
   /// Returns the earliest event date in the logbook, if any.

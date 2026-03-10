@@ -635,6 +635,195 @@ class ReportsRepository {
     return flights;
   }
 
+  /// Loads lightweight map data using SQL route/airport aggregates.
+  ///
+  /// If [query] has advanced filters not directly applicable in SQL, this
+  /// method falls back to [load] to resolve filtered flight IDs first, then
+  /// aggregates only those IDs.
+  Future<ReportsMapData> loadMapData(ReportsQuery query) async {
+    List<int>? filteredFlightIds;
+    if (query.filters.isNotEmpty) {
+      final result = await load(query);
+      filteredFlightIds = result.flights
+          .map((flight) => flight.flightId)
+          .toList(growable: false);
+      if (filteredFlightIds.isEmpty) {
+        return const ReportsMapData(airports: [], routes: []);
+      }
+    }
+
+    final whereParts = <String>[
+      'dep_tl.event_date_time >= ?',
+      'dep_tl.event_date_time <= ?',
+      if (filteredFlightIds != null)
+        'f.id IN (${List.filled(filteredFlightIds.length, '?').join(', ')})',
+    ];
+    final whereClause = whereParts.join(' AND ');
+    final variables = <Variable<Object>>[
+      Variable<DateTime>(query.from),
+      Variable<DateTime>(query.to),
+      if (filteredFlightIds != null)
+        ...filteredFlightIds.map(Variable<int>.new),
+    ];
+
+    final airportRows = await _db
+        .customSelect(
+          '''
+WITH filtered_flights AS (
+  SELECT
+    dep_ap.id AS dep_id,
+    dep_ap.icao AS dep_icao,
+    dep_ap.latitude AS dep_lat,
+    dep_ap.longitude AS dep_lon,
+    arr_ap.id AS arr_id,
+    arr_ap.icao AS arr_icao,
+    arr_ap.latitude AS arr_lat,
+    arr_ap.longitude AS arr_lon
+  FROM flights f
+  JOIN time_lines dep_tl ON dep_tl.id = f.departure_date_time_id
+  LEFT JOIN airports dep_ap ON dep_ap.id = f.departure_airport_id
+  LEFT JOIN airports arr_ap ON arr_ap.id = f.arrival_airport_id
+  WHERE $whereClause
+),
+airport_rows AS (
+  SELECT
+    dep_id AS airport_id,
+    UPPER(TRIM(COALESCE(dep_icao, ''))) AS airport_icao,
+    dep_lat AS latitude,
+    dep_lon AS longitude
+  FROM filtered_flights
+  WHERE dep_id IS NOT NULL AND dep_lat IS NOT NULL AND dep_lon IS NOT NULL
+  UNION
+  SELECT
+    arr_id AS airport_id,
+    UPPER(TRIM(COALESCE(arr_icao, ''))) AS airport_icao,
+    arr_lat AS latitude,
+    arr_lon AS longitude
+  FROM filtered_flights
+  WHERE arr_id IS NOT NULL AND arr_lat IS NOT NULL AND arr_lon IS NOT NULL
+)
+SELECT
+  airport_id,
+  airport_icao,
+  latitude,
+  longitude
+FROM airport_rows
+GROUP BY airport_id, airport_icao, latitude, longitude
+ORDER BY airport_icao ASC
+''',
+          variables: variables,
+          readsFrom: {_db.flights, _db.timeLines, _db.airports},
+        )
+        .get();
+
+    final routeRows = await _db
+        .customSelect(
+          '''
+WITH filtered_flights AS (
+  SELECT
+    dep_ap.id AS dep_id,
+    dep_ap.icao AS dep_icao,
+    dep_ap.latitude AS dep_lat,
+    dep_ap.longitude AS dep_lon,
+    arr_ap.id AS arr_id,
+    arr_ap.icao AS arr_icao,
+    arr_ap.latitude AS arr_lat,
+    arr_ap.longitude AS arr_lon
+  FROM flights f
+  JOIN time_lines dep_tl ON dep_tl.id = f.departure_date_time_id
+  LEFT JOIN airports dep_ap ON dep_ap.id = f.departure_airport_id
+  LEFT JOIN airports arr_ap ON arr_ap.id = f.arrival_airport_id
+  WHERE $whereClause
+),
+paired_routes AS (
+  SELECT
+    CASE WHEN dep_id <= arr_id THEN dep_id ELSE arr_id END AS airport_a_id,
+    CASE WHEN dep_id <= arr_id THEN arr_id ELSE dep_id END AS airport_b_id,
+    CASE
+      WHEN dep_id <= arr_id
+      THEN UPPER(TRIM(COALESCE(dep_icao, '')))
+      ELSE UPPER(TRIM(COALESCE(arr_icao, '')))
+    END AS airport_a_icao,
+    CASE
+      WHEN dep_id <= arr_id
+      THEN UPPER(TRIM(COALESCE(arr_icao, '')))
+      ELSE UPPER(TRIM(COALESCE(dep_icao, '')))
+    END AS airport_b_icao,
+    CASE WHEN dep_id <= arr_id THEN dep_lat ELSE arr_lat END AS airport_a_lat,
+    CASE WHEN dep_id <= arr_id THEN dep_lon ELSE arr_lon END AS airport_a_lon,
+    CASE WHEN dep_id <= arr_id THEN arr_lat ELSE dep_lat END AS airport_b_lat,
+    CASE WHEN dep_id <= arr_id THEN arr_lon ELSE dep_lon END AS airport_b_lon,
+    CASE WHEN dep_id <= arr_id THEN 1 ELSE 0 END AS a_to_b
+  FROM filtered_flights
+  WHERE dep_id IS NOT NULL
+    AND arr_id IS NOT NULL
+    AND dep_id <> arr_id
+    AND dep_lat IS NOT NULL
+    AND dep_lon IS NOT NULL
+    AND arr_lat IS NOT NULL
+    AND arr_lon IS NOT NULL
+)
+SELECT
+  airport_a_id,
+  airport_b_id,
+  airport_a_icao,
+  airport_b_icao,
+  airport_a_lat,
+  airport_a_lon,
+  airport_b_lat,
+  airport_b_lon,
+  COUNT(*) AS flights_total,
+  SUM(a_to_b) AS flights_a_to_b,
+  SUM(CASE WHEN a_to_b = 1 THEN 0 ELSE 1 END) AS flights_b_to_a
+FROM paired_routes
+GROUP BY
+  airport_a_id,
+  airport_b_id,
+  airport_a_icao,
+  airport_b_icao,
+  airport_a_lat,
+  airport_a_lon,
+  airport_b_lat,
+  airport_b_lon
+ORDER BY flights_total DESC, airport_a_icao ASC, airport_b_icao ASC
+''',
+          variables: variables,
+          readsFrom: {_db.flights, _db.timeLines, _db.airports},
+        )
+        .get();
+
+    final airports = airportRows
+        .map((row) {
+          return ReportsMapAirportPoint(
+            airportId: row.read<int>('airport_id'),
+            icao: row.read<String>('airport_icao'),
+            latitude: row.read<double>('latitude'),
+            longitude: row.read<double>('longitude'),
+          );
+        })
+        .toList(growable: false);
+
+    final routes = routeRows
+        .map((row) {
+          return ReportsMapRoute(
+            airportAId: row.read<int>('airport_a_id'),
+            airportBId: row.read<int>('airport_b_id'),
+            airportAIcao: row.read<String>('airport_a_icao'),
+            airportBIcao: row.read<String>('airport_b_icao'),
+            airportALatitude: row.read<double>('airport_a_lat'),
+            airportALongitude: row.read<double>('airport_a_lon'),
+            airportBLatitude: row.read<double>('airport_b_lat'),
+            airportBLongitude: row.read<double>('airport_b_lon'),
+            flightsTotal: row.read<int>('flights_total'),
+            flightsAToB: row.read<int>('flights_a_to_b'),
+            flightsBToA: row.read<int>('flights_b_to_a'),
+          );
+        })
+        .toList(growable: false);
+
+    return ReportsMapData(airports: airports, routes: routes);
+  }
+
   /// Loads SQL-aggregated analysis totals grouped by [groupBy].
   Future<List<ReportsAnalysisAggregateRow>> loadFlightAnalysisAggregates({
     required DateTime from,
@@ -840,13 +1029,13 @@ GROUP BY group_key
     final variables = <Variable<Object>>[];
     final groupExpr = switch (groupBy) {
       ReportsAnalysisGroupBy.type => () {
-          variables.add(Variable<String>(unknownType));
-          return "COALESCE(NULLIF(TRIM(at.code), ''), ?)";
-        }(),
+        variables.add(Variable<String>(unknownType));
+        return "COALESCE(NULLIF(TRIM(at.code), ''), ?)";
+      }(),
       ReportsAnalysisGroupBy.family => () {
-          variables.add(Variable<String>(unknownFamily));
-          return "COALESCE(NULLIF(TRIM(at.family), ''), ?)";
-        }(),
+        variables.add(Variable<String>(unknownFamily));
+        return "COALESCE(NULLIF(TRIM(at.family), ''), ?)";
+      }(),
       ReportsAnalysisGroupBy.aircraft ||
       ReportsAnalysisGroupBy.airport ||
       ReportsAnalysisGroupBy.year ||

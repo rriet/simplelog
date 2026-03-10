@@ -17,6 +17,7 @@ class PickerSearchBar extends StatefulWidget {
     this.trailing,
     this.padding = const EdgeInsets.fromLTRB(16, 12, 16, 0),
     this.useCustomKeyboard = false,
+    this.onCustomKeyboardVisibilityChanged,
   });
 
   /// Text controller for the search text.
@@ -48,6 +49,9 @@ class PickerSearchBar extends StatefulWidget {
 
   /// Whether to use the custom iOS keyboard overlay.
   final bool useCustomKeyboard;
+
+  /// Called when custom keyboard overlay visibility changes.
+  final ValueChanged<bool>? onCustomKeyboardVisibilityChanged;
 
   @override
   State<PickerSearchBar> createState() => _PickerSearchBarState();
@@ -133,11 +137,13 @@ class _PickerSearchBarState extends State<PickerSearchBar> {
       },
     );
     overlay.insert(_keyboardOverlay!);
+    widget.onCustomKeyboardVisibilityChanged?.call(true);
   }
 
   void _hideKeyboardOverlay() {
     _keyboardOverlay?.remove();
     _keyboardOverlay = null;
+    widget.onCustomKeyboardVisibilityChanged?.call(false);
   }
 
   void _insertText(String text) {

@@ -27,13 +27,19 @@ class AircraftPickerDialog extends StatelessWidget {
     required String title,
     bool onlySimulators = false,
   }) {
-    return showLargeDialogScreen<AircraftRow>(
+    final screen = AircraftPickerDialog(
+      title: title,
+      onlySimulators: onlySimulators,
+    );
+    if (isCompactDialogScreen(context)) {
+      return Navigator.of(
+        context,
+        rootNavigator: true,
+      ).push<AircraftRow>(MaterialPageRoute(builder: (_) => screen));
+    }
+    return showDialog<AircraftRow>(
       context: context,
-      maxWidth: 640,
-      builder: (_) => AircraftPickerDialog(
-        title: title,
-        onlySimulators: onlySimulators,
-      ),
+      builder: (_) => screen,
     );
   }
 

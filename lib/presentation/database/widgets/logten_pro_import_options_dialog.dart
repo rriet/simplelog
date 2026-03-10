@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/data/import/logten_pro_import_models.dart';
 import 'package:simplelog/data/import/logten_pro_tsv_inspector.dart';
 import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
-import 'package:simplelog/presentation/shared/widgets/dialog_adaptive_presenter.dart';
 
 /// Configuration dialog shown before importing a LogTen Pro export.
 class LogTenProImportOptionsDialog extends StatefulWidget {
@@ -30,13 +29,21 @@ class LogTenProImportOptionsDialog extends StatefulWidget {
     required LogTenProTsvInspection inspection,
     required LogTenImportOptions initial,
   }) {
-    return showLargeDialogScreen<LogTenImportOptions>(
+    final screen = LogTenProImportOptionsDialog(
+      fileName: fileName,
+      inspection: inspection,
+      initial: initial,
+    );
+    final isCompact = MediaQuery.sizeOf(context).width < 600;
+    if (isCompact) {
+      return Navigator.of(
+        context,
+        rootNavigator: true,
+      ).push<LogTenImportOptions>(MaterialPageRoute(builder: (_) => screen));
+    }
+    return showDialog<LogTenImportOptions>(
       context: context,
-      builder: (context) => LogTenProImportOptionsDialog(
-        fileName: fileName,
-        inspection: inspection,
-        initial: initial,
-      ),
+      builder: (_) => screen,
     );
   }
 

@@ -12,6 +12,7 @@ class AdaptiveFormShell extends StatelessWidget {
     super.key,
     this.actions = const <Widget>[],
     this.fullScreen = true,
+    this.popupMaxWidth = 460,
   });
 
   /// Called when user closes the screen.
@@ -35,40 +36,61 @@ class AdaptiveFormShell extends StatelessWidget {
   /// Main content widget.
   final Widget contentView;
 
+  /// Max width used by popup mode (non-fullscreen).
+  final double popupMaxWidth;
+
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
     final isCompact = isCompactDialogScreen(context);
     final title = isCompact ? shortTitle : longTitle;
-    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
-    final useDialogStyle = isInDialog || (isCompact && !fullScreen);
+    final useDialogStyle = !isCompact || !fullScreen;
 
     if (useDialogStyle) {
-      return Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
-              child: Row(
+      final maxWidth = isCompact ? screenSize.width - 24 : popupMaxWidth;
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: maxWidth,
+              maxHeight: screenSize.height * 0.82,
+            ),
+            child: Material(
+              color: Theme.of(context).colorScheme.surface,
+              elevation: 12,
+              shadowColor: Colors.black.withValues(alpha: 0.24),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: onClose,
-                  ),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleLarge,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: onClose,
+                        ),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ),
+                        ...actions,
+                      ],
                     ),
                   ),
-                  ...actions,
+                  const Divider(height: 1),
+                  Flexible(child: contentView),
                 ],
               ),
             ),
-            const Divider(height: 1),
-            Flexible(child: contentView),
-          ],
+          ),
         ),
       );
     }

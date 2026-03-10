@@ -138,10 +138,12 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   }
 
   Future<void> _importCsv(BuildContext context, WidgetRef ref) async {
+    final isAndroid = Platform.isAndroid;
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['csv', 'sqlite', 'db', 'xlsx', 'txt', 'tsv'],
-      withData: true,
+      type: isAndroid ? FileType.any : FileType.custom,
+      allowedExtensions: isAndroid
+          ? null
+          : const ['csv', 'sqlite', 'db', 'xlsx', 'txt', 'tsv'],
     );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.single;
@@ -152,8 +154,8 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       return;
     }
     final bytes =
-        file.bytes ??
-        (file.path == null ? null : await File(file.path!).readAsBytes());
+        (file.path == null ? null : await File(file.path!).readAsBytes()) ??
+        file.bytes;
     if (bytes == null) return;
     final content = _decodeCsvBytes(bytes);
     final type = _sourceDispatcher.detect(
@@ -359,8 +361,8 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     PlatformFile file,
   ) async {
     final bytes =
-        file.bytes ??
-        (file.path == null ? null : await File(file.path!).readAsBytes());
+        (file.path == null ? null : await File(file.path!).readAsBytes()) ??
+        file.bytes;
     if (bytes == null || bytes.isEmpty || !context.mounted) return;
 
     final confirmed = await showDialog<bool>(
@@ -509,13 +511,12 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     final picked = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['sqlite', 'db', 'backup'],
-      withData: true,
     );
     if (picked == null || picked.files.isEmpty || !context.mounted) return;
     final file = picked.files.single;
     final bytes =
-        file.bytes ??
-        (file.path == null ? null : await File(file.path!).readAsBytes());
+        (file.path == null ? null : await File(file.path!).readAsBytes()) ??
+        file.bytes;
     if (bytes == null || bytes.isEmpty || !context.mounted) return;
 
     final confirmed = await showDialog<bool>(

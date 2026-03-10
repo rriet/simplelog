@@ -5,6 +5,8 @@ import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/features/airports/application/providers/airports_feature_providers.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_filters_dialog.dart';
+import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
+import 'package:simplelog/presentation/shared/widgets/dialog_adaptive_presenter.dart';
 import 'package:simplelog/presentation/shared/widgets/entity_picker_dialog.dart';
 
 /// Generic dialog used to search and pick an airport from the database.
@@ -23,73 +25,86 @@ class AirportPickerDialog extends StatelessWidget {
     BuildContext context, {
     required String title,
   }) {
+    final screen = AirportPickerDialog(title: title);
+    if (isCompactDialogScreen(context)) {
+      return Navigator.of(
+        context,
+        rootNavigator: true,
+      ).push<Airport>(MaterialPageRoute(builder: (_) => screen));
+    }
     return showDialog<Airport>(
       context: context,
-      builder: (_) => Dialog(
-        child: SizedBox(
-          width: 640,
-          height: 700,
-          child: AirportPickerDialog(title: title),
-        ),
-      ),
+      builder: (_) => screen,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return EntityPickerDialog<Airport>(
-      title: title,
-      searchLabelBuilder: (ref) {
-        final filters = ref.watch(airportFiltersProvider);
-        return _searchLabel(l10n, filters.searchField);
-      },
-      itemsBuilder: (ref, query) {
-        final filters = ref.watch(airportFiltersProvider);
-        final rowsAsync = ref.watch(
-          airportsProvider(
-            AirportSearchParams(query: query, filters: filters),
-          ),
-        );
-        return rowsAsync.when(
-          data: (rows) => AsyncValue<List<Airport>>.data(
-            rows.map((row) => row.airport).toList(growable: false),
-          ),
-          loading: () => const AsyncValue<List<Airport>>.loading(),
-          error: AsyncValue<List<Airport>>.error,
-        );
-      },
-      itemKey: (airport) => airport.id,
-      itemTitle: (airport) => '${airport.icao}'
-          '${(airport.iata ?? '').isEmpty ? '' : ' / ${airport.iata}'}',
-      itemSubtitle: (airport) => [
-        if ((airport.name ?? '').trim().isNotEmpty) airport.name!,
-        if ((airport.city ?? '').trim().isNotEmpty) airport.city!,
-        if ((airport.country ?? '').trim().isNotEmpty) airport.country!,
-      ].join(' • '),
-      searchTrailingBuilder: (context, ref) => IconButton(
-        tooltip: l10n.logbookFilterAction,
-        onPressed: () async {
-          final current = ref.read(airportFiltersProvider);
-          final updated = await AirportFiltersDialog.show(
-            context,
-            initial: current,
-          );
-          if (updated == null) return;
-          await ref.read(airportFiltersProvider.notifier).setFilters(updated);
-        },
-        icon: const Icon(Icons.filter_list),
-      ),
-      isFavorite: (airport) => airport.isFavorite,
-      onToggleFavorite: (ref, airport) async {
-        await ref
-            .read(airportControllerProvider.notifier)
-            .toggleFavorite(
-              airport,
+    return AdaptiveFormShell(
+      onClose: () => Navigator.of(context).pop(),
+      longTitle: title,
+      shortTitle: title,
+      contentView: SizedBox(
+        height: 700,
+        child: EntityPickerDialog<Airport>(
+          title: title,
+          showHeader: false,
+          searchLabelBuilder: (ref) {
+            final filters = ref.watch(airportFiltersProvider);
+            return _searchLabel(l10n, filters.searchField);
+          },
+          itemsBuilder: (ref, query) {
+            final filters = ref.watch(airportFiltersProvider);
+            final rowsAsync = ref.watch(
+              airportsProvider(
+                AirportSearchParams(query: query, filters: filters),
+              ),
             );
-      },
-      emptyText: l10n.airportEmptyResults,
-      errorBuilder: (_, _) => Center(child: Text(l10n.airportLoadError)),
+            return rowsAsync.when(
+              data: (rows) => AsyncValue<List<Airport>>.data(
+                rows.map((row) => row.airport).toList(growable: false),
+              ),
+              loading: () => const AsyncValue<List<Airport>>.loading(),
+              error: AsyncValue<List<Airport>>.error,
+            );
+          },
+          itemKey: (airport) => airport.id,
+          itemTitle: (airport) =>
+              '${airport.icao}'
+              '${(airport.iata ?? '').isEmpty ? '' : ' / ${airport.iata}'}',
+          itemSubtitle: (airport) => [
+            if ((airport.name ?? '').trim().isNotEmpty) airport.name!,
+            if ((airport.city ?? '').trim().isNotEmpty) airport.city!,
+            if ((airport.country ?? '').trim().isNotEmpty) airport.country!,
+          ].join(' • '),
+          searchTrailingBuilder: (context, ref) => IconButton(
+            tooltip: l10n.logbookFilterAction,
+            onPressed: () async {
+              final current = ref.read(airportFiltersProvider);
+              final updated = await AirportFiltersDialog.show(
+                context,
+                initial: current,
+              );
+              if (updated == null) return;
+              await ref
+                  .read(airportFiltersProvider.notifier)
+                  .setFilters(updated);
+            },
+            icon: const Icon(Icons.filter_list),
+          ),
+          isFavorite: (airport) => airport.isFavorite,
+          onToggleFavorite: (ref, airport) async {
+            await ref
+                .read(airportControllerProvider.notifier)
+                .toggleFavorite(
+                  airport,
+                );
+          },
+          emptyText: l10n.airportEmptyResults,
+          errorBuilder: (_, _) => Center(child: Text(l10n.airportLoadError)),
+        ),
+      ),
     );
   }
 

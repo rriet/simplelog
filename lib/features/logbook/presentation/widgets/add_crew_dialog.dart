@@ -80,33 +80,32 @@ Future<CrewDraftSelection?> showAddCrewDialog({
 
   return showDialog<CrewDraftSelection>(
     context: context,
-    builder: (dialogContext) => Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: StatefulBuilder(
-          builder: (context, setLocalState) => AdaptiveFormShell(
-            onClose: () => Navigator.of(dialogContext).pop(),
-            longTitle: l10n.addCrewTitle,
-            shortTitle: l10n.addCrewTitle,
-            fullScreen: false,
-            actions: [
-              TextButton(
-                onPressed: selectedCrewId == null
-                    ? null
-                    : () => Navigator.of(dialogContext).pop(
-                        CrewDraftSelection(
-                          crewId: selectedCrewId!,
-                          position: selectedPosition,
-                        ),
+    builder: (dialogContext) => SizedBox(
+      width: 420,
+      child: StatefulBuilder(
+        builder: (context, setLocalState) => AdaptiveFormShell(
+          onClose: () => Navigator.of(dialogContext).pop(),
+          longTitle: l10n.addCrewTitle,
+          shortTitle: l10n.addCrewTitle,
+          fullScreen: false,
+          actions: [
+            TextButton(
+              onPressed: selectedCrewId == null
+                  ? null
+                  : () => Navigator.of(dialogContext).pop(
+                      CrewDraftSelection(
+                        crewId: selectedCrewId!,
+                        position: selectedPosition,
                       ),
-                child: Text(l10n.addAction),
-              ),
-            ],
-            contentView: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+                    ),
+              child: Text(l10n.addAction),
+            ),
+          ],
+          contentView: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                   PickerWithAddInputField(
                     label: l10n.fieldCrew,
                     valueText: crewLabel(selectedCrewId),
@@ -144,8 +143,7 @@ Future<CrewDraftSelection?> showAddCrewDialog({
                       setLocalState(() => selectedPosition = value);
                     },
                   ),
-                ],
-              ),
+              ],
             ),
           ),
         ),

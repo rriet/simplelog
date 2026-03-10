@@ -1507,6 +1507,7 @@ LIMIT ? OFFSET ?
     LogbookFilters filters, {
     required int limit,
     required int offset,
+    Set<int>? includedFlightIds,
   }) async {
     if (filters.types.isEmpty) {
       return <LogbookEntry>[];
@@ -1525,6 +1526,7 @@ LIMIT ? OFFSET ?
 
     final query = _buildQuery(
       filters,
+      includedFlightIds: includedFlightIds,
       departureAirport: departureAirport,
       arrivalAirport: arrivalAirport,
       positioningDeparture: positioningDeparture,
@@ -1626,6 +1628,7 @@ LIMIT ? OFFSET ?
     required $DutyPeriodsTable dutyEnd,
     required $AircraftsTable simAircraft,
     required $AircraftTypesTable simAircraftType,
+    Set<int>? includedFlightIds,
   }) {
     final query = _buildBaseQuery(
       departureAirport: departureAirport,
@@ -1649,6 +1652,11 @@ LIMIT ? OFFSET ?
       );
     }
     query.where(_typesPredicate(filters.types, dutyStart, dutyEnd));
+    if (includedFlightIds != null && includedFlightIds.isNotEmpty) {
+      query.where(
+        _db.flights.id.isNull() | _db.flights.id.isIn(includedFlightIds),
+      );
+    }
 
     return query..orderBy([
       OrderingTerm.desc(_db.timeLines.eventDateTime),
@@ -1839,11 +1847,9 @@ LIMIT ? OFFSET ?
   }
 
   Future<void> _recomputeAndPersistSimulatorEndorsementHash(
-    int simulatorId,
-    {
+    int simulatorId, {
     required bool isLocked,
-  }
-  ) async {
+  }) async {
     final simulatorTraining = await findSimulatorTrainingById(simulatorId);
     if (simulatorTraining == null) return;
     final hash = await _buildSimulatorEndorsementHash(
@@ -1911,8 +1917,7 @@ LIMIT ? OFFSET ?
   Future<String?> _buildSimulatorEndorsementHash(
     SimulatorTraining simulatorTraining, {
     bool? isLockedValue,
-  }
-  ) async {
+  }) async {
     if (!_hasEndorsement(
       simulatorTraining.endorsementData,
       simulatorTraining.signatureImage,

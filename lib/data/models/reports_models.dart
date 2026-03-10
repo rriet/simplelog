@@ -751,6 +751,95 @@ class ReportsFlightRow {
   final int landings;
 }
 
+/// Single airport point used by map visualizations.
+class ReportsMapAirportPoint {
+  /// Creates one airport map point.
+  const ReportsMapAirportPoint({
+    required this.airportId,
+    required this.icao,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  /// Internal airport id.
+  final int airportId;
+
+  /// ICAO code shown on map.
+  final String icao;
+
+  /// Latitude in decimal degrees.
+  final double latitude;
+
+  /// Longitude in decimal degrees.
+  final double longitude;
+}
+
+/// Aggregated bidirectional route used by map visualizations.
+class ReportsMapRoute {
+  /// Creates one route aggregate row.
+  const ReportsMapRoute({
+    required this.airportAId,
+    required this.airportBId,
+    required this.airportAIcao,
+    required this.airportBIcao,
+    required this.airportALatitude,
+    required this.airportALongitude,
+    required this.airportBLatitude,
+    required this.airportBLongitude,
+    required this.flightsTotal,
+    required this.flightsAToB,
+    required this.flightsBToA,
+  });
+
+  /// First airport id in normalized pair.
+  final int airportAId;
+
+  /// Second airport id in normalized pair.
+  final int airportBId;
+
+  /// First airport ICAO in normalized pair.
+  final String airportAIcao;
+
+  /// Second airport ICAO in normalized pair.
+  final String airportBIcao;
+
+  /// First airport latitude.
+  final double airportALatitude;
+
+  /// First airport longitude.
+  final double airportALongitude;
+
+  /// Second airport latitude.
+  final double airportBLatitude;
+
+  /// Second airport longitude.
+  final double airportBLongitude;
+
+  /// Number of flights in both directions combined.
+  final int flightsTotal;
+
+  /// Number of flights from A to B.
+  final int flightsAToB;
+
+  /// Number of flights from B to A.
+  final int flightsBToA;
+}
+
+/// Aggregated map payload with unique airports and route pairs.
+class ReportsMapData {
+  /// Creates map payload.
+  const ReportsMapData({
+    required this.airports,
+    required this.routes,
+  });
+
+  /// Unique airport points used for markers.
+  final List<ReportsMapAirportPoint> airports;
+
+  /// Unique bidirectional routes used for lines.
+  final List<ReportsMapRoute> routes;
+}
+
 /// Aggregated row representing previous experience totals per model.
 class ReportsPreviousExperienceRow {
   /// Creates a row of previous experience for a given model.

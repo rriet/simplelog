@@ -13,7 +13,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
 import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
 import 'package:simplelog/presentation/shared/widgets/dialog_adaptive_presenter.dart';
-import 'package:simplelog/presentation/shared/widgets/dialog_header_bar.dart';
 import 'package:simplelog/presentation/shared/widgets/square_outline_button.dart';
 
 /// Compact settings card that opens the pilot profile editor popup.
@@ -56,7 +55,7 @@ class PilotProfileEditButton extends ConsumerWidget {
 Future<void> showPilotProfileEditorDialog(
   BuildContext context,
 ) async {
-  await showLargeDialogScreen<void>(
+  await showDialog<void>(
     context: context,
     builder: (_) => const _PilotProfileEditorDialog(),
   );
@@ -186,6 +185,8 @@ class _PilotProfileEditorDialogState
       onClose: () => Navigator.of(context).pop(),
       longTitle: 'Pilot profile',
       shortTitle: 'Profile',
+      fullScreen: false,
+      popupMaxWidth: 720,
       actions: [
         TextButton(onPressed: _save, child: const Text('Save')),
       ],
@@ -443,72 +444,75 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 420),
-        child: Column(
-          children: [
-            DialogHeaderBar(
-              title: 'Sign on screen',
-              onClose: () => Navigator.of(context).pop(),
-              actions: [
-                TextButton(onPressed: _save, child: const Text('Save')),
-              ],
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    _canvasSize = Size(
-                      constraints.maxWidth,
-                      constraints.maxHeight,
-                    );
-                    return Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
+    return SizedBox(
+      width: 760,
+      child: AdaptiveFormShell(
+        onClose: () => Navigator.of(context).pop(),
+        longTitle: 'Sign on screen',
+        shortTitle: 'Sign',
+        fullScreen: false,
+        popupMaxWidth: 760,
+        actions: [
+          TextButton(onPressed: _save, child: const Text('Save')),
+        ],
+        contentView: SizedBox(
+          height: 420,
+          child: Column(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      _canvasSize = Size(
+                        constraints.maxWidth,
+                        constraints.maxHeight,
+                      );
+                      return Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onPanStart: (details) {
-                          setState(() {
-                            _strokes.add(<Offset>[details.localPosition]);
-                          });
-                        },
-                        onPanUpdate: (details) {
-                          if (_strokes.isEmpty) {
-                            return;
-                          }
-                          setState(() {
-                            _strokes.last.add(details.localPosition);
-                          });
-                        },
-                        child: CustomPaint(
-                          size: Size.infinite,
-                          painter: _SignaturePainter(strokes: _strokes),
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onPanStart: (details) {
+                            setState(() {
+                              _strokes.add(<Offset>[details.localPosition]);
+                            });
+                          },
+                          onPanUpdate: (details) {
+                            if (_strokes.isEmpty) {
+                              return;
+                            }
+                            setState(() {
+                              _strokes.last.add(details.localPosition);
+                            });
+                          },
+                          child: CustomPaint(
+                            size: Size.infinite,
+                            painter: _SignaturePainter(strokes: _strokes),
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: SquareOutlineButton(
-                  label: 'Clear',
-                  icon: Icons.delete_outline,
-                  onPressed: () => setState(_strokes.clear),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: SquareOutlineButton(
+                    label: 'Clear',
+                    icon: Icons.delete_outline,
+                    onPressed: () => setState(_strokes.clear),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

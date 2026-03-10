@@ -43,8 +43,14 @@ class LogbookUseCases {
     LogbookFilters filters, {
     required int limit,
     required int offset,
+    Set<int>? includedFlightIds,
   }) {
-    return _repository.fetchLogbookPage(filters, limit: limit, offset: offset);
+    return _repository.fetchLogbookPage(
+      filters,
+      limit: limit,
+      offset: offset,
+      includedFlightIds: includedFlightIds,
+    );
   }
 
   /// Returns earliest timeline date among stored entries, if any.

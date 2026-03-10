@@ -965,7 +965,7 @@ class LogTenProTsvSourceParser {
   ) {
     final trimmed = _normalizeNumericText(value, association: association);
     if (trimmed.isEmpty) return null;
-    if (format == _LogTenTimeFormat.hhMm) {
+    if (trimmed.contains(':')) {
       final parts = trimmed.split(':');
       if (parts.length != 2) {
         throw _LogTenRowIssue(
@@ -975,9 +975,19 @@ class LogTenProTsvSourceParser {
           reason: 'Invalid duration "$trimmed".',
         );
       }
-      return (int.parse(parts[0]) * 60) + int.parse(parts[1]);
+      final hours = int.tryParse(parts[0]);
+      final minutes = int.tryParse(parts[1]);
+      if (hours == null || minutes == null) {
+        throw _LogTenRowIssue(
+          lineNumber: lineNumber,
+          association: association,
+          currentValue: value,
+          reason: 'Invalid duration "$trimmed".',
+        );
+      }
+      return (hours * 60) + minutes;
     }
-    final parsed = double.tryParse(trimmed);
+    final parsed = double.tryParse(trimmed.replaceAll(',', '.'));
     if (parsed == null) {
       throw _LogTenRowIssue(
         lineNumber: lineNumber,
@@ -1126,9 +1136,8 @@ class LogTenProTsvSourceParser {
       }
     }
     if (sawHhMm && sawDecimal) {
-      throw const FormatException(
-        'LogTen Pro export mixes HH:MM and decimal duration formats.',
-      );
+      // Mixed format exports are valid; durations are parsed per-cell.
+      return _LogTenTimeFormat.hhMm;
     }
     return sawHhMm ? _LogTenTimeFormat.hhMm : _LogTenTimeFormat.decimal;
   }
