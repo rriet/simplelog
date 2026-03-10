@@ -11,10 +11,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/features/crew/application/providers/crew_feature_providers.dart';
-import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
 /// Screen used to create or edit a crew member record.

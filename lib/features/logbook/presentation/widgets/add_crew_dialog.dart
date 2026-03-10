@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/picker_with_add_input_field.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/features/crew/presentation/widgets/crew_picker_dialog.dart';
-import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/picker_with_add_input_field.dart';
 
 /// Result payload returned by add-crew dialog.
 class CrewDraftSelection {

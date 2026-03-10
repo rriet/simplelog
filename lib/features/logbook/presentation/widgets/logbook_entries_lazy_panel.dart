@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/display/logbook_summary_panel.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_flight_summary.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
-import 'package:simplelog/presentation/shared/widgets/logbook_summary_panel.dart';
 
 /// Fetches one page of logbook entries.
 typedef LogbookEntriesPageLoader =

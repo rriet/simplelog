@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_row.dart';
@@ -12,7 +13,6 @@ import 'package:simplelog/features/crew/presentation/widgets/crew_info_dialog.da
 import 'package:simplelog/features/crew/presentation/widgets/crew_list.dart';
 import 'package:simplelog/features/crew/presentation/widgets/crew_search_bar.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
-import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
 /// Main screen for browsing, filtering and managing crew members.

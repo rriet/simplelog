@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
+import 'package:simplelog/core/presentation/widgets/pickers/entity_picker_dialog.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/features/airports/application/providers/airports_feature_providers.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_filters_dialog.dart';
-import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
-import 'package:simplelog/presentation/shared/widgets/dialog_adaptive_presenter.dart';
-import 'package:simplelog/presentation/shared/widgets/entity_picker_dialog.dart';
 
 /// Generic dialog used to search and pick an airport from the database.
 class AirportPickerDialog extends StatelessWidget {

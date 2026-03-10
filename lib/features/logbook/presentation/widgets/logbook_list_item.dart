@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/display/slidable_actions.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/airport_extensions.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
-import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
 /// Logbook entry tile with optional slide actions.
 class LogbookListItem extends StatelessWidget {

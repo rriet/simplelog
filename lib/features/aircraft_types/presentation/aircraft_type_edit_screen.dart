@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/keyboard/uppercase_text_formatter.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
 import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
-import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/uppercase_text_formatter.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
 /// Create/edit screen for aircraft type rows.

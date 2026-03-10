@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/features/about/presentation/about_screen.dart';
 import 'package:simplelog/features/aircraft/presentation/aircraft_screen.dart';
 import 'package:simplelog/features/aircraft_types/presentation/aircraft_types_screen.dart';
 import 'package:simplelog/features/airports/presentation/airport_screen.dart';
 import 'package:simplelog/features/crew/presentation/crew_screen.dart';
 import 'package:simplelog/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:simplelog/features/database/presentation/database_screen.dart';
 import 'package:simplelog/features/logbook/presentation/logbook_screen.dart';
-import 'package:simplelog/presentation/about/about_screen.dart';
-import 'package:simplelog/presentation/database/database_screen.dart';
-import 'package:simplelog/presentation/settings/settings_screen.dart';
+import 'package:simplelog/features/settings/presentation/settings_screen.dart';
 
 /// Primary navigation destinations shown in the app shell.
 enum AppScreen {

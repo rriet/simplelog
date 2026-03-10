@@ -7,6 +7,12 @@ import 'package:intl/intl.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/picker_with_add_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
@@ -22,12 +28,6 @@ import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.
 import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/endorsement_dialog.dart';
-import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/picker_with_add_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 

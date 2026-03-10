@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/presentation/shared/widgets/picker_search_bar.dart';
+import 'package:simplelog/core/presentation/widgets/pickers/picker_search_bar.dart';
 
 /// Search bar used in airport screens/dialogs.
 class AirportSearchBar extends StatelessWidget {

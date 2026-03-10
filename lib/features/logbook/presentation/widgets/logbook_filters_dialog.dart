@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
 
@@ -54,12 +55,20 @@ class LogbookFiltersDialog extends StatefulWidget {
     required LogbookFilters initial,
     required Future<DateTime?> Function() loadFirstEventDate,
   }) {
+    final screen = LogbookFiltersDialog(
+      initial: initial,
+      loadFirstEventDate: loadFirstEventDate,
+    );
+    final isCompact = MediaQuery.sizeOf(context).width < 600;
+    if (isCompact) {
+      return Navigator.of(
+        context,
+        rootNavigator: true,
+      ).push<LogbookFilters>(MaterialPageRoute(builder: (_) => screen));
+    }
     return showDialog<LogbookFilters>(
       context: context,
-      builder: (context) => LogbookFiltersDialog(
-        initial: initial,
-        loadFirstEventDate: loadFirstEventDate,
-      ),
+      builder: (_) => screen,
     );
   }
 }
@@ -202,161 +211,114 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
-    return Dialog(
-      child: SizedBox(
-        width: 520,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        l10n.logbookFilterTitle,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
+    return AdaptiveFormShell(
+      onClose: () => Navigator.of(context).pop(),
+      longTitle: l10n.logbookFilterTitle,
+      shortTitle: l10n.logbookFilterTitle,
+      popupMaxWidth: 520,
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(
+              LogbookFilters(
+                from: _fromDate,
+                to: _toDate,
+                types: Set<LogbookEventType>.from(_types),
               ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      DropdownButtonFormField<LogbookDatePreset>(
-                        key: ValueKey(_preset),
-                        initialValue: _preset,
-                        decoration: InputDecoration(
-                          labelText: l10n.logbookFilterRange,
-                          border: const OutlineInputBorder(),
-                        ),
-                        items: _buildPresetItems(l10n),
-                        onChanged: _loadingPreset
-                            ? null
-                            : (value) {
-                                if (value != null) {
-                                  unawaited(_selectPreset(value));
-                                }
-                              },
-                      ),
-                      const SizedBox(height: 12),
-                      _DateField(
-                        label: l10n.logbookFilterFromDate,
-                        value: _fromDate,
-                        onPick: () => _pickDate(isFrom: true),
-                        onClear: _fromDate == null
-                            ? null
-                            : () => _clearDate(true),
-                      ),
-                      const SizedBox(height: 12),
-                      _DateField(
-                        label: l10n.logbookFilterToDate,
-                        value: _toDate,
-                        onPick: () => _pickDate(isFrom: false),
-                        onClear: _toDate == null
-                            ? null
-                            : () => _clearDate(false),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.logbookFilterEventTypes,
-                        style: theme.textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      CheckboxListTile(
-                        value: _types.contains(LogbookEventType.flight),
-                        onChanged: (value) => _toggleType(
-                          LogbookEventType.flight,
-                          value ?? false,
-                        ),
-                        title: Text(l10n.logbookEventFlight),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      CheckboxListTile(
-                        value: _types.contains(
-                          LogbookEventType.simulatorTraining,
-                        ),
-                        onChanged: (value) => _toggleType(
-                          LogbookEventType.simulatorTraining,
-                          value ?? false,
-                        ),
-                        title: Text(l10n.logbookEventSimulator),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      CheckboxListTile(
-                        value: _types.contains(LogbookEventType.dutyPeriod),
-                        onChanged: (value) => _toggleType(
-                          LogbookEventType.dutyPeriod,
-                          value ?? false,
-                        ),
-                        title: Text(l10n.logbookEventDuty),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      CheckboxListTile(
-                        value: _types.contains(LogbookEventType.positioning),
-                        onChanged: (value) => _toggleType(
-                          LogbookEventType.positioning,
-                          value ?? false,
-                        ),
-                        title: Text(l10n.logbookEventPositioning),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.logbookFilterAdvanced,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            );
+          },
+          child: Text(l10n.logbookFilterApply),
+        ),
+      ],
+      contentView: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DropdownButtonFormField<LogbookDatePreset>(
+              key: ValueKey(_preset),
+              initialValue: _preset,
+              decoration: InputDecoration(
+                labelText: l10n.logbookFilterRange,
+                border: const OutlineInputBorder(),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(l10n.cancelAction),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(
-                          LogbookFilters(
-                            from: _fromDate,
-                            to: _toDate,
-                            types: Set<LogbookEventType>.from(_types),
-                          ),
-                        );
-                      },
-                      child: Text(l10n.logbookFilterApply),
-                    ),
-                  ],
-                ),
+              items: _buildPresetItems(l10n),
+              onChanged: _loadingPreset
+                  ? null
+                  : (value) {
+                      if (value != null) {
+                        unawaited(_selectPreset(value));
+                      }
+                    },
+            ),
+            const SizedBox(height: 12),
+            _DateField(
+              label: l10n.logbookFilterFromDate,
+              value: _fromDate,
+              onPick: () => _pickDate(isFrom: true),
+              onClear: _fromDate == null ? null : () => _clearDate(true),
+            ),
+            const SizedBox(height: 12),
+            _DateField(
+              label: l10n.logbookFilterToDate,
+              value: _toDate,
+              onPick: () => _pickDate(isFrom: false),
+              onClear: _toDate == null ? null : () => _clearDate(false),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.logbookFilterEventTypes,
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            CheckboxListTile(
+              value: _types.contains(LogbookEventType.flight),
+              onChanged: (value) => _toggleType(
+                LogbookEventType.flight,
+                value ?? false,
               ),
-            ],
-          ),
+              title: Text(l10n.logbookEventFlight),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+            ),
+            CheckboxListTile(
+              value: _types.contains(LogbookEventType.simulatorTraining),
+              onChanged: (value) => _toggleType(
+                LogbookEventType.simulatorTraining,
+                value ?? false,
+              ),
+              title: Text(l10n.logbookEventSimulator),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+            ),
+            CheckboxListTile(
+              value: _types.contains(LogbookEventType.dutyPeriod),
+              onChanged: (value) => _toggleType(
+                LogbookEventType.dutyPeriod,
+                value ?? false,
+              ),
+              title: Text(l10n.logbookEventDuty),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+            ),
+            CheckboxListTile(
+              value: _types.contains(LogbookEventType.positioning),
+              onChanged: (value) => _toggleType(
+                LogbookEventType.positioning,
+                value ?? false,
+              ),
+              title: Text(l10n.logbookEventPositioning),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.logbookFilterAdvanced,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
       ),
     );

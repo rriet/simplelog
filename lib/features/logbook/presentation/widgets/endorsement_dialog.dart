@@ -3,8 +3,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
 import 'package:simplelog/data/models/endorsement_data.dart';
-import 'package:simplelog/presentation/shared/widgets/square_outline_button.dart';
 
 /// Dialog to edit an entry endorsement and signature.
 class EndorsementDialog extends StatefulWidget {

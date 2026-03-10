@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/display/slidable_actions.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
-import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
 /// Single aircraft row with lock/edit/delete actions.
 class AircraftListItem extends StatelessWidget {

@@ -4,6 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
+import 'package:simplelog/core/presentation/widgets/display/event_type_toggle_button.dart';
+import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
@@ -18,13 +24,9 @@ import 'package:simplelog/features/logbook/presentation/positioning_edit_screen.
 import 'package:simplelog/features/logbook/presentation/simulator_edit_screen.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_list.dart';
-import 'package:simplelog/presentation/reports/providers/reports_preferences_provider.dart';
-import 'package:simplelog/presentation/reports/providers/reports_repository_provider.dart';
-import 'package:simplelog/presentation/reports/reports_screen.dart';
-import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
-import 'package:simplelog/presentation/shared/widgets/event_type_toggle_button.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/square_outline_button.dart';
+import 'package:simplelog/features/reports/presentation/providers/reports_preferences_provider.dart';
+import 'package:simplelog/features/reports/presentation/providers/reports_repository_provider.dart';
+import 'package:simplelog/features/reports/presentation/reports_screen.dart';
 
 /// Main logbook screen with list, analytics, and reports tabs.
 class LogbookScreen extends ConsumerStatefulWidget {
@@ -317,6 +319,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final l10n = AppLocalizations.of(context)!;
     final runtimeQuery = ref.watch(reportsRuntimeQueryProvider);
     final eventTypes = ref.watch(reportsEventTypesProvider);
+    final isCompact = MediaQuery.sizeOf(context).width < 600;
     ref
       ..listen<ReportsRuntimeQueryState>(reportsRuntimeQueryProvider, (
         prev,
@@ -357,6 +360,9 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
         ); // keeps compatibility with existing providers/listeners
       });
 
+    final fullBleedReportsTabs =
+        isCompact && (_selectedTabIndex == 1 || _selectedTabIndex == 2);
+
     return Stack(
       children: [
         Column(
@@ -383,7 +389,12 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                padding: EdgeInsets.fromLTRB(
+                  fullBleedReportsTabs ? 0 : 16,
+                  8,
+                  fullBleedReportsTabs ? 0 : 16,
+                  16,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -537,48 +548,30 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   Future<void> _openMoreFilters() async {
     final l10n = AppLocalizations.of(context)!;
     _filtersDialogOpen = true;
-    await showDialog<void>(
-      context: context,
-      builder: (context) {
-        final size = MediaQuery.of(context).size;
-        return Dialog(
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 24,
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: SizedBox(
-            width: size.width > 980 ? 900 : size.width - 40,
-            height: size.height > 900 ? 860 : size.height - 48,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          l10n.reportsTabFilters,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(l10n.reportsDone),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                const Expanded(
-                  child: ReportsScreen(section: ReportsPanelSection.filters),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    final shell = AdaptiveFormShell(
+      onClose: () => Navigator.of(context).pop(),
+      longTitle: l10n.reportsTabFilters,
+      shortTitle: l10n.reportsTabFilters,
+      popupMaxWidth: 900,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.reportsDone),
+        ),
+      ],
+      contentView: const ReportsScreen(section: ReportsPanelSection.filters),
     );
+    if (isCompactDialogScreen(context)) {
+      await Navigator.of(
+        context,
+        rootNavigator: true,
+      ).push<void>(MaterialPageRoute(builder: (_) => shell));
+    } else {
+      await showDialog<void>(
+        context: context,
+        builder: (_) => shell,
+      );
+    }
     _filtersDialogOpen = false;
     if (_pendingReloadFromFiltersDialog) {
       _pendingReloadFromFiltersDialog = false;

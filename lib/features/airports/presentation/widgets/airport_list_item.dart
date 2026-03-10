@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/display/slidable_actions.dart';
 import 'package:simplelog/data/models/airport_extensions.dart';
 import 'package:simplelog/data/models/airport_row.dart';
-import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
 /// Single airport list row with actions and slidable support.
 class AirportListItem extends StatelessWidget {

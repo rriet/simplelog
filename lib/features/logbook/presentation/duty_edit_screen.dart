@@ -5,12 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
-import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/clock_time_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/date_selector_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/hour_input_field.dart';
 
 /// Screen for creating or editing a duty period entry.
 class DutyEditScreen extends ConsumerStatefulWidget {

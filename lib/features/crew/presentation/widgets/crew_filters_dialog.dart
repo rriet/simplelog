@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 
 /// Search fields available in crew filter dialog.
 enum CrewSearchBy {

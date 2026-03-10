@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
+import 'package:simplelog/core/presentation/widgets/pickers/entity_picker_dialog.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
-import 'package:simplelog/presentation/shared/widgets/adaptive_form_shell.dart';
-import 'package:simplelog/presentation/shared/widgets/dialog_adaptive_presenter.dart';
-import 'package:simplelog/presentation/shared/widgets/entity_picker_dialog.dart';
 
 /// Dialog wrapper around generic entity picker for aircraft selection.
 class AircraftPickerDialog extends StatelessWidget {

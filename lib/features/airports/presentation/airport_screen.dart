@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 import 'package:simplelog/data/models/airport_row.dart';
@@ -12,7 +13,6 @@ import 'package:simplelog/features/airports/presentation/widgets/airport_filters
 import 'package:simplelog/features/airports/presentation/widgets/airport_list.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_search_bar.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
-import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
 /// Main airport management screen.

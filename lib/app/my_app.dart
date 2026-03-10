@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/theme/app_theme.dart';
-import 'package:simplelog/presentation/home/home_page.dart';
+import 'package:simplelog/features/home/presentation/home_page.dart';
 import 'package:simplelog/state/providers/initial_data_provider.dart';
 import 'package:simplelog/state/providers/locale_provider.dart';
 import 'package:simplelog/state/providers/theme_mode_provider.dart';

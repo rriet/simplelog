@@ -2,6 +2,11 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/keyboard/uppercase_text_formatter.dart';
 import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
@@ -10,11 +15,6 @@ import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
 import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
 import 'package:simplelog/features/aircraft_types/presentation/aircraft_type_edit_screen.dart';
-import 'package:simplelog/presentation/shared/widgets/app_message_dialog.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/dropdown_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/number_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/inputs/text_input_field.dart';
-import 'package:simplelog/presentation/shared/widgets/uppercase_text_formatter.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
 /// Create/edit screen for aircraft rows.

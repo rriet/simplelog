@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:simplelog/presentation/shared/widgets/picker_search_bar.dart';
+import 'package:simplelog/core/presentation/widgets/pickers/picker_search_bar.dart';
 
 /// Search bar used in crew screens/dialogs.
 class CrewSearchBar extends StatelessWidget {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/display/slidable_actions.dart';
 import 'package:simplelog/data/models/aircraft_type_extensions.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
-import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
 /// List tile for a single aircraft type with slide actions on compact layouts.
 class AircraftTypeRowTile extends StatelessWidget {

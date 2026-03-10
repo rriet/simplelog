@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/display/slidable_actions.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_list_item.dart';
-import 'package:simplelog/presentation/shared/widgets/slidable_actions.dart';
 
 /// Common interface implemented by all items that 
 /// can appear in the logbook list.
