@@ -13,6 +13,7 @@ class AdaptiveFormShell extends StatelessWidget {
     this.actions = const <Widget>[],
     this.fullScreen = true,
     this.popupMaxWidth = 460,
+    this.leading,
   });
 
   /// Called when user closes the screen.
@@ -26,6 +27,12 @@ class AdaptiveFormShell extends StatelessWidget {
 
   /// Action widgets shown on the top-right.
   final List<Widget> actions;
+
+  /// Optional leading widget override.
+  ///
+  /// When `null`, the shell uses the default close/back control.
+  /// Provide a custom widget to replace it, or `SizedBox.shrink()` to remove.
+  final Widget? leading;
 
   /// Whether compact screens should use a full-screen page presentation.
   ///
@@ -49,6 +56,12 @@ class AdaptiveFormShell extends StatelessWidget {
 
     if (useDialogStyle) {
       final maxWidth = isCompact ? screenSize.width - 24 : popupMaxWidth;
+      final leadingWidget =
+          leading ??
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: onClose,
+          );
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -72,10 +85,7 @@ class AdaptiveFormShell extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
                     child: Row(
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: onClose,
-                        ),
+                        leadingWidget,
                         Expanded(
                           child: Text(
                             title,
@@ -96,9 +106,10 @@ class AdaptiveFormShell extends StatelessWidget {
       );
     }
 
+    final leadingWidget = leading ?? BackButton(onPressed: onClose);
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: onClose),
+        leading: leadingWidget,
         title: Text(title),
         actions: actions,
       ),

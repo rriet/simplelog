@@ -3975,148 +3975,157 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final entriesByFlight = await _loadIssueFlightEntries(flightIds);
     if (!mounted) return;
     final screenWidth = MediaQuery.of(context).size.width;
+    final isCompact = screenWidth < 700;
     final dialogWidth = math.min<double>(screenWidth * 0.92, 1080);
+    final issueScreen = StatefulBuilder(
+      builder: (context, setStateDialog) {
+        final content = groupedIssues.isEmpty
+            ? const Text('No flight issues found.')
+            : ListView.builder(
+                shrinkWrap: true,
+                itemCount: groupedIssues.length,
+                itemBuilder: (context, index) {
+                  final issue = groupedIssues[index];
+                  final flightId = issue.flightId;
+                  final entry = flightId == null
+                      ? null
+                      : entriesByFlight[flightId];
+                  final issueSummary = issue.messages.length == 1
+                      ? issue.messages.first
+                      : '${issue.messages.length} issues found';
+                  final issueTitle = entry == null
+                      ? issueSummary
+                      : '${DateFormat('yyyy-MM-dd').format(
+                          DbDateTime.dbToUtc(entry.timeLine.eventDateTime),
+                        )} - $issueSummary';
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            issueTitle,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          if (issue.messages.length > 1) ...[
+                            const SizedBox(height: 6),
+                            for (final message in issue.messages)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text('• $message'),
+                              ),
+                          ],
+                          if (entry != null) ...[
+                            const SizedBox(height: 8),
+                            Card(
+                              margin: EdgeInsets.zero,
+                              child: LogbookListItem(
+                                entry: entry,
+                                isCompact:
+                                    MediaQuery.of(context).size.width < 760,
+                                onOpen: (_) => unawaited(
+                                  LogbookEntryDialogs.show(
+                                    context,
+                                    entry: entry,
+                                    useCases: ref.read(
+                                      logbookUseCasesProvider,
+                                    ),
+                                  ),
+                                ),
+                                onToggleLock: (_) async {
+                                  final useCases = ref.read(
+                                    logbookUseCasesProvider,
+                                  );
+                                  await useCases.toggleEntryLock(entry);
+                                  if (!mounted) return;
+                                  final refreshed =
+                                      await useCases.fetchEntryByTimelineId(
+                                    entry.timeLine.id,
+                                  );
+                                  if (refreshed != null &&
+                                      refreshed.flight != null &&
+                                      flightId != null) {
+                                    setStateDialog(() {
+                                      entriesByFlight[flightId] = refreshed;
+                                    });
+                                  }
+                                },
+                                onEdit: (_) => unawaited(
+                                  _openFlightEditFromIssue(
+                                    flightId!,
+                                    onChanged: () async {
+                                      final useCases = ref.read(
+                                        logbookUseCasesProvider,
+                                      );
+                                      final refreshed =
+                                          await useCases.fetchEntryByTimelineId(
+                                        entry.timeLine.id,
+                                      );
+                                      if (refreshed != null &&
+                                          refreshed.flight != null) {
+                                        setStateDialog(() {
+                                          entriesByFlight[flightId] = refreshed;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                                onDelete: (_) async {
+                                  final useCases = ref.read(
+                                    logbookUseCasesProvider,
+                                  );
+                                  await useCases.deleteEntry(entry);
+                                  if (!mounted || flightId == null) {
+                                    return;
+                                  }
+                                  setStateDialog(() {
+                                    entriesByFlight.remove(flightId);
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+        return SizedBox(
+          width: dialogWidth,
+          child: AdaptiveFormShell(
+            onClose: () => Navigator.of(context).pop(),
+            longTitle: 'Flight checks',
+            shortTitle: 'Checks',
+            leading: const SizedBox.shrink(),
+            popupMaxWidth: dialogWidth,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+            contentView: Padding(
+              padding: const EdgeInsets.all(12),
+              child: content,
+            ),
+          ),
+        );
+      },
+    );
+    if (isCompact) {
+      await Navigator.of(
+        context,
+        rootNavigator: true,
+      ).push<void>(MaterialPageRoute(builder: (_) => issueScreen));
+      return;
+    }
     await showDialog<void>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setStateDialog) {
-          final content = groupedIssues.isEmpty
-              ? const Text('No flight issues found.')
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: groupedIssues.length,
-                  itemBuilder: (context, index) {
-                    final issue = groupedIssues[index];
-                    final flightId = issue.flightId;
-                    final entry = flightId == null
-                        ? null
-                        : entriesByFlight[flightId];
-                    final issueSummary = issue.messages.length == 1
-                        ? issue.messages.first
-                        : '${issue.messages.length} issues found';
-                    final issueTitle = entry == null
-                        ? issueSummary
-                        : '${DateFormat('yyyy-MM-dd').format(
-                            DbDateTime.dbToUtc(entry.timeLine.eventDateTime),
-                          )} - $issueSummary';
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              issueTitle,
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            if (issue.messages.length > 1) ...[
-                              const SizedBox(height: 6),
-                              for (final message in issue.messages)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Text('• $message'),
-                                ),
-                            ],
-                            if (entry != null) ...[
-                              const SizedBox(height: 8),
-                              Card(
-                                margin: EdgeInsets.zero,
-                                child: LogbookListItem(
-                                  entry: entry,
-                                  isCompact:
-                                      MediaQuery.of(context).size.width < 760,
-                                  onOpen: (_) => unawaited(
-                                    LogbookEntryDialogs.show(
-                                      context,
-                                      entry: entry,
-                                      useCases: ref.read(
-                                        logbookUseCasesProvider,
-                                      ),
-                                    ),
-                                  ),
-                                  onToggleLock: (_) async {
-                                    final useCases = ref.read(
-                                      logbookUseCasesProvider,
-                                    );
-                                    await useCases.toggleEntryLock(entry);
-                                    if (!mounted) return;
-                                    final refreshed = await useCases
-                                        .fetchEntryByTimelineId(
-                                          entry.timeLine.id,
-                                        );
-                                    if (refreshed != null &&
-                                        refreshed.flight != null &&
-                                        flightId != null) {
-                                      setStateDialog(() {
-                                        entriesByFlight[flightId] = refreshed;
-                                      });
-                                    }
-                                  },
-                                  onEdit: (_) => unawaited(
-                                    _openFlightEditFromIssue(
-                                      flightId!,
-                                      onChanged: () async {
-                                        final useCases = ref.read(
-                                          logbookUseCasesProvider,
-                                        );
-                                        final refreshed = await useCases
-                                            .fetchEntryByTimelineId(
-                                              entry.timeLine.id,
-                                            );
-                                        if (refreshed != null &&
-                                            refreshed.flight != null) {
-                                          setStateDialog(() {
-                                            entriesByFlight[flightId] =
-                                                refreshed;
-                                          });
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                  onDelete: (_) async {
-                                    final useCases = ref.read(
-                                      logbookUseCasesProvider,
-                                    );
-                                    await useCases.deleteEntry(entry);
-                                    if (!mounted || flightId == null) {
-                                      return;
-                                    }
-                                    setStateDialog(() {
-                                      entriesByFlight.remove(flightId);
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-          return SizedBox(
-            width: dialogWidth,
-            child: AdaptiveFormShell(
-              onClose: () => Navigator.of(context).pop(),
-              longTitle: 'Flight checks',
-              shortTitle: 'Checks',
-              popupMaxWidth: dialogWidth,
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
-                ),
-              ],
-              contentView: Padding(
-                padding: const EdgeInsets.all(12),
-                child: content,
-              ),
-            ),
-          );
-        },
-      ),
+      builder: (_) => issueScreen,
     );
   }
 
