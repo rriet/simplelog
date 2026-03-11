@@ -30,6 +30,7 @@ import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.
 import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/endorsement_dialog.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_form_fields.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
@@ -432,38 +433,22 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
               onTap: _pickStartDate,
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: ClockTimeInputField(
-                    controller: _startTimeController,
-                    label: 'Start Time',
-                    onChangedMinutes: _onStartTimeChanged,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ClockTimeInputField(
-                    controller: _endTimeController,
-                    label: 'End Time',
-                    onChangedMinutes: _onEndTimeChanged,
-                    onCleared: _clearEndTime,
-                    allowEmpty: true,
-                    errorText: _startEndErrorText,
-                    suffixIcon: IconButton(
-                      tooltip: 'Clear',
-                      padding: EdgeInsets.zero,
-                      visualDensity: VisualDensity.compact,
-                      constraints: const BoxConstraints.tightFor(
-                        width: 24,
-                        height: 24,
-                      ),
-                      onPressed: _end == null ? null : _clearEndTime,
-                      icon: const Icon(Icons.clear),
-                    ),
-                  ),
-                ),
-              ],
+            TwoColumnFieldRow(
+              left: ClockTimeInputField(
+                controller: _startTimeController,
+                label: 'Start Time',
+                onChangedMinutes: _onStartTimeChanged,
+              ),
+              right: LabeledClockFieldWithClear(
+                controller: _endTimeController,
+                label: 'End Time',
+                onChangedMinutes: _onEndTimeChanged,
+                onCleared: _clearEndTime,
+                errorText: _startEndErrorText,
+                clearTooltip: 'Clear',
+                clearEnabled: _end != null,
+                onPressedClear: _clearEndTime,
+              ),
             ),
             const SizedBox(height: 8),
             HourInputField(
@@ -560,38 +545,9 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
-            OutlinedButton.icon(
-              onPressed: _openEndorsementDialog,
-              icon: Icon(
-                _endorsement == null
-                    ? Icons.draw_outlined
-                    : Icons.verified_outlined,
-              ),
-              label: const Text('Endorsement'),
-            ),
-            const SizedBox(width: 8),
-            OutlinedButton.icon(
-              onPressed: () async {
-                final draft = await showAddCrewDialog(
-                  context: context,
-                  initialCrewId: crewItems.isNotEmpty
-                      ? crewItems.first.id
-                      : null,
-                  crewLabel: (crewId) => _crewLabel(crewId, crewItems),
-                  onCreateCrew: _createCrewAndReturnId,
-                );
-                if (draft == null || !mounted) return;
-                final duplicate = _crewRows.any(
-                  (row) => row.crewId == draft.crewId,
-                );
-                if (duplicate) return;
-                setState(() {
-                  _crewRows.add(draft);
-                  _crewErrorText = null;
-                });
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Add Crew'),
+            Wrap(
+              spacing: 8,
+              children: _buildCrewHeaderActions(crewItems),
             ),
           ],
         ),
@@ -670,6 +626,49 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
           ),
         ],
       ],
+    );
+  }
+
+  List<Widget> _buildCrewHeaderActions(List<CrewRow> crewItems) {
+    return [
+      _crewHeaderActionButton(
+        onPressed: _openEndorsementDialog,
+        icon: _endorsement == null
+            ? Icons.draw_outlined
+            : Icons.verified_outlined,
+        label: const Text('Endorsement'),
+      ),
+      _crewHeaderActionButton(
+        onPressed: () async {
+          final draft = await showAddCrewDialog(
+            context: context,
+            initialCrewId: crewItems.isNotEmpty ? crewItems.first.id : null,
+            crewLabel: (crewId) => _crewLabel(crewId, crewItems),
+            onCreateCrew: _createCrewAndReturnId,
+          );
+          if (draft == null || !mounted) return;
+          final duplicate = _crewRows.any((row) => row.crewId == draft.crewId);
+          if (duplicate) return;
+          setState(() {
+            _crewRows.add(draft);
+            _crewErrorText = null;
+          });
+        },
+        icon: Icons.add,
+        label: const Text('Add Crew'),
+      ),
+    ];
+  }
+
+  Widget _crewHeaderActionButton({
+    required FutureOr<void> Function() onPressed,
+    required IconData icon,
+    required Widget label,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: () => onPressed(),
+      icon: Icon(icon),
+      label: label,
     );
   }
 

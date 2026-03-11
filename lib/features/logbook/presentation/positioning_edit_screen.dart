@@ -23,6 +23,7 @@ import 'package:simplelog/features/airports/presentation/airport_edit_screen.dar
 import 'package:simplelog/features/airports/presentation/widgets/airport_picker_dialog.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_form_fields.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
 /// Screen used to create or edit positioning entries.
@@ -59,6 +60,52 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
   String? _arrivalAirportErrorText;
   String? _arrivalTimeErrorText;
   String? _totalTimeErrorText;
+
+  void _setLoadingFalse() {
+    setState(() => _loading = false);
+  }
+
+  void _applyPickedDate(DateTime picked) {
+    setState(() {
+      _departure = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        _departure.hour,
+        _departure.minute,
+      );
+      _updateTimeIfAuto();
+    });
+  }
+
+  void _setDepartureAirportId(int id) {
+    setState(() {
+      _departureAirportId = id;
+      _departureAirportErrorText = null;
+    });
+  }
+
+  void _setArrivalAirportId(int id) {
+    setState(() {
+      _arrivalAirportId = id;
+      _arrivalAirportErrorText = null;
+    });
+  }
+
+  void _setCreatedAirport({
+    required bool asDeparture,
+    required Airport created,
+  }) {
+    setState(() {
+      if (asDeparture) {
+        _departureAirportId = created.id;
+        _departureAirportErrorText = null;
+      } else {
+        _arrivalAirportId = created.id;
+        _arrivalAirportErrorText = null;
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -99,7 +146,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
   Future<void> _loadExisting() async {
     if (widget.isCreate) {
       if (!mounted) return;
-      setState(() => _loading = false);
+      _setLoadingFalse();
       return;
     }
     final useCases = ref.read(logbookUseCasesProvider);
@@ -109,7 +156,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     if (!mounted) return;
     if (loaded == null) {
       if (!mounted) return;
-      setState(() => _loading = false);
+      _setLoadingFalse();
       return;
     }
     _positioning = loaded.positioning;
@@ -132,7 +179,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       loaded.positioning.timeTotalMinutes,
     );
     if (!mounted) return;
-    setState(() => _loading = false);
+    _setLoadingFalse();
   }
 
   int _calculatedMinutes() {
@@ -154,16 +201,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     );
     if (picked == null) return;
     if (!mounted) return;
-    setState(() {
-      _departure = DateTime(
-        picked.year,
-        picked.month,
-        picked.day,
-        _departure.hour,
-        _departure.minute,
-      );
-      _updateTimeIfAuto();
-    });
+    _applyPickedDate(picked);
   }
 
   Future<void> _pickDepartureAirport() async {
@@ -173,10 +211,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     );
     if (selected == null) return;
     if (!mounted) return;
-    setState(() {
-      _departureAirportId = selected.id;
-      _departureAirportErrorText = null;
-    });
+    _setDepartureAirportId(selected.id);
   }
 
   Future<void> _pickArrivalAirport() async {
@@ -186,10 +221,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     );
     if (selected == null) return;
     if (!mounted) return;
-    setState(() {
-      _arrivalAirportId = selected.id;
-      _arrivalAirportErrorText = null;
-    });
+    _setArrivalAirportId(selected.id);
   }
 
   Future<void> _createAirportAndSelect({required bool asDeparture}) async {
@@ -215,15 +247,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     )..where((t) => t.id.equals(id))).getSingleOrNull();
     if (!mounted || created == null) return;
     if (!mounted) return;
-    setState(() {
-      if (asDeparture) {
-        _departureAirportId = created.id;
-        _departureAirportErrorText = null;
-      } else {
-        _arrivalAirportId = created.id;
-        _arrivalAirportErrorText = null;
-      }
-    });
+    _setCreatedAirport(asDeparture: asDeparture, created: created);
   }
 
   void _onDepartureTimeChanged(int minutes) {
@@ -381,38 +405,22 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
               onTap: _pickDate,
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: ClockTimeInputField(
-                    controller: _departureTimeController,
-                    label: 'Departure Time',
-                    onChangedMinutes: _onDepartureTimeChanged,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ClockTimeInputField(
-                    controller: _arrivalTimeController,
-                    label: 'Arrival Time',
-                    onChangedMinutes: _onArrivalTimeChanged,
-                    onCleared: _clearArrivalTime,
-                    allowEmpty: true,
-                    errorText: _arrivalTimeErrorText,
-                    suffixIcon: IconButton(
-                      tooltip: 'Clear',
-                      padding: EdgeInsets.zero,
-                      visualDensity: VisualDensity.compact,
-                      constraints: const BoxConstraints.tightFor(
-                        width: 24,
-                        height: 24,
-                      ),
-                      onPressed: _arrival == null ? null : _clearArrivalTime,
-                      icon: const Icon(Icons.clear),
-                    ),
-                  ),
-                ),
-              ],
+            TwoColumnFieldRow(
+              left: ClockTimeInputField(
+                controller: _departureTimeController,
+                label: 'Departure Time',
+                onChangedMinutes: _onDepartureTimeChanged,
+              ),
+              right: LabeledClockFieldWithClear(
+                controller: _arrivalTimeController,
+                label: 'Arrival Time',
+                onChangedMinutes: _onArrivalTimeChanged,
+                onCleared: _clearArrivalTime,
+                errorText: _arrivalTimeErrorText,
+                clearTooltip: 'Clear',
+                clearEnabled: _arrival != null,
+                onPressedClear: _clearArrivalTime,
+              ),
             ),
             const SizedBox(height: 8),
             HourInputField(

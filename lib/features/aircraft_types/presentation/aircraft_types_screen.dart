@@ -176,17 +176,12 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
           height: MediaQuery.of(context).size.height * 0.8,
           child: Column(
             children: [
-              ListTile(
-                title: Text(row.code),
-                subtitle: Text(
-                  row.type.longName.trim().isEmpty
-                      ? 'Aircraft Type'
-                      : row.type.longName.trim(),
-                ),
-                trailing: TextButton(
-                  onPressed: () => AppNavigator.pop(context),
-                  child: const Text('Done'),
-                ),
+              _buildDetailsHeaderTile(
+                title: row.code,
+                subtitle: row.type.longName.trim().isEmpty
+                    ? 'Aircraft Type'
+                    : row.type.longName.trim(),
+                onDone: () => AppNavigator.pop(context),
               ),
               const Divider(height: 1),
               Expanded(
@@ -245,13 +240,10 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
           height: MediaQuery.of(context).size.height * 0.8,
           child: Column(
             children: [
-              ListTile(
-                title: Text('Family: ${group.family}'),
-                subtitle: const Text('Flights'),
-                trailing: TextButton(
-                  onPressed: () => AppNavigator.pop(context),
-                  child: const Text('Done'),
-                ),
+              _buildDetailsHeaderTile(
+                title: 'Family: ${group.family}',
+                subtitle: 'Flights',
+                onDone: () => AppNavigator.pop(context),
               ),
               const Divider(height: 1),
               Expanded(
@@ -309,6 +301,21 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
     flush();
 
     return groups;
+  }
+
+  Widget _buildDetailsHeaderTile({
+    required String title,
+    required String subtitle,
+    required VoidCallback onDone,
+  }) {
+    return ListTile(
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: TextButton(
+        onPressed: onDone,
+        child: const Text('Done'),
+      ),
+    );
   }
 
   @override

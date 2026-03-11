@@ -31,6 +31,11 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
   final _searchController = TextEditingController();
   String _query = '';
   bool _fabOpen = false;
+
+  void _setSearchBy(AircraftSearchBy value) {
+    setState(() => _searchBy = value);
+  }
+
   AircraftSearchBy _searchBy = AircraftSearchBy.all;
 
   @override
@@ -54,8 +59,9 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
       context,
       initialSearchBy: _searchBy,
     );
-    if (!mounted || selected == null) return;
-    setState(() => _searchBy = selected);
+    if (selected == null) return;
+    if (!mounted) return;
+    _setSearchBy(selected);
   }
 
   String _searchLabel(AppLocalizations l10n) {
@@ -173,56 +179,20 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
   }
 
   Future<void> _createAircraft() async {
-    final isCompact = MediaQuery.of(context).size.width < 600;
-    const placeholder = Aircraft(
-      id: kPlaceholderId,
-      aircraftTypeId: 0,
-      registration: '',
-      isSimulator: false,
-      isFavorite: false,
-      isLocked: false,
-    );
-
-    if (isCompact) {
-      await AppNavigator.pushMaterial<void>(
-        context,
-        (_) => const AircraftEditScreen(
-          item: placeholder,
-          isCreate: true,
-          initialIsSimulator: false,
-        ),
-      );
-      return;
-    }
-
-    await showDialog<void>(
-      context: context,
-      builder: (context) => Dialog(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 520,
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
-          ),
-          child: const SizedBox(
-            width: 520,
-            child: AircraftEditScreen(
-              item: placeholder,
-              isCreate: true,
-              initialIsSimulator: false,
-            ),
-          ),
-        ),
-      ),
-    );
+    await _openCreateAircraft(isSimulator: false);
   }
 
   Future<void> _createSimulator() async {
+    await _openCreateAircraft(isSimulator: true);
+  }
+
+  Future<void> _openCreateAircraft({required bool isSimulator}) async {
     final isCompact = MediaQuery.of(context).size.width < 600;
-    const placeholder = Aircraft(
+    final placeholder = Aircraft(
       id: kPlaceholderId,
       aircraftTypeId: 0,
       registration: '',
-      isSimulator: true,
+      isSimulator: isSimulator,
       isFavorite: false,
       isLocked: false,
     );
@@ -230,10 +200,10 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
     if (isCompact) {
       await AppNavigator.pushMaterial<void>(
         context,
-        (_) => const AircraftEditScreen(
+        (_) => AircraftEditScreen(
           item: placeholder,
           isCreate: true,
-          initialIsSimulator: true,
+          initialIsSimulator: isSimulator,
         ),
       );
       return;
@@ -247,12 +217,12 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
             maxWidth: 520,
             maxHeight: MediaQuery.of(context).size.height * 0.9,
           ),
-          child: const SizedBox(
+          child: SizedBox(
             width: 520,
             child: AircraftEditScreen(
               item: placeholder,
               isCreate: true,
-              initialIsSimulator: true,
+              initialIsSimulator: isSimulator,
             ),
           ),
         ),

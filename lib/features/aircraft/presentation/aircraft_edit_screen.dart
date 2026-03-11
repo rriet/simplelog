@@ -61,6 +61,10 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
   late bool _isFavorite;
   bool _showAircraftTypeError = false;
 
+  void _setAircraftTypeId(int id) {
+    setState(() => _aircraftTypeId = id);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -217,7 +221,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
       );
       if (!mounted) return;
       if (newId != null) {
-        setState(() => _aircraftTypeId = newId);
+        _setAircraftTypeId(newId);
       }
       return;
     }
@@ -242,7 +246,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     );
     if (!mounted) return;
     if (newId != null) {
-      setState(() => _aircraftTypeId = newId);
+      _setAircraftTypeId(newId);
     }
   }
 

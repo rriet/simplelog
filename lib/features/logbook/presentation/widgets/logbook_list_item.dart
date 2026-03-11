@@ -20,6 +20,7 @@ class LogbookListItem extends StatelessWidget {
     this.onDelete,
     this.onToggleLock,
   });
+
   /// Entry rendered by this row.
   final LogbookEntry entry;
 
@@ -150,7 +151,7 @@ class LogbookListItem extends StatelessWidget {
     );
   }
 
-  ListTile _buildPositioningTile(
+  Widget _buildPositioningTile(
     BuildContext context,
     DateTime date, {
     required bool isCompact,
@@ -204,40 +205,23 @@ class LogbookListItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Center(
-                          child: _ScaledText(depCode, style: boostedTitleStyle),
-                        ),
+                  _RouteCodesAndDurationRow(
+                    depCode: depCode,
+                    center: _ScaledText(
+                      durationText,
+                      style: titleStyle?.copyWith(
+                        fontSize: (titleStyle.fontSize ?? 0) + 1,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                      Expanded(
-                        child: Center(
-                          child: _ScaledText(
-                            durationText,
-                            style: titleStyle?.copyWith(
-                              fontSize: (titleStyle.fontSize ?? 0) + 1,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: _ScaledText(arrCode, style: boostedTitleStyle),
-                        ),
-                      ),
-                    ],
+                    ),
+                    arrCode: arrCode,
+                    titleStyle: boostedTitleStyle,
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Expanded(child: Center(child: _ScaledText(depTime))),
-                      const Expanded(child: Center(child: _PositioningPath())),
-                      Expanded(child: Center(child: _ScaledText(arrTime))),
-                    ],
+                  _RouteTimesAndPathRow(
+                    depTime: depTime,
+                    arrTime: arrTime,
+                    icon: Icons.airline_seat_recline_extra_sharp,
                   ),
                 ],
               ),
@@ -247,22 +231,16 @@ class LogbookListItem extends StatelessWidget {
       ],
     );
 
-    return ListTile(
-      onTap: onOpen != null
-          ? () => onOpen!(entry)
-          : onEdit == null
-          ? null
-          : () => onEdit!(entry),
-      title: Padding(
-        padding: isCompact
-            ? EdgeInsets.zero
-            : const EdgeInsets.symmetric(horizontal: 8),
-        child: content,
-      ),
+    return _EventTileShell(
+      entry: entry,
+      isCompact: isCompact,
+      onOpen: onOpen,
+      onEdit: onEdit,
+      content: content,
     );
   }
 
-  ListTile _buildSimulatorTile(
+  Widget _buildSimulatorTile(
     BuildContext context,
     DateTime date, {
     required bool isCompact,
@@ -307,13 +285,11 @@ class LogbookListItem extends StatelessWidget {
             const SizedBox(width: 10),
             _DateDivider(color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(width: 10),
-            Expanded(
-              child: Center(
-                child: _ScaledText(
-                  'Session Time: $totalText',
-                  style: boostedTitleStyle?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+            _CenteredExpanded(
+              child: _ScaledText(
+                'Session Time: $totalText',
+                style: boostedTitleStyle?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
@@ -322,22 +298,16 @@ class LogbookListItem extends StatelessWidget {
       ],
     );
 
-    return ListTile(
-      onTap: onOpen != null
-          ? () => onOpen!(entry)
-          : onEdit == null
-          ? null
-          : () => onEdit!(entry),
-      title: Padding(
-        padding: isCompact
-            ? EdgeInsets.zero
-            : const EdgeInsets.symmetric(horizontal: 8),
-        child: content,
-      ),
+    return _EventTileShell(
+      entry: entry,
+      isCompact: isCompact,
+      onOpen: onOpen,
+      onEdit: onEdit,
+      content: content,
     );
   }
 
-  ListTile _buildFlightTile(
+  Widget _buildFlightTile(
     BuildContext context,
     AppLocalizations l10n,
     DateTime date, {
@@ -404,55 +374,35 @@ class LogbookListItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Center(
-                          child: _ScaledText(depCode, style: boostedTitleStyle),
+                  _RouteCodesAndDurationRow(
+                    depCode: depCode,
+                    center: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontSize: (titleStyle?.fontSize ?? 0) + 1,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: RichText(
-                            textAlign: TextAlign.center,
-                            text: TextSpan(
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(
-                                    fontSize: (titleStyle?.fontSize ?? 0) + 1,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                                  ),
-                              children: [
-                                TextSpan(text: blockTime),
-                                if (totalBlockMinutes != blockMinutes)
-                                  TextSpan(
-                                    text:
-                                        ' ($totalBlockTime'
-                                        'h)',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                              ],
+                        children: [
+                          TextSpan(text: blockTime),
+                          if (totalBlockMinutes != blockMinutes)
+                            TextSpan(
+                              text:
+                                  ' ($totalBlockTime'
+                                  'h)',
+                              style: Theme.of(context).textTheme.bodySmall,
                             ),
-                          ),
-                        ),
+                        ],
                       ),
-                      Expanded(
-                        child: Center(
-                          child: _ScaledText(arrCode, style: boostedTitleStyle),
-                        ),
-                      ),
-                    ],
+                    ),
+                    arrCode: arrCode,
+                    titleStyle: boostedTitleStyle,
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Expanded(child: Center(child: _ScaledText(depTime))),
-                      const Expanded(child: Center(child: _FlightPath())),
-                      Expanded(child: Center(child: _ScaledText(arrTime))),
-                    ],
+                  _RouteTimesAndPathRow(
+                    depTime: depTime,
+                    arrTime: arrTime,
+                    icon: Icons.flight_takeoff,
                   ),
                 ],
               ),
@@ -468,18 +418,12 @@ class LogbookListItem extends StatelessWidget {
       ],
     );
 
-    return ListTile(
-      onTap: onOpen != null
-          ? () => onOpen!(entry)
-          : onEdit == null
-          ? null
-          : () => onEdit!(entry),
-      title: Padding(
-        padding: isCompact
-            ? EdgeInsets.zero
-            : const EdgeInsets.symmetric(horizontal: 8),
-        child: content,
-      ),
+    return _EventTileShell(
+      entry: entry,
+      isCompact: isCompact,
+      onOpen: onOpen,
+      onEdit: onEdit,
+      content: content,
     );
   }
 
@@ -804,36 +748,108 @@ class _ScaledText extends StatelessWidget {
   }
 }
 
-class _FlightPath extends StatelessWidget {
-  const _FlightPath();
+class _EventTileShell extends StatelessWidget {
+  const _EventTileShell({
+    required this.entry,
+    required this.isCompact,
+    required this.content,
+    this.onOpen,
+    this.onEdit,
+  });
+
+  final LogbookEntry entry;
+  final bool isCompact;
+  final ValueChanged<LogbookEntry>? onOpen;
+  final ValueChanged<LogbookEntry>? onEdit;
+  final Widget content;
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurfaceVariant;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 30) {
-          return const SizedBox.shrink();
-        }
-        return SizedBox(
-          height: 16,
-          child: Row(
-            children: [
-              Expanded(child: Divider(color: color, thickness: 1, height: 1)),
-              const SizedBox(width: 6),
-              Icon(Icons.flight_takeoff, size: 16, color: color),
-              const SizedBox(width: 6),
-              Expanded(child: Divider(color: color, thickness: 1, height: 1)),
-            ],
-          ),
-        );
-      },
+    return ListTile(
+      onTap: onOpen != null
+          ? () => onOpen!(entry)
+          : onEdit == null
+          ? null
+          : () => onEdit!(entry),
+      title: Padding(
+        padding: isCompact
+            ? EdgeInsets.zero
+            : const EdgeInsets.symmetric(horizontal: 8),
+        child: content,
+      ),
     );
   }
 }
 
-class _PositioningPath extends StatelessWidget {
-  const _PositioningPath();
+class _RouteCodesAndDurationRow extends StatelessWidget {
+  const _RouteCodesAndDurationRow({
+    required this.depCode,
+    required this.center,
+    required this.arrCode,
+    required this.titleStyle,
+  });
+
+  final String depCode;
+  final Widget center;
+  final String arrCode;
+  final TextStyle? titleStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final cells = [
+      _ScaledText(depCode, style: titleStyle),
+      center,
+      _ScaledText(arrCode, style: titleStyle),
+    ];
+    return Row(
+      children: cells
+          .map((cell) => _CenteredExpanded(child: cell))
+          .toList(growable: false),
+    );
+  }
+}
+
+class _RouteTimesAndPathRow extends StatelessWidget {
+  const _RouteTimesAndPathRow({
+    required this.depTime,
+    required this.arrTime,
+    required this.icon,
+  });
+
+  final String depTime;
+  final String arrTime;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final cells = [
+      _ScaledText(depTime),
+      _PathWithIcon(icon: icon),
+      _ScaledText(arrTime),
+    ];
+    return Row(
+      children: cells
+          .map((cell) => _CenteredExpanded(child: cell))
+          .toList(growable: false),
+    );
+  }
+}
+
+class _CenteredExpanded extends StatelessWidget {
+  const _CenteredExpanded({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(child: Center(child: child));
+  }
+}
+
+class _PathWithIcon extends StatelessWidget {
+  const _PathWithIcon({required this.icon});
+
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -849,11 +865,7 @@ class _PositioningPath extends StatelessWidget {
             children: [
               Expanded(child: Divider(color: color, thickness: 1, height: 1)),
               const SizedBox(width: 6),
-              Icon(
-                Icons.airline_seat_recline_extra_sharp,
-                size: 16,
-                color: color,
-              ),
+              Icon(icon, size: 16, color: color),
               const SizedBox(width: 6),
               Expanded(child: Divider(color: color, thickness: 1, height: 1)),
             ],

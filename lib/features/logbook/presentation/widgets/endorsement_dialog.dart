@@ -39,11 +39,24 @@ class EndorsementDialog extends StatefulWidget {
 }
 
 class _EndorsementDialogState extends State<EndorsementDialog> {
+  static const _lockWarningText =
+      'Once saved with an endorsement signature, this entry is locked and cannot be edited unless the signature is removed.';
+
   final _nameController = TextEditingController();
   final _certificateController = TextEditingController();
   final _typeController = TextEditingController();
   final _expiryController = TextEditingController();
   Uint8List? _signatureImage;
+
+  void _setExpiry(DateTime picked) {
+    setState(() {
+      _expiryController.text = DateFormat('yyyy-MM-dd').format(picked);
+    });
+  }
+
+  void _setSignature(Uint8List bytes) {
+    setState(() => _signatureImage = bytes);
+  }
 
   @override
   void initState() {
@@ -92,9 +105,7 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
-                'Once saved with an endorsement signature, this entry '
-                'is locked and cannot be edited unless the signature '
-                'is removed.',
+                _lockWarningText,
               ),
             ),
             const SizedBox(height: 12),
@@ -130,14 +141,8 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
               ),
             ),
             const SizedBox(height: 12),
-            Container(
+            _SignaturePreviewPanel(
               height: 130,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
               child: _signatureImage == null
                   ? const Center(child: Text('No signature'))
                   : Padding(
@@ -198,9 +203,7 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
     );
     if (picked == null) return;
     if (!mounted) return;
-    setState(() {
-      _expiryController.text = DateFormat('yyyy-MM-dd').format(picked);
-    });
+    _setExpiry(picked);
   }
 
   DateTime? _parseIsoDate(String raw) {
@@ -220,7 +223,7 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
     );
     if (bytes == null) return;
     if (!mounted) return;
-    setState(() => _signatureImage = bytes);
+    _setSignature(bytes);
   }
 
   void _save() {
@@ -284,28 +287,15 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
                       constraints.maxWidth,
                       constraints.maxHeight,
                     );
-                    return Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    return _SignaturePreviewPanel(
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
-                        onPanStart: (details) {
-                          setState(() {
-                            _strokes.add(<Offset>[details.localPosition]);
-                          });
-                        },
-                        onPanUpdate: (details) {
-                          if (_strokes.isEmpty) {
-                            return;
-                          }
-                          setState(() {
-                            _strokes.last.add(details.localPosition);
-                          });
-                        },
+                        onPanStart: (details) => _startStroke(
+                          details.localPosition,
+                        ),
+                        onPanUpdate: (details) => _appendStroke(
+                          details.localPosition,
+                        ),
                         child: CustomPaint(
                           size: Size.infinite,
                           painter: _SignaturePainter(strokes: _strokes),
@@ -339,6 +329,21 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
       return;
     }
     AppNavigator.pop(context, bytes);
+  }
+
+  void _startStroke(Offset position) {
+    setState(() {
+      _strokes.add(<Offset>[position]);
+    });
+  }
+
+  void _appendStroke(Offset position) {
+    if (_strokes.isEmpty) {
+      return;
+    }
+    setState(() {
+      _strokes.last.add(position);
+    });
   }
 
   Future<Uint8List?> _exportSignaturePng() async {
@@ -376,6 +381,32 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
     image.dispose();
     return data?.buffer.asUint8List();
   }
+}
+
+class _SignaturePreviewPanel extends StatelessWidget {
+  const _SignaturePreviewPanel({
+    required this.child,
+    this.height,
+  });
+
+  final Widget child;
+  final double? height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      decoration: _signaturePreviewDecoration(context),
+      child: child,
+    );
+  }
+}
+
+BoxDecoration _signaturePreviewDecoration(BuildContext context) {
+  return BoxDecoration(
+    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+    borderRadius: BorderRadius.circular(8),
+  );
 }
 
 class _SignaturePainter extends CustomPainter {

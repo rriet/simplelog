@@ -170,56 +170,37 @@ class _SimpleLogImportOptionsDialogState
               children: [
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
-                    'Total time (updates PIC/SIC/etc)',
-                  ),
+                  title: const Text('Total time (updates PIC/SIC/etc)'),
                   value: _recalcTotal,
                   onChanged: (value) => setState(() => _recalcTotal = value),
                 ),
                 if (_recalcTotal) ...[
-                  _CompactFieldRow(
-                    fields: [
-                      _CompactFieldSpec.number(
-                        label: 'IRP3 %',
-                        controller: _irp3PercentController,
-                      ),
-                      _CompactFieldSpec.time(
-                        label: 'IRP3 Time',
-                        controller: _irp3SubtractController,
-                      ),
-                    ],
+                  _buildPercentTimePairRow(
+                    percentLabel: 'IRP3 %',
+                    percentController: _irp3PercentController,
+                    timeLabel: 'IRP3 Time',
+                    timeController: _irp3SubtractController,
                   ),
-                  _CompactFieldRow(
-                    fields: [
-                      _CompactFieldSpec.number(
-                        label: 'IRP4 %',
-                        controller: _irp4PercentController,
-                      ),
-                      _CompactFieldSpec.time(
-                        label: 'IRP4 Time',
-                        controller: _irp4SubtractController,
-                      ),
-                    ],
+                  _buildPercentTimePairRow(
+                    percentLabel: 'IRP4 %',
+                    percentController: _irp4PercentController,
+                    timeLabel: 'IRP4 Time',
+                    timeController: _irp4SubtractController,
                   ),
                 ],
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Night time'),
+                _buildRecalculationToggle(
+                  title: 'Night time',
                   value: _recalcNight,
                   onChanged: (value) => setState(() => _recalcNight = value),
                 ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text(
-                    'Takeoff & Landings (day/night)',
-                  ),
+                _buildRecalculationToggle(
+                  title: 'Takeoff & Landings (day/night)',
                   value: _recalcTakeoffLanding,
                   onChanged: (value) =>
                       setState(() => _recalcTakeoffLanding = value),
                 ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Cross-country'),
+                _buildRecalculationToggle(
+                  title: 'Cross-country',
                   value: _recalcCrossCountry,
                   onChanged: (value) =>
                       setState(() => _recalcCrossCountry = value),
@@ -233,53 +214,31 @@ class _SimpleLogImportOptionsDialogState
                       ),
                     ],
                   ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Instrument time'),
+                _buildRecalculationToggle(
+                  title: 'Instrument time',
                   value: _recalcInstrument,
                   onChanged: (value) =>
                       setState(() => _recalcInstrument = value),
                 ),
                 if (_recalcInstrument) ...[
-                  _CompactFieldRow(
-                    fields: [
-                      _CompactFieldSpec.number(
-                        label: 'Instrument %',
-                        controller: _instrumentPercentController,
-                      ),
-                      _CompactFieldSpec.time(
-                        label: 'Subtracted',
-                        controller: _instrumentSubtractController,
-                      ),
-                      _CompactFieldSpec.time(
-                        label: 'Minimum',
-                        controller: _instrumentMinController,
-                      ),
-                    ],
+                  _buildPercentTimeMinimumRow(
+                    percentLabel: 'Instrument %',
+                    percentController: _instrumentPercentController,
+                    subtractController: _instrumentSubtractController,
+                    minimumController: _instrumentMinController,
                   ),
                 ],
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('IFR time'),
+                _buildRecalculationToggle(
+                  title: 'IFR time',
                   value: _recalcIfr,
                   onChanged: (value) => setState(() => _recalcIfr = value),
                 ),
                 if (_recalcIfr) ...[
-                  _CompactFieldRow(
-                    fields: [
-                      _CompactFieldSpec.number(
-                        label: 'IFR %',
-                        controller: _ifrPercentController,
-                      ),
-                      _CompactFieldSpec.time(
-                        label: 'Subtracted',
-                        controller: _ifrSubtractController,
-                      ),
-                      _CompactFieldSpec.time(
-                        label: 'Minimum',
-                        controller: _ifrMinController,
-                      ),
-                    ],
+                  _buildPercentTimeMinimumRow(
+                    percentLabel: 'IFR %',
+                    percentController: _ifrPercentController,
+                    subtractController: _ifrSubtractController,
+                    minimumController: _ifrMinController,
                   ),
                 ],
               ],
@@ -295,46 +254,23 @@ class _SimpleLogImportOptionsDialogState
               ),
               title: const Text('Conflict Resolution'),
               children: [
-                SwitchListTile(
-                  contentPadding: const EdgeInsets.fromLTRB(
-                    16,
-                    0,
-                    16,
-                    8,
-                  ),
-                  title: const Text('Override Airport on Conflict'),
+                _buildConflictToggle(
+                  title: 'Override Airport on Conflict',
                   value: _overrideAirports,
                   onChanged: (value) =>
                       setState(() => _overrideAirports = value),
                 ),
-                SwitchListTile(
-                  contentPadding: const EdgeInsets.fromLTRB(
-                    16,
-                    0,
-                    16,
-                    8,
-                  ),
-                  title: const Text(
-                    'Override Aircraft on Conflict',
-                  ),
+                _buildConflictToggle(
+                  title: 'Override Aircraft on Conflict',
                   value: _overrideAircraft,
                   onChanged: (value) =>
                       setState(() => _overrideAircraft = value),
                 ),
-                SwitchListTile(
-                  contentPadding: const EdgeInsets.fromLTRB(
-                    16,
-                    0,
-                    16,
-                    8,
-                  ),
-                  title: const Text(
-                    'Override Aircraft Type on Conflict',
-                  ),
+                _buildConflictToggle(
+                  title: 'Override Aircraft Type on Conflict',
                   value: _overrideAircraftTypes,
-                  onChanged: (value) => setState(
-                    () => _overrideAircraftTypes = value,
-                  ),
+                  onChanged: (value) =>
+                      setState(() => _overrideAircraftTypes = value),
                 ),
               ],
             ),
@@ -395,6 +331,76 @@ class _SimpleLogImportOptionsDialogState
       overrideAirportValues: _overrideAirports,
       overrideAircraftValues: _overrideAircraft,
       overrideAircraftTypeValues: _overrideAircraftTypes,
+    );
+  }
+
+  Widget _buildRecalculationToggle({
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(title),
+      value: value,
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildConflictToggle({
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return SwitchListTile(
+      contentPadding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      title: Text(title),
+      value: value,
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildPercentTimePairRow({
+    required String percentLabel,
+    required TextEditingController percentController,
+    required String timeLabel,
+    required TextEditingController timeController,
+  }) {
+    return _CompactFieldRow(
+      fields: [
+        _CompactFieldSpec.number(
+          label: percentLabel,
+          controller: percentController,
+        ),
+        _CompactFieldSpec.time(
+          label: timeLabel,
+          controller: timeController,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPercentTimeMinimumRow({
+    required String percentLabel,
+    required TextEditingController percentController,
+    required TextEditingController subtractController,
+    required TextEditingController minimumController,
+  }) {
+    return _CompactFieldRow(
+      fields: [
+        _CompactFieldSpec.number(
+          label: percentLabel,
+          controller: percentController,
+        ),
+        _CompactFieldSpec.time(
+          label: 'Subtracted',
+          controller: subtractController,
+        ),
+        _CompactFieldSpec.time(
+          label: 'Minimum',
+          controller: minimumController,
+        ),
+      ],
     );
   }
 }

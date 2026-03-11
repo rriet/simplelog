@@ -911,16 +911,12 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: limitController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: l10n.dashboardLimitValueLabel,
-                      ),
+                    ..._buildThresholdFields(
+                      l10n: l10n,
+                      limitController: limitController,
+                      yellowController: yellowController,
+                      redController: redController,
                     ),
-                    const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       initialValue: limitUnit,
                       decoration: InputDecoration(
@@ -946,26 +942,6 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                       ],
                       onChanged: (value) =>
                           setState(() => limitUnit = value ?? limitUnit),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: yellowController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: l10n.dashboardWarnYellowBeforeLabel,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: redController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: l10n.dashboardWarnRedBeforeLabel,
-                      ),
                     ),
                   ],
                 ),
@@ -1097,5 +1073,47 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
       _ => reference,
     };
     return '$baseLabel • $referenceLabel';
+  }
+
+  Widget _numericSettingsField({
+    required TextEditingController controller,
+    required String label,
+    bool decimal = false,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: decimal
+          ? const TextInputType.numberWithOptions(decimal: true)
+          : TextInputType.number,
+      decoration: InputDecoration(labelText: label),
+    );
+  }
+
+  List<Widget> _buildThresholdFields({
+    required AppLocalizations l10n,
+    required TextEditingController limitController,
+    required TextEditingController yellowController,
+    required TextEditingController redController,
+  }) {
+    return [
+      _numericSettingsField(
+        controller: limitController,
+        label: l10n.dashboardLimitValueLabel,
+        decimal: true,
+      ),
+      const SizedBox(height: 8),
+      _numericSettingsField(
+        controller: yellowController,
+        label: l10n.dashboardWarnYellowBeforeLabel,
+        decimal: true,
+      ),
+      const SizedBox(height: 8),
+      _numericSettingsField(
+        controller: redController,
+        label: l10n.dashboardWarnRedBeforeLabel,
+        decimal: true,
+      ),
+      const SizedBox(height: 8),
+    ];
   }
 }

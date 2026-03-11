@@ -25,12 +25,10 @@ Future<void> showAirportDetailsDialog(
         height: MediaQuery.of(context).size.height * 0.75,
         child: Column(
           children: [
-            ListTile(
-              title: Text(l10n.screenAirports),
-              trailing: TextButton(
-                onPressed: () => AppNavigator.pop(context),
-                child: Text(l10n.okAction),
-              ),
+            _buildDialogHeaderTile(
+              title: l10n.screenAirports,
+              buttonLabel: l10n.okAction,
+              onPressed: () => AppNavigator.pop(context),
             ),
             const Divider(height: 1),
             Expanded(
@@ -139,12 +137,10 @@ Future<void> _showAirportExpandedMapDialog(
         height: 500,
         child: Column(
           children: [
-            ListTile(
-              title: Text(l10n.mapTitle),
-              trailing: TextButton(
-                onPressed: () => AppNavigator.pop(context),
-                child: Text(l10n.okAction),
-              ),
+            _buildDialogHeaderTile(
+              title: l10n.mapTitle,
+              buttonLabel: l10n.okAction,
+              onPressed: () => AppNavigator.pop(context),
             ),
             const Divider(height: 1),
             Expanded(
@@ -216,6 +212,20 @@ Future<void> _showAirportExpandedMapDialog(
           ],
         ),
       ),
+    ),
+  );
+}
+
+Widget _buildDialogHeaderTile({
+  required String title,
+  required String buttonLabel,
+  required VoidCallback onPressed,
+}) {
+  return ListTile(
+    title: Text(title),
+    trailing: TextButton(
+      onPressed: onPressed,
+      child: Text(buttonLabel),
     ),
   );
 }

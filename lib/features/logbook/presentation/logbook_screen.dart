@@ -41,6 +41,9 @@ class LogbookScreen extends ConsumerStatefulWidget {
 
 class _LogbookScreenState extends ConsumerState<LogbookScreen>
     with SingleTickerProviderStateMixin {
+  static const _unlockEndorsementWarningMessage =
+      'If you unlock this entry, signature and endorsement information will be deleted. Continue?';
+
   int? _currentYear;
   bool _fabOpen = false;
   int _selectedTabIndex = 0;
@@ -722,25 +725,12 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   }
 
   Future<bool?> _confirmEndorsementUnlock() {
-    return showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Unlock endorsed entry?'),
-        content: const Text(
-          'If you unlock this entry, signature and endorsement '
-          'information will be deleted. Continue?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => AppNavigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => AppNavigator.pop(dialogContext, true),
-            child: const Text('Unlock'),
-          ),
-        ],
-      ),
+    const unlockTitle = 'Unlock endorsed entry?';
+    return _showConfirmDialog(
+      title: const Text(unlockTitle),
+      content: const Text(_unlockEndorsementWarningMessage),
+      cancelLabel: const Text('Cancel'),
+      confirmLabel: const Text('Unlock'),
     );
   }
 
@@ -802,43 +792,46 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
       LogbookEventType.dutyPeriod => l10n.logbookEventDuty,
       LogbookEventType.unknown => l10n.reportsEntryGeneric,
     };
+    return _showDeleteConfirmDialog(l10n.reportsDeleteEntryConfirm(label));
+  }
+
+  Future<bool?> _confirmDeleteDuty(LogbookDutyGroupItem group) {
+    final l10n = AppLocalizations.of(context)!;
+    return _showDeleteConfirmDialog(l10n.reportsDeleteDutyConfirm);
+  }
+
+  Future<bool?> _showConfirmDialog({
+    required Widget title,
+    required Widget content,
+    required Widget cancelLabel,
+    required Widget confirmLabel,
+  }) {
     return showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.confirmDeleteTitle),
-        content: Text(l10n.reportsDeleteEntryConfirm(label)),
+      builder: (dialogContext) => AlertDialog(
+        title: title,
+        content: content,
         actions: [
           TextButton(
-            onPressed: () => AppNavigator.pop(context, false),
-            child: Text(l10n.cancelAction),
+            onPressed: () => AppNavigator.pop(dialogContext, false),
+            child: cancelLabel,
           ),
           FilledButton(
-            onPressed: () => AppNavigator.pop(context, true),
-            child: Text(l10n.deleteAction),
+            onPressed: () => AppNavigator.pop(dialogContext, true),
+            child: confirmLabel,
           ),
         ],
       ),
     );
   }
 
-  Future<bool?> _confirmDeleteDuty(LogbookDutyGroupItem group) {
+  Future<bool?> _showDeleteConfirmDialog(String message) {
     final l10n = AppLocalizations.of(context)!;
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.confirmDeleteTitle),
-        content: Text(l10n.reportsDeleteDutyConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => AppNavigator.pop(context, false),
-            child: Text(l10n.cancelAction),
-          ),
-          FilledButton(
-            onPressed: () => AppNavigator.pop(context, true),
-            child: Text(l10n.deleteAction),
-          ),
-        ],
-      ),
+    return _showConfirmDialog(
+      title: Text(l10n.confirmDeleteTitle),
+      content: Text(message),
+      cancelLabel: Text(l10n.cancelAction),
+      confirmLabel: Text(l10n.deleteAction),
     );
   }
 
@@ -1212,64 +1205,22 @@ class _GlobalFilterBar extends StatelessWidget {
             child: showTypeChips
                 ? Row(
                     children: [
-                      SizedBox(
+                      _buildDateSelector(
                         width: dateFieldWidth,
-                        child: DateSelectorInputField(
-                          label: 'From',
-                          valueText: fromDateLabel,
-                          onTap: onSelectFromDate,
-                        ),
+                        label: 'From',
+                        valueText: fromDateLabel,
+                        onTap: onSelectFromDate,
                       ),
                       const SizedBox(width: 8),
-                      SizedBox(
+                      _buildDateSelector(
                         width: dateFieldWidth,
-                        child: DateSelectorInputField(
-                          label: 'To',
-                          valueText: toDateLabel,
-                          onTap: onSelectToDate,
-                        ),
+                        label: 'To',
+                        valueText: toDateLabel,
+                        onTap: onSelectToDate,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: EventTypeToggleButton(
-                                key: const ValueKey('main_filter_flight'),
-                                label: l10n.logbookEventFlight,
-                                selected: selectedTypes.flights,
-                                onTap: onToggleFlights,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: EventTypeToggleButton(
-                                key: const ValueKey('main_filter_simulator'),
-                                label: l10n.fieldIsSimulator,
-                                selected: selectedTypes.simulator,
-                                onTap: onToggleSimulator,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: EventTypeToggleButton(
-                                key: const ValueKey('main_filter_duty'),
-                                label: l10n.reportsMetricDuty,
-                                selected: selectedTypes.duty,
-                                onTap: onToggleDuty,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: EventTypeToggleButton(
-                                key: const ValueKey('main_filter_positioning'),
-                                label: l10n.logbookEventPositioning,
-                                selected: selectedTypes.positioning,
-                                onTap: onTogglePositioning,
-                              ),
-                            ),
-                          ],
-                        ),
+                        child: Row(children: _buildTypeToggleItems(l10n)),
                       ),
                       const SizedBox(width: 8),
                       SquareOutlineButton(
@@ -1286,22 +1237,18 @@ class _GlobalFilterBar extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        SizedBox(
+                        _buildDateSelector(
                           width: dateFieldWidth,
-                          child: DateSelectorInputField(
-                            label: 'From',
-                            valueText: fromDateLabel,
-                            onTap: onSelectFromDate,
-                          ),
+                          label: 'From',
+                          valueText: fromDateLabel,
+                          onTap: onSelectFromDate,
                         ),
                         const SizedBox(width: 8),
-                        SizedBox(
+                        _buildDateSelector(
                           width: dateFieldWidth,
-                          child: DateSelectorInputField(
-                            label: 'To',
-                            valueText: toDateLabel,
-                            onTap: onSelectToDate,
-                          ),
+                          label: 'To',
+                          valueText: toDateLabel,
+                          onTap: onSelectToDate,
                         ),
                         const SizedBox(width: 8),
                         SquareOutlineButton(
@@ -1318,6 +1265,79 @@ class _GlobalFilterBar extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTypeToggle({
+    required Key key,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: EventTypeToggleButton(
+        key: key,
+        label: label,
+        selected: selected,
+        onTap: onTap,
+      ),
+    );
+  }
+
+  List<Widget> _buildTypeToggleItems(AppLocalizations l10n) {
+    final items = [
+      (
+        const ValueKey('main_filter_flight'),
+        l10n.logbookEventFlight,
+        selectedTypes.flights,
+        onToggleFlights,
+      ),
+      (
+        const ValueKey('main_filter_simulator'),
+        l10n.fieldIsSimulator,
+        selectedTypes.simulator,
+        onToggleSimulator,
+      ),
+      (
+        const ValueKey('main_filter_duty'),
+        l10n.reportsMetricDuty,
+        selectedTypes.duty,
+        onToggleDuty,
+      ),
+      (
+        const ValueKey('main_filter_positioning'),
+        l10n.logbookEventPositioning,
+        selectedTypes.positioning,
+        onTogglePositioning,
+      ),
+    ];
+
+    return [
+      for (var i = 0; i < items.length; i++) ...[
+        _buildTypeToggle(
+          key: items[i].$1,
+          label: items[i].$2,
+          selected: items[i].$3,
+          onTap: items[i].$4,
+        ),
+        if (i < items.length - 1) const SizedBox(width: 8),
+      ],
+    ];
+  }
+
+  Widget _buildDateSelector({
+    required double width,
+    required String label,
+    required String valueText,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: width,
+      child: DateSelectorInputField(
+        label: label,
+        valueText: valueText,
+        onTap: onTap,
+      ),
     );
   }
 }

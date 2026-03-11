@@ -46,13 +46,46 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   static const _sourceDispatcher = ImportSourceDispatcher();
   static const _logTenProInspector = LogTenProTsvInspector();
   static const _qatarAirwaysInspector = QatarAirwaysWorkbookInspector();
+  static const _syncSubtitle = 'Connect two devices on the same network.';
+  static const _importExportSubtitle =
+      'Import supported files with automatic format detection, or export CSV.';
+  static const _replaceDataWarningMessage =
+      'Current logbook data will be replaced. This cannot be undone.';
+
+  _DatabaseSectionCard _buildTwoActionSection({
+    required String title,
+    required String subtitle,
+    required IconData firstIcon,
+    required String firstLabel,
+    required VoidCallback onFirstPressed,
+    required IconData secondIcon,
+    required String secondLabel,
+    required VoidCallback onSecondPressed,
+  }) {
+    return _DatabaseSectionCard(
+      title: title,
+      subtitle: subtitle,
+      children: [
+        _DatabaseActionButton(
+          icon: firstIcon,
+          label: firstLabel,
+          onPressed: onFirstPressed,
+        ),
+        const SizedBox(height: 8),
+        _DatabaseActionButton(
+          icon: secondIcon,
+          label: secondLabel,
+          onPressed: onSecondPressed,
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760),
@@ -66,7 +99,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
             const SizedBox(height: 16),
             _DatabaseSectionCard(
               title: 'Sync',
-              subtitle: 'Connect two devices on the same network.',
+              subtitle: _syncSubtitle,
               children: [
                 _DatabaseActionButton(
                   icon: Icons.sync,
@@ -81,42 +114,26 @@ class DatabaseSyncTrigger extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
-            _DatabaseSectionCard(
+            _buildTwoActionSection(
               title: 'Import / Export',
-              subtitle:
-                  'Import supported files with automatic format '
-                  'detection, or export CSV.',
-              children: [
-                _DatabaseActionButton(
-                  icon: Icons.upload_file,
-                  label: 'Import File',
-                  onPressed: () => _importCsv(context, ref),
-                ),
-                const SizedBox(height: 8),
-                _DatabaseActionButton(
-                  icon: Icons.download_outlined,
-                  label: 'Export CSV',
-                  onPressed: () => _exportCsv(context, ref),
-                ),
-              ],
+              subtitle: _importExportSubtitle,
+              firstIcon: Icons.upload_file,
+              firstLabel: 'Import File',
+              onFirstPressed: () => _importCsv(context, ref),
+              secondIcon: Icons.download_outlined,
+              secondLabel: 'Export CSV',
+              onSecondPressed: () => _exportCsv(context, ref),
             ),
             const SizedBox(height: 12),
-            _DatabaseSectionCard(
+            _buildTwoActionSection(
               title: 'Backup / Restore',
               subtitle: 'Create and restore SQLite backups.',
-              children: [
-                _DatabaseActionButton(
-                  icon: Icons.save_alt_outlined,
-                  label: 'Backup Logbook',
-                  onPressed: () => _backupDatabase(context, ref),
-                ),
-                const SizedBox(height: 8),
-                _DatabaseActionButton(
-                  icon: Icons.restore_outlined,
-                  label: 'Restore Logbook',
-                  onPressed: () => _restoreDatabase(context, ref),
-                ),
-              ],
+              firstIcon: Icons.save_alt_outlined,
+              firstLabel: 'Backup Logbook',
+              onFirstPressed: () => _backupDatabase(context, ref),
+              secondIcon: Icons.restore_outlined,
+              secondLabel: 'Restore Logbook',
+              onSecondPressed: () => _restoreDatabase(context, ref),
             ),
             const SizedBox(height: 12),
             _DatabaseSectionCard(
@@ -368,25 +385,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         file.bytes;
     if (bytes == null || bytes.isEmpty || !context.mounted) return;
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await _showDestructiveReplaceConfirmation(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Import database file?'),
-        content: const Text(
-          'Current logbook data will be replaced. '
-          'This cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => AppNavigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => AppNavigator.pop(dialogContext, true),
-            child: const Text('Import'),
-          ),
-        ],
-      ),
+      title: 'Import database file?',
+      confirmLabel: 'Import',
     );
     if (confirmed != true || !context.mounted) return;
 
@@ -522,25 +524,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         file.bytes;
     if (bytes == null || bytes.isEmpty || !context.mounted) return;
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await _showDestructiveReplaceConfirmation(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Restore database backup?'),
-        content: const Text(
-          'Current logbook data will be replaced. '
-          'This cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => AppNavigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => AppNavigator.pop(dialogContext, true),
-            child: const Text('Restore'),
-          ),
-        ],
-      ),
+      title: 'Restore database backup?',
+      confirmLabel: 'Restore',
     );
 
     if (confirmed != true || !context.mounted) return;
@@ -732,24 +719,12 @@ class DatabaseSyncTrigger extends ConsumerWidget {
 
   Future<void> _clearDatabase(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await _showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.clearDatabaseTitle),
-        content: Text(
-          l10n.clearDatabaseMessage,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => AppNavigator.pop(context, false),
-            child: Text(l10n.cancelAction),
-          ),
-          FilledButton(
-            onPressed: () => AppNavigator.pop(context, true),
-            child: Text(l10n.clearAction),
-          ),
-        ],
-      ),
+      title: l10n.clearDatabaseTitle,
+      message: l10n.clearDatabaseMessage,
+      confirmLabel: l10n.clearAction,
+      cancelLabel: l10n.cancelAction,
     );
     if (confirmed != true || !context.mounted) return;
     final db = ref.read(databaseProvider);
@@ -762,6 +737,46 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   Future<void> _showInfoDialog(BuildContext context, String message) async {
     if (!context.mounted) return;
     await showAppMessageDialog(context, message: message);
+  }
+
+  Future<bool?> _showDestructiveReplaceConfirmation({
+    required BuildContext context,
+    required String title,
+    required String confirmLabel,
+  }) {
+    return _showConfirmationDialog(
+      context: context,
+      title: title,
+      message: _replaceDataWarningMessage,
+      confirmLabel: confirmLabel,
+      cancelLabel: 'Cancel',
+    );
+  }
+
+  Future<bool?> _showConfirmationDialog({
+    required BuildContext context,
+    required String title,
+    required String message,
+    required String confirmLabel,
+    required String cancelLabel,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => AppNavigator.pop(dialogContext, false),
+            child: Text(cancelLabel),
+          ),
+          FilledButton(
+            onPressed: () => AppNavigator.pop(dialogContext, true),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _importQatarAirwaysWorkbook(
@@ -1101,22 +1116,12 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     String fileName,
   ) async {
     final label = _sourceDispatcher.labelFor(type);
-    final result = await showDialog<bool>(
+    final result = await _showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Import Options'),
-        content: Text('File: $fileName\nDetected: $label'),
-        actions: [
-          TextButton(
-            onPressed: () => AppNavigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => AppNavigator.pop(context, true),
-            child: const Text('Continue'),
-          ),
-        ],
-      ),
+      title: 'Import Options',
+      message: 'File: $fileName\nDetected: $label',
+      confirmLabel: 'Continue',
+      cancelLabel: 'Cancel',
     );
     return result ?? false;
   }

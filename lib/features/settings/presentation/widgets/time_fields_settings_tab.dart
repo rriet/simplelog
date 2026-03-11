@@ -27,6 +27,12 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
   final _c4 = TextEditingController();
   bool _loadedLabels = false;
   Timer? _labelsSaveDebounce;
+  static const _timeFieldsIntro =
+      'Control visible time columns and custom labels.';
+  static const _visibleFieldsSubtitle =
+      'Choose which columns are shown in forms and lists.';
+  static const _customLabelsSubtitle =
+      'Rename custom fields used across the app.';
 
   @override
   void dispose() {
@@ -137,7 +143,7 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Control visible time columns and custom labels.',
+              _timeFieldsIntro,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -151,7 +157,7 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
             const SizedBox(height: 12),
             _SettingsSectionCard(
               title: 'Visible Time Fields',
-              subtitle: 'Choose which columns are shown in forms and lists.',
+              subtitle: _visibleFieldsSubtitle,
               children: [
                 SwitchListTile(
                   value: visibility.pic,
@@ -232,7 +238,7 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
             const SizedBox(height: 12),
             _SettingsSectionCard(
               title: 'Custom Time Labels',
-              subtitle: 'Rename custom fields used across the app.',
+              subtitle: _customLabelsSubtitle,
               children: [
                 TextFormField(
                   controller: _c1,

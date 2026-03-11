@@ -138,28 +138,31 @@ class CrewInfoDialog {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (phone.isNotEmpty) ...[
-                ListTile(
-                  leading: const Icon(Icons.phone),
-                  title: Text(l10n.callNumber),
-                  subtitle: Text(phoneDisplay),
+                _buildContactActionTile(
+                  context: context,
+                  icon: Icons.phone,
+                  title: l10n.callNumber,
+                  subtitle: phoneDisplay,
                   onTap: () async {
                     AppNavigator.pop(context);
                     await launchUrl(Uri(scheme: 'tel', path: phone));
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.message),
-                  title: Text(l10n.textNumber),
-                  subtitle: Text(phoneDisplay),
+                _buildContactActionTile(
+                  context: context,
+                  icon: Icons.message,
+                  title: l10n.textNumber,
+                  subtitle: phoneDisplay,
                   onTap: () async {
                     AppNavigator.pop(context);
                     await launchUrl(Uri(scheme: 'sms', path: phone));
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.copy),
-                  title: Text(l10n.copyNumber),
-                  subtitle: Text(phoneDisplay),
+                _buildContactActionTile(
+                  context: context,
+                  icon: Icons.copy,
+                  title: l10n.copyNumber,
+                  subtitle: phoneDisplay,
                   onTap: () async {
                     await Clipboard.setData(ClipboardData(text: phone));
                     if (context.mounted) AppNavigator.pop(context);
@@ -167,19 +170,21 @@ class CrewInfoDialog {
                 ),
               ],
               if (email.isNotEmpty) ...[
-                ListTile(
-                  leading: const Icon(Icons.email),
-                  title: Text(l10n.sendEmail),
-                  subtitle: Text(email),
+                _buildContactActionTile(
+                  context: context,
+                  icon: Icons.email,
+                  title: l10n.sendEmail,
+                  subtitle: email,
                   onTap: () async {
                     AppNavigator.pop(context);
                     await launchUrl(Uri(scheme: 'mailto', path: email));
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.copy),
-                  title: Text(l10n.copyEmail),
-                  subtitle: Text(email),
+                _buildContactActionTile(
+                  context: context,
+                  icon: Icons.copy,
+                  title: l10n.copyEmail,
+                  subtitle: email,
                   onTap: () async {
                     await Clipboard.setData(ClipboardData(text: email));
                     if (context.mounted) AppNavigator.pop(context);
@@ -204,6 +209,21 @@ class CrewInfoDialog {
           child: Image.memory(bytes, fit: BoxFit.contain),
         ),
       ),
+    );
+  }
+
+  static Widget _buildContactActionTile({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Future<void> Function() onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      onTap: () async => onTap(),
     );
   }
 }
@@ -255,54 +275,59 @@ class _CrewDetailHeader extends StatelessWidget {
               ),
               if (phoneDisplay.isNotEmpty) ...[
                 const SizedBox(height: 4),
-                InkWell(
+                _ContactLinkRow(
+                  icon: Icons.phone,
+                  text: phoneDisplay,
                   onTap: onPhoneTap,
-                  borderRadius: BorderRadius.circular(6),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.phone, size: 16),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          phoneDisplay,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
               if (email.isNotEmpty) ...[
                 const SizedBox(height: 4),
-                InkWell(
+                _ContactLinkRow(
+                  icon: Icons.email,
+                  text: email,
                   onTap: onEmailTap,
-                  borderRadius: BorderRadius.circular(6),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.email, size: 16),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          email,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ContactLinkRow extends StatelessWidget {
+  const _ContactLinkRow({
+    required this.icon,
+    required this.text,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String text;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Row(
+        children: [
+          Icon(icon, size: 16),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -22,11 +22,9 @@ import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
-import 'package:simplelog/core/presentation/widgets/dialogs/dialog_header_bar.dart';
 import 'package:simplelog/core/presentation/widgets/display/event_type_toggle_button.dart';
 import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
-import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/time_input_field.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/core/theme/app_form_controls_theme.dart';
@@ -49,6 +47,7 @@ import 'package:simplelog/features/reports/application/report_pdf_application_se
 import 'package:simplelog/features/reports/presentation/providers/report_pdf_application_service_provider.dart';
 import 'package:simplelog/features/reports/presentation/providers/reports_preferences_provider.dart';
 import 'package:simplelog/features/reports/presentation/providers/reports_repository_provider.dart';
+import 'package:simplelog/features/reports/presentation/widgets/reports_form_components.dart';
 import 'package:simplelog/features/settings/presentation/widgets/pilot_profile_settings_card.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
@@ -208,6 +207,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   List<LogbookEntry> _entries = const [];
   DateTime? _firstFlightDate;
   DateTime? _lastFlightDate;
+  static const _mapSectionTitle = 'Map';
+  static const _mapSectionSubtitle =
+      'Preview the filtered routes and path overlay.';
+  static const _pdfSectionTitle = 'PDF Generation';
+  static const _pdfSectionSubtitle =
+      'Select template and export the report PDF.';
 
   @override
   void initState() {
@@ -296,9 +301,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   Future<void> _openTemplateEditorDialog() async {
     final db = ref.read(databaseProvider);
-    final changed = await showLargeDialogScreen<bool>(
-      context: context,
-      builder: (_) => _EditTemplatesDialog(
+    final changed = await _presentAdaptiveShellDialog<bool>(
+      _EditTemplatesDialog(
         db: db,
         initialReportName: _selectedTemplate?.fileName,
       ),
@@ -1133,14 +1137,26 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       );
       return;
     }
-    await showLargeDialogScreen<void>(
-      context: context,
-      maxWidth: 1100,
-      builder: (context) => _FlightsMapDialog(
+    await _presentAdaptiveShellDialog<void>(
+      _FlightsMapDialog(
         mapData: mapData,
         fullscreen: true,
         initialShowLines: _showPathOnMap,
       ),
+    );
+  }
+
+  Future<T?> _presentAdaptiveShellDialog<T>(Widget child) async {
+    if (isCompactDialogScreen(context)) {
+      return AppNavigator.pushMaterial<T>(
+        context,
+        (_) => child,
+        rootNavigator: true,
+      );
+    }
+    return showDialog<T>(
+      context: context,
+      builder: (_) => child,
     );
   }
 
@@ -2227,8 +2243,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         final analysesActive = showTabbedLayout
             ? _tabController.index == 2
             : section == ReportsPanelSection.analizes;
-        final horizontalPadding =
-            compact && (analysesActive || totalsActive)
+        final horizontalPadding = compact && (analysesActive || totalsActive)
             ? 0.0
             : (compact ? 8.0 : 16.0);
         final verticalPadding = compact ? 8.0 : 16.0;
@@ -2453,79 +2468,35 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         Row(
           children: [
             Expanded(
-              child: DropdownButtonFormField<_AnalysisGroupBy>(
-                initialValue: _analysisGroupBy,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: l10n.reportsAnalyzeByLabel,
-                  border: const OutlineInputBorder(),
-                  isDense: true,
-                ),
-                items: _analysisGroupByOptions
-                    .map(
-                      (value) => DropdownMenuItem(
-                        value: value,
-                        child: _overflowText(
-                          _analysisGroupByLabel(l10n, value),
-                        ),
-                      ),
-                    )
-                    .toList(growable: false),
-                selectedItemBuilder: (context) => _analysisGroupByOptions
-                    .map(
-                      (value) => _dropdownSelectedItem(
-                        _analysisGroupByLabel(l10n, value),
-                      ),
-                    )
-                    .toList(growable: false),
+              child: ReportsEnumDropdownField<_AnalysisGroupBy>(
+                value: _analysisGroupBy,
+                label: l10n.reportsAnalyzeByLabel,
+                options: _analysisGroupByOptions,
+                optionLabel: (value) => _analysisGroupByLabel(l10n, value),
                 onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _analysisGroupBy = value);
-                    if (_detailsLoaded) {
-                      unawaited(_refreshAnalysisGroups());
-                    } else {
-                      unawaited(
-                        _ensureDetailsLoaded(
-                          includeEntries: false,
-                        ),
-                      );
-                    }
+                  setState(() => _analysisGroupBy = value);
+                  if (_detailsLoaded) {
+                    unawaited(_refreshAnalysisGroups());
+                  } else {
+                    unawaited(
+                      _ensureDetailsLoaded(
+                        includeEntries: false,
+                      ),
+                    );
                   }
                 },
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: DropdownButtonFormField<_AnalysisOrderBy>(
-                initialValue: _analysisOrderBy,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: l10n.reportsOrderByLabel,
-                  border: const OutlineInputBorder(),
-                  isDense: true,
-                ),
-                items: _AnalysisOrderBy.values
-                    .map(
-                      (value) => DropdownMenuItem(
-                        value: value,
-                        child: _overflowText(
-                          _analysisOrderByLabel(l10n, value),
-                        ),
-                      ),
-                    )
-                    .toList(growable: false),
-                selectedItemBuilder: (context) => _AnalysisOrderBy.values
-                    .map(
-                      (value) => _dropdownSelectedItem(
-                        _analysisOrderByLabel(l10n, value),
-                      ),
-                    )
-                    .toList(growable: false),
+              child: ReportsEnumDropdownField<_AnalysisOrderBy>(
+                value: _analysisOrderBy,
+                label: l10n.reportsOrderByLabel,
+                options: _AnalysisOrderBy.values.toList(growable: false),
+                optionLabel: (value) => _analysisOrderByLabel(l10n, value),
                 onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _analysisOrderBy = value);
-                    unawaited(_refreshAnalysisGroups());
-                  }
+                  setState(() => _analysisOrderBy = value);
+                  unawaited(_refreshAnalysisGroups());
                 },
               ),
             ),
@@ -2707,13 +2678,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final addIconSize = controlsTheme?.pickerAddIconSize ?? 20;
     final addBorderRadius = controlsTheme?.pickerAddBorderRadius ?? 8;
     final addBorderColor = Theme.of(context).colorScheme.outline;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _ReportsSectionCard(
-          title: 'Map',
-          subtitle: 'Preview the filtered routes and path overlay.',
+          title: _mapSectionTitle,
+          subtitle: _mapSectionSubtitle,
           children: [
             Row(
               children: [
@@ -2742,8 +2712,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         ),
         const SizedBox(height: 12),
         _ReportsSectionCard(
-          title: 'PDF Generation',
-          subtitle: 'Select template and export the report PDF.',
+          title: _pdfSectionTitle,
+          subtitle: _pdfSectionSubtitle,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3430,10 +3400,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             rules: DutyCalculationRules(
               crewHomeBaseAirportId: settings.crewHomeBaseAirportId,
               reportingTimeOnBaseMinutes: settings.reportingTimeOnBaseMinutes,
-              reportingTimeOffBaseMinutes:
-                  settings.reportingTimeOffBaseMinutes,
-              dutyEndTimeAllowanceMinutes:
-                  settings.dutyEndTimeAllowanceMinutes,
+              reportingTimeOffBaseMinutes: settings.reportingTimeOffBaseMinutes,
+              dutyEndTimeAllowanceMinutes: settings.dutyEndTimeAllowanceMinutes,
               minimumRestTimeMinutes: settings.minimumRestTimeMinutes,
             ),
           );
@@ -3470,27 +3438,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final count = _batchFlightCount;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => SizedBox(
-        width: 560,
-        child: AdaptiveFormShell(
-          onClose: () => AppNavigator.pop(context, false),
-          longTitle: 'Calculate Duty?',
-          shortTitle: 'Calculate Duty?',
-          actions: [
-            TextButton(
-              onPressed: () => AppNavigator.pop(context, true),
-              child: const Text('Calculate'),
-            ),
-          ],
-          contentView: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'This will create or update duty periods for up to '
-              '$count filtered flights.\n\n'
-              'Existing locked duty periods will be skipped.',
-            ),
-          ),
-        ),
+      builder: (context) => ReportsConfirmActionDialog(
+        title: 'Calculate Duty?',
+        actionLabel: 'Calculate',
+        message:
+            'This will create or update duty periods for up to '
+            '$count filtered flights.\n\n'
+            'Existing locked duty periods will be skipped.',
       ),
     );
     if (confirmed != true) return;
@@ -3660,26 +3614,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => SizedBox(
-        width: 560,
-        child: AdaptiveFormShell(
-          onClose: () => AppNavigator.pop(context, false),
-          longTitle: lockState ? 'Lock entries?' : 'Unlock entries?',
-          shortTitle: lockState ? 'Lock?' : 'Unlock?',
-          actions: [
-            TextButton(
-              onPressed: () => AppNavigator.pop(context, true),
-              child: Text(lockState ? 'Lock' : 'Unlock'),
-            ),
-          ],
-          contentView: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'This will ${lockState ? 'lock' : 'unlock'} '
-              '${targets.changeCount} filtered entries.',
-            ),
-          ),
-        ),
+      builder: (context) => ReportsConfirmActionDialog(
+        title: lockState ? 'Lock entries?' : 'Unlock entries?',
+        actionLabel: lockState ? 'Lock' : 'Unlock',
+        message:
+            'This will ${lockState ? 'lock' : 'unlock'} '
+            '${targets.changeCount} filtered entries.',
       ),
     );
     if (confirmed != true) return;
@@ -4176,10 +4116,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                                   );
                                   await useCases.toggleEntryLock(entry);
                                   if (!mounted) return;
-                                  final refreshed =
-                                      await useCases.fetchEntryByTimelineId(
-                                    entry.timeLine.id,
-                                  );
+                                  final refreshed = await useCases
+                                      .fetchEntryByTimelineId(
+                                        entry.timeLine.id,
+                                      );
                                   if (refreshed != null &&
                                       refreshed.flight != null &&
                                       flightId != null) {
@@ -4195,10 +4135,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                                       final useCases = ref.read(
                                         logbookUseCasesProvider,
                                       );
-                                      final refreshed =
-                                          await useCases.fetchEntryByTimelineId(
-                                        entry.timeLine.id,
-                                      );
+                                      final refreshed = await useCases
+                                          .fetchEntryByTimelineId(
+                                            entry.timeLine.id,
+                                          );
                                       if (refreshed != null &&
                                           refreshed.flight != null) {
                                         setStateDialog(() {
@@ -4882,143 +4822,139 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
         child: ListView(
           shrinkWrap: true,
           children: [
-                const Text('Crew position'),
-                const SizedBox(height: 8),
-                if (isNarrow) ...[
-                  modeDropdown(
-                    value: _preferences.crewMode,
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() {
-                        _preferences = _preferences.copyWith(crewMode: value);
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<_BatchCrewRole>(
-                    isExpanded: true,
-                    initialValue: _preferences.crewRole,
-                    items: _BatchCrewRole.values
-                        .map(
-                          (role) => DropdownMenuItem(
-                            value: role,
-                            child: Text(crewRoleLabel(role)),
-                          ),
-                        )
-                        .toList(growable: false),
-                    decoration: const InputDecoration(isDense: true),
-                    onChanged: _preferences.crewMode ==
-                            _BatchFieldMode.recalculate
-                        ? (value) {
-                            if (value == null) return;
-                            setState(() {
-                              _preferences = _preferences.copyWith(
-                                crewRole: value,
-                              );
-                            });
-                          }
-                        : null,
-                  ),
-                ] else
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: modeDropdown(
-                          value: _preferences.crewMode,
-                          onChanged: (value) {
-                            if (value == null) return;
-                            setState(() {
-                              _preferences = _preferences.copyWith(
-                                crewMode: value,
-                              );
-                            });
-                          },
-                        ),
+            const Text('Crew position'),
+            const SizedBox(height: 8),
+            if (isNarrow) ...[
+              modeDropdown(
+                value: _preferences.crewMode,
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _preferences = _preferences.copyWith(crewMode: value);
+                  });
+                },
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<_BatchCrewRole>(
+                isExpanded: true,
+                initialValue: _preferences.crewRole,
+                items: _BatchCrewRole.values
+                    .map(
+                      (role) => DropdownMenuItem(
+                        value: role,
+                        child: Text(crewRoleLabel(role)),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: DropdownButtonFormField<_BatchCrewRole>(
-                          isExpanded: true,
-                          initialValue: _preferences.crewRole,
-                          items: _BatchCrewRole.values
-                              .map(
-                                (role) => DropdownMenuItem(
-                                  value: role,
-                                  child: Text(crewRoleLabel(role)),
-                                ),
-                              )
-                              .toList(growable: false),
-                          decoration: const InputDecoration(isDense: true),
-                          onChanged:
-                              _preferences.crewMode ==
-                                  _BatchFieldMode.recalculate
-                              ? (value) {
-                                  if (value == null) return;
-                                  setState(() {
-                                    _preferences = _preferences.copyWith(
-                                      crewRole: value,
-                                    );
-                                  });
-                                }
-                              : null,
-                        ),
-                      ),
-                    ],
+                    )
+                    .toList(growable: false),
+                decoration: const InputDecoration(isDense: true),
+                onChanged: _preferences.crewMode == _BatchFieldMode.recalculate
+                    ? (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _preferences = _preferences.copyWith(
+                            crewRole: value,
+                          );
+                        });
+                      }
+                    : null,
+              ),
+            ] else
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: modeDropdown(
+                      value: _preferences.crewMode,
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _preferences = _preferences.copyWith(
+                            crewMode: value,
+                          );
+                        });
+                      },
+                    ),
                   ),
-                const SizedBox(height: 12),
-                for (final field in _fields)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: isNarrow
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(label(field)),
-                              const SizedBox(height: 6),
-                              modeDropdown(
-                                value: _preferences.modeFor(field),
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  final nextModes = Map<
-                                    _BatchCalcField,
-                                    _BatchFieldMode
-                                  >.from(_preferences.fieldModes)
-                                    ..[field] = value;
-                                  setState(() {
-                                    _preferences = _preferences.copyWith(
-                                      fieldModes: nextModes,
-                                    );
-                                  });
-                                },
-                              ),
-                            ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButtonFormField<_BatchCrewRole>(
+                      isExpanded: true,
+                      initialValue: _preferences.crewRole,
+                      items: _BatchCrewRole.values
+                          .map(
+                            (role) => DropdownMenuItem(
+                              value: role,
+                              child: Text(crewRoleLabel(role)),
+                            ),
                           )
-                        : Row(
-                            children: [
-                              Expanded(child: Text(label(field))),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: modeDropdown(
-                                  value: _preferences.modeFor(field),
-                                  onChanged: (value) {
-                                    if (value == null) return;
-                                    final nextModes = Map<
-                                      _BatchCalcField,
-                                      _BatchFieldMode
-                                    >.from(_preferences.fieldModes)
-                                      ..[field] = value;
-                                    setState(() {
-                                      _preferences = _preferences.copyWith(
-                                        fieldModes: nextModes,
-                                      );
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
+                          .toList(growable: false),
+                      decoration: const InputDecoration(isDense: true),
+                      onChanged:
+                          _preferences.crewMode == _BatchFieldMode.recalculate
+                          ? (value) {
+                              if (value == null) return;
+                              setState(() {
+                                _preferences = _preferences.copyWith(
+                                  crewRole: value,
+                                );
+                              });
+                            }
+                          : null,
+                    ),
                   ),
+                ],
+              ),
+            const SizedBox(height: 12),
+            for (final field in _fields)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: isNarrow
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(label(field)),
+                          const SizedBox(height: 6),
+                          modeDropdown(
+                            value: _preferences.modeFor(field),
+                            onChanged: (value) {
+                              if (value == null) return;
+                              final nextModes =
+                                  Map<_BatchCalcField, _BatchFieldMode>.from(
+                                    _preferences.fieldModes,
+                                  )..[field] = value;
+                              setState(() {
+                                _preferences = _preferences.copyWith(
+                                  fieldModes: nextModes,
+                                );
+                              });
+                            },
+                          ),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Expanded(child: Text(label(field))),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: modeDropdown(
+                              value: _preferences.modeFor(field),
+                              onChanged: (value) {
+                                if (value == null) return;
+                                final nextModes =
+                                    Map<_BatchCalcField, _BatchFieldMode>.from(
+                                      _preferences.fieldModes,
+                                    )..[field] = value;
+                                setState(() {
+                                  _preferences = _preferences.copyWith(
+                                    fieldModes: nextModes,
+                                  );
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
           ],
         ),
       ),
@@ -5999,97 +5935,46 @@ class _FiltersCard extends StatelessWidget {
                               SizedBox(
                                 width: maxFieldWidth,
                                 child:
-                                    DropdownButtonFormField<
+                                    ReportsEnumDropdownField<
                                       _ReportDateRangePreset
                                     >(
-                                      initialValue: preset,
-                                      isExpanded: true,
-                                      decoration: InputDecoration(
-                                        labelText: l10n.logbookFilterRange,
-                                        border: const OutlineInputBorder(),
-                                        isDense: true,
-                                      ),
-                                      items: _ReportDateRangePreset.values
-                                          .map(
-                                            (value) => DropdownMenuItem(
-                                              value: value,
-                                              child: _overflowText(
-                                                _reportDateRangePresetLabel(
-                                                  l10n,
-                                                  value,
-                                                ),
-                                              ),
-                                            ),
-                                          )
+                                      value: preset,
+                                      label: l10n.logbookFilterRange,
+                                      options: _ReportDateRangePreset.values
                                           .toList(growable: false),
-                                      selectedItemBuilder: (context) =>
-                                          _ReportDateRangePreset.values
-                                              .map(
-                                                (
-                                                  value,
-                                                ) => _dropdownSelectedItem(
-                                                  _reportDateRangePresetLabel(
-                                                    l10n,
-                                                    value,
-                                                  ),
-                                                ),
-                                              )
-                                              .toList(growable: false),
-                                      onChanged: (value) {
-                                        if (value != null) {
-                                          unawaited(onPresetChanged(value));
-                                        }
-                                      },
+                                      optionLabel: (value) =>
+                                          _reportDateRangePresetLabel(
+                                            l10n,
+                                            value,
+                                          ),
+                                      onChanged: (value) =>
+                                          unawaited(onPresetChanged(value)),
                                     ),
                               ),
                               SizedBox(
                                 width: maxFieldWidth * 2 + 8,
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: DateSelectorInputField(
-                                        label: l10n.logbookFilterFromDate,
-                                        valueText: DateFormat(
-                                          'dd/MMM yyyy',
-                                          locale,
-                                        ).format(from),
-                                        onTap: onPickStart,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: ClockTimeInputField(
-                                        controller: fromTimeController,
-                                        label: 'Hour',
-                                        onChangedMinutes: onFromTimeChanged,
-                                      ),
-                                    ),
-                                  ],
+                                child: DateAndHourRow(
+                                  dateLabel: l10n.logbookFilterFromDate,
+                                  dateValueText: DateFormat(
+                                    'dd/MMM yyyy',
+                                    locale,
+                                  ).format(from),
+                                  onPickDate: onPickStart,
+                                  timeController: fromTimeController,
+                                  onTimeChanged: onFromTimeChanged,
                                 ),
                               ),
                               SizedBox(
                                 width: maxFieldWidth * 2 + 8,
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: DateSelectorInputField(
-                                        label: l10n.logbookFilterToDate,
-                                        valueText: DateFormat(
-                                          'dd/MMM yyyy',
-                                          locale,
-                                        ).format(to),
-                                        onTap: onPickEnd,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: ClockTimeInputField(
-                                        controller: toTimeController,
-                                        label: 'Hour',
-                                        onChangedMinutes: onToTimeChanged,
-                                      ),
-                                    ),
-                                  ],
+                                child: DateAndHourRow(
+                                  dateLabel: l10n.logbookFilterToDate,
+                                  dateValueText: DateFormat(
+                                    'dd/MMM yyyy',
+                                    locale,
+                                  ).format(to),
+                                  onPickDate: onPickEnd,
+                                  timeController: toTimeController,
+                                  onTimeChanged: onToTimeChanged,
                                 ),
                               ),
                               SizedBox(
@@ -6698,7 +6583,8 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
       if (number == null) return;
     }
 
-    AppNavigator.pop(context, 
+    AppNavigator.pop(
+      context,
       ReportsFilterCondition(
         field: _field,
         operator: _operator,
@@ -6713,96 +6599,35 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
     final l10n = AppLocalizations.of(context)!;
     final operators = _operatorsForField(_field);
     final fields = _availableFields();
-    return Dialog(
-      child: SizedBox(
-        width: 520,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              DialogHeaderBar(
-                title: l10n.reportsAddFilter,
-                onClose: () => AppNavigator.pop(context),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<ReportsFilterField>(
-                initialValue: _field,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: l10n.reportsFieldNameLabel,
-                  border: const OutlineInputBorder(),
-                ),
-                items: fields
-                    .map(
-                      (field) => DropdownMenuItem(
-                        value: field,
-                        child: _overflowText(
-                          _reportFilterFieldLabel(l10n, field),
-                        ),
-                      ),
-                    )
-                    .toList(growable: false),
-                selectedItemBuilder: (context) => fields
-                    .map(
-                      (field) => _dropdownSelectedItem(
-                        _reportFilterFieldLabel(l10n, field),
-                      ),
-                    )
-                    .toList(growable: false),
-                onChanged: (value) {
-                  if (value != null) {
-                    _onFieldChanged(value);
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<ReportsFilterOperator>(
-                initialValue: _operator,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: l10n.reportsConditionLabel,
-                  border: const OutlineInputBorder(),
-                ),
-                items: operators
-                    .map(
-                      (operator) => DropdownMenuItem(
-                        value: operator,
-                        child: _overflowText(
-                          _reportFilterOperatorLabel(l10n, operator),
-                        ),
-                      ),
-                    )
-                    .toList(growable: false),
-                selectedItemBuilder: (context) => operators
-                    .map(
-                      (operator) => _dropdownSelectedItem(
-                        _reportFilterOperatorLabel(l10n, operator),
-                      ),
-                    )
-                    .toList(growable: false),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _operator = value);
-                  }
-                },
-              ),
-              if (_field.valueType != ReportsFilterValueType.boolean) ...[
-                const SizedBox(height: 12),
-                _buildValueField(),
-              ],
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  onPressed: _save,
-                  child: Text(l10n.addAction),
-                ),
-              ),
-            ],
+    return ReportsDialogScaffoldSection(
+      title: l10n.reportsAddFilter,
+      actionLabel: l10n.addAction,
+      onAction: _save,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ReportsEnumDropdownField<ReportsFilterField>(
+            value: _field,
+            label: l10n.reportsFieldNameLabel,
+            options: fields,
+            optionLabel: (field) => _reportFilterFieldLabel(l10n, field),
+            onChanged: _onFieldChanged,
           ),
-        ),
+          const SizedBox(height: 12),
+          ReportsEnumDropdownField<ReportsFilterOperator>(
+            value: _operator,
+            label: l10n.reportsConditionLabel,
+            options: operators,
+            optionLabel: (operator) =>
+                _reportFilterOperatorLabel(l10n, operator),
+            onChanged: (value) => setState(() => _operator = value),
+          ),
+          if (_field.valueType != ReportsFilterValueType.boolean) ...[
+            const SizedBox(height: 12),
+            _buildValueField(),
+          ],
+        ],
       ),
     );
   }
@@ -6811,21 +6636,15 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
     final l10n = AppLocalizations.of(context)!;
     switch (_field.valueType) {
       case ReportsFilterValueType.text:
-        return TextFormField(
+        return ReportsLabeledInputField(
           controller: _textController,
-          decoration: InputDecoration(
-            labelText: l10n.reportsValueLabel,
-            border: const OutlineInputBorder(),
-          ),
+          label: l10n.reportsValueLabel,
         );
       case ReportsFilterValueType.number:
-        return TextFormField(
+        return ReportsLabeledInputField(
           controller: _numberController,
+          label: l10n.reportsValueLabel,
           keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: l10n.reportsValueLabel,
-            border: const OutlineInputBorder(),
-          ),
         );
       case ReportsFilterValueType.time:
         return TimeInputField(
@@ -6857,38 +6676,14 @@ class _SaveQueryDialogState extends State<_SaveQueryDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Dialog(
-      child: SizedBox(
-        width: 420,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              DialogHeaderBar(
-                title: l10n.reportsSaveQuery,
-                onClose: () => AppNavigator.pop(context),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _controller,
-                decoration: InputDecoration(
-                  labelText: l10n.fieldName,
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  onPressed: () => AppNavigator.pop(context, _controller.text),
-                  child: Text(l10n.saveAction),
-                ),
-              ),
-            ],
-          ),
-        ),
+    return ReportsDialogScaffoldSection(
+      title: l10n.reportsSaveQuery,
+      actionLabel: l10n.saveAction,
+      maxWidth: 420,
+      onAction: () => AppNavigator.pop(context, _controller.text),
+      content: ReportsLabeledInputField(
+        controller: _controller,
+        label: l10n.fieldName,
       ),
     );
   }
@@ -7346,6 +7141,7 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
       onClose: () => AppNavigator.pop(context),
       longTitle: l10n.reportsFlightMapTitle,
       shortTitle: l10n.reportsFlightMapTitle,
+      popupMaxWidth: 1100,
       actions: actions,
       contentView: mapBody,
     );
@@ -7593,10 +7389,8 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
       return item.templateJson;
     }();
 
-    final editedJson = await showLargeDialogScreen<String>(
-      context: context,
-      maxWidth: 980,
-      builder: (_) => _TemplateJsonEditorDialog(
+    final editedJson = await _presentAdaptiveShellDialog<String>(
+      _TemplateJsonEditorDialog(
         templateName: item.templateName,
         initialJson: prettyJson,
       ),
@@ -7823,7 +7617,22 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
       onClose: () => AppNavigator.pop(context, _changed),
       longTitle: 'Edit Templates',
       shortTitle: 'Edit Templates',
+      popupMaxWidth: 980,
       contentView: body,
+    );
+  }
+
+  Future<T?> _presentAdaptiveShellDialog<T>(Widget child) async {
+    if (isCompactDialogScreen(context)) {
+      return AppNavigator.pushMaterial<T>(
+        context,
+        (_) => child,
+        rootNavigator: true,
+      );
+    }
+    return showDialog<T>(
+      context: context,
+      builder: (_) => child,
     );
   }
 }
@@ -7902,6 +7711,7 @@ class _TemplateJsonEditorDialogState extends State<_TemplateJsonEditorDialog> {
       onClose: () => AppNavigator.pop(context),
       longTitle: title,
       shortTitle: 'Edit Template',
+      popupMaxWidth: 980,
       contentView: body,
     );
   }

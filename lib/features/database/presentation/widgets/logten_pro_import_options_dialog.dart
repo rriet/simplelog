@@ -56,6 +56,9 @@ class LogTenProImportOptionsDialog extends StatefulWidget {
 
 class _LogTenProImportOptionsDialogState
     extends State<LogTenProImportOptionsDialog> {
+  static const _sourceColumnHeaderLabel = 'Source Column';
+  static const _associationHeaderLabel = 'Association';
+
   late final Map<String, LogTenFieldAssociation> _assignments;
   late int _timezoneOffsetMinutes;
 
@@ -77,6 +80,41 @@ class _LogTenProImportOptionsDialogState
         valueOverrides: widget.initial.valueOverrides,
         ignoredLines: widget.initial.ignoredLines,
       ),
+    );
+  }
+
+  Widget _buildAssociationDropdown({
+    required String column,
+    required LogTenFieldAssociation value,
+  }) {
+    return DropdownButtonFormField<LogTenFieldAssociation>(
+      initialValue: value,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(),
+        isDense: true,
+      ),
+      selectedItemBuilder: (context) => [
+        for (final option in LogTenFieldAssociation.values)
+          Text(
+            option.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+      ],
+      items: [
+        for (final option in LogTenFieldAssociation.values)
+          DropdownMenuItem(
+            value: option,
+            child: Text(option.label),
+          ),
+      ],
+      onChanged: (selection) {
+        if (selection == null) return;
+        setState(() {
+          _assignments[column] = selection;
+        });
+      },
     );
   }
 
@@ -120,19 +158,9 @@ class _LogTenProImportOptionsDialogState
                       ),
                       child: const Row(
                         children: [
-                          Expanded(
-                            child: Text(
-                              'Source Column',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
+                          _HeaderCell(label: _sourceColumnHeaderLabel),
                           SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              'Association',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
+                          _HeaderCell(label: _associationHeaderLabel),
                         ],
                       ),
                     ),
@@ -171,38 +199,9 @@ class _LogTenProImportOptionsDialogState
                                           ),
                                     ),
                                     const SizedBox(height: 8),
-                                    DropdownButtonFormField<
-                                      LogTenFieldAssociation
-                                    >(
-                                      initialValue: value,
-                                      isExpanded: true,
-                                      decoration: const InputDecoration(
-                                        border: OutlineInputBorder(),
-                                        isDense: true,
-                                      ),
-                                      selectedItemBuilder: (context) => [
-                                        for (final option
-                                            in LogTenFieldAssociation.values)
-                                          Text(
-                                            option.label,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                      ],
-                                      items: [
-                                        for (final option
-                                            in LogTenFieldAssociation.values)
-                                          DropdownMenuItem(
-                                            value: option,
-                                            child: Text(option.label),
-                                          ),
-                                      ],
-                                      onChanged: (selection) {
-                                        if (selection == null) return;
-                                        setState(() {
-                                          _assignments[column] = selection;
-                                        });
-                                      },
+                                    _buildAssociationDropdown(
+                                      column: column,
+                                      value: value,
                                     ),
                                   ],
                                 )
@@ -217,44 +216,10 @@ class _LogTenProImportOptionsDialogState
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
-                                      child:
-                                          DropdownButtonFormField<
-                                            LogTenFieldAssociation
-                                          >(
-                                            initialValue: value,
-                                            isExpanded: true,
-                                            decoration: const InputDecoration(
-                                              border: OutlineInputBorder(),
-                                              isDense: true,
-                                            ),
-                                            selectedItemBuilder: (context) => [
-                                              for (final option
-                                                  in LogTenFieldAssociation
-                                                      .values)
-                                                Text(
-                                                  option.label,
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                            ],
-                                            items: [
-                                              for (final option
-                                                  in LogTenFieldAssociation
-                                                      .values)
-                                                DropdownMenuItem(
-                                                  value: option,
-                                                  child: Text(option.label),
-                                                ),
-                                            ],
-                                            onChanged: (selection) {
-                                              if (selection == null) return;
-                                              setState(() {
-                                                _assignments[column] =
-                                                    selection;
-                                              });
-                                            },
-                                          ),
+                                      child: _buildAssociationDropdown(
+                                        column: column,
+                                        value: value,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -311,6 +276,22 @@ class _LogTenProImportOptionsDialogState
         TextButton(onPressed: _submit, child: const Text('Import')),
       ],
       contentView: body,
+    );
+  }
+}
+
+class _HeaderCell extends StatelessWidget {
+  const _HeaderCell({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
     );
   }
 }

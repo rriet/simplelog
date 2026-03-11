@@ -44,6 +44,7 @@ import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.
 import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/endorsement_dialog.dart';
+import 'package:simplelog/features/logbook/presentation/widgets/logbook_form_fields.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
@@ -1447,173 +1448,96 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         ),
         const SizedBox(height: 8),
         if (_logTakeoffLanding) ...[
-          Row(
+          TwoColumnFieldRow(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ClockTimeInputField(
-                  controller: _chocksOffTimeController,
-                  label: 'Chocks OFF',
-                  onChangedMinutes: _onChocksOffTimeChanged,
-                  onCleared: () => setState(
-                    () => _chocksOff = DateTime(
-                      _chocksOff.year,
-                      _chocksOff.month,
-                      _chocksOff.day,
-                    ),
-                  ),
-                  allowEmpty: true,
-                  errorText:
-                      _showChocksOffRequiredError &&
-                          _chocksOffTimeController.text.trim().isEmpty
-                      ? l10n.chocksOffRequiredToCalculate
-                      : null,
-                  suffixIcon: IconButton(
-                    tooltip: l10n.clearAction,
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 24,
-                      height: 24,
-                    ),
-                    onPressed: _clearChocksOffTime,
-                    icon: const Icon(Icons.clear),
-                  ),
+            left: LabeledClockFieldWithClear(
+              controller: _chocksOffTimeController,
+              label: 'Chocks OFF',
+              onChangedMinutes: _onChocksOffTimeChanged,
+              onCleared: () => setState(
+                () => _chocksOff = DateTime(
+                  _chocksOff.year,
+                  _chocksOff.month,
+                  _chocksOff.day,
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ClockTimeInputField(
-                  controller: _takeOffTimeController,
-                  label: 'TakeOff',
-                  onChangedMinutes: _onTakeoffTimeChanged,
-                  onCleared: () => setState(() => _takeOff = null),
-                  allowEmpty: true,
-                  suffixIcon: IconButton(
-                    tooltip: l10n.clearAction,
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 24,
-                      height: 24,
-                    ),
-                    onPressed: _takeOff == null ? null : _clearTakeoffTime,
-                    icon: const Icon(Icons.clear),
-                  ),
-                ),
-              ),
-            ],
+              errorText:
+                  _showChocksOffRequiredError &&
+                      _chocksOffTimeController.text.trim().isEmpty
+                  ? l10n.chocksOffRequiredToCalculate
+                  : null,
+              clearTooltip: l10n.clearAction,
+              onPressedClear: _clearChocksOffTime,
+            ),
+            right: LabeledClockFieldWithClear(
+              controller: _takeOffTimeController,
+              label: 'TakeOff',
+              onChangedMinutes: _onTakeoffTimeChanged,
+              onCleared: () => setState(() => _takeOff = null),
+              clearTooltip: l10n.clearAction,
+              clearEnabled: _takeOff != null,
+              onPressedClear: _clearTakeoffTime,
+            ),
           ),
           const SizedBox(height: 8),
-          Row(
+          TwoColumnFieldRow(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ClockTimeInputField(
-                  controller: _landingTimeController,
-                  label: 'Landing',
-                  onChangedMinutes: _onLandingTimeChanged,
-                  onCleared: () => setState(() => _landing = null),
-                  allowEmpty: true,
-                  suffixIcon: IconButton(
-                    tooltip: l10n.clearAction,
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 24,
-                      height: 24,
-                    ),
-                    onPressed: _landing == null ? null : _clearLandingTime,
-                    icon: const Icon(Icons.clear),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ClockTimeInputField(
-                  controller: _chocksOnTimeController,
-                  label: 'Chocks ON',
-                  onChangedMinutes: _onChocksOnTimeChanged,
-                  onCleared: () => setState(() => _chocksOn = null),
-                  allowEmpty: true,
-                  errorText: _showCalculateRequiredError && _chocksOn == null
-                      ? l10n.chocksOnRequiredToCalculate
-                      : null,
-                  suffixIcon: IconButton(
-                    tooltip: l10n.clearAction,
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 24,
-                      height: 24,
-                    ),
-                    onPressed: _chocksOn == null ? null : _clearChocksOnTime,
-                    icon: const Icon(Icons.clear),
-                  ),
-                ),
-              ),
-            ],
+            left: LabeledClockFieldWithClear(
+              controller: _landingTimeController,
+              label: 'Landing',
+              onChangedMinutes: _onLandingTimeChanged,
+              onCleared: () => setState(() => _landing = null),
+              clearTooltip: l10n.clearAction,
+              clearEnabled: _landing != null,
+              onPressedClear: _clearLandingTime,
+            ),
+            right: LabeledClockFieldWithClear(
+              controller: _chocksOnTimeController,
+              label: 'Chocks ON',
+              onChangedMinutes: _onChocksOnTimeChanged,
+              onCleared: () => setState(() => _chocksOn = null),
+              errorText: _showCalculateRequiredError && _chocksOn == null
+                  ? l10n.chocksOnRequiredToCalculate
+                  : null,
+              clearTooltip: l10n.clearAction,
+              clearEnabled: _chocksOn != null,
+              onPressedClear: _clearChocksOnTime,
+            ),
           ),
         ] else
-          Row(
+          TwoColumnFieldRow(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ClockTimeInputField(
-                  controller: _chocksOffTimeController,
-                  label: 'Chocks OFF',
-                  onChangedMinutes: _onChocksOffTimeChanged,
-                  onCleared: () => setState(
-                    () => _chocksOff = DateTime(
-                      _chocksOff.year,
-                      _chocksOff.month,
-                      _chocksOff.day,
-                    ),
-                  ),
-                  allowEmpty: true,
-                  errorText:
-                      _showChocksOffRequiredError &&
-                          _chocksOffTimeController.text.trim().isEmpty
-                      ? l10n.chocksOffRequiredToCalculate
-                      : null,
-                  suffixIcon: IconButton(
-                    tooltip: l10n.clearAction,
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 24,
-                      height: 24,
-                    ),
-                    onPressed: _clearChocksOffTime,
-                    icon: const Icon(Icons.clear),
-                  ),
+            left: LabeledClockFieldWithClear(
+              controller: _chocksOffTimeController,
+              label: 'Chocks OFF',
+              onChangedMinutes: _onChocksOffTimeChanged,
+              onCleared: () => setState(
+                () => _chocksOff = DateTime(
+                  _chocksOff.year,
+                  _chocksOff.month,
+                  _chocksOff.day,
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ClockTimeInputField(
-                  controller: _chocksOnTimeController,
-                  label: 'Chocks ON',
-                  onChangedMinutes: _onChocksOnTimeChanged,
-                  onCleared: () => setState(() => _chocksOn = null),
-                  allowEmpty: true,
-                  errorText: _showCalculateRequiredError && _chocksOn == null
-                      ? l10n.chocksOnRequiredToCalculate
-                      : null,
-                  suffixIcon: IconButton(
-                    tooltip: l10n.clearAction,
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 24,
-                      height: 24,
-                    ),
-                    onPressed: _chocksOn == null ? null : _clearChocksOnTime,
-                    icon: const Icon(Icons.clear),
-                  ),
-                ),
-              ),
-            ],
+              errorText:
+                  _showChocksOffRequiredError &&
+                      _chocksOffTimeController.text.trim().isEmpty
+                  ? l10n.chocksOffRequiredToCalculate
+                  : null,
+              clearTooltip: l10n.clearAction,
+              onPressedClear: _clearChocksOffTime,
+            ),
+            right: LabeledClockFieldWithClear(
+              controller: _chocksOnTimeController,
+              label: 'Chocks ON',
+              onChangedMinutes: _onChocksOnTimeChanged,
+              onCleared: () => setState(() => _chocksOn = null),
+              errorText: _showCalculateRequiredError && _chocksOn == null
+                  ? l10n.chocksOnRequiredToCalculate
+                  : null,
+              clearTooltip: l10n.clearAction,
+              clearEnabled: _chocksOn != null,
+              onPressedClear: _clearChocksOnTime,
+            ),
           ),
         const SizedBox(height: 8),
         PickerWithAddInputField(
@@ -1660,40 +1584,18 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: NumberInputField(
-                controller: _takeoffDayController,
-                label: 'Takeoff Day',
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: NumberInputField(
-                controller: _takeoffNightController,
-                label: 'Takeoff Night',
-              ),
-            ),
-          ],
+        LabeledNumberFieldPair(
+          leftController: _takeoffDayController,
+          leftLabel: 'Takeoff Day',
+          rightController: _takeoffNightController,
+          rightLabel: 'Takeoff Night',
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: NumberInputField(
-                controller: _landingDayController,
-                label: 'Landing Day',
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: NumberInputField(
-                controller: _landingNightController,
-                label: 'Landing Night',
-              ),
-            ),
-          ],
+        LabeledNumberFieldPair(
+          leftController: _landingDayController,
+          leftLabel: 'Landing Day',
+          rightController: _landingNightController,
+          rightLabel: 'Landing Night',
         ),
         const SizedBox(height: 8),
         Row(
@@ -2192,16 +2094,14 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
-            TextButton.icon(
+            _crewHeaderActionButton(
               onPressed: _openEndorsementDialog,
-              icon: Icon(
-                _endorsement == null
-                    ? Icons.draw_outlined
-                    : Icons.verified_outlined,
-              ),
+              icon: _endorsement == null
+                  ? Icons.draw_outlined
+                  : Icons.verified_outlined,
               label: const Text('Endorsement'),
             ),
-            TextButton.icon(
+            _crewHeaderActionButton(
               onPressed: () async {
                 final draft = await showAddCrewDialog(
                   context: context,
@@ -2218,7 +2118,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
                 if (duplicate) return;
                 setState(() => _crewRows.add(draft));
               },
-              icon: const Icon(Icons.add),
+              icon: Icons.add,
               label: Text(AppLocalizations.of(context)!.addCrewTitle),
             ),
           ],
@@ -2286,6 +2186,18 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _crewHeaderActionButton({
+    required FutureOr<void> Function() onPressed,
+    required IconData icon,
+    required Widget label,
+  }) {
+    return TextButton.icon(
+      onPressed: () => onPressed(),
+      icon: Icon(icon),
+      label: label,
     );
   }
 

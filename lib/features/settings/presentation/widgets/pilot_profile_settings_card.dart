@@ -114,38 +114,26 @@ class _PilotProfileEditorDialogState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextFormField(
+          _buildProfileTextField(
             controller: _nameController,
-            onChanged: (_) => _userEditedText = true,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              border: OutlineInputBorder(),
-              isDense: true,
-            ),
+            label: 'Name',
+            onChanged: () => _userEditedText = true,
           ),
           const SizedBox(height: 10),
-          TextFormField(
+          _buildProfileTextField(
             controller: _addressController,
-            onChanged: (_) => _userEditedText = true,
+            label: 'Address',
+            onChanged: () => _userEditedText = true,
             minLines: 2,
             maxLines: null,
-            decoration: const InputDecoration(
-              labelText: 'Address',
-              border: OutlineInputBorder(),
-              isDense: true,
-            ),
           ),
           const SizedBox(height: 10),
-          TextFormField(
+          _buildProfileTextField(
             controller: _licensesController,
-            onChanged: (_) => _userEditedText = true,
+            label: 'Licenses',
+            onChanged: () => _userEditedText = true,
             minLines: 2,
             maxLines: null,
-            decoration: const InputDecoration(
-              labelText: 'Licenses',
-              border: OutlineInputBorder(),
-              isDense: true,
-            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -156,12 +144,7 @@ class _PilotProfileEditorDialogState
           Container(
             width: double.infinity,
             height: 150,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Theme.of(context).colorScheme.outlineVariant,
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
+            decoration: _outlinedPanelDecoration(context),
             child: _signatureImage == null
                 ? const Center(child: Text('No signature'))
                 : Padding(
@@ -189,10 +172,34 @@ class _PilotProfileEditorDialogState
       fullScreen: false,
       popupMaxWidth: 720,
       actions: [
-        TextButton(onPressed: _save, child: const Text('Save')),
+        _buildSaveAction(),
       ],
       contentView: body,
     );
+  }
+
+  Widget _buildProfileTextField({
+    required TextEditingController controller,
+    required String label,
+    required VoidCallback onChanged,
+    int minLines = 1,
+    int? maxLines = 1,
+  }) {
+    return TextFormField(
+      controller: controller,
+      onChanged: (_) => onChanged(),
+      minLines: minLines,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        isDense: true,
+      ),
+    );
+  }
+
+  Widget _buildSaveAction() {
+    return _buildDialogSaveAction(onPressed: _save);
   }
 
   Future<void> _save() async {
@@ -216,26 +223,30 @@ class _PilotProfileEditorDialogState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.gesture),
-              title: const Text('Sign on screen'),
-              onTap: () => AppNavigator.pop(context, _SignatureAction.sign),
+            _buildSignatureActionTile(
+              context: context,
+              icon: Icons.gesture,
+              title: 'Sign on screen',
+              action: _SignatureAction.sign,
             ),
             if (_canUseCamera)
-              ListTile(
-                leading: const Icon(Icons.photo_camera_outlined),
-                title: const Text('Take picture'),
-                onTap: () => AppNavigator.pop(context, _SignatureAction.camera),
+              _buildSignatureActionTile(
+                context: context,
+                icon: Icons.photo_camera_outlined,
+                title: 'Take picture',
+                action: _SignatureAction.camera,
               ),
-            ListTile(
-              leading: const Icon(Icons.image_outlined),
-              title: const Text('Select picture file'),
-              onTap: () => AppNavigator.pop(context, _SignatureAction.file),
+            _buildSignatureActionTile(
+              context: context,
+              icon: Icons.image_outlined,
+              title: 'Select picture file',
+              action: _SignatureAction.file,
             ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline),
-              title: const Text('Clear signature'),
-              onTap: () => AppNavigator.pop(context, _SignatureAction.clear),
+            _buildSignatureActionTile(
+              context: context,
+              icon: Icons.delete_outline,
+              title: 'Clear signature',
+              action: _SignatureAction.clear,
             ),
           ],
         ),
@@ -270,6 +281,19 @@ class _PilotProfileEditorDialogState
           setState(() => _signatureImage = null);
         }
     }
+  }
+
+  Widget _buildSignatureActionTile({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required _SignatureAction action,
+  }) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      onTap: () => AppNavigator.pop(context, action),
+    );
   }
 
   Future<void> _pickFromCamera() async {
@@ -461,7 +485,7 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
         shortTitle: 'Sign',
         fullScreen: false,
         actions: [
-          TextButton(onPressed: _save, child: const Text('Save')),
+          _buildDialogSaveAction(onPressed: _save),
         ],
         contentView: SizedBox(
           height: 420,
@@ -477,12 +501,7 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
                         constraints.maxHeight,
                       );
                       return Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Theme.of(context).colorScheme.outlineVariant,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        decoration: _outlinedPanelDecoration(context),
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           onPanStart: (details) {
@@ -572,6 +591,17 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
     return data?.buffer.asUint8List();
   }
+}
+
+Widget _buildDialogSaveAction({required VoidCallback onPressed}) {
+  return TextButton(onPressed: onPressed, child: const Text('Save'));
+}
+
+BoxDecoration _outlinedPanelDecoration(BuildContext context) {
+  return BoxDecoration(
+    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+    borderRadius: BorderRadius.circular(8),
+  );
 }
 
 class _SignaturePainter extends CustomPainter {

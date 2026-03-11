@@ -15,6 +15,10 @@ class SettingsScreen extends ConsumerWidget {
   /// Creates the settings screen widget.
   const SettingsScreen({super.key});
 
+  static const _calculationPilotProfileTitle = 'Calculation & Pilot Profile';
+  static const _calculationPilotProfileSubtitle =
+      'Pilot identity and signature preferences.';
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DefaultTabController(
@@ -50,8 +54,8 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                         SizedBox(height: 12),
                         _SettingsSectionCard(
-                          title: 'Calculation & Pilot Profile',
-                          subtitle: 'Pilot identity and signature preferences.',
+                          title: _calculationPilotProfileTitle,
+                          subtitle: _calculationPilotProfileSubtitle,
                           children: [
                             SimulatorDefaultPositionSelector(),
                             SizedBox(height: 8),

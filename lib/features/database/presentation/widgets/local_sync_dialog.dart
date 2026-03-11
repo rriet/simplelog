@@ -805,35 +805,20 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     AppLocalizations l10n,
     List<DiscoveredDevice> devices,
   ) {
-    final actionButtons = [
-      OutlinedButton(
-        onPressed: (_selected == null || _isBusy) ? null : _pullFromDevice,
-        child: Text(l10n.databaseSyncPullAction),
-      ),
-      FilledButton(
-        onPressed: (_selected == null || _isBusy) ? null : _sendToDevice,
-        child: Text(l10n.databaseSyncSendAction),
-      ),
-    ];
+    final actionButtons = _buildActionButtons(
+      pullEnabled: _selected != null && !_isBusy,
+      sendEnabled: _selected != null && !_isBusy,
+      pullLabel: l10n.databaseSyncPullAction,
+      sendLabel: l10n.databaseSyncSendAction,
+    );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.databaseSyncFoundTitle,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            IconButton(
-              tooltip: l10n.cancelAction,
-              onPressed: () => AppNavigator.pop(context),
-              icon: const Icon(Icons.close),
-            ),
-          ],
+        _buildDialogHeader(
+          title: l10n.databaseSyncFoundTitle,
+          cancelTooltip: l10n.cancelAction,
         ),
         const SizedBox(height: 12),
         if (_isBusy) const LinearProgressIndicator(),
@@ -877,24 +862,19 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   }
 
   Widget _buildWaitingView(BuildContext context, AppLocalizations l10n) {
+    final actionButtons = _buildActionButtons(
+      pullEnabled: _connectedDevice != null && !_isBusy,
+      sendEnabled: _connectedDevice != null && !_isBusy,
+      pullLabel: l10n.databaseSyncPullAction,
+      sendLabel: l10n.databaseSyncSendAction,
+    );
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.databaseSyncConnected(_connectedName ?? '-'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            IconButton(
-              tooltip: l10n.cancelAction,
-              onPressed: () => AppNavigator.pop(context),
-              icon: const Icon(Icons.close),
-            ),
-          ],
+        _buildDialogHeader(
+          title: l10n.databaseSyncConnected(_connectedName ?? '-'),
+          cancelTooltip: l10n.cancelAction,
         ),
         const SizedBox(height: 12),
         Text(l10n.databaseSyncWaiting),
@@ -907,20 +887,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
           alignment: WrapAlignment.end,
           spacing: 8,
           runSpacing: 8,
-          children: [
-            OutlinedButton(
-              onPressed: (_connectedDevice == null || _isBusy)
-                  ? null
-                  : _pullFromDevice,
-              child: Text(l10n.databaseSyncPullAction),
-            ),
-            FilledButton(
-              onPressed: (_connectedDevice == null || _isBusy)
-                  ? null
-                  : _sendToDevice,
-              child: Text(l10n.databaseSyncSendAction),
-            ),
-          ],
+          children: actionButtons,
         ),
         if (_status != null) ...[
           const SizedBox(height: 8),
@@ -928,5 +895,44 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
         ],
       ],
     );
+  }
+
+  Widget _buildDialogHeader({
+    required String title,
+    required String cancelTooltip,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        IconButton(
+          tooltip: cancelTooltip,
+          onPressed: () => AppNavigator.pop(context),
+          icon: const Icon(Icons.close),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildActionButtons({
+    required bool pullEnabled,
+    required bool sendEnabled,
+    required String pullLabel,
+    required String sendLabel,
+  }) {
+    return [
+      OutlinedButton(
+        onPressed: pullEnabled ? _pullFromDevice : null,
+        child: Text(pullLabel),
+      ),
+      FilledButton(
+        onPressed: sendEnabled ? _sendToDevice : null,
+        child: Text(sendLabel),
+      ),
+    ];
   }
 }

@@ -264,19 +264,19 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (!isDesktop)
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: Text(cameraLabel),
+              _buildPhotoMenuTile(
+                icon: Icons.photo_camera,
+                title: cameraLabel,
                 onTap: () => AppNavigator.pop(context, _PhotoAction.camera),
               ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: Text(galleryLabel),
+            _buildPhotoMenuTile(
+              icon: Icons.photo_library,
+              title: galleryLabel,
               onTap: () => AppNavigator.pop(context, _PhotoAction.gallery),
             ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline),
-              title: Text(removeLabel),
+            _buildPhotoMenuTile(
+              icon: Icons.delete_outline,
+              title: removeLabel,
               enabled: _pictureBytes != null,
               onTap: () => AppNavigator.pop(context, _PhotoAction.remove),
             ),
@@ -301,6 +301,35 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
       case null:
         break;
     }
+  }
+
+  Widget _buildToggleField({
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      visualDensity: const VisualDensity(vertical: -1),
+      title: Text(title),
+      value: value,
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildPhotoMenuTile({
+    required IconData icon,
+    required String title,
+    required VoidCallback? onTap,
+    bool enabled = true,
+  }) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      enabled: enabled,
+      onTap: onTap,
+    );
   }
 
   @override
@@ -354,19 +383,13 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
               maxLines: 4,
             ),
             const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              visualDensity: const VisualDensity(vertical: -1),
-              title: Text(l10n.fieldIsSelf),
+            _buildToggleField(
+              title: l10n.fieldIsSelf,
               value: _isSelf,
               onChanged: (value) => setState(() => _isSelf = value),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              visualDensity: const VisualDensity(vertical: -1),
-              title: Text(l10n.fieldIsFavorite),
+            _buildToggleField(
+              title: l10n.fieldIsFavorite,
               value: _isFavorite,
               onChanged: (value) => setState(() => _isFavorite = value),
             ),

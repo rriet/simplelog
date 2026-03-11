@@ -10,6 +10,7 @@ import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_
 /// Fetches one page of logbook entries.
 typedef LogbookEntriesPageLoader =
     Future<List<LogbookEntry>> Function(int limit, int offset);
+
 /// Loads summary totals for the current data set.
 typedef LogbookFlightSummaryLoader = Future<LogbookFlightSummary> Function();
 
@@ -26,10 +27,13 @@ class LogbookEntriesLazyPanel extends StatefulWidget {
 
   /// Callback used to load paged entries.
   final LogbookEntriesPageLoader pageLoader;
+
   /// Callback used to load summary totals.
   final LogbookFlightSummaryLoader summaryLoader;
+
   /// Called when user taps an entry.
   final ValueChanged<LogbookEntry> onEntryTap;
+
   /// Page size used for incremental loads.
   final int pageSize;
 
@@ -48,6 +52,51 @@ class _LogbookEntriesLazyPanelState extends State<LogbookEntriesLazyPanel> {
   Object? _error;
   Object? _summaryError;
 
+  void _setSummaryLoading() {
+    setState(() {
+      _summaryLoading = true;
+      _summaryError = null;
+    });
+  }
+
+  void _setSummaryLoaded(LogbookFlightSummary summary) {
+    setState(() {
+      _summary = summary;
+      _summaryLoading = false;
+    });
+  }
+
+  void _setSummaryError(Object error) {
+    setState(() {
+      _summaryError = error;
+      _summaryLoading = false;
+    });
+  }
+
+  void _setPageLoading() {
+    setState(() {
+      _loadingMore = true;
+      _error = null;
+    });
+  }
+
+  void _appendPage(List<LogbookEntry> append, bool hasMore) {
+    setState(() {
+      _entries.addAll(append);
+      _hasMore = hasMore;
+      _initialLoading = false;
+      _loadingMore = false;
+    });
+  }
+
+  void _setPageError(Object error) {
+    setState(() {
+      _error = error;
+      _initialLoading = false;
+      _loadingMore = false;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -56,32 +105,20 @@ class _LogbookEntriesLazyPanelState extends State<LogbookEntriesLazyPanel> {
   }
 
   Future<void> _loadSummary() async {
-    setState(() {
-      _summaryLoading = true;
-      _summaryError = null;
-    });
+    _setSummaryLoading();
     try {
       final summary = await widget.summaryLoader();
       if (!mounted) return;
-      setState(() {
-        _summary = summary;
-        _summaryLoading = false;
-      });
+      _setSummaryLoaded(summary);
     } on Object catch (error) {
       if (!mounted) return;
-      setState(() {
-        _summaryError = error;
-        _summaryLoading = false;
-      });
+      _setSummaryError(error);
     }
   }
 
   Future<void> _loadNextPage() async {
     if (_loadingMore || !_hasMore) return;
-    setState(() {
-      _loadingMore = true;
-      _error = null;
-    });
+    _setPageLoading();
 
     try {
       final page = await widget.pageLoader(
@@ -91,19 +128,10 @@ class _LogbookEntriesLazyPanelState extends State<LogbookEntriesLazyPanel> {
       if (!mounted) return;
       final hasMore = page.length > widget.pageSize;
       final append = hasMore ? page.take(widget.pageSize).toList() : page;
-      setState(() {
-        _entries.addAll(append);
-        _hasMore = hasMore;
-        _initialLoading = false;
-        _loadingMore = false;
-      });
+      _appendPage(append, hasMore);
     } on Object catch (error) {
       if (!mounted) return;
-      setState(() {
-        _error = error;
-        _initialLoading = false;
-        _loadingMore = false;
-      });
+      _setPageError(error);
     }
   }
 

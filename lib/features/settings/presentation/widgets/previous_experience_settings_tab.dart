@@ -23,6 +23,9 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
   /// Creates the previous-experience tab.
   const PreviousExperienceSettingsTab({super.key});
 
+  static const _entriesSubtitle =
+      'Edit, add, or remove previous experience records.';
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rowsAsync = ref.watch(previousExperiencesProvider);
@@ -48,7 +51,7 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
             const SizedBox(height: 16),
             _SettingsSectionCard(
               title: 'Entries',
-              subtitle: 'Edit, add, or remove previous experience records.',
+              subtitle: _entriesSubtitle,
               children: [
                 Align(
                   alignment: Alignment.centerRight,
@@ -120,22 +123,12 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
     WidgetRef ref,
     PreviousExperienceRow row,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await _showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Previous Experience'),
-        content: Text('Delete entry for ${row.aircraftType.code}?'),
-        actions: [
-          TextButton(
-            onPressed: () => AppNavigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => AppNavigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      title: 'Delete Previous Experience',
+      content: 'Delete entry for ${row.aircraftType.code}?',
+      cancelLabel: 'Cancel',
+      confirmLabel: 'Delete',
     );
     if (confirmed != true) return;
     await ref
@@ -167,6 +160,32 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
       builder: (_) => _PreviousExperienceEditDialog(
         aircraftTypes: typesAsync.map((e) => e.type).toList(),
         initial: initial,
+      ),
+    );
+  }
+
+  Future<bool?> _showConfirmationDialog({
+    required BuildContext context,
+    required String title,
+    required String content,
+    required String cancelLabel,
+    required String confirmLabel,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => AppNavigator.pop(dialogContext, false),
+            child: Text(cancelLabel),
+          ),
+          FilledButton(
+            onPressed: () => AppNavigator.pop(dialogContext, true),
+            child: Text(confirmLabel),
+          ),
+        ],
       ),
     );
   }
@@ -243,6 +262,21 @@ class _PreviousExperienceEditDialogState
   DateTime? _lastFlight;
   bool _showRequiredErrors = false;
 
+  void _setPickedDateTime({
+    required bool first,
+    required DateTime value,
+  }) {
+    setState(() {
+      if (first) {
+        _firstFlight = value;
+        _showRequiredErrors = false;
+      } else {
+        _lastFlight = value;
+        _showRequiredErrors = false;
+      }
+    });
+  }
+
   final _timeControllers = <String, TextEditingController>{};
   final _intControllers = <String, TextEditingController>{};
 
@@ -312,12 +346,14 @@ class _PreviousExperienceEditDialogState
       firstDate: DateTime.utc(1970),
       lastDate: DateTime.utc(2100),
     );
-    if (date == null || !mounted) return;
+    if (date == null) return;
+    if (!mounted) return;
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(hour: base.hour, minute: base.minute),
     );
-    if (time == null || !mounted) return;
+    if (time == null) return;
+    if (!mounted) return;
     final value = DateTime.utc(
       date.year,
       date.month,
@@ -325,15 +361,7 @@ class _PreviousExperienceEditDialogState
       time.hour,
       time.minute,
     );
-    setState(() {
-      if (first) {
-        _firstFlight = value;
-        _showRequiredErrors = false;
-      } else {
-        _lastFlight = value;
-        _showRequiredErrors = false;
-      }
-    });
+    _setPickedDateTime(first: first, value: value);
   }
 
   int _minutes(String key) =>
@@ -488,24 +516,40 @@ class _PreviousExperienceEditDialogState
 
   Future<bool> _showWarningsAndConfirm(List<String> warnings) async {
     if (!mounted) return false;
-    final decision = await showDialog<bool>(
+    final decision = await _showConfirmationDialog(
+      context: context,
+      title: 'Validation warnings',
+      content: '${warnings.join('\n')}\n\nSave anyway?',
+      cancelLabel: 'Review',
+      confirmLabel: 'Save anyway',
+    );
+    return decision ?? false;
+  }
+
+  Future<bool?> _showConfirmationDialog({
+    required BuildContext context,
+    required String title,
+    required String content,
+    required String cancelLabel,
+    required String confirmLabel,
+  }) {
+    return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Validation warnings'),
-        content: Text('${warnings.join('\n')}\n\nSave anyway?'),
+        title: Text(title),
+        content: Text(content),
         actions: [
           TextButton(
             onPressed: () => AppNavigator.pop(context, false),
-            child: const Text('Review'),
+            child: Text(cancelLabel),
           ),
           FilledButton(
             onPressed: () => AppNavigator.pop(context, true),
-            child: const Text('Save anyway'),
+            child: Text(confirmLabel),
           ),
         ],
       ),
     );
-    return decision ?? false;
   }
 
   @override
@@ -515,67 +559,21 @@ class _PreviousExperienceEditDialogState
         : 'Edit Previous Experience';
     final isCompact = isCompactDialogScreen(context);
     final displayTitle = isCompact ? 'Previous Experience' : title;
+    final firstFlightField = _buildFirstFlightField();
+    final lastFlightField = _buildLastFlightField();
     final dateFields = isCompact
         ? Column(
             children: [
-              _DateField(
-                label: 'First Flight',
-                value: _firstFlight,
-                onPick: () => _pickDateTime(first: true),
-                onClear: () => setState(() {
-                  _firstFlight = null;
-                  _showRequiredErrors = true;
-                }),
-                errorText: _showRequiredErrors && _firstFlight == null
-                    ? 'First Flight is required.'
-                    : null,
-              ),
+              firstFlightField,
               const SizedBox(height: 12),
-              _DateField(
-                label: 'Last Flight',
-                value: _lastFlight,
-                onPick: () => _pickDateTime(first: false),
-                onClear: () => setState(() {
-                  _lastFlight = null;
-                  _showRequiredErrors = true;
-                }),
-                errorText: _showRequiredErrors && _lastFlight == null
-                    ? 'Last Flight is required.'
-                    : null,
-              ),
+              lastFlightField,
             ],
           )
         : Row(
             children: [
-              Expanded(
-                child: _DateField(
-                  label: 'First Flight',
-                  value: _firstFlight,
-                  onPick: () => _pickDateTime(first: true),
-                  onClear: () => setState(() {
-                    _firstFlight = null;
-                    _showRequiredErrors = true;
-                  }),
-                  errorText: _showRequiredErrors && _firstFlight == null
-                      ? 'First Flight is required.'
-                      : null,
-                ),
-              ),
+              Expanded(child: firstFlightField),
               const SizedBox(width: 12),
-              Expanded(
-                child: _DateField(
-                  label: 'Last Flight',
-                  value: _lastFlight,
-                  onPick: () => _pickDateTime(first: false),
-                  onClear: () => setState(() {
-                    _lastFlight = null;
-                    _showRequiredErrors = true;
-                  }),
-                  errorText: _showRequiredErrors && _lastFlight == null
-                      ? 'Last Flight is required.'
-                      : null,
-                ),
-              ),
+              Expanded(child: lastFlightField),
             ],
           );
     final formBody = SingleChildScrollView(
@@ -625,6 +623,36 @@ class _PreviousExperienceEditDialogState
         TextButton(onPressed: _save, child: const Text('Save')),
       ],
       contentView: formBody,
+    );
+  }
+
+  Widget _buildFirstFlightField() {
+    return _DateField(
+      label: 'First Flight',
+      value: _firstFlight,
+      onPick: () => _pickDateTime(first: true),
+      onClear: () => setState(() {
+        _firstFlight = null;
+        _showRequiredErrors = true;
+      }),
+      errorText: _showRequiredErrors && _firstFlight == null
+          ? 'First Flight is required.'
+          : null,
+    );
+  }
+
+  Widget _buildLastFlightField() {
+    return _DateField(
+      label: 'Last Flight',
+      value: _lastFlight,
+      onPick: () => _pickDateTime(first: false),
+      onClear: () => setState(() {
+        _lastFlight = null;
+        _showRequiredErrors = true;
+      }),
+      errorText: _showRequiredErrors && _lastFlight == null
+          ? 'Last Flight is required.'
+          : null,
     );
   }
 }

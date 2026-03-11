@@ -59,6 +59,37 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
   String? _dutyEndErrorText;
   String? _factoredDutyErrorText;
 
+  void _setLoadingFalse() {
+    setState(() => _loading = false);
+  }
+
+  void _refreshLoadedState() {
+    setState(() {});
+  }
+
+  void _applyPickedDate(DateTime picked) {
+    setState(() {
+      _start = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        _start.hour,
+        _start.minute,
+      );
+      _end = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        _end.hour,
+        _end.minute,
+      );
+      if (!_end.isAfter(_start)) {
+        _end = _end.add(const Duration(days: 1));
+      }
+      _updateFactoredIfNeeded();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -134,7 +165,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
         );
       }
       if (!mounted) return;
-      setState(() => _loading = false);
+      _setLoadingFalse();
       return;
     }
 
@@ -143,7 +174,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     if (!mounted) return;
     if (loaded == null) {
       if (!mounted) return;
-      setState(() => _loading = false);
+      _setLoadingFalse();
       return;
     }
     final startLine = loaded.startLine;
@@ -169,7 +200,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     _dutyTimeController.text = HourInputField.formatHours(_dutyMinutes);
     _loading = false;
     if (!mounted) return;
-    setState(() {});
+    _refreshLoadedState();
   }
 
   Future<void> _pickDate() async {
@@ -181,26 +212,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     );
     if (picked == null) return;
     if (!mounted) return;
-    setState(() {
-      _start = DateTime(
-        picked.year,
-        picked.month,
-        picked.day,
-        _start.hour,
-        _start.minute,
-      );
-      _end = DateTime(
-        picked.year,
-        picked.month,
-        picked.day,
-        _end.hour,
-        _end.minute,
-      );
-      if (!_end.isAfter(_start)) {
-        _end = _end.add(const Duration(days: 1));
-      }
-      _updateFactoredIfNeeded();
-    });
+    _applyPickedDate(picked);
   }
 
   void _onStartTimeChanged(int minutes) {

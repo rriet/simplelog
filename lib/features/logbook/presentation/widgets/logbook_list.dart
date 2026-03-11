@@ -6,7 +6,7 @@ import 'package:simplelog/core/presentation/widgets/display/slidable_actions.dar
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_list_item.dart';
 
-/// Common interface implemented by all items that 
+/// Common interface implemented by all items that
 /// can appear in the logbook list.
 abstract class LogbookListItemModel {
   /// Const constructor for subclasses.
@@ -291,7 +291,7 @@ class _LogbookListState extends State<LogbookList> {
               final key = _yearKeys.putIfAbsent(item.year, GlobalKey.new);
               return KeyedSubtree(
                 key: itemKey,
-                child: _YearHeader(key: key, year: item.year),
+                child: _YearHeaderContent(key: key, year: item.year),
               );
             }
             return KeyedSubtree(
@@ -326,7 +326,7 @@ class _LogbookListState extends State<LogbookList> {
             top: 0,
             child: SizedBox(
               height: _stickyHeight,
-              child: _StickyYearHeader(year: _currentYear!),
+              child: _YearHeaderContent(year: _currentYear!),
             ),
           ),
       ],
@@ -619,31 +619,8 @@ class _DutyTitle extends StatelessWidget {
   }
 }
 
-class _YearHeader extends StatelessWidget {
-  const _YearHeader({required this.year, super.key});
-
-  final int year;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      color: theme.colorScheme.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      alignment: Alignment.centerLeft,
-      child: Text(
-        '— $year —',
-        style: theme.textTheme.titleSmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _StickyYearHeader extends StatelessWidget {
-  const _StickyYearHeader({required this.year});
+class _YearHeaderContent extends StatelessWidget {
+  const _YearHeaderContent({required this.year, super.key});
 
   final int year;
 

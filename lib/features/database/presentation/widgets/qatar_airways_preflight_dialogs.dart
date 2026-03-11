@@ -56,8 +56,24 @@ class QatarAirwaysMissingAirportsDialog extends StatefulWidget {
 
 class _QatarAirwaysMissingAirportsDialogState
     extends State<QatarAirwaysMissingAirportsDialog> {
+  static const _missingAirportsMessage =
+      'Create the missing airports before continuing the Qatar Airways import.';
+
   late final List<String> _pendingCodes;
   bool _busy = false;
+
+  void _setBusy(bool value) {
+    setState(() => _busy = value);
+  }
+
+  void _applyAirportCreated(String code, bool resolved) {
+    setState(() {
+      _busy = false;
+      if (resolved) {
+        _pendingCodes.remove(code);
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -66,16 +82,10 @@ class _QatarAirwaysMissingAirportsDialogState
   }
 
   Future<void> _createAirport(String code) async {
-    setState(() => _busy = true);
+    _setBusy(true);
     final resolved = await widget.onCreateAirport(code);
     if (!mounted) return;
-    if (!mounted) return;
-    setState(() {
-      _busy = false;
-      if (resolved) {
-        _pendingCodes.remove(code);
-      }
-    });
+    _applyAirportCreated(code, resolved);
   }
 
   @override
@@ -89,8 +99,7 @@ class _QatarAirwaysMissingAirportsDialogState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Create the missing airports before continuing '
-              'the Qatar Airways import.',
+              _missingAirportsMessage,
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -99,20 +108,7 @@ class _QatarAirwaysMissingAirportsDialogState
                 child: Column(
                   children: [
                     for (final code in _pendingCodes)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          children: [
-                            Expanded(child: Text(code)),
-                            FilledButton(
-                              onPressed: _busy
-                                  ? null
-                                  : () => _createAirport(code),
-                              child: const Text('Create airport'),
-                            ),
-                          ],
-                        ),
-                      ),
+                      _buildPendingResolveCodeRow(code),
                   ],
                 ),
               ),
@@ -132,6 +128,18 @@ class _QatarAirwaysMissingAirportsDialogState
           child: const Text('Continue'),
         ),
       ],
+    );
+  }
+
+  Widget _buildPendingResolveCodeRow(String code) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: _PendingResolveRow(
+        label: code,
+        actionLabel: 'Create airport',
+        enabled: !_busy,
+        onPressed: () => _createAirport(code),
+      ),
     );
   }
 }
@@ -185,8 +193,29 @@ class QatarAirwaysMissingAircraftDialog extends StatefulWidget {
 
 class _QatarAirwaysMissingAircraftDialogState
     extends State<QatarAirwaysMissingAircraftDialog> {
+  static const _missingAircraftMessage =
+      'Create the missing simulator aircraft before continuing the Qatar Airways import.';
+
   late final List<QatarAirwaysMissingAircraft> _pendingAircraft;
   bool _busy = false;
+
+  void _setBusy(bool value) {
+    setState(() => _busy = value);
+  }
+
+  void _applyAircraftCreated(
+    QatarAirwaysMissingAircraft aircraft,
+    bool resolved,
+  ) {
+    setState(() {
+      _busy = false;
+      if (resolved) {
+        _pendingAircraft.removeWhere(
+          (candidate) => candidate.registration == aircraft.registration,
+        );
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -197,18 +226,10 @@ class _QatarAirwaysMissingAircraftDialogState
   }
 
   Future<void> _createAircraft(QatarAirwaysMissingAircraft aircraft) async {
-    setState(() => _busy = true);
+    _setBusy(true);
     final resolved = await widget.onCreateAircraft(aircraft);
     if (!mounted) return;
-    if (!mounted) return;
-    setState(() {
-      _busy = false;
-      if (resolved) {
-        _pendingAircraft.removeWhere(
-          (candidate) => candidate.registration == aircraft.registration,
-        );
-      }
-    });
+    _applyAircraftCreated(aircraft, resolved);
   }
 
   @override
@@ -223,8 +244,7 @@ class _QatarAirwaysMissingAircraftDialogState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Create the missing simulator aircraft before continuing '
-                'the Qatar Airways import.',
+                _missingAircraftMessage,
               ),
               const SizedBox(height: 12),
               Expanded(
@@ -234,22 +254,7 @@ class _QatarAirwaysMissingAircraftDialogState
                       const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final aircraft = _pendingAircraft[index];
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${aircraft.registration} '
-                            '(${aircraft.aircraftTypeCode})',
-                          ),
-                        ),
-                        FilledButton(
-                          onPressed: _busy
-                              ? null
-                              : () => _createAircraft(aircraft),
-                          child: const Text('Create aircraft'),
-                        ),
-                      ],
-                    );
+                    return _buildPendingResolveAircraftRow(aircraft);
                   },
                 ),
               ),
@@ -272,6 +277,42 @@ class _QatarAirwaysMissingAircraftDialogState
         ),
       ],
       contentView: body,
+    );
+  }
+
+  Widget _buildPendingResolveAircraftRow(QatarAirwaysMissingAircraft aircraft) {
+    return _PendingResolveRow(
+      label: '${aircraft.registration} (${aircraft.aircraftTypeCode})',
+      actionLabel: 'Create aircraft',
+      enabled: !_busy,
+      onPressed: () => _createAircraft(aircraft),
+    );
+  }
+}
+
+class _PendingResolveRow extends StatelessWidget {
+  const _PendingResolveRow({
+    required this.label,
+    required this.actionLabel,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final String label;
+  final String actionLabel;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: Text(label)),
+        FilledButton(
+          onPressed: enabled ? onPressed : null,
+          child: Text(actionLabel),
+        ),
+      ],
     );
   }
 }

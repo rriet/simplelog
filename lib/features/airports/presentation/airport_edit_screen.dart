@@ -69,6 +69,13 @@ class _AirportEditScreenState extends ConsumerState<AirportEditScreen> {
   late double _longitude;
   late bool _isFavorite;
 
+  void _setCoordinates(CoordinatePair value) {
+    setState(() {
+      _latitude = value.latitude;
+      _longitude = value.longitude;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -215,11 +222,9 @@ class _AirportEditScreenState extends ConsumerState<AirportEditScreen> {
         longitude: _longitude,
       ),
     );
-    if (result == null || !mounted) return;
-    setState(() {
-      _latitude = result.latitude;
-      _longitude = result.longitude;
-    });
+    if (result == null) return;
+    if (!mounted) return;
+    _setCoordinates(result);
   }
 
   @override
@@ -377,6 +382,32 @@ class _CoordinateEditDialogState extends State<_CoordinateEditDialog> {
     return [_CoordinateDecimalFormatter()];
   }
 
+  Future<void> _saveCoordinatesFromControllers() async {
+    final l10n = AppLocalizations.of(context)!;
+    final lat = CoordinateParser.parseSingle(
+      _latController.text,
+      isLatitude: true,
+    );
+    final lon = CoordinateParser.parseSingle(
+      _lonController.text,
+      isLatitude: false,
+    );
+    if (lat == null || lon == null) {
+      await showAppMessageDialog(
+        context,
+        title: l10n.validationErrorTitle,
+        message: 'Invalid coordinates. Use decimal or degree-minute format.',
+        okLabel: l10n.okAction,
+        useRootNavigator: false,
+      );
+      return;
+    }
+    AppNavigator.pop(
+      context,
+      CoordinatePair(latitude: lat, longitude: lon),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -453,31 +484,7 @@ class _CoordinateEditDialogState extends State<_CoordinateEditDialog> {
           child: Text(l10n.cancelAction),
         ),
         FilledButton(
-          onPressed: () async {
-            final lat = CoordinateParser.parseSingle(
-              _latController.text,
-              isLatitude: true,
-            );
-            final lon = CoordinateParser.parseSingle(
-              _lonController.text,
-              isLatitude: false,
-            );
-            if (lat == null || lon == null) {
-              await showAppMessageDialog(
-                context,
-                title: l10n.validationErrorTitle,
-                message:
-                    'Invalid coordinates. Use decimal or degree-minute format.',
-                okLabel: l10n.okAction,
-                useRootNavigator: false,
-              );
-              return;
-            }
-            AppNavigator.pop(
-              context,
-              CoordinatePair(latitude: lat, longitude: lon),
-            );
-          },
+          onPressed: _saveCoordinatesFromControllers,
           child: Text(l10n.saveAction),
         ),
       ],

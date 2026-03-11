@@ -181,6 +181,21 @@ class _AircraftTypeEditScreenState
     }
   }
 
+  Widget _buildBooleanField({
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      visualDensity: const VisualDensity(vertical: -1),
+      title: Text(title),
+      value: value,
+      onChanged: onChanged,
+    );
+  }
+
   Future<void> _showValidationError(ValidationResult validation) async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
@@ -331,35 +346,23 @@ class _AircraftTypeEditScreenState
               },
             ),
             const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              visualDensity: const VisualDensity(vertical: -1),
-              title: Text(l10n.fieldMultiPilot),
+            _buildBooleanField(
+              title: l10n.fieldMultiPilot,
               value: _multiPilot,
               onChanged: (value) => setState(() => _multiPilot = value),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              visualDensity: const VisualDensity(vertical: -1),
-              title: Text(l10n.fieldComplex),
+            _buildBooleanField(
+              title: l10n.fieldComplex,
               value: _complex,
               onChanged: (value) => setState(() => _complex = value),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              visualDensity: const VisualDensity(vertical: -1),
-              title: Text(l10n.fieldEfis),
+            _buildBooleanField(
+              title: l10n.fieldEfis,
               value: _efis,
               onChanged: (value) => setState(() => _efis = value),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              visualDensity: const VisualDensity(vertical: -1),
-              title: Text(l10n.fieldHighPerformance),
+            _buildBooleanField(
+              title: l10n.fieldHighPerformance,
               value: _highPerformance,
               onChanged: (value) => setState(() => _highPerformance = value),
             ),

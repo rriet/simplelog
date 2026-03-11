@@ -1,6 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+const _aboutTagline = 'Pilot Logbook • Made by a Pilot, for Pilots';
+const _aboutAppName = 'SimpleLog';
+const _aboutLaunchErrorPrefix = 'Could not launch';
+const _aboutWhyTitle = 'Why SimpleLog';
+const _aboutGithubTitle = 'Open Source on GitHub';
+const _aboutSupportTitle = 'Support SimpleLog';
+const _aboutStoryText =
+    'SimpleLog was born in the cockpit: built by a real '
+    'airline pilot who got fed up with scribbling on paper '
+    "like it's 1976.\n\n"
+    'This app replaces my previous Java '
+    'logbook software, which I developed and used for '
+    'many years as an airline pilot. '
+    'The rewrite brings mobile support, modern UI, and '
+    'easier data portability — while preserving the core '
+    'focus on quick, accurate entries in real operations.\n\n'
+    'Just punch in takeoff, landing, airports and times → '
+    'smash Calculate → watch how fast totals and breakdowns '
+    'gets calculated automatically → save and done.\n\n'
+    'No nonsense, no subscriptions, no server drama. Your '
+    'flights stay yours, stored locally, synced on local '
+    'network.\n\n'
+    'Open source. Free forever. Fly. Log. Repeat.\n'
+    'If it saves you time, a coffee keeps the lights on. ☕✈️';
+const _githubDocsText =
+    'Documentation • Tutorials • Sync setup • '
+    'Desktop builds • Bug tracker • Future '
+    'features';
+const _supportBodyText =
+    'SimpleLog will always remain free and open source.\n\n'
+    'Ongoing costs include Apple & Google developer '
+    'accounts, '
+    'test devices, and countless hours improving the app '
+    'based on real pilot feedback.\n\n'
+    'If SimpleLog saves you time in the cockpit or makes '
+    'your logbook life easier — any support is deeply '
+    'appreciated.';
+const _supportFooterText =
+    '→ The GitHub page has full documentation, tutorials, '
+    'sync guides, desktop builds, and ways to support '
+    'the project.';
+
 /// About page with software details and license access.
 class AboutScreen extends StatelessWidget {
   /// Creates the about page.
@@ -25,7 +67,7 @@ class AboutScreen extends StatelessWidget {
               children: [
                 _AboutTab(openRepository: _openRepository),
                 const LicensePage(
-                  applicationName: 'SimpleLog',
+                  applicationName: _aboutAppName,
                 ),
               ],
             ),
@@ -40,7 +82,7 @@ class AboutScreen extends StatelessWidget {
       await launchUrl(_repoUrl, mode: LaunchMode.externalApplication);
       return;
     }
-    debugPrint('Could not launch $_repoUrl');
+    debugPrint('$_aboutLaunchErrorPrefix $_repoUrl');
   }
 }
 
@@ -69,7 +111,7 @@ class _AboutTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'SimpleLog',
+                    _aboutAppName,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
@@ -77,7 +119,7 @@ class _AboutTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Pilot Logbook • Made by a Pilot, for Pilots',
+                    _aboutTagline,
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.primary.withValues(alpha: 0.8),
                     ),
@@ -98,7 +140,7 @@ class _AboutTab extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Why SimpleLog',
+                      _aboutWhyTitle,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -106,23 +148,7 @@ class _AboutTab extends StatelessWidget {
                     ),
                     SizedBox(height: 12),
                     Text(
-                      'SimpleLog was born in the cockpit: built by a real '
-                      'airline pilot who got fed up with scribbling on paper '
-                      "like it's 1976.\n\n"
-                      'This app replaces my previous Java '
-                      'logbook software, which I developed and used for '
-                      'many years as an airline pilot. '
-                      'The rewrite brings mobile support, modern UI, and '
-                      'easier data portability — while preserving the core '
-                      'focus on quick, accurate entries in real operations.\n\n'
-                      'Just punch in takeoff, landing, airports and times → '
-                      'smash Calculate → watch how fast totals and breakdowns '
-                      'gets calculated automatically → save and done.\n\n'
-                      'No nonsense, no subscriptions, no server drama. Your '
-                      'flights stay yours, stored locally, synced on local '
-                      'network.\n\n'
-                      'Open source. Free forever. Fly. Log. Repeat.\n'
-                      'If it saves you time, a coffee keeps the lights on. ☕✈️',
+                      _aboutStoryText,
                     ),
                   ],
                 ),
@@ -156,7 +182,7 @@ class _AboutTab extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Open Source on GitHub',
+                                  _aboutGithubTitle,
                                   style: theme.textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: theme.colorScheme.primary,
@@ -164,9 +190,7 @@ class _AboutTab extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Documentation • Tutorials • Sync setup • '
-                                  'Desktop builds • Bug tracker • Future '
-                                  'features',
+                                  _githubDocsText,
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
@@ -219,7 +243,7 @@ class _AboutTab extends StatelessWidget {
                         ),
                         SizedBox(width: 12),
                         Text(
-                          'Support SimpleLog',
+                          _aboutSupportTitle,
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -229,20 +253,11 @@ class _AboutTab extends StatelessWidget {
                     ),
                     SizedBox(height: 12),
                     Text(
-                      'SimpleLog will always remain free and open source.\n\n'
-                      'Ongoing costs include Apple & Google developer '
-                      'accounts, '
-                      'test devices, and countless hours improving the app '
-                      'based on real pilot feedback.\n\n'
-                      'If SimpleLog saves you time in the cockpit or makes '
-                      'your logbook life easier — any support is deeply '
-                      'appreciated.',
+                      _supportBodyText,
                     ),
                     SizedBox(height: 16),
                     Text(
-                      '→ The GitHub page has full documentation, tutorials, '
-                      'sync guides, desktop builds, and ways to support '
-                      'the project.',
+                      _supportFooterText,
                       style: TextStyle(fontStyle: FontStyle.italic),
                     ),
                   ],

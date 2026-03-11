@@ -64,10 +64,26 @@ class LogTenProImportReviewDialog extends ConsumerStatefulWidget {
 
 class _LogTenProImportReviewDialogState
     extends ConsumerState<LogTenProImportReviewDialog> {
+  static const _reviewHelpText =
+      'Fix the value for each invalid field, or ignore the full source line.';
+  static const _simulatorSelectedHelp =
+      'Simulator selected: airport fields are not required.';
+
   late final Map<int, Map<LogTenFieldAssociation, TextEditingController>>
   _controllers;
   late final Set<int> _ignoredLines;
   late final Set<int> _simulatorLines;
+
+  void _setAirportResolution({
+    required LogTenImportIssue issue,
+    required String replacement,
+  }) {
+    setState(() {
+      _controllers[issue.lineNumber]![issue.association]!.text = replacement;
+      _ignoredLines.remove(issue.lineNumber);
+      _simulatorLines.remove(issue.lineNumber);
+    });
+  }
 
   @override
   void initState() {
@@ -191,11 +207,7 @@ class _LogTenProImportReviewDialogState
     if (selected == null) return;
     if (!mounted) return;
     final replacement = _airportReplacementCode(selected, issue.currentValue);
-    setState(() {
-      _controllers[issue.lineNumber]![issue.association]!.text = replacement;
-      _ignoredLines.remove(issue.lineNumber);
-      _simulatorLines.remove(issue.lineNumber);
-    });
+    _setAirportResolution(issue: issue, replacement: replacement);
   }
 
   Future<void> _createAirport(LogTenImportIssue issue) async {
@@ -226,11 +238,7 @@ class _LogTenProImportReviewDialogState
     if (!mounted || created == null) return;
     if (!mounted) return;
     final replacement = _airportReplacementCode(created, issue.currentValue);
-    setState(() {
-      _controllers[issue.lineNumber]![issue.association]!.text = replacement;
-      _ignoredLines.remove(issue.lineNumber);
-      _simulatorLines.remove(issue.lineNumber);
-    });
+    _setAirportResolution(issue: issue, replacement: replacement);
   }
 
   String _airportReplacementCode(Airport airport, String originalValue) {
@@ -265,8 +273,7 @@ class _LogTenProImportReviewDialogState
               children: [
                 const Expanded(
                   child: Text(
-                    'Fix the value for each invalid field, or ignore the full '
-                    'source line.',
+                    _reviewHelpText,
                   ),
                 ),
                 TextButton(
@@ -355,8 +362,7 @@ class _LogTenProImportReviewDialogState
                           const SizedBox(height: 8),
                           if (simulatorSelected)
                             const Text(
-                              'Simulator selected: airport fields are not '
-                              'required.',
+                              _simulatorSelectedHelp,
                             ),
                           const SizedBox(height: 12),
                         ],

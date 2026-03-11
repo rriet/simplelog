@@ -80,16 +80,9 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.orderByLabel,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<AirportOrderBy>(
-                      initialValue: _orderBy,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                      ),
+                    _buildLabeledDropdown<AirportOrderBy>(
+                      label: l10n.orderByLabel,
+                      value: _orderBy,
                       items: AirportOrderBy.values
                           .map(
                             (option) => DropdownMenuItem(
@@ -112,16 +105,9 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
                           setState(() => _showOnlyVisited = value),
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      l10n.searchByLabel,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<AirportSearchField>(
-                      initialValue: _searchField,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                      ),
+                    _buildLabeledDropdown<AirportSearchField>(
+                      label: l10n.searchByLabel,
+                      value: _searchField,
                       items: AirportSearchField.values
                           .map(
                             (option) => DropdownMenuItem(
@@ -207,5 +193,31 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
       case AirportSearchField.country:
         return l10n.fieldCountry;
     }
+  }
+
+  Widget _buildLabeledDropdown<T>({
+    required String label,
+    required T value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<T>(
+          initialValue: value,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+          ),
+          items: items,
+          onChanged: onChanged,
+        ),
+      ],
+    );
   }
 }

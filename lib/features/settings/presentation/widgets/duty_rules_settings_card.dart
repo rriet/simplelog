@@ -56,6 +56,10 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
   bool _isHydrating = false;
   Timer? _saveDebounce;
 
+  void _setHomeBaseAirportId(int id) {
+    setState(() => _homeBaseAirportId = id);
+  }
+
   @override
   void dispose() {
     _saveDebounce?.cancel();
@@ -140,8 +144,9 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
       context,
       title: 'Select home base airport',
     );
-    if (selected == null || !mounted) return;
-    setState(() => _homeBaseAirportId = selected.id);
+    if (selected == null) return;
+    if (!mounted) return;
+    _setHomeBaseAirportId(selected.id);
     await _saveNow();
   }
 
@@ -171,7 +176,7 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
       airportId = created?.id;
     }
     if (airportId == null) return;
-    setState(() => _homeBaseAirportId = airportId);
+    _setHomeBaseAirportId(airportId);
     await _saveNow();
   }
 

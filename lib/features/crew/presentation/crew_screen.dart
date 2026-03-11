@@ -30,6 +30,10 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
   String _query = '';
   CrewSearchBy _searchBy = CrewSearchBy.all;
 
+  void _setSearchBy(CrewSearchBy value) {
+    setState(() => _searchBy = value);
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -51,8 +55,9 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
       context,
       initialSearchBy: _searchBy,
     );
-    if (!mounted || selected == null) return;
-    setState(() => _searchBy = selected);
+    if (selected == null) return;
+    if (!mounted) return;
+    _setSearchBy(selected);
   }
 
   String _searchLabel(AppLocalizations l10n) {
