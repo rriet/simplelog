@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
@@ -68,11 +69,11 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
         content: Text(l10n.confirmDeleteAirport(row.icao)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => AppNavigator.pop(context, false),
             child: Text(l10n.cancelAction),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => AppNavigator.pop(context, true),
             child: Text(l10n.deleteAction),
           ),
         ],
@@ -116,11 +117,9 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
     );
 
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) =>
-              const AirportEditScreen(item: placeholder, isCreate: true),
-        ),
+      await AppNavigator.pushMaterial<void>(
+        context,
+        (_) => const AirportEditScreen(item: placeholder, isCreate: true),
       );
       return;
     }
@@ -146,10 +145,9 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
 
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => AirportEditScreen(item: row.airport),
-        ),
+      await AppNavigator.pushMaterial<void>(
+        context,
+        (_) => AirportEditScreen(item: row.airport),
       );
       return;
     }

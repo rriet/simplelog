@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
 import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
@@ -22,10 +23,9 @@ class EndorsementDialog extends StatefulWidget {
     EndorsementData? initial,
   }) {
     if (isCompactDialogScreen(context)) {
-      return Navigator.of(context).push<EndorsementData>(
-        MaterialPageRoute(
-          builder: (_) => EndorsementDialog(initial: initial),
-        ),
+      return AppNavigator.pushMaterial<EndorsementData>(
+        context,
+        (_) => EndorsementDialog(initial: initial),
       );
     }
     return showDialog<EndorsementData>(
@@ -70,7 +70,7 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
   Widget build(BuildContext context) {
     final hasInitial = widget.initial != null && !widget.initial!.isEmpty;
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).pop(),
+      onClose: () => AppNavigator.pop(context),
       longTitle: 'Endorsement',
       shortTitle: 'Endorsement',
       popupMaxWidth: 760,
@@ -169,7 +169,8 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
                   SquareOutlineButton(
                     label: 'Remove endorsement',
                     icon: Icons.remove_circle_outline,
-                    onPressed: () => Navigator.of(context).pop(
+                    onPressed: () => AppNavigator.pop(
+                      context,
                       const EndorsementData(
                         name: '',
                         certificate: '',
@@ -195,7 +196,8 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
       firstDate: DateTime(1990),
       lastDate: DateTime(2100),
     );
-    if (picked == null || !mounted) return;
+    if (picked == null) return;
+    if (!mounted) return;
     setState(() {
       _expiryController.text = DateFormat('yyyy-MM-dd').format(picked);
     });
@@ -216,7 +218,8 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
       context: context,
       builder: (_) => const _SignaturePadDialog(),
     );
-    if (bytes == null || !mounted) return;
+    if (bytes == null) return;
+    if (!mounted) return;
     setState(() => _signatureImage = bytes);
   }
 
@@ -228,7 +231,7 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
       type: _typeController.text.trim(),
       signatureImage: _signatureImage,
     );
-    Navigator.of(context).pop(result);
+    AppNavigator.pop(context, result);
   }
 }
 
@@ -335,7 +338,7 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
     if (!mounted || bytes == null) {
       return;
     }
-    Navigator.of(context).pop(bytes);
+    AppNavigator.pop(context, bytes);
   }
 
   Future<Uint8List?> _exportSignaturePng() async {

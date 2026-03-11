@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 
 /// Missing simulator aircraft identified during Qatar Airways preflight.
@@ -68,6 +69,7 @@ class _QatarAirwaysMissingAirportsDialogState
     setState(() => _busy = true);
     final resolved = await widget.onCreateAirport(code);
     if (!mounted) return;
+    if (!mounted) return;
     setState(() {
       _busy = false;
       if (resolved) {
@@ -120,13 +122,13 @@ class _QatarAirwaysMissingAirportsDialogState
       ),
       actions: [
         TextButton(
-          onPressed: _busy ? null : () => Navigator.of(context).pop(false),
+          onPressed: _busy ? null : () => AppNavigator.pop(context, false),
           child: const Text('Cancel'),
         ),
         FilledButton(
           onPressed: _busy || _pendingCodes.isNotEmpty
               ? null
-              : () => Navigator.of(context).pop(true),
+              : () => AppNavigator.pop(context, true),
           child: const Text('Continue'),
         ),
       ],
@@ -163,10 +165,11 @@ class QatarAirwaysMissingAircraftDialog extends StatefulWidget {
     );
     final isCompact = MediaQuery.sizeOf(context).width < 600;
     if (isCompact) {
-      final navigator = Navigator.of(context, rootNavigator: true);
-      return navigator
-          .push<bool>(MaterialPageRoute(builder: (_) => screen))
-          .then((value) => value ?? false);
+      return AppNavigator.pushMaterial<bool>(
+        context,
+        (_) => screen,
+        rootNavigator: true,
+      ).then((value) => value ?? false);
     }
     return showDialog<bool>(
       context: context,
@@ -196,6 +199,7 @@ class _QatarAirwaysMissingAircraftDialogState
   Future<void> _createAircraft(QatarAirwaysMissingAircraft aircraft) async {
     setState(() => _busy = true);
     final resolved = await widget.onCreateAircraft(aircraft);
+    if (!mounted) return;
     if (!mounted) return;
     setState(() {
       _busy = false;
@@ -256,14 +260,14 @@ class _QatarAirwaysMissingAircraftDialogState
     );
 
     return AdaptiveFormShell(
-      onClose: _busy ? () {} : () => Navigator.of(context).pop(false),
+      onClose: _busy ? () {} : () => AppNavigator.pop(context, false),
       longTitle: 'Missing Aircraft',
       shortTitle: 'Missing Aircraft',
       actions: [
         TextButton(
           onPressed: _busy || _pendingAircraft.isNotEmpty
               ? null
-              : () => Navigator.of(context).pop(true),
+              : () => AppNavigator.pop(context, true),
           child: const Text('Continue'),
         ),
       ],

@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/import/logten_pro_import_models.dart';
@@ -43,11 +44,10 @@ class LogTenProImportReviewDialog extends ConsumerStatefulWidget {
     );
     final isCompact = MediaQuery.sizeOf(context).width < 600;
     if (isCompact) {
-      return Navigator.of(
+      return AppNavigator.pushMaterial<LogTenImportReviewResult>(
         context,
+        (_) => screen,
         rootNavigator: true,
-      ).push<LogTenImportReviewResult>(
-        MaterialPageRoute(builder: (_) => screen),
       );
     }
     return showDialog<LogTenImportReviewResult>(
@@ -152,7 +152,8 @@ class _LogTenProImportReviewDialogState
         overrides.remove(lineNumber);
       }
     }
-    Navigator.of(context).pop(
+    AppNavigator.pop(
+      context,
       LogTenImportReviewResult(
         valueOverrides: overrides,
         ignoredLines: {..._ignoredLines},
@@ -187,7 +188,8 @@ class _LogTenProImportReviewDialogState
           ? 'Select departure airport'
           : 'Select arrival airport',
     );
-    if (selected == null || !mounted) return;
+    if (selected == null) return;
+    if (!mounted) return;
     final replacement = _airportReplacementCode(selected, issue.currentValue);
     setState(() {
       _controllers[issue.lineNumber]![issue.association]!.text = replacement;
@@ -222,6 +224,7 @@ class _LogTenProImportReviewDialogState
       db.airports,
     )..where((t) => t.id.equals(airportId))).getSingleOrNull();
     if (!mounted || created == null) return;
+    if (!mounted) return;
     final replacement = _airportReplacementCode(created, issue.currentValue);
     setState(() {
       _controllers[issue.lineNumber]![issue.association]!.text = replacement;
@@ -432,7 +435,7 @@ class _LogTenProImportReviewDialogState
     return SizedBox(
       width: 980,
       child: AdaptiveFormShell(
-        onClose: () => Navigator.of(context).pop(),
+        onClose: () => AppNavigator.pop(context),
         longTitle: 'Review Invalid LogTen Lines',
         shortTitle: 'Review Import',
         actions: [

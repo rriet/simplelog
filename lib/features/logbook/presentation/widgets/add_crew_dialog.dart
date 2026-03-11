@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/picker_with_add_input_field.dart';
@@ -84,7 +85,7 @@ Future<CrewDraftSelection?> showAddCrewDialog({
       width: 420,
       child: StatefulBuilder(
         builder: (context, setLocalState) => AdaptiveFormShell(
-          onClose: () => Navigator.of(dialogContext).pop(),
+          onClose: () => AppNavigator.pop(dialogContext),
           longTitle: l10n.addCrewTitle,
           shortTitle: l10n.addCrewTitle,
           fullScreen: false,
@@ -92,7 +93,8 @@ Future<CrewDraftSelection?> showAddCrewDialog({
             TextButton(
               onPressed: selectedCrewId == null
                   ? null
-                  : () => Navigator.of(dialogContext).pop(
+                  : () => AppNavigator.pop(
+                      dialogContext,
                       CrewDraftSelection(
                         crewId: selectedCrewId!,
                         position: selectedPosition,
@@ -106,43 +108,43 @@ Future<CrewDraftSelection?> showAddCrewDialog({
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                  PickerWithAddInputField(
-                    label: l10n.fieldCrew,
-                    valueText: crewLabel(selectedCrewId),
-                    onTap: () async {
-                      final selected = await CrewPickerDialog.show(
-                        dialogContext,
-                        title: l10n.selectCrewTitle,
-                      );
-                      if (selected == null) return;
-                      setLocalState(() => selectedCrewId = selected.id);
-                    },
-                    onAdd: onCreateCrew == null
-                        ? null
-                        : () async {
-                            final createdId = await onCreateCrew();
-                            if (createdId == null) return;
-                            setLocalState(() => selectedCrewId = createdId);
-                          },
-                    addTooltip: l10n.createCrewTitle,
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownInputField<CrewPosition>(
-                    label: l10n.crewPositionLabel,
-                    value: selectedPosition,
-                    items: addCrewPositionOptions
-                        .map(
-                          (position) => DropdownMenuItem<CrewPosition>(
-                            value: position,
-                            child: Text(crewPositionLabel(l10n, position)),
-                          ),
-                        )
-                        .toList(growable: false),
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setLocalState(() => selectedPosition = value);
-                    },
-                  ),
+                PickerWithAddInputField(
+                  label: l10n.fieldCrew,
+                  valueText: crewLabel(selectedCrewId),
+                  onTap: () async {
+                    final selected = await CrewPickerDialog.show(
+                      dialogContext,
+                      title: l10n.selectCrewTitle,
+                    );
+                    if (selected == null) return;
+                    setLocalState(() => selectedCrewId = selected.id);
+                  },
+                  onAdd: onCreateCrew == null
+                      ? null
+                      : () async {
+                          final createdId = await onCreateCrew();
+                          if (createdId == null) return;
+                          setLocalState(() => selectedCrewId = createdId);
+                        },
+                  addTooltip: l10n.createCrewTitle,
+                ),
+                const SizedBox(height: 12),
+                DropdownInputField<CrewPosition>(
+                  label: l10n.crewPositionLabel,
+                  value: selectedPosition,
+                  items: addCrewPositionOptions
+                      .map(
+                        (position) => DropdownMenuItem<CrewPosition>(
+                          value: position,
+                          child: Text(crewPositionLabel(l10n, position)),
+                        ),
+                      )
+                      .toList(growable: false),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setLocalState(() => selectedPosition = value);
+                  },
+                ),
               ],
             ),
           ),

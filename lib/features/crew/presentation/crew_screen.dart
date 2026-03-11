@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/data/database/app_database.dart';
@@ -86,11 +87,11 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
         content: Text(l10n.confirmDeleteCrew(row.name)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => AppNavigator.pop(context, false),
             child: Text(l10n.cancelAction),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => AppNavigator.pop(context, true),
             child: Text(l10n.deleteAction),
           ),
         ],
@@ -146,11 +147,9 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
     );
 
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) =>
-              const CrewEditScreen(item: placeholder, isCreate: true),
-        ),
+      await AppNavigator.pushMaterial<void>(
+        context,
+        (_) => const CrewEditScreen(item: placeholder, isCreate: true),
       );
       return;
     }
@@ -176,10 +175,9 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
 
     if (isCompact) {
-      await Navigator.of(
+      await AppNavigator.pushMaterial<void>(
         context,
-      ).push(
-        MaterialPageRoute<void>(builder: (_) => CrewEditScreen(item: row.crew)),
+        (_) => CrewEditScreen(item: row.crew),
       );
       return;
     }

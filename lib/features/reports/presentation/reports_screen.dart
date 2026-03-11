@@ -1483,8 +1483,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       }
       final uri = Uri.file(path);
       await launchUrl(uri);
-    } on Object {
-      // Best effort only.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -1873,8 +1873,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         if (exportedFile.existsSync() && exportedFile.lengthSync() > 0) {
           return path;
         }
-      } on Object {
-        // Provider path can be inaccessible (for example SAF URI).
+      } on Object catch (error, stackTrace) {
+        Zone.current.handleUncaughtError(error, stackTrace);
       }
       final docsDir = await getApplicationDocumentsDirectory();
       final fallbackPath = '${docsDir.path}${Platform.pathSeparator}$fileName';
@@ -7540,8 +7540,8 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
           templateJson['coverPage'] = importedJson;
         }
       }
-    } on Object {
-      // Best-effort export expansion.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
     return templateJson;
   }
@@ -7587,8 +7587,8 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
         if (decoded is Map<String, dynamic>) {
           return const JsonEncoder.withIndent('  ').convert(decoded);
         }
-      } on Object {
-        // Keep original text when JSON cannot be parsed.
+      } on Object catch (error, stackTrace) {
+        Zone.current.handleUncaughtError(error, stackTrace);
       }
       return item.templateJson;
     }();

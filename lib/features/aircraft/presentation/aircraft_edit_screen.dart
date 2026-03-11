@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
@@ -176,7 +177,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     }
 
     if (mounted) {
-      Navigator.of(context).pop(true);
+      AppNavigator.pop(context, true);
     }
   }
 
@@ -210,12 +211,11 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     );
 
     if (isCompact) {
-      final newId = await Navigator.of(context).push<int?>(
-        MaterialPageRoute(
-          builder: (_) =>
-              const AircraftTypeEditScreen(item: placeholder, isCreate: true),
-        ),
+      final newId = await AppNavigator.pushMaterial<int?>(
+        context,
+        (_) => const AircraftTypeEditScreen(item: placeholder, isCreate: true),
       );
+      if (!mounted) return;
       if (newId != null) {
         setState(() => _aircraftTypeId = newId);
       }
@@ -240,6 +240,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
         );
       },
     );
+    if (!mounted) return;
     if (newId != null) {
       setState(() => _aircraftTypeId = newId);
     }
@@ -383,7 +384,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
         ? (_isSimulatorMode ? 'Add Simulator' : 'Add Aircraft')
         : (_isSimulatorMode ? 'Edit Simulator' : l10n.editAircraftTitle);
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).maybePop(),
+      onClose: () => AppNavigator.maybePop(context),
       longTitle: title,
       shortTitle: title,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],

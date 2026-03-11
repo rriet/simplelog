@@ -296,8 +296,8 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
           ),
         ]);
       }
-    } on Object catch (_) {
-      // ignore
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -401,8 +401,8 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'host': selfHost, 'port': syncPort}),
       );
-    } on Object catch (_) {
-      // ignore
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -595,12 +595,11 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
 
   Future<void> _showSyncComplete(AppLocalizations l10n) async {
     if (!mounted) return;
-    final navigator = Navigator.of(context, rootNavigator: true);
-    if (navigator.canPop()) {
-      navigator.pop();
+    if (AppNavigator.canPopRoot(context)) {
+      AppNavigator.popRoot(context);
     }
     await showAppMessageDialog(
-      navigator.context,
+      context,
       title: l10n.databaseSyncSuccess,
       okLabel: l10n.okAction,
     );
@@ -642,12 +641,11 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   Future<void> _showDisconnectedDialog() async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    final navigator = Navigator.of(context, rootNavigator: true);
-    if (navigator.canPop()) {
-      navigator.pop();
+    if (AppNavigator.canPopRoot(context)) {
+      AppNavigator.popRoot(context);
     }
     await showAppMessageDialog(
-      navigator.context,
+      context,
       title: l10n.databaseSyncDisconnected,
       okLabel: l10n.okAction,
     );
@@ -656,8 +654,8 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   Future<void> _notifyTransferComplete(DiscoveredDevice device) async {
     try {
       await _postToDevice(device, '/complete');
-    } on Object catch (_) {
-      // ignore
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 

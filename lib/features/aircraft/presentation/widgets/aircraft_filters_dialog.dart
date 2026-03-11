@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 
 /// Field to search against when filtering the aircraft list.
@@ -84,7 +85,7 @@ class _AircraftFiltersDialogState extends State<AircraftFiltersDialog> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => AppNavigator.pop(context),
                       icon: const Icon(Icons.close),
                     ),
                   ],
@@ -129,12 +130,12 @@ class _AircraftFiltersDialogState extends State<AircraftFiltersDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => AppNavigator.pop(context),
                       child: Text(l10n.cancelAction),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
-                      onPressed: () => Navigator.of(context).pop(_searchBy),
+                      onPressed: () => AppNavigator.pop(context, _searchBy),
                       child: Text(l10n.applyAction),
                     ),
                   ],

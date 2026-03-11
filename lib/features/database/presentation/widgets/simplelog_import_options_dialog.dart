@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
@@ -34,10 +35,11 @@ class SimpleLogImportOptionsDialog extends StatefulWidget {
     );
     final isCompact = MediaQuery.sizeOf(context).width < 600;
     if (isCompact) {
-      return Navigator.of(
+      return AppNavigator.pushMaterial<SimpleLogImportOptions>(
         context,
+        (_) => screen,
         rootNavigator: true,
-      ).push<SimpleLogImportOptions>(MaterialPageRoute(builder: (_) => screen));
+      );
     }
     return showDialog<SimpleLogImportOptions>(
       context: context,
@@ -342,13 +344,13 @@ class _SimpleLogImportOptionsDialogState
     );
 
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).pop(),
+      onClose: () => AppNavigator.pop(context),
       longTitle: 'Import Options',
       shortTitle: 'Import',
       popupMaxWidth: 560,
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(_buildOptions()),
+          onPressed: () => AppNavigator.pop(context, _buildOptions()),
           child: const Text('Import'),
         ),
       ],

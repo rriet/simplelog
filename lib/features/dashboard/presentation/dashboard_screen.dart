@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
@@ -256,7 +257,7 @@ class _RuleDetailsDialog extends ConsumerWidget {
           subtitle: Text(l10n.dashboardRuleTotals),
           trailing: IconButton(
             icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => AppNavigator.pop(context),
           ),
         ),
         const Divider(height: 1),
@@ -593,7 +594,7 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                 title: Text(l10n.dashboardSetupTitle),
                 trailing: IconButton(
                   icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => AppNavigator.pop(context),
                 ),
               ),
               const Divider(height: 1),
@@ -971,11 +972,11 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
+                  onPressed: () => AppNavigator.pop(context, false),
                   child: Text(l10n.cancelAction),
                 ),
                 FilledButton(
-                  onPressed: () => Navigator.of(context).pop(true),
+                  onPressed: () => AppNavigator.pop(context, true),
                   child: Text(
                     isEditing ? l10n.saveAction : l10n.dashboardCreateAction,
                   ),

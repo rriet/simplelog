@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
@@ -126,11 +127,11 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
         content: Text('Delete entry for ${row.aircraftType.code}?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => AppNavigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => AppNavigator.pop(context, true),
             child: const Text('Delete'),
           ),
         ],
@@ -482,7 +483,7 @@ class _PreviousExperienceEditDialogState
       );
     }
     if (!mounted) return;
-    Navigator.of(context).pop();
+    AppNavigator.pop(context);
   }
 
   Future<bool> _showWarningsAndConfirm(List<String> warnings) async {
@@ -494,11 +495,11 @@ class _PreviousExperienceEditDialogState
         content: Text('${warnings.join('\n')}\n\nSave anyway?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => AppNavigator.pop(context, false),
             child: const Text('Review'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => AppNavigator.pop(context, true),
             child: const Text('Save anyway'),
           ),
         ],
@@ -617,7 +618,7 @@ class _PreviousExperienceEditDialogState
     );
 
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).maybePop(),
+      onClose: () => AppNavigator.maybePop(context),
       longTitle: displayTitle,
       shortTitle: 'Previous Experience',
       actions: [

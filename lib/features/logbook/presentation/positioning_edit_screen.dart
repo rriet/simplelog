@@ -7,6 +7,7 @@ import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
@@ -97,6 +98,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
 
   Future<void> _loadExisting() async {
     if (widget.isCreate) {
+      if (!mounted) return;
       setState(() => _loading = false);
       return;
     }
@@ -106,6 +108,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     );
     if (!mounted) return;
     if (loaded == null) {
+      if (!mounted) return;
       setState(() => _loading = false);
       return;
     }
@@ -128,6 +131,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
     _timeController.text = HourInputField.formatHours(
       loaded.positioning.timeTotalMinutes,
     );
+    if (!mounted) return;
     setState(() => _loading = false);
   }
 
@@ -148,7 +152,8 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       firstDate: DateTime(1990),
       lastDate: DateTime(2100),
     );
-    if (picked == null || !mounted) return;
+    if (picked == null) return;
+    if (!mounted) return;
     setState(() {
       _departure = DateTime(
         picked.year,
@@ -166,7 +171,8 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       context,
       title: 'Select departure airport',
     );
-    if (selected == null || !mounted) return;
+    if (selected == null) return;
+    if (!mounted) return;
     setState(() {
       _departureAirportId = selected.id;
       _departureAirportErrorText = null;
@@ -178,7 +184,8 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       context,
       title: 'Select arrival airport',
     );
-    if (selected == null || !mounted) return;
+    if (selected == null) return;
+    if (!mounted) return;
     setState(() {
       _arrivalAirportId = selected.id;
       _arrivalAirportErrorText = null;
@@ -207,6 +214,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       db.airports,
     )..where((t) => t.id.equals(id))).getSingleOrNull();
     if (!mounted || created == null) return;
+    if (!mounted) return;
     setState(() {
       if (asDeparture) {
         _departureAirportId = created.id;
@@ -340,7 +348,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       );
     }
     if (!mounted) return;
-    Navigator.of(context).pop(true);
+    AppNavigator.pop(context, true);
   }
 
   @override
@@ -479,7 +487,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
 
     final title = widget.isCreate ? 'New Positioning' : 'Edit Positioning';
     return AdaptiveFormShell(
-      onClose: () => unawaited(Navigator.of(context).maybePop()),
+      onClose: () => unawaited(AppNavigator.maybePop(context)),
       longTitle: title,
       shortTitle: title,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],

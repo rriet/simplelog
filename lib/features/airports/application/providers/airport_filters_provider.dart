@@ -50,8 +50,8 @@ class AirportFiltersNotifier extends Notifier<AirportFilters> {
         showOnlyVisited: data['showOnlyVisited'] == true,
       );
       state = loaded;
-    } on Object catch (_) {
-      // Ignore invalid persisted state and keep defaults.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -64,8 +64,8 @@ class AirportFiltersNotifier extends Notifier<AirportFilters> {
         'showOnlyVisited': filters.showOnlyVisited,
       };
       await file.writeAsString(jsonEncode(payload), flush: true);
-    } on Object catch (_) {
-      // Best effort persistence.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 

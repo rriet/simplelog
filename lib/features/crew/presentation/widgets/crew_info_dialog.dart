@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/data/models/crew_extensions.dart';
 import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
@@ -35,7 +36,7 @@ class CrewInfoDialog {
               ListTile(
                 title: const Text('Crew'),
                 trailing: TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  onPressed: () => AppNavigator.pop(dialogContext),
                   child: const Text('Done'),
                 ),
               ),
@@ -142,7 +143,7 @@ class CrewInfoDialog {
                   title: Text(l10n.callNumber),
                   subtitle: Text(phoneDisplay),
                   onTap: () async {
-                    Navigator.of(context).pop();
+                    AppNavigator.pop(context);
                     await launchUrl(Uri(scheme: 'tel', path: phone));
                   },
                 ),
@@ -151,7 +152,7 @@ class CrewInfoDialog {
                   title: Text(l10n.textNumber),
                   subtitle: Text(phoneDisplay),
                   onTap: () async {
-                    Navigator.of(context).pop();
+                    AppNavigator.pop(context);
                     await launchUrl(Uri(scheme: 'sms', path: phone));
                   },
                 ),
@@ -161,7 +162,7 @@ class CrewInfoDialog {
                   subtitle: Text(phoneDisplay),
                   onTap: () async {
                     await Clipboard.setData(ClipboardData(text: phone));
-                    if (context.mounted) Navigator.of(context).pop();
+                    if (context.mounted) AppNavigator.pop(context);
                   },
                 ),
               ],
@@ -171,7 +172,7 @@ class CrewInfoDialog {
                   title: Text(l10n.sendEmail),
                   subtitle: Text(email),
                   onTap: () async {
-                    Navigator.of(context).pop();
+                    AppNavigator.pop(context);
                     await launchUrl(Uri(scheme: 'mailto', path: email));
                   },
                 ),
@@ -181,7 +182,7 @@ class CrewInfoDialog {
                   subtitle: Text(email),
                   onTap: () async {
                     await Clipboard.setData(ClipboardData(text: email));
-                    if (context.mounted) Navigator.of(context).pop();
+                    if (context.mounted) AppNavigator.pop(context);
                   },
                 ),
               ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
@@ -34,10 +35,11 @@ class SouthwestImportOptionsDialog extends StatefulWidget {
     );
     final isCompact = MediaQuery.sizeOf(context).width < 600;
     if (isCompact) {
-      return Navigator.of(
+      return AppNavigator.pushMaterial<SouthwestImportOptions>(
         context,
+        (_) => screen,
         rootNavigator: true,
-      ).push<SouthwestImportOptions>(MaterialPageRoute(builder: (_) => screen));
+      );
     }
     return showDialog<SouthwestImportOptions>(
       context: context,
@@ -88,7 +90,8 @@ class _SouthwestImportOptionsDialogState
   }
 
   void _submit() {
-    Navigator.of(context).pop(
+    AppNavigator.pop(
+      context,
       SouthwestImportOptions(
         defaultSelfPosition: _defaultSelfPosition,
         recalculateBlockTime: _recalcBlock,
@@ -205,7 +208,7 @@ class _SouthwestImportOptionsDialogState
       ),
     );
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).pop(),
+      onClose: () => AppNavigator.pop(context),
       longTitle: 'Southwest Import Options',
       shortTitle: 'SWA Import Options',
       actions: [

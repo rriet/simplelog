@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
@@ -62,11 +63,11 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
         content: Text(l10n.confirmDeleteAircraftType(row.code)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => AppNavigator.pop(context, false),
             child: Text(l10n.cancelAction),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => AppNavigator.pop(context, true),
             child: Text(l10n.deleteAction),
           ),
         ],
@@ -108,11 +109,9 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
     );
 
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) =>
-              const AircraftTypeEditScreen(item: placeholder, isCreate: true),
-        ),
+      await AppNavigator.pushMaterial<void>(
+        context,
+        (_) => const AircraftTypeEditScreen(item: placeholder, isCreate: true),
       );
       return;
     }
@@ -141,10 +140,9 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
 
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => AircraftTypeEditScreen(item: row.type),
-        ),
+      await AppNavigator.pushMaterial<void>(
+        context,
+        (_) => AircraftTypeEditScreen(item: row.type),
       );
       return;
     }
@@ -186,7 +184,7 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
                       : row.type.longName.trim(),
                 ),
                 trailing: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => AppNavigator.pop(context),
                   child: const Text('Done'),
                 ),
               ),
@@ -251,7 +249,7 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
                 title: Text('Family: ${group.family}'),
                 subtitle: const Text('Flights'),
                 trailing: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => AppNavigator.pop(context),
                   child: const Text('Done'),
                 ),
               ),

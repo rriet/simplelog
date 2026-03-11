@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/maps/map_tile_caching.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/airport_extensions.dart';
 import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
@@ -27,7 +28,7 @@ Future<void> showAirportDetailsDialog(
             ListTile(
               title: Text(l10n.screenAirports),
               trailing: TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => AppNavigator.pop(context),
                 child: Text(l10n.okAction),
               ),
             ),
@@ -141,7 +142,7 @@ Future<void> _showAirportExpandedMapDialog(
             ListTile(
               title: Text(l10n.mapTitle),
               trailing: TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => AppNavigator.pop(context),
                 child: Text(l10n.okAction),
               ),
             ),

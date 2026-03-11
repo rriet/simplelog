@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 
 /// Search fields available in crew filter dialog.
 enum CrewSearchBy {
   /// Search across all supported fields.
   all,
+
   /// Search by crew name.
   name,
+
   /// Search by email.
   email,
+
   /// Search by phone.
   phone,
+
   /// Search by notes.
   notes,
 }
@@ -80,7 +85,7 @@ class _CrewFiltersDialogState extends State<CrewFiltersDialog> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => AppNavigator.pop(context),
                       icon: const Icon(Icons.close),
                     ),
                   ],
@@ -125,12 +130,12 @@ class _CrewFiltersDialogState extends State<CrewFiltersDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => AppNavigator.pop(context),
                       child: Text(l10n.cancelAction),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
-                      onPressed: () => Navigator.of(context).pop(_searchBy),
+                      onPressed: () => AppNavigator.pop(context, _searchBy),
                       child: Text(l10n.applyAction),
                     ),
                   ],

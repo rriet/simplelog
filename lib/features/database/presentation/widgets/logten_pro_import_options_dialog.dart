@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/data/import/logten_pro_import_models.dart';
 import 'package:simplelog/data/import/logten_pro_tsv_inspector.dart';
@@ -36,10 +37,11 @@ class LogTenProImportOptionsDialog extends StatefulWidget {
     );
     final isCompact = MediaQuery.sizeOf(context).width < 600;
     if (isCompact) {
-      return Navigator.of(
+      return AppNavigator.pushMaterial<LogTenImportOptions>(
         context,
+        (_) => screen,
         rootNavigator: true,
-      ).push<LogTenImportOptions>(MaterialPageRoute(builder: (_) => screen));
+      );
     }
     return showDialog<LogTenImportOptions>(
       context: context,
@@ -67,7 +69,8 @@ class _LogTenProImportOptionsDialogState
   }
 
   void _submit() {
-    Navigator.of(context).pop(
+    AppNavigator.pop(
+      context,
       LogTenImportOptions(
         assignments: Map<String, LogTenFieldAssociation>.from(_assignments),
         timezoneOffsetMinutes: _timezoneOffsetMinutes,
@@ -301,7 +304,7 @@ class _LogTenProImportOptionsDialogState
     );
 
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).pop(),
+      onClose: () => AppNavigator.pop(context),
       longTitle: 'Import LogTen Pro',
       shortTitle: 'Import LogTen',
       actions: [

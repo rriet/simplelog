@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/geo/coordinate_parser.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
@@ -167,7 +168,7 @@ class _AirportEditScreenState extends ConsumerState<AirportEditScreen> {
       }
       final id = await controller.create(companion);
       if (mounted) {
-        Navigator.of(context).pop(id ?? true);
+        AppNavigator.pop(context, id ?? true);
       }
       return;
     } else {
@@ -191,7 +192,7 @@ class _AirportEditScreenState extends ConsumerState<AirportEditScreen> {
     }
 
     if (mounted) {
-      Navigator.of(context).pop(true);
+      AppNavigator.pop(context, true);
     }
   }
 
@@ -308,7 +309,7 @@ class _AirportEditScreenState extends ConsumerState<AirportEditScreen> {
       ),
     );
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).maybePop(),
+      onClose: () => AppNavigator.maybePop(context),
       longTitle: title,
       shortTitle: title,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
@@ -448,7 +449,7 @@ class _CoordinateEditDialogState extends State<_CoordinateEditDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => AppNavigator.pop(context),
           child: Text(l10n.cancelAction),
         ),
         FilledButton(
@@ -472,9 +473,10 @@ class _CoordinateEditDialogState extends State<_CoordinateEditDialog> {
               );
               return;
             }
-            Navigator.of(
+            AppNavigator.pop(
               context,
-            ).pop(CoordinatePair(latitude: lat, longitude: lon));
+              CoordinatePair(latitude: lat, longitude: lon),
+            );
           },
           child: Text(l10n.saveAction),
         ),

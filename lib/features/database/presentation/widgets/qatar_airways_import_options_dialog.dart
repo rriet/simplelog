@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
@@ -38,11 +39,10 @@ class QatarAirwaysImportOptionsDialog extends StatefulWidget {
     );
     final isCompact = MediaQuery.sizeOf(context).width < 600;
     if (isCompact) {
-      return Navigator.of(
+      return AppNavigator.pushMaterial<QatarAirwaysImportOptions>(
         context,
+        (_) => screen,
         rootNavigator: true,
-      ).push<QatarAirwaysImportOptions>(
-        MaterialPageRoute(builder: (_) => screen),
       );
     }
     return showDialog<QatarAirwaysImportOptions>(
@@ -79,7 +79,8 @@ class _QatarAirwaysImportOptionsDialogState
     if (_defaultPosition == CrewPosition.pic && myName.isEmpty) {
       return;
     }
-    Navigator.of(context).pop(
+    AppNavigator.pop(
+      context,
       QatarAirwaysImportOptions(
         defaultPosition: _defaultPosition,
         myName: myName,
@@ -130,7 +131,7 @@ class _QatarAirwaysImportOptionsDialogState
       ),
     );
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).pop(),
+      onClose: () => AppNavigator.pop(context),
       longTitle: 'Import Qatar Airways',
       shortTitle: 'Import Qatar',
       actions: [

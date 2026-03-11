@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_info_item.dart';
 import 'package:simplelog/data/models/crew_row.dart';
@@ -66,7 +67,7 @@ class LogbookEntryDialogs {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      onPressed: () => AppNavigator.pop(dialogContext),
                       child: Text(l10n.okAction),
                     ),
                   ],
@@ -138,7 +139,7 @@ class LogbookEntryDialogs {
                         ),
                       ),
                       TextButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        onPressed: () => AppNavigator.pop(dialogContext),
                         child: Text(l10n.okAction),
                       ),
                     ],
@@ -330,7 +331,7 @@ class LogbookEntryDialogs {
                           ),
                         ),
                       TextButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        onPressed: () => AppNavigator.pop(dialogContext),
                         child: Text(l10n.okAction),
                       ),
                     ],
@@ -650,7 +651,7 @@ class LogbookEntryDialogs {
                           ),
                         ),
                       TextButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        onPressed: () => AppNavigator.pop(dialogContext),
                         child: Text(l10n.okAction),
                       ),
                     ],
@@ -805,7 +806,7 @@ class LogbookEntryDialogs {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      onPressed: () => AppNavigator.pop(dialogContext),
                       child: const Text('Close'),
                     ),
                   ],

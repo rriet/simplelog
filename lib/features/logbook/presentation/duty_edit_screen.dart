@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
@@ -132,6 +133,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
           suggestion.factoredMinutes,
         );
       }
+      if (!mounted) return;
       setState(() => _loading = false);
       return;
     }
@@ -140,6 +142,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     final loaded = await useCases.loadDutyEditData(widget.dutyId!);
     if (!mounted) return;
     if (loaded == null) {
+      if (!mounted) return;
       setState(() => _loading = false);
       return;
     }
@@ -165,6 +168,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     );
     _dutyTimeController.text = HourInputField.formatHours(_dutyMinutes);
     _loading = false;
+    if (!mounted) return;
     setState(() {});
   }
 
@@ -175,7 +179,8 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
-    if (picked == null || !mounted) return;
+    if (picked == null) return;
+    if (!mounted) return;
     setState(() {
       _start = DateTime(
         picked.year,
@@ -301,7 +306,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     }
 
     if (mounted) {
-      Navigator.of(context).pop(true);
+      AppNavigator.pop(context, true);
     }
   }
 
@@ -395,7 +400,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
       ),
     );
     return AdaptiveFormShell(
-      onClose: () => unawaited(Navigator.of(context).maybePop()),
+      onClose: () => unawaited(AppNavigator.maybePop(context)),
       longTitle: title,
       shortTitle: title,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],

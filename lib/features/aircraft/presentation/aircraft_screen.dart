@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/delete_confirmation_dialog.dart';
 import 'package:simplelog/core/text/search_normalizer.dart';
@@ -121,7 +122,7 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
               ListTile(
                 title: Text(l10n.screenAircraft),
                 trailing: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => AppNavigator.pop(context),
                   child: Text(l10n.okAction),
                 ),
               ),
@@ -183,13 +184,12 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
     );
 
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => const AircraftEditScreen(
-            item: placeholder,
-            isCreate: true,
-            initialIsSimulator: false,
-          ),
+      await AppNavigator.pushMaterial<void>(
+        context,
+        (_) => const AircraftEditScreen(
+          item: placeholder,
+          isCreate: true,
+          initialIsSimulator: false,
         ),
       );
       return;
@@ -228,13 +228,12 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
     );
 
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => const AircraftEditScreen(
-            item: placeholder,
-            isCreate: true,
-            initialIsSimulator: true,
-          ),
+      await AppNavigator.pushMaterial<void>(
+        context,
+        (_) => const AircraftEditScreen(
+          item: placeholder,
+          isCreate: true,
+          initialIsSimulator: true,
         ),
       );
       return;
@@ -265,11 +264,10 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
     final isCompact = MediaQuery.of(context).size.width < 600;
 
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => AircraftEditScreen(
-            item: row.aircraft,
-          ),
+      await AppNavigator.pushMaterial<void>(
+        context,
+        (_) => AircraftEditScreen(
+          item: row.aircraft,
         ),
       );
       return;

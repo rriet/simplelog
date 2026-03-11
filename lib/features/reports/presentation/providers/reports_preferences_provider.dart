@@ -134,8 +134,8 @@ class ReportPilotInfoNotifier extends Notifier<ReportPilotInfo> {
       if (row != null) {
         state = ReportPilotInfo.fromDatabaseRow(row);
       }
-    } on Object catch (_) {
-      // Keep default value.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -157,8 +157,8 @@ class ReportPilotInfoNotifier extends Notifier<ReportPilotInfo> {
               signatureImage: Value(value.signatureImage),
             ),
           );
-    } on Object catch (_) {
-      // Best effort persistence.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 }
@@ -210,8 +210,8 @@ class _ReportPilotInfoMigrationHelper {
               ),
             );
       }
-    } on Object catch (_) {
-      // Best effort persistence.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -243,8 +243,8 @@ class IncludePreviousExperienceNotifier extends Notifier<bool> {
       final data = jsonDecode(raw) as Map<String, dynamic>;
       final value = data['includePreviousExperience'] == true;
       state = value;
-    } on Object catch (_) {
-      // Keep default value.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -261,8 +261,8 @@ class IncludePreviousExperienceNotifier extends Notifier<bool> {
           } else if (decoded is Map) {
             current = Map<String, dynamic>.from(decoded);
           }
-        } on Object catch (_) {
-          current = <String, dynamic>{};
+        } on Object catch (error, stackTrace) {
+          Zone.current.handleUncaughtError(error, stackTrace);
         }
       }
       current['includePreviousExperience'] = value;
@@ -270,8 +270,8 @@ class IncludePreviousExperienceNotifier extends Notifier<bool> {
         jsonEncode(current),
         flush: true,
       );
-    } on Object catch (_) {
-      // Best effort persistence.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -303,8 +303,8 @@ class IncludeHoursBeforeNotifier extends Notifier<bool> {
       final data = jsonDecode(raw) as Map<String, dynamic>;
       final value = data['includeHoursBefore'] != false;
       state = value;
-    } on Object catch (_) {
-      // Keep default value.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -321,8 +321,8 @@ class IncludeHoursBeforeNotifier extends Notifier<bool> {
           } else if (decoded is Map) {
             current = Map<String, dynamic>.from(decoded);
           }
-        } on Object catch (_) {
-          current = <String, dynamic>{};
+        } on Object catch (error, stackTrace) {
+          Zone.current.handleUncaughtError(error, stackTrace);
         }
       }
       current['includeHoursBefore'] = value;
@@ -330,8 +330,8 @@ class IncludeHoursBeforeNotifier extends Notifier<bool> {
         jsonEncode(current),
         flush: true,
       );
-    } on Object catch (_) {
-      // Best effort persistence.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -365,8 +365,8 @@ class SelectedReportTemplateFileNameNotifier extends Notifier<String?> {
       if (value is String && value.trim().isNotEmpty) {
         state = value.trim();
       }
-    } on Object catch (_) {
-      // Keep default value.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -383,8 +383,8 @@ class SelectedReportTemplateFileNameNotifier extends Notifier<String?> {
           } else if (decoded is Map) {
             current = Map<String, dynamic>.from(decoded);
           }
-        } on Object catch (_) {
-          current = <String, dynamic>{};
+        } on Object catch (error, stackTrace) {
+          Zone.current.handleUncaughtError(error, stackTrace);
         }
       }
       if (value == null || value.trim().isEmpty) {
@@ -396,8 +396,8 @@ class SelectedReportTemplateFileNameNotifier extends Notifier<String?> {
         jsonEncode(current),
         flush: true,
       );
-    } on Object catch (_) {
-      // Best effort persistence.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -431,8 +431,8 @@ class OpenPdfAfterSavingNotifier extends Notifier<bool> {
       if (value is bool) {
         state = value;
       }
-    } on Object catch (_) {
-      // Keep default value.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -449,8 +449,8 @@ class OpenPdfAfterSavingNotifier extends Notifier<bool> {
           } else if (decoded is Map) {
             current = Map<String, dynamic>.from(decoded);
           }
-        } on Object catch (_) {
-          current = <String, dynamic>{};
+        } on Object catch (error, stackTrace) {
+          Zone.current.handleUncaughtError(error, stackTrace);
         }
       }
       current[_openPdfAfterSavingKey] = value;
@@ -458,8 +458,8 @@ class OpenPdfAfterSavingNotifier extends Notifier<bool> {
         jsonEncode(current),
         flush: true,
       );
-    } on Object catch (_) {
-      // Best effort persistence.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -516,8 +516,8 @@ class SavedReportsQueriesNotifier extends Notifier<List<SavedReportsQuery>> {
           .whereType<Map<String, dynamic>>()
           .map(SavedReportsQuery.fromJson)
           .toList(growable: false);
-    } on Object catch (_) {
-      // Keep default value.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -530,8 +530,8 @@ class SavedReportsQueriesNotifier extends Notifier<List<SavedReportsQuery>> {
         ),
         flush: true,
       );
-    } on Object catch (_) {
-      // Best effort persistence.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -633,8 +633,7 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return;
       final json = Map<String, dynamic>.from(decoded);
-      final schemaVersion =
-          (json['schemaVersion'] as num?)?.toInt() ?? 1;
+      final schemaVersion = (json['schemaVersion'] as num?)?.toInt() ?? 1;
       var next = ReportsEventTypesSelection.fromJson(json);
       if (schemaVersion < _reportsEventTypesSchemaVersion &&
           !next.positioning) {
@@ -642,8 +641,8 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
         await _save(next);
       }
       state = next;
-    } on Object catch (_) {
-      // Keep defaults.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 
@@ -658,8 +657,8 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
         jsonEncode(payload),
         flush: true,
       );
-    } on Object catch (_) {
-      // Best effort persistence.
+    } on Object catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
     }
   }
 

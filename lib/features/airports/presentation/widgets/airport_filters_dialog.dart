@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 
 /// Modal dialog that edits airport list ordering and search filters.
@@ -68,7 +69,7 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => AppNavigator.pop(context),
                       icon: const Icon(Icons.close),
                     ),
                   ],
@@ -143,12 +144,13 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => AppNavigator.pop(context),
                       child: Text(l10n.cancelAction),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
-                      onPressed: () => Navigator.of(context).pop(
+                      onPressed: () => AppNavigator.pop(
+                        context,
                         AirportFilters(
                           orderBy: _orderBy,
                           searchField: _searchField,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
 import 'package:simplelog/core/presentation/widgets/pickers/entity_picker_dialog.dart';
@@ -32,10 +33,11 @@ class AircraftPickerDialog extends StatelessWidget {
       onlySimulators: onlySimulators,
     );
     if (isCompactDialogScreen(context)) {
-      return Navigator.of(
+      return AppNavigator.pushMaterial<AircraftRow>(
         context,
+        (_) => screen,
         rootNavigator: true,
-      ).push<AircraftRow>(MaterialPageRoute(builder: (_) => screen));
+      );
     }
     return showDialog<AircraftRow>(
       context: context,
@@ -47,7 +49,7 @@ class AircraftPickerDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).pop(),
+      onClose: () => AppNavigator.pop(context),
       longTitle: title,
       shortTitle: title,
       contentView: SizedBox(

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
@@ -146,7 +147,7 @@ class _AircraftTypeEditScreenState
       }
       final id = await controller.create(companion);
       if (mounted) {
-        Navigator.of(context).pop(id);
+        AppNavigator.pop(context, id);
       }
       return;
     } else {
@@ -176,7 +177,7 @@ class _AircraftTypeEditScreenState
     }
 
     if (mounted) {
-      Navigator.of(context).pop(true);
+      AppNavigator.pop(context, true);
     }
   }
 
@@ -255,7 +256,7 @@ class _AircraftTypeEditScreenState
                                       ListTile(
                                         title: Text(family),
                                         onTap: () =>
-                                            Navigator.of(context).pop(family),
+                                            AppNavigator.pop(context, family),
                                       ),
                                   ],
                                 ),
@@ -367,7 +368,7 @@ class _AircraftTypeEditScreenState
       ),
     );
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).maybePop(),
+      onClose: () => AppNavigator.maybePop(context),
       longTitle: title,
       shortTitle: title,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
