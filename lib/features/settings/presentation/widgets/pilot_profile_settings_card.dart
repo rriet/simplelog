@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
 import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
@@ -182,7 +183,7 @@ class _PilotProfileEditorDialogState
     );
 
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).pop(),
+      onClose: () => AppNavigator.pop(context),
       longTitle: 'Pilot profile',
       shortTitle: 'Profile',
       fullScreen: false,
@@ -205,7 +206,7 @@ class _PilotProfileEditorDialogState
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pop();
+    AppNavigator.pop(context);
   }
 
   Future<void> _showSignatureOptions() async {
@@ -218,23 +219,23 @@ class _PilotProfileEditorDialogState
             ListTile(
               leading: const Icon(Icons.gesture),
               title: const Text('Sign on screen'),
-              onTap: () => Navigator.of(context).pop(_SignatureAction.sign),
+              onTap: () => AppNavigator.pop(context, _SignatureAction.sign),
             ),
             if (_canUseCamera)
               ListTile(
                 leading: const Icon(Icons.photo_camera_outlined),
                 title: const Text('Take picture'),
-                onTap: () => Navigator.of(context).pop(_SignatureAction.camera),
+                onTap: () => AppNavigator.pop(context, _SignatureAction.camera),
               ),
             ListTile(
               leading: const Icon(Icons.image_outlined),
               title: const Text('Select picture file'),
-              onTap: () => Navigator.of(context).pop(_SignatureAction.file),
+              onTap: () => AppNavigator.pop(context, _SignatureAction.file),
             ),
             ListTile(
               leading: const Icon(Icons.delete_outline),
               title: const Text('Clear signature'),
-              onTap: () => Navigator.of(context).pop(_SignatureAction.clear),
+              onTap: () => AppNavigator.pop(context, _SignatureAction.clear),
             ),
           ],
         ),
@@ -255,7 +256,9 @@ class _PilotProfileEditorDialogState
           final normalized = await _normalizeSignatureBytes(bytes);
           if (!mounted) return;
           _userEditedSignature = true;
-          setState(() => _signatureImage = normalized);
+          if (mounted) {
+            setState(() => _signatureImage = normalized);
+          }
         }
       case _SignatureAction.camera:
         await _pickFromCamera();
@@ -263,7 +266,9 @@ class _PilotProfileEditorDialogState
         await _pickFromFile();
       case _SignatureAction.clear:
         _userEditedSignature = true;
-        setState(() => _signatureImage = null);
+        if (mounted) {
+          setState(() => _signatureImage = null);
+        }
     }
   }
 
@@ -282,7 +287,9 @@ class _PilotProfileEditorDialogState
       final normalized = await _normalizeSignatureBytes(bytes);
       if (!mounted) return;
       _userEditedSignature = true;
-      setState(() => _signatureImage = normalized);
+      if (mounted) {
+        setState(() => _signatureImage = normalized);
+      }
     } on Object {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -312,7 +319,9 @@ class _PilotProfileEditorDialogState
       final normalized = await _normalizeSignatureBytes(bytes);
       if (!mounted) return;
       _userEditedSignature = true;
-      setState(() => _signatureImage = normalized);
+      if (mounted) {
+        setState(() => _signatureImage = normalized);
+      }
     } on Object {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -447,7 +456,7 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
     return SizedBox(
       width: 760,
       child: AdaptiveFormShell(
-        onClose: () => Navigator.of(context).pop(),
+        onClose: () => AppNavigator.pop(context),
         longTitle: 'Sign on screen',
         shortTitle: 'Sign',
         fullScreen: false,
@@ -522,7 +531,7 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pop(bytes);
+    AppNavigator.pop(context, bytes);
   }
 
   Future<Uint8List?> _exportSignaturePng() async {

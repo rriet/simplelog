@@ -8,6 +8,7 @@ import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
@@ -120,7 +121,9 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     final loaded = await useCases.loadSimulatorEditData(widget.simulatorId!);
     if (!mounted) return;
     if (loaded == null) {
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
       return;
     }
     _simulatorTraining = loaded.simulatorTraining;
@@ -154,7 +157,9 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
               CrewDraftSelection(crewId: item.crewId, position: item.position),
         ),
       );
-    setState(() => _loading = false);
+    if (mounted) {
+      setState(() => _loading = false);
+    }
   }
 
   Future<void> _insertDefaultSelfCrewIfAny() async {
@@ -170,11 +175,13 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       simulatorDefaultCrewPositionProvider.future,
     );
     if (!mounted) return;
-    setState(() {
-      _crewRows.add(
-        CrewDraftSelection(crewId: selfCrew.id, position: defaultPosition),
-      );
-    });
+    if (mounted) {
+      setState(() {
+        _crewRows.add(
+          CrewDraftSelection(crewId: selfCrew.id, position: defaultPosition),
+        );
+      });
+    }
   }
 
   int _calculatedMinutes() {
@@ -194,10 +201,12 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       onlySimulators: true,
     );
     if (selected == null || !mounted) return;
-    setState(() {
-      _aircraftId = selected.aircraft.id;
-      _simulatorErrorText = null;
-    });
+    if (mounted) {
+      setState(() {
+        _aircraftId = selected.aircraft.id;
+        _simulatorErrorText = null;
+      });
+    }
   }
 
   Future<void> _createSimulatorAndSelect() async {
@@ -226,10 +235,12 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
               ..limit(1))
             .getSingleOrNull();
     if (!mounted || created == null) return;
-    setState(() {
-      _aircraftId = created.id;
-      _simulatorErrorText = null;
-    });
+    if (mounted) {
+      setState(() {
+        _aircraftId = created.id;
+        _simulatorErrorText = null;
+      });
+    }
   }
 
   Future<int?> _createCrewAndReturnId() async {
@@ -248,9 +259,11 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       initial: _endorsement,
     );
     if (!mounted || value == null) return;
-    setState(() {
-      _endorsement = value.isEmpty ? null : value;
-    });
+    if (mounted) {
+      setState(() {
+        _endorsement = value.isEmpty ? null : value;
+      });
+    }
   }
 
   Future<void> _pickStartDate() async {
@@ -261,16 +274,18 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       lastDate: DateTime(2100),
     );
     if (picked == null || !mounted) return;
-    setState(() {
-      _start = DateTime(
-        picked.year,
-        picked.month,
-        picked.day,
-        _start.hour,
-        _start.minute,
-      );
-      _updateTimeIfAuto();
-    });
+    if (mounted) {
+      setState(() {
+        _start = DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          _start.hour,
+          _start.minute,
+        );
+        _updateTimeIfAuto();
+      });
+    }
   }
 
   void _onStartTimeChanged(int minutes) {
@@ -390,7 +405,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       );
     }
     if (!mounted) return;
-    Navigator.of(context).pop(true);
+    AppNavigator.pop(context, true);
   }
 
   @override
@@ -524,7 +539,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
         : 'Edit Sim Training';
 
     return AdaptiveFormShell(
-      onClose: () => unawaited(Navigator.of(context).maybePop()),
+      onClose: () => AppNavigator.pop(context),
       longTitle: longTitle,
       shortTitle: shortTitle,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],

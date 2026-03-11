@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/sync/local_sync_discovery.dart';
@@ -121,7 +122,9 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
 
       await _startFallbackScan();
     } on Object catch (error) {
-      setState(() => _status = error.toString());
+      if (mounted) {
+        setState(() => _status = error.toString());
+      }
     } finally {
       if (mounted) {
         setState(() => _isBusy = false);
@@ -147,10 +150,12 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     final name = await _discovery?.localDeviceName ?? 'SimpleLog';
     final ips = await _localIpAddresses();
     if (!mounted) return;
-    setState(() {
-      _localDeviceName = name;
-      _localIps = ips.toSet();
-    });
+    if (mounted) {
+      setState(() {
+        _localDeviceName = name;
+        _localIps = ips.toSet();
+      });
+    }
   }
 
   Future<List<String>> _localIpAddresses() async {
@@ -237,11 +242,13 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
       }
     }
     if (!mounted) return;
-    setState(() {
-      _devices
-        ..clear()
-        ..addAll(next);
-    });
+    if (mounted) {
+      setState(() {
+        _devices
+          ..clear()
+          ..addAll(next);
+      });
+    }
   }
 
   bool _isSelfDevice(DiscoveredDevice device, {String? resolvedHost}) {
@@ -330,14 +337,16 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     final reachable = await _probeDeviceReachability(target);
     if (!mounted) return;
     if (!reachable) {
-      setState(() {
-        _status =
-            'Device ${target.name} is no longer reachable. '
-            'Reopen Local Sync on that device and reconnect.';
-        _isWaiting = false;
-        _connectedDevice = null;
-        _connectedName = null;
-      });
+      if (mounted) {
+        setState(() {
+          _status =
+              'Device ${target.name} is no longer reachable. '
+              'Reopen Local Sync on that device and reconnect.';
+          _isWaiting = false;
+          _connectedDevice = null;
+          _connectedName = null;
+        });
+      }
       return;
     }
 
@@ -349,10 +358,12 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     if (!mounted) return;
     if (!confirm) return;
 
-    setState(() {
-      _isBusy = true;
-      _status = 'Transferring database...';
-    });
+    if (mounted) {
+      setState(() {
+        _isBusy = true;
+        _status = 'Transferring database...';
+      });
+    }
     try {
       final bytes = await _readDatabaseBytes();
       final response = await _postToDevice(
@@ -403,19 +414,23 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     final reachable = await _probeDeviceReachability(device);
     if (!mounted) return;
     if (!reachable) {
-      setState(() {
-        _status =
-            'Cannot verify ${device.host}:${device.port} yet. '
-            'You can still try Pull/Send. Keep Local Sync open on the other '
-            'device and use the same Wi-Fi.';
-      });
+      if (mounted) {
+        setState(() {
+          _status =
+              'Cannot verify ${device.host}:${device.port} yet. '
+              'You can still try Pull/Send. Keep Local Sync open on the other '
+              'device and use the same Wi-Fi.';
+        });
+      }
     }
     await _sendHelloTo(device);
     if (!mounted) return;
-    setState(() {
-      _connectedName = device.name;
-      _isWaiting = true;
-    });
+    if (mounted) {
+      setState(() {
+        _connectedName = device.name;
+        _isWaiting = true;
+      });
+    }
     _connectedDevice = device;
     _startDisconnectMonitor(device);
   }
@@ -454,14 +469,16 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     final reachable = await _probeDeviceReachability(target);
     if (!mounted) return;
     if (!reachable) {
-      setState(() {
-        _status =
-            'Device ${target.name} is no longer reachable. '
-            'Reopen Local Sync on that device and reconnect.';
-        _isWaiting = false;
-        _connectedDevice = null;
-        _connectedName = null;
-      });
+      if (mounted) {
+        setState(() {
+          _status =
+              'Device ${target.name} is no longer reachable. '
+              'Reopen Local Sync on that device and reconnect.';
+          _isWaiting = false;
+          _connectedDevice = null;
+          _connectedName = null;
+        });
+      }
       return;
     }
 
@@ -475,10 +492,12 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     if (!mounted) return;
     if (!confirm) return;
 
-    setState(() {
-      _isBusy = true;
-      _status = 'Transferring database...';
-    });
+    if (mounted) {
+      setState(() {
+        _isBusy = true;
+        _status = 'Transferring database...';
+      });
+    }
     try {
       final response = await _getFromDevice(
         target,
@@ -514,11 +533,11 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
         content: Text(l10n.databaseSyncConfirmMessage(name)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => AppNavigator.pop(context, false),
             child: Text(l10n.cancelAction),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => AppNavigator.pop(context, true),
             child: Text(l10n.databaseSyncConfirmAction),
           ),
         ],
@@ -813,7 +832,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
             ),
             IconButton(
               tooltip: l10n.cancelAction,
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => AppNavigator.pop(context),
               icon: const Icon(Icons.close),
             ),
           ],
@@ -874,7 +893,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
             ),
             IconButton(
               tooltip: l10n.cancelAction,
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => AppNavigator.pop(context),
               icon: const Icon(Icons.close),
             ),
           ],

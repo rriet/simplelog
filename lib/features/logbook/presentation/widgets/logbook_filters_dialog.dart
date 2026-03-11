@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
@@ -61,10 +62,11 @@ class LogbookFiltersDialog extends StatefulWidget {
     );
     final isCompact = MediaQuery.sizeOf(context).width < 600;
     if (isCompact) {
-      return Navigator.of(
+      return AppNavigator.pushMaterial<LogbookFilters>(
         context,
+        (_) => screen,
         rootNavigator: true,
-      ).push<LogbookFilters>(MaterialPageRoute(builder: (_) => screen));
+      );
     }
     return showDialog<LogbookFilters>(
       context: context,
@@ -109,16 +111,18 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
         setState(() => _loadingPreset = true);
         final first = await widget.loadFirstEventDate();
         if (!mounted) return;
-        setState(() {
-          _loadingPreset = false;
-          if (first != null) {
-            _fromDate = _startOfDay(first);
-            _toDate = _endOfDay(now);
-          } else {
-            _fromDate = null;
-            _toDate = null;
-          }
-        });
+        if (mounted) {
+          setState(() {
+            _loadingPreset = false;
+            if (first != null) {
+              _fromDate = _startOfDay(first);
+              _toDate = _endOfDay(now);
+            } else {
+              _fromDate = null;
+              _toDate = null;
+            }
+          });
+        }
         return;
       case LogbookDatePreset.last7Days:
         _setRangeDays(now, 7);
@@ -139,22 +143,30 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
         final lastMonth = DateTime.utc(now.year, now.month - 1);
         _fromDate = DateTime.utc(lastMonth.year, lastMonth.month);
         _toDate = _endOfDay(DateTime.utc(now.year, now.month, 0));
-        setState(() {});
+        if (mounted) {
+          setState(() {});
+        }
         return;
       case LogbookDatePreset.lastYear:
         _fromDate = DateTime.utc(now.year - 1);
         _toDate = _endOfDay(DateTime.utc(now.year - 1, 12, 31));
-        setState(() {});
+        if (mounted) {
+          setState(() {});
+        }
         return;
       case LogbookDatePreset.currentMonth:
         _fromDate = DateTime.utc(now.year, now.month);
         _toDate = _endOfDay(DateTime.utc(now.year, now.month + 1, 0));
-        setState(() {});
+        if (mounted) {
+          setState(() {});
+        }
         return;
       case LogbookDatePreset.currentYear:
         _fromDate = DateTime.utc(now.year);
         _toDate = _endOfDay(DateTime.utc(now.year, 12, 31));
-        setState(() {});
+        if (mounted) {
+          setState(() {});
+        }
         return;
     }
   }
@@ -163,7 +175,9 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
     final start = now.subtract(Duration(days: days - 1));
     _fromDate = _startOfDay(start);
     _toDate = _endOfDay(now);
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _pickDate({required bool isFrom}) async {
@@ -175,14 +189,16 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
       lastDate: DateTime.utc(2100),
     );
     if (!mounted || picked == null) return;
-    setState(() {
-      if (isFrom) {
-        _fromDate = _startOfDay(picked);
-      } else {
-        _toDate = _endOfDay(picked);
-      }
-      _preset = LogbookDatePreset.custom;
-    });
+    if (mounted) {
+      setState(() {
+        if (isFrom) {
+          _fromDate = _startOfDay(picked);
+        } else {
+          _toDate = _endOfDay(picked);
+        }
+        _preset = LogbookDatePreset.custom;
+      });
+    }
   }
 
   void _clearDate(bool isFrom) {
@@ -212,14 +228,15 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
     final theme = Theme.of(context);
 
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).pop(),
+      onClose: () => AppNavigator.pop(context),
       longTitle: l10n.logbookFilterTitle,
       shortTitle: l10n.logbookFilterTitle,
       popupMaxWidth: 520,
       actions: [
         TextButton(
           onPressed: () {
-            Navigator.of(context).pop(
+            AppNavigator.pop(
+              context,
               LogbookFilters(
                 from: _fromDate,
                 to: _toDate,
