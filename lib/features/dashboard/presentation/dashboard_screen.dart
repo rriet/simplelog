@@ -165,14 +165,14 @@ class _RuleCard extends ConsumerWidget {
                 card.rule.ruleType == 'maximum'
                     ? (card.remainingValue >= 0
                           ? '$remainingAbsLabel '
-                              '${l10n.dashboardRemainingSuffix}'
+                                '${l10n.dashboardRemainingSuffix}'
                           : '$remainingAbsLabel '
-                              '${l10n.dashboardOverLimitSuffix}')
+                                '${l10n.dashboardOverLimitSuffix}')
                     : (card.remainingValue >= 0
                           ? '$remainingAbsLabel '
-                              '${l10n.dashboardAboveMinimumSuffix}'
+                                '${l10n.dashboardAboveMinimumSuffix}'
                           : '$remainingAbsLabel '
-                              '${l10n.dashboardBelowMinimumSuffix}'),
+                                '${l10n.dashboardBelowMinimumSuffix}'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const Spacer(),
@@ -699,336 +699,344 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
         (_isCountMetric(metric) ? _unitCount : _unitHours);
     if (!context.mounted) return;
 
-    final created = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) => AlertDialog(
-            title: Text(
-              isEditing
-                  ? l10n.dashboardEditRuleTitle
-                  : l10n.dashboardCreateRuleTitle,
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: ruleNameController,
-                    decoration: InputDecoration(
-                      labelText: l10n.dashboardRuleNameLabel,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: metric,
-                    decoration: InputDecoration(
-                      labelText: l10n.dashboardMetricLabel,
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: _metricDuty,
-                        child: Text(l10n.dashboardDutyLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricBlock,
-                        child: Text(l10n.dashboardBlockLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricFlight,
-                        child: Text(l10n.dashboardFlightLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricNight,
-                        child: Text(l10n.dashboardNightLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricIfr,
-                        child: Text(l10n.dashboardIfrLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricInstrument,
-                        child: Text(l10n.dashboardInstrumentLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricTakeoff,
-                        child: Text(l10n.dashboardTakeoffLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricTakeoffDay,
-                        child: Text(l10n.dashboardTakeoffDayLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricTakeoffNight,
-                        child: Text(l10n.dashboardTakeoffNightLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricLandings,
-                        child: Text(l10n.dashboardLandingsLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricLandingsDay,
-                        child: Text(l10n.dashboardLandingsDayLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricLandingsNight,
-                        child: Text(l10n.dashboardLandingsNightLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricInstrumentApproaches,
-                        child: Text(l10n.dashboardInstrumentApproachesLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricPic,
-                        child: Text(l10n.dashboardPicTimeLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricSic,
-                        child: Text(l10n.dashboardSicTimeLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricPicus,
-                        child: Text(l10n.dashboardPicusTimeLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricDual,
-                        child: Text(l10n.dashboardDualTimeLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricInstructor,
-                        child: Text(l10n.dashboardInstructorTimeLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _metricCrossCountry,
-                        child: Text(l10n.dashboardCrossCountryLabel),
-                      ),
-                    ],
-                    onChanged: (value) => setState(() {
-                      metric = value ?? metric;
-                      limitUnit = _isCountMetric(metric)
-                          ? _unitCount
-                          : _unitHours;
-                    }),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: ruleType,
-                    decoration: InputDecoration(
-                      labelText: l10n.dashboardRuleTypeLabel,
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: _ruleTypeMinimum,
-                        child: Text(l10n.dashboardMinimumLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _ruleTypeMaximum,
-                        child: Text(l10n.dashboardMaximumLabel),
-                      ),
-                    ],
-                    onChanged: (value) =>
-                        setState(() => ruleType = value ?? ruleType),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: windowType,
-                    decoration: InputDecoration(
-                      labelText: l10n.dashboardWindowTypeLabel,
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: _windowHours,
-                        child: Text(l10n.dashboardHoursUnit),
-                      ),
-                      DropdownMenuItem(
-                        value: _windowDays,
-                        child: Text(l10n.dashboardDaysUnit),
-                      ),
-                      DropdownMenuItem(
-                        value: _windowWeeks,
-                        child: Text(l10n.dashboardWeeksUnit),
-                      ),
-                      DropdownMenuItem(
-                        value: _windowMonths,
-                        child: Text(l10n.dashboardMonthsUnit),
-                      ),
-                      DropdownMenuItem(
-                        value: _windowYears,
-                        child: Text(l10n.dashboardYearsUnit),
-                      ),
-                      DropdownMenuItem(
-                        value: _windowCalendarMonths,
-                        child: Text(l10n.dashboardCalendarMonthsLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _windowCalendarYears,
-                        child: Text(l10n.dashboardCalendarYearsLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _windowCalendarDays,
-                        child: Text(l10n.dashboardCalendarDaysLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _windowCalendarQuarter,
-                        child: Text(l10n.dashboardCalendarQuarterLabel),
-                      ),
-                    ],
-                    onChanged: (value) =>
-                        setState(() => windowType = value ?? windowType),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: windowReference,
-                    decoration: InputDecoration(
-                      labelText: l10n.dashboardStartReferenceLabel,
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: _referenceSameTime,
-                        child: Text(l10n.dashboardSameTimeNowLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _referenceMidnightLocal,
-                        child: Text(l10n.dashboardMidnightLocalLabel),
-                      ),
-                      DropdownMenuItem(
-                        value: _referenceMidnightUtc,
-                        child: Text(l10n.dashboardMidnightUtcLabel),
-                      ),
-                    ],
-                    onChanged: (value) => setState(
-                      () => windowReference = value ?? windowReference,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: windowController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: l10n.dashboardWindowValueLabel,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: limitController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: l10n.dashboardLimitValueLabel,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: limitUnit,
-                    decoration: InputDecoration(
-                      labelText: l10n.dashboardUnitLabel,
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: _unitHours,
-                        child: Text(l10n.dashboardHoursUnit),
-                      ),
-                      DropdownMenuItem(
-                        value: _unitMinutes,
-                        child: Text(l10n.dashboardMinutesUnit),
-                      ),
-                      DropdownMenuItem(
-                        value: _unitDays,
-                        child: Text(l10n.dashboardDaysUnit),
-                      ),
-                      DropdownMenuItem(
-                        value: _unitCount,
-                        child: Text(l10n.dashboardCountUnit),
-                      ),
-                    ],
-                    onChanged: (value) =>
-                        setState(() => limitUnit = value ?? limitUnit),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: yellowController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: l10n.dashboardWarnYellowBeforeLabel,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: redController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: l10n.dashboardWarnRedBeforeLabel,
-                    ),
-                  ),
-                ],
+    try {
+      final created = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setState) => AlertDialog(
+              title: Text(
+                isEditing
+                    ? l10n.dashboardEditRuleTitle
+                    : l10n.dashboardCreateRuleTitle,
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(l10n.cancelAction),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: Text(
-                  isEditing ? l10n.saveAction : l10n.dashboardCreateAction,
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: ruleNameController,
+                      decoration: InputDecoration(
+                        labelText: l10n.dashboardRuleNameLabel,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      initialValue: metric,
+                      decoration: InputDecoration(
+                        labelText: l10n.dashboardMetricLabel,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: _metricDuty,
+                          child: Text(l10n.dashboardDutyLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricBlock,
+                          child: Text(l10n.dashboardBlockLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricFlight,
+                          child: Text(l10n.dashboardFlightLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricNight,
+                          child: Text(l10n.dashboardNightLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricIfr,
+                          child: Text(l10n.dashboardIfrLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricInstrument,
+                          child: Text(l10n.dashboardInstrumentLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricTakeoff,
+                          child: Text(l10n.dashboardTakeoffLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricTakeoffDay,
+                          child: Text(l10n.dashboardTakeoffDayLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricTakeoffNight,
+                          child: Text(l10n.dashboardTakeoffNightLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricLandings,
+                          child: Text(l10n.dashboardLandingsLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricLandingsDay,
+                          child: Text(l10n.dashboardLandingsDayLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricLandingsNight,
+                          child: Text(l10n.dashboardLandingsNightLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricInstrumentApproaches,
+                          child: Text(l10n.dashboardInstrumentApproachesLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricPic,
+                          child: Text(l10n.dashboardPicTimeLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricSic,
+                          child: Text(l10n.dashboardSicTimeLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricPicus,
+                          child: Text(l10n.dashboardPicusTimeLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricDual,
+                          child: Text(l10n.dashboardDualTimeLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricInstructor,
+                          child: Text(l10n.dashboardInstructorTimeLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _metricCrossCountry,
+                          child: Text(l10n.dashboardCrossCountryLabel),
+                        ),
+                      ],
+                      onChanged: (value) => setState(() {
+                        metric = value ?? metric;
+                        limitUnit = _isCountMetric(metric)
+                            ? _unitCount
+                            : _unitHours;
+                      }),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      initialValue: ruleType,
+                      decoration: InputDecoration(
+                        labelText: l10n.dashboardRuleTypeLabel,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: _ruleTypeMinimum,
+                          child: Text(l10n.dashboardMinimumLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _ruleTypeMaximum,
+                          child: Text(l10n.dashboardMaximumLabel),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => ruleType = value ?? ruleType),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      initialValue: windowType,
+                      decoration: InputDecoration(
+                        labelText: l10n.dashboardWindowTypeLabel,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: _windowHours,
+                          child: Text(l10n.dashboardHoursUnit),
+                        ),
+                        DropdownMenuItem(
+                          value: _windowDays,
+                          child: Text(l10n.dashboardDaysUnit),
+                        ),
+                        DropdownMenuItem(
+                          value: _windowWeeks,
+                          child: Text(l10n.dashboardWeeksUnit),
+                        ),
+                        DropdownMenuItem(
+                          value: _windowMonths,
+                          child: Text(l10n.dashboardMonthsUnit),
+                        ),
+                        DropdownMenuItem(
+                          value: _windowYears,
+                          child: Text(l10n.dashboardYearsUnit),
+                        ),
+                        DropdownMenuItem(
+                          value: _windowCalendarMonths,
+                          child: Text(l10n.dashboardCalendarMonthsLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _windowCalendarYears,
+                          child: Text(l10n.dashboardCalendarYearsLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _windowCalendarDays,
+                          child: Text(l10n.dashboardCalendarDaysLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _windowCalendarQuarter,
+                          child: Text(l10n.dashboardCalendarQuarterLabel),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => windowType = value ?? windowType),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      initialValue: windowReference,
+                      decoration: InputDecoration(
+                        labelText: l10n.dashboardStartReferenceLabel,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: _referenceSameTime,
+                          child: Text(l10n.dashboardSameTimeNowLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _referenceMidnightLocal,
+                          child: Text(l10n.dashboardMidnightLocalLabel),
+                        ),
+                        DropdownMenuItem(
+                          value: _referenceMidnightUtc,
+                          child: Text(l10n.dashboardMidnightUtcLabel),
+                        ),
+                      ],
+                      onChanged: (value) => setState(
+                        () => windowReference = value ?? windowReference,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: windowController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: l10n.dashboardWindowValueLabel,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: limitController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: l10n.dashboardLimitValueLabel,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      initialValue: limitUnit,
+                      decoration: InputDecoration(
+                        labelText: l10n.dashboardUnitLabel,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: _unitHours,
+                          child: Text(l10n.dashboardHoursUnit),
+                        ),
+                        DropdownMenuItem(
+                          value: _unitMinutes,
+                          child: Text(l10n.dashboardMinutesUnit),
+                        ),
+                        DropdownMenuItem(
+                          value: _unitDays,
+                          child: Text(l10n.dashboardDaysUnit),
+                        ),
+                        DropdownMenuItem(
+                          value: _unitCount,
+                          child: Text(l10n.dashboardCountUnit),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => limitUnit = value ?? limitUnit),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: yellowController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: l10n.dashboardWarnYellowBeforeLabel,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: redController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: l10n.dashboardWarnRedBeforeLabel,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        );
-      },
-    );
-    if (created != true) return;
-    final storedWindowType = _encodeWindowType(windowType, windowReference);
-    final ruleName = ruleNameController.text.trim().isEmpty
-        ? _buildDefaultRuleName(
-            metric: metric,
-            ruleType: ruleType,
-            windowType: storedWindowType,
-            windowValue: int.tryParse(windowController.text.trim()) ?? 365,
-          )
-        : ruleNameController.text.trim();
-    final windowValue = int.tryParse(windowController.text.trim()) ?? 365;
-    final limitValue = double.tryParse(limitController.text.trim()) ?? 0;
-    final yellow = double.tryParse(yellowController.text.trim()) ?? 0;
-    final red = double.tryParse(redController.text.trim()) ?? 0;
-
-    if (isEditing) {
-      final updated = existing.copyWith(
-        ruleName: ruleName,
-        metric: metric,
-        ruleType: ruleType,
-        windowType: storedWindowType,
-        windowValue: windowValue,
-        limitValue: limitValue,
-        limitUnit: limitUnit,
-        warnYellowBefore: yellow,
-        warnRedBefore: red,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(l10n.cancelAction),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(
+                    isEditing ? l10n.saveAction : l10n.dashboardCreateAction,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       );
-      await repo.updateRule(updated);
-      return;
-    }
+      if (created != true) return;
+      final storedWindowType = _encodeWindowType(windowType, windowReference);
+      final ruleName = ruleNameController.text.trim().isEmpty
+          ? _buildDefaultRuleName(
+              metric: metric,
+              ruleType: ruleType,
+              windowType: storedWindowType,
+              windowValue: int.tryParse(windowController.text.trim()) ?? 365,
+            )
+          : ruleNameController.text.trim();
+      final windowValue = int.tryParse(windowController.text.trim()) ?? 365;
+      final limitValue = double.tryParse(limitController.text.trim()) ?? 0;
+      final yellow = double.tryParse(yellowController.text.trim()) ?? 0;
+      final red = double.tryParse(redController.text.trim()) ?? 0;
 
-    await repo.createRule(
-      LimitRulesCompanion.insert(
-        ruleName: ruleName,
-        metric: metric,
-        ruleType: ruleType,
-        windowType: storedWindowType,
-        windowValue: windowValue,
-        limitValue: limitValue,
-        limitUnit: limitUnit,
-        warnYellowBefore: Value(yellow),
-        warnRedBefore: Value(red),
-        active: const Value(true),
-      ),
-    );
+      if (isEditing) {
+        final updated = existing.copyWith(
+          ruleName: ruleName,
+          metric: metric,
+          ruleType: ruleType,
+          windowType: storedWindowType,
+          windowValue: windowValue,
+          limitValue: limitValue,
+          limitUnit: limitUnit,
+          warnYellowBefore: yellow,
+          warnRedBefore: red,
+        );
+        await repo.updateRule(updated);
+        return;
+      }
+
+      await repo.createRule(
+        LimitRulesCompanion.insert(
+          ruleName: ruleName,
+          metric: metric,
+          ruleType: ruleType,
+          windowType: storedWindowType,
+          windowValue: windowValue,
+          limitValue: limitValue,
+          limitUnit: limitUnit,
+          warnYellowBefore: Value(yellow),
+          warnRedBefore: Value(red),
+          active: const Value(true),
+        ),
+      );
+    } finally {
+      ruleNameController.dispose();
+      windowController.dispose();
+      limitController.dispose();
+      yellowController.dispose();
+      redController.dispose();
+    }
   }
 
   String _buildDefaultRuleName({

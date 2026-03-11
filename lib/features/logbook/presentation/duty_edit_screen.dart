@@ -4,13 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
+import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
+import 'package:simplelog/state/providers/duty_rules_settings_provider.dart';
 
 /// Screen for creating or editing a duty period entry.
 class DutyEditScreen extends ConsumerStatefulWidget {
@@ -58,6 +61,14 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
   @override
   void initState() {
     super.initState();
+    EditScreenLifecycleLogger.onInit(
+      screen: 'DutyEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.dutyId,
+      },
+    );
     final now = DateTime.now();
     _start = widget.initialStart ?? now;
     _end = widget.initialEnd ?? now.add(const Duration(hours: 2));
@@ -74,6 +85,14 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
 
   @override
   void dispose() {
+    EditScreenLifecycleLogger.onDispose(
+      screen: 'DutyEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.dutyId,
+      },
+    );
     _startTimeController.dispose();
     _endTimeController.dispose();
     _dutyTimeController.dispose();
@@ -85,6 +104,34 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
 
   Future<void> _loadExisting() async {
     if (widget.isCreate) {
+      final useCases = ref.read(logbookUseCasesProvider);
+      final rulesSettings = await ref.read(dutyRulesSettingsProvider.future);
+      final suggestion = await useCases.suggestDutyForLatestEvent(
+        rules: DutyCalculationRules(
+          crewHomeBaseAirportId: rulesSettings.crewHomeBaseAirportId,
+          reportingTimeOnBaseMinutes: rulesSettings.reportingTimeOnBaseMinutes,
+          reportingTimeOffBaseMinutes:
+              rulesSettings.reportingTimeOffBaseMinutes,
+          dutyEndTimeAllowanceMinutes:
+              rulesSettings.dutyEndTimeAllowanceMinutes,
+          minimumRestTimeMinutes: rulesSettings.minimumRestTimeMinutes,
+        ),
+      );
+      if (!mounted) return;
+      if (suggestion != null) {
+        _start = suggestion.startUtc;
+        _end = suggestion.endUtc;
+        _startTimeController.text = ClockTimeInputField.formatMinutesOfDay(
+          _start.hour * 60 + _start.minute,
+        );
+        _endTimeController.text = ClockTimeInputField.formatMinutesOfDay(
+          _end.hour * 60 + _end.minute,
+        );
+        _dutyTimeController.text = HourInputField.formatHours(_dutyMinutes);
+        _factoredController.text = HourInputField.formatHours(
+          suggestion.factoredMinutes,
+        );
+      }
       setState(() => _loading = false);
       return;
     }

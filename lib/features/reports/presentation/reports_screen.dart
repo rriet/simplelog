@@ -18,6 +18,7 @@ import 'package:simplelog/core/flight/flight_calculations.dart';
 import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/maps/map_tile_caching.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
@@ -51,6 +52,7 @@ import 'package:simplelog/features/reports/presentation/providers/reports_reposi
 import 'package:simplelog/features/settings/presentation/widgets/pilot_profile_settings_card.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
+import 'package:simplelog/state/providers/duty_rules_settings_provider.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 import 'package:simplelog/state/providers/flight_form_settings_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -202,6 +204,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   int _batchFlightCount = 0;
   bool _isCheckingBatchFlights = false;
   bool _isPreparingBatchData = false;
+  bool _isCalculatingBatchDuty = false;
   List<LogbookEntry> _entries = const [];
   DateTime? _firstFlightDate;
   DateTime? _lastFlightDate;
@@ -281,12 +284,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final preferred = options.where((option) {
       return option.fileName == preferredTemplateFileName;
     });
-    setState(() {
-      _xslTemplateOptions = options;
-      _selectedTemplate = preferred.isNotEmpty
-          ? preferred.first
-          : (_selectedTemplate ?? options.first);
-    });
+    if (mounted) {
+      setState(() {
+        _xslTemplateOptions = options;
+        _selectedTemplate = preferred.isNotEmpty
+            ? preferred.first
+            : (_selectedTemplate ?? options.first);
+      });
+    }
   }
 
   Future<void> _openTemplateEditorDialog() async {
@@ -307,7 +312,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       return;
     }
     if (_xslTemplateOptions.isEmpty) {
-      setState(() => _selectedTemplate = null);
+      if (mounted) {
+        setState(() => _selectedTemplate = null);
+      }
       return;
     }
     final preferredName =
@@ -316,7 +323,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       (option) => option.fileName == preferredName,
     );
     final next = matched.isNotEmpty ? matched.first : _xslTemplateOptions.first;
-    setState(() => _selectedTemplate = next);
+    if (mounted) {
+      setState(() => _selectedTemplate = next);
+    }
     await ref
         .read(selectedReportTemplateFileNameProvider.notifier)
         .setValue(value: next.fileName);
@@ -466,22 +475,23 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           baseRange: flightRange,
           includePreviousExperience: includePreviousExperience,
         );
-        if (!mounted) return;
-        setState(() {
-          _data = ReportsData(
-            totals: _applyTypeSelectionToTotals(totals, eventTypes),
-            flights: const [],
-          );
-          _batchFlightCount = eventTypes.flights ? totals.sectors : 0;
-          _entries = const [];
-          _detailsLoaded = false;
-          _entriesLoaded = false;
-          _analysisGroups = const [];
-          _analysisLoading = false;
-          _invalidateAnalysisCache();
-          _firstFlightDate = range.$1;
-          _lastFlightDate = range.$2;
-        });
+        if (mounted) {
+          setState(() {
+            _data = ReportsData(
+              totals: _applyTypeSelectionToTotals(totals, eventTypes),
+              flights: const [],
+            );
+            _batchFlightCount = eventTypes.flights ? totals.sectors : 0;
+            _entries = const [];
+            _detailsLoaded = false;
+            _entriesLoaded = false;
+            _analysisGroups = const [];
+            _analysisLoading = false;
+            _invalidateAnalysisCache();
+            _firstFlightDate = range.$1;
+            _lastFlightDate = range.$2;
+          });
+        }
       } else {
         final result = await repo.load(
           ReportsQuery(
@@ -501,24 +511,27 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           baseRange: baseRange,
           includePreviousExperience: includePreviousExperience,
         );
-        setState(() {
-          _data = ReportsData(
-            totals: _applyTypeSelectionToTotals(result.totals, eventTypes),
-            flights: flights,
-          );
-          _batchFlightCount = eventTypes.flights ? flights.length : 0;
-          _entries = const [];
-          _detailsLoaded = true;
-          _entriesLoaded = false;
-          _invalidateAnalysisCache();
-          _firstFlightDate = range.$1;
-          _lastFlightDate = range.$2;
-        });
+        if (mounted) {
+          setState(() {
+            _data = ReportsData(
+              totals: _applyTypeSelectionToTotals(result.totals, eventTypes),
+              flights: flights,
+            );
+            _batchFlightCount = eventTypes.flights ? flights.length : 0;
+            _entries = const [];
+            _detailsLoaded = true;
+            _entriesLoaded = false;
+            _invalidateAnalysisCache();
+            _firstFlightDate = range.$1;
+            _lastFlightDate = range.$2;
+          });
+        }
         unawaited(_refreshAnalysisGroups());
       }
     } on Object catch (error) {
-      if (!mounted) return;
-      setState(() => _error = error.toString());
+      if (mounted) {
+        setState(() => _error = error.toString());
+      }
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -615,21 +628,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           includePreviousExperience: includePreviousExperience,
         );
 
-        if (!mounted) return;
-
-        setState(() {
-          _data = ReportsData(
-            totals: _applyTypeSelectionToTotals(totals, eventTypes),
-            flights: flights,
-          );
-          _batchFlightCount = eventTypes.flights ? flights.length : 0;
-          _entries = const [];
-          _detailsLoaded = true;
-          _entriesLoaded = false;
-          _invalidateAnalysisCache();
-          _firstFlightDate = range.$1;
-          _lastFlightDate = range.$2;
-        });
+        if (mounted) {
+          setState(() {
+            _data = ReportsData(
+              totals: _applyTypeSelectionToTotals(totals, eventTypes),
+              flights: flights,
+            );
+            _batchFlightCount = eventTypes.flights ? flights.length : 0;
+            _entries = const [];
+            _detailsLoaded = true;
+            _entriesLoaded = false;
+            _invalidateAnalysisCache();
+            _firstFlightDate = range.$1;
+            _lastFlightDate = range.$2;
+          });
+        }
         unawaited(_refreshAnalysisGroups());
       } else {
         final result = await repo.load(
@@ -652,25 +665,27 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           baseRange: baseRange,
           includePreviousExperience: includePreviousExperience,
         );
-        if (!mounted) return;
-        setState(() {
-          _data = ReportsData(
-            totals: _applyTypeSelectionToTotals(result.totals, eventTypes),
-            flights: flights,
-          );
-          _batchFlightCount = eventTypes.flights ? flights.length : 0;
-          _entries = entries;
-          _detailsLoaded = true;
-          _entriesLoaded = includeEntries;
-          _invalidateAnalysisCache();
-          _firstFlightDate = range.$1;
-          _lastFlightDate = range.$2;
-        });
+        if (mounted) {
+          setState(() {
+            _data = ReportsData(
+              totals: _applyTypeSelectionToTotals(result.totals, eventTypes),
+              flights: flights,
+            );
+            _batchFlightCount = eventTypes.flights ? flights.length : 0;
+            _entries = entries;
+            _detailsLoaded = true;
+            _entriesLoaded = includeEntries;
+            _invalidateAnalysisCache();
+            _firstFlightDate = range.$1;
+            _lastFlightDate = range.$2;
+          });
+        }
         unawaited(_refreshAnalysisGroups());
       }
     } on Object catch (error) {
-      if (!mounted) return;
-      setState(() => _error = error.toString());
+      if (mounted) {
+        setState(() => _error = error.toString());
+      }
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -894,14 +909,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       current.hour,
       current.minute,
     );
-    setState(() {
-      if (isStart) {
-        _from = selectedUtc;
-      } else {
-        _to = selectedUtc;
-      }
-      _preset = _ReportDateRangePreset.custom;
-    });
+    if (mounted) {
+      setState(() {
+        if (isStart) {
+          _from = selectedUtc;
+        } else {
+          _to = selectedUtc;
+        }
+        _preset = _ReportDateRangePreset.custom;
+      });
+    }
     _syncRangeTimeControllers();
     _persistRuntimeQuery();
     if (!_isFiltersOnlySection) {
@@ -915,6 +932,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }) async {
     final hour = (minutesOfDay ~/ 60) % 24;
     final minute = minutesOfDay % 60;
+    if (!mounted) return;
     setState(() {
       if (isStart) {
         _from = DateTime.utc(_from.year, _from.month, _from.day, hour, minute);
@@ -977,11 +995,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         return;
     }
 
-    setState(() {
-      _preset = preset;
-      _from = start;
-      _to = end;
-    });
+    if (mounted) {
+      setState(() {
+        _preset = preset;
+        _from = start;
+        _to = end;
+      });
+    }
     _syncRangeTimeControllers();
     _persistRuntimeQuery();
     if (!_isFiltersOnlySection) {
@@ -995,7 +1015,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       builder: (context) => const _AddFilterDialog(),
     );
     if (added == null || !mounted) return;
-    setState(() => _filters.add(added));
+    if (mounted) {
+      setState(() => _filters.add(added));
+    }
     _persistRuntimeQuery();
     if (!_isFiltersOnlySection) {
       await _loadOverviewData();
@@ -1982,10 +2004,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           ..sort(_analysisSortCompare);
 
     if (!mounted || token != _analysisBuildToken) return;
-    setState(() {
-      _analysisGroups = builtGroups;
-      _analysisLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _analysisGroups = builtGroups;
+        _analysisLoading = false;
+      });
+    }
   }
 
   Map<String, _AnalysisGroupAccumulator> _aggregateBucketsFromRows(
@@ -2591,13 +2615,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             return SizedBox(
               width: 460,
               child: AdaptiveFormShell(
-                onClose: () => Navigator.of(context).pop(false),
+                onClose: () => AppNavigator.pop(context, false),
                 longTitle: 'PDF options',
                 shortTitle: 'PDF',
                 fullScreen: false,
                 actions: [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(true),
+                    onPressed: () => AppNavigator.pop(context, true),
                     child: Text(l10n.reportsGeneratePdf),
                   ),
                 ],
@@ -2824,7 +2848,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   Widget _buildBatchSection({required bool compact}) {
     final filteredCount = _batchFlightCount;
     final actionsDisabled =
-        filteredCount == 0 || _isPreparingBatchData || _isCheckingBatchFlights;
+        filteredCount == 0 ||
+        _isPreparingBatchData ||
+        _isCheckingBatchFlights ||
+        _isCalculatingBatchDuty;
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -2854,6 +2881,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                     const LinearProgressIndicator(minHeight: 3),
                     const SizedBox(height: 6),
                     const Text('Preparing batch data...'),
+                  ],
+                  if (_isCalculatingBatchDuty) ...[
+                    const SizedBox(height: 8),
+                    const LinearProgressIndicator(minHeight: 3),
+                    const SizedBox(height: 6),
+                    const Text('Calculating duty periods...'),
                   ],
                   const SizedBox(height: 8),
                   _ReportsActionButton(
@@ -2894,6 +2927,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                     label: 'Calculate All',
                     onPressed: actionsDisabled ? null : _batchCalculateAll,
                   ),
+                  const SizedBox(height: 8),
+                  _ReportsActionButton(
+                    icon: Icons.timelapse_outlined,
+                    label: _isCalculatingBatchDuty
+                        ? 'Calculating Duty...'
+                        : 'Calculate Duty',
+                    onPressed: actionsDisabled
+                        ? null
+                        : _confirmAndBatchCalculateDuty,
+                  ),
                 ],
               ),
             ],
@@ -2910,7 +2953,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (selectedChecks == null || selectedChecks.isEmpty) {
       return;
     }
-    setState(() => _isCheckingBatchFlights = true);
+    if (mounted) {
+      setState(() => _isCheckingBatchFlights = true);
+    }
     try {
       await _ensureBatchFlightsReadyForActions();
       final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
@@ -3103,13 +3148,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         builder: (context, setStateDialog) => SizedBox(
           width: 420,
           child: AdaptiveFormShell(
-            onClose: () => Navigator.of(context).pop(),
+            onClose: () => AppNavigator.pop(context),
             longTitle: 'Set Crew',
             shortTitle: 'Set Crew',
             fullScreen: false,
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(selectedPosition),
+                onPressed: () => AppNavigator.pop(context, selectedPosition),
                 child: const Text('Apply'),
               ),
             ],
@@ -3366,6 +3411,92 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
   }
 
+  Future<void> _batchCalculateDuty() async {
+    if (_isCalculatingBatchDuty) return;
+    if (!mounted) return;
+    setState(() => _isCalculatingBatchDuty = true);
+    try {
+      await _ensureBatchFlightsReadyForActions();
+      final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
+      if (snapshots.isEmpty) {
+        await _showInfoDialog('No filtered flights found.');
+        return;
+      }
+      final settings = await ref.read(dutyRulesSettingsProvider.future);
+      final result = await ref
+          .read(logbookUseCasesProvider)
+          .calculateDutyForFlights(
+            flightIds: snapshots.keys.toSet(),
+            rules: DutyCalculationRules(
+              crewHomeBaseAirportId: settings.crewHomeBaseAirportId,
+              reportingTimeOnBaseMinutes: settings.reportingTimeOnBaseMinutes,
+              reportingTimeOffBaseMinutes:
+                  settings.reportingTimeOffBaseMinutes,
+              dutyEndTimeAllowanceMinutes:
+                  settings.dutyEndTimeAllowanceMinutes,
+              minimumRestTimeMinutes: settings.minimumRestTimeMinutes,
+            ),
+          );
+      if (!mounted) return;
+      final message = StringBuffer()
+        ..write(
+          'Duty calculation completed.\n'
+          'Created: ${result.created}, '
+          'Updated: ${result.updated}, '
+          'Unchanged: ${result.unchanged}.',
+        );
+      if (result.skippedLockedDuty > 0) {
+        message.write('\nSkipped locked duties: ${result.skippedLockedDuty}.');
+      }
+      if (result.skippedMissingFlightEvent > 0) {
+        message.write(
+          '\nSkipped flights without a resolved event: '
+          '${result.skippedMissingFlightEvent}.',
+        );
+      }
+      await _showInfoDialog(message.toString());
+      await _ensureDetailsLoaded(
+        includeEntries: false,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isCalculatingBatchDuty = false);
+      }
+    }
+  }
+
+  Future<void> _confirmAndBatchCalculateDuty() async {
+    if (!mounted) return;
+    final count = _batchFlightCount;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => SizedBox(
+        width: 560,
+        child: AdaptiveFormShell(
+          onClose: () => AppNavigator.pop(context, false),
+          longTitle: 'Calculate Duty?',
+          shortTitle: 'Calculate Duty?',
+          actions: [
+            TextButton(
+              onPressed: () => AppNavigator.pop(context, true),
+              child: const Text('Calculate'),
+            ),
+          ],
+          contentView: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'This will create or update duty periods for up to '
+              '$count filtered flights.\n\n'
+              'Existing locked duty periods will be skipped.',
+            ),
+          ),
+        ),
+      ),
+    );
+    if (confirmed != true) return;
+    await _batchCalculateDuty();
+  }
+
   List<_BatchCalcField> get _batchCalcFieldOrder => const [
     _BatchCalcField.block,
     _BatchCalcField.ifr,
@@ -3529,22 +3660,26 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(lockState ? 'Lock entries?' : 'Unlock entries?'),
-        content: Text(
-          'This will ${lockState ? 'lock' : 'unlock'} ${targets.changeCount} '
-          'filtered entries.',
+      builder: (context) => SizedBox(
+        width: 560,
+        child: AdaptiveFormShell(
+          onClose: () => AppNavigator.pop(context, false),
+          longTitle: lockState ? 'Lock entries?' : 'Unlock entries?',
+          shortTitle: lockState ? 'Lock?' : 'Unlock?',
+          actions: [
+            TextButton(
+              onPressed: () => AppNavigator.pop(context, true),
+              child: Text(lockState ? 'Lock' : 'Unlock'),
+            ),
+          ],
+          contentView: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'This will ${lockState ? 'lock' : 'unlock'} '
+              '${targets.changeCount} filtered entries.',
+            ),
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(lockState ? 'Lock' : 'Unlock'),
-          ),
-        ],
       ),
     );
     if (confirmed != true) return;
@@ -4097,14 +4232,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         return SizedBox(
           width: dialogWidth,
           child: AdaptiveFormShell(
-            onClose: () => Navigator.of(context).pop(),
+            onClose: () => AppNavigator.pop(context),
             longTitle: 'Flight checks',
             shortTitle: 'Checks',
             leading: const SizedBox.shrink(),
             popupMaxWidth: dialogWidth,
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => AppNavigator.pop(context),
                 child: const Text('OK'),
               ),
             ],
@@ -4117,10 +4252,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       },
     );
     if (isCompact) {
-      await Navigator.of(
+      await AppNavigator.pushMaterial<void>(
         context,
+        (_) => issueScreen,
         rootNavigator: true,
-      ).push<void>(MaterialPageRoute(builder: (_) => issueScreen));
+      );
       return;
     }
     await showDialog<void>(
@@ -4139,9 +4275,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     var changed = false;
     if (isCompact) {
       changed =
-          await Navigator.of(
-            context,
-          ).push<bool>(MaterialPageRoute(builder: (_) => screen)) ??
+          await AppNavigator.pushMaterial<bool>(context, (_) => screen) ??
           false;
     } else {
       changed =
@@ -4229,7 +4363,7 @@ WHERE id IN ($placeholders)
         ),
         actions: [
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => AppNavigator.pop(context),
             child: const Text('OK'),
           ),
         ],
@@ -4288,10 +4422,11 @@ class _BatchFlightChecksDialog extends StatefulWidget {
   static Future<Set<_BatchFlightCheck>?> show(BuildContext context) {
     const screen = _BatchFlightChecksDialog();
     if (isCompactDialogScreen(context)) {
-      return Navigator.of(
+      return AppNavigator.pushMaterial<Set<_BatchFlightCheck>>(
         context,
+        (_) => screen,
         rootNavigator: true,
-      ).push<Set<_BatchFlightCheck>>(MaterialPageRoute(builder: (_) => screen));
+      );
     }
     return showDialog<Set<_BatchFlightCheck>>(
       context: context,
@@ -4421,13 +4556,13 @@ class _BatchFlightChecksDialogState extends State<_BatchFlightChecksDialog> {
     );
     final borderColor = theme.colorScheme.outline.withValues(alpha: 0.35);
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).pop(),
+      onClose: () => AppNavigator.pop(context),
       longTitle: 'Check Flights',
       shortTitle: 'Checks',
       popupMaxWidth: 680,
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(_selected),
+          onPressed: () => AppNavigator.pop(context, _selected),
           child: const Text('Run'),
         ),
       ],
@@ -4615,11 +4750,10 @@ class _BatchCalculateAllDialog extends StatefulWidget {
       initialPreferences: initialPreferences,
     );
     if (isCompactDialogScreen(context)) {
-      return Navigator.of(
+      return AppNavigator.pushMaterial<_BatchCalculateAllPreferences>(
         context,
+        (_) => screen,
         rootNavigator: true,
-      ).push<_BatchCalculateAllPreferences>(
-        MaterialPageRoute(builder: (_) => screen),
       );
     }
     return showDialog<_BatchCalculateAllPreferences>(
@@ -4733,13 +4867,13 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
     }
 
     return AdaptiveFormShell(
-      onClose: () => Navigator.of(context).pop(),
+      onClose: () => AppNavigator.pop(context),
       longTitle: 'Calculate All',
       shortTitle: 'Calculate',
       popupMaxWidth: 620,
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(_preferences),
+          onPressed: () => AppNavigator.pop(context, _preferences),
           child: const Text('Apply'),
         ),
       ],
@@ -6564,7 +6698,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
       if (number == null) return;
     }
 
-    Navigator.of(context).pop(
+    AppNavigator.pop(context, 
       ReportsFilterCondition(
         field: _field,
         operator: _operator,
@@ -6590,7 +6724,7 @@ class _AddFilterDialogState extends State<_AddFilterDialog> {
             children: [
               DialogHeaderBar(
                 title: l10n.reportsAddFilter,
-                onClose: () => Navigator.of(context).pop(),
+                onClose: () => AppNavigator.pop(context),
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<ReportsFilterField>(
@@ -6734,7 +6868,7 @@ class _SaveQueryDialogState extends State<_SaveQueryDialog> {
             children: [
               DialogHeaderBar(
                 title: l10n.reportsSaveQuery,
-                onClose: () => Navigator.of(context).pop(),
+                onClose: () => AppNavigator.pop(context),
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -6748,7 +6882,7 @@ class _SaveQueryDialogState extends State<_SaveQueryDialog> {
               Align(
                 alignment: Alignment.centerRight,
                 child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(_controller.text),
+                  onPressed: () => AppNavigator.pop(context, _controller.text),
                   child: Text(l10n.saveAction),
                 ),
               ),
@@ -7208,34 +7342,12 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
       ),
     ];
 
-    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
-    if (isInDialog) {
-      return Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          children: [
-            DialogHeaderBar(
-              title: l10n.reportsFlightMapTitle,
-              onClose: () => Navigator.of(context).pop(),
-              actions: actions,
-            ),
-            const Divider(height: 1),
-            Expanded(child: mapBody),
-          ],
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(l10n.reportsFlightMapTitle),
-        actions: actions,
-      ),
-      body: mapBody,
+    return AdaptiveFormShell(
+      onClose: () => AppNavigator.pop(context),
+      longTitle: l10n.reportsFlightMapTitle,
+      shortTitle: l10n.reportsFlightMapTitle,
+      actions: actions,
+      contentView: mapBody,
     );
   }
 }
@@ -7353,10 +7465,12 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
       }
     }
     items.sort((a, b) => a.templateName.compareTo(b.templateName));
-    setState(() {
-      _items = items;
-      _isBusy = false;
-    });
+    if (mounted) {
+      setState(() {
+        _items = items;
+        _isBusy = false;
+      });
+    }
   }
 
   Future<void> _downloadTemplate(_TemplateEntryItem item) async {
@@ -7443,11 +7557,11 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
+              onPressed: () => AppNavigator.pop(dialogContext, false),
               child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
             ),
             TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
+              onPressed: () => AppNavigator.pop(dialogContext, true),
               child: const Text('Delete'),
             ),
           ],
@@ -7705,32 +7819,11 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
       ),
     );
 
-    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
-    if (isInDialog) {
-      return Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          children: [
-            DialogHeaderBar(
-              title: 'Edit Templates',
-              onClose: () => Navigator.of(context).pop(_changed),
-            ),
-            const Divider(height: 1),
-            Expanded(child: body),
-          ],
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(_changed),
-        ),
-        title: const Text('Edit Templates'),
-      ),
-      body: body,
+    return AdaptiveFormShell(
+      onClose: () => AppNavigator.pop(context, _changed),
+      longTitle: 'Edit Templates',
+      shortTitle: 'Edit Templates',
+      contentView: body,
     );
   }
 }
@@ -7788,14 +7881,14 @@ class _TemplateJsonEditorDialogState extends State<_TemplateJsonEditorDialog> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => AppNavigator.pop(context),
                 child: Text(
                   MaterialLocalizations.of(context).cancelButtonLabel,
                 ),
               ),
               const SizedBox(width: 8),
               FilledButton(
-                onPressed: () => Navigator.of(context).pop(_controller.text),
+                onPressed: () => AppNavigator.pop(context, _controller.text),
                 child: const Text('Save'),
               ),
             ],
@@ -7805,32 +7898,11 @@ class _TemplateJsonEditorDialogState extends State<_TemplateJsonEditorDialog> {
     );
 
     final title = 'Edit Template: ${widget.templateName}';
-    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
-    if (isInDialog) {
-      return Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          children: [
-            DialogHeaderBar(
-              title: title,
-              onClose: () => Navigator.of(context).pop(),
-            ),
-            const Divider(height: 1),
-            Expanded(child: body),
-          ],
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(title),
-      ),
-      body: body,
+    return AdaptiveFormShell(
+      onClose: () => AppNavigator.pop(context),
+      longTitle: title,
+      shortTitle: 'Edit Template',
+      contentView: body,
     );
   }
 }

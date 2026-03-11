@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
@@ -221,19 +223,21 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
           offset: _directOffset,
         );
         if (!mounted) return;
-        setState(() {
-          if (reset) {
-            _entries
-              ..clear()
-              ..addAll(page);
-            _allFilteredEntries = const [];
-            _loadedCount = 0;
-          } else {
-            _entries.addAll(page);
-          }
-          _directOffset += page.length;
-          _hasMore = page.length == _pageSize;
-        });
+        if (mounted) {
+          setState(() {
+            if (reset) {
+              _entries
+                ..clear()
+                ..addAll(page);
+              _allFilteredEntries = const [];
+              _loadedCount = 0;
+            } else {
+              _entries.addAll(page);
+            }
+            _directOffset += page.length;
+            _hasMore = page.length == _pageSize;
+          });
+        }
         return;
       }
 
@@ -266,13 +270,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
         0,
         _allFilteredEntries.length,
       );
-      setState(() {
-        _entries
-          ..clear()
-          ..addAll(_allFilteredEntries.take(nextLoadedCount));
-        _loadedCount = nextLoadedCount;
-        _hasMore = _loadedCount < _allFilteredEntries.length;
-      });
+      if (mounted) {
+        setState(() {
+          _entries
+            ..clear()
+            ..addAll(_allFilteredEntries.take(nextLoadedCount));
+          _loadedCount = nextLoadedCount;
+          _hasMore = _loadedCount < _allFilteredEntries.length;
+        });
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -549,23 +555,24 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final l10n = AppLocalizations.of(context)!;
     _filtersDialogOpen = true;
     final shell = AdaptiveFormShell(
-      onClose: () => Navigator.of(context).pop(),
+      onClose: () => AppNavigator.pop(context),
       longTitle: l10n.reportsTabFilters,
       shortTitle: l10n.reportsTabFilters,
       popupMaxWidth: 900,
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => AppNavigator.pop(context),
           child: Text(l10n.reportsDone),
         ),
       ],
       contentView: const ReportsScreen(section: ReportsPanelSection.filters),
     );
     if (isCompactDialogScreen(context)) {
-      await Navigator.of(
+      await AppNavigator.pushMaterial<void>(
         context,
+        (_) => shell,
         rootNavigator: true,
-      ).push<void>(MaterialPageRoute(builder: (_) => shell));
+      );
     } else {
       await showDialog<void>(
         context: context,
@@ -616,13 +623,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final useCases = ref.read(logbookUseCasesProvider);
     final updated = await useCases.fetchEntryByTimelineId(timeLineId);
     if (!mounted) return;
-    setState(() {
-      if (updated == null) {
-        _entries.removeWhere((e) => e.timeLine.id == timeLineId);
-      } else {
-        _upsertEntry(updated);
-      }
-    });
+    if (mounted) {
+      setState(() {
+        if (updated == null) {
+          _entries.removeWhere((e) => e.timeLine.id == timeLineId);
+        } else {
+          _upsertEntry(updated);
+        }
+      });
+    }
   }
 
   Future<void> _refreshDutyById(int dutyId) async {
@@ -630,11 +639,13 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final duty = await useCases.findDutyById(dutyId);
     if (!mounted) return;
     if (duty == null) {
-      setState(() {
-        _entries.removeWhere(
-          (e) => e.dutyStart?.id == dutyId || e.dutyEnd?.id == dutyId,
-        );
-      });
+      if (mounted) {
+        setState(() {
+          _entries.removeWhere(
+            (e) => e.dutyStart?.id == dutyId || e.dutyEnd?.id == dutyId,
+          );
+        });
+      }
       return;
     }
     await _refreshEntryByTimelineId(duty.dutyStartTimeLineId);
@@ -667,9 +678,11 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
       await _loadNextPage(reset: true);
       return;
     }
-    setState(() {
-      _entries.removeWhere((e) => e.timeLine.id == entry.timeLine.id);
-    });
+    if (mounted) {
+      setState(() {
+        _entries.removeWhere((e) => e.timeLine.id == entry.timeLine.id);
+      });
+    }
   }
 
   Future<void> _toggleEntryLock(LogbookEntry entry) async {
@@ -719,11 +732,11 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
+            onPressed: () => AppNavigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
+            onPressed: () => AppNavigator.pop(dialogContext, true),
             child: const Text('Unlock'),
           ),
         ],
@@ -739,9 +752,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
       initialEnd: group.end,
     );
     if (isCompact) {
-      await Navigator.of(
-        context,
-      ).push(MaterialPageRoute<void>(builder: (_) => screen));
+      await AppNavigator.pushMaterial<void>(context, (_) => screen);
       await _refreshDutyById(group.dutyId);
       return;
     }
@@ -771,9 +782,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final isCompact = MediaQuery.of(context).size.width < 600;
     const screen = DutyEditScreen();
     if (isCompact) {
-      await Navigator.of(
-        context,
-      ).push(MaterialPageRoute<void>(builder: (_) => screen));
+      await AppNavigator.pushMaterial<void>(context, (_) => screen);
       await _loadNextPage(reset: true);
       return;
     }
@@ -800,11 +809,11 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
         content: Text(l10n.reportsDeleteEntryConfirm(label)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => AppNavigator.pop(context, false),
             child: Text(l10n.cancelAction),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => AppNavigator.pop(context, true),
             child: Text(l10n.deleteAction),
           ),
         ],
@@ -821,11 +830,11 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
         content: Text(l10n.reportsDeleteDutyConfirm),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => AppNavigator.pop(context, false),
             child: Text(l10n.cancelAction),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => AppNavigator.pop(context, true),
             child: Text(l10n.deleteAction),
           ),
         ],
@@ -837,9 +846,10 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final isCompact = MediaQuery.of(context).size.width < 600;
     final screen = PositioningEditScreen(positioningId: positioningId);
     if (isCompact) {
-      final changed = await Navigator.of(
+      final changed = await AppNavigator.pushMaterial<bool>(
         context,
-      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
+        (_) => screen,
+      );
       if (changed == true) {
         await _refreshEntryByTimelineId(timelineId);
       }
@@ -858,9 +868,10 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final isCompact = MediaQuery.of(context).size.width < 600;
     const screen = PositioningEditScreen();
     if (isCompact) {
-      final created = await Navigator.of(
+      final created = await AppNavigator.pushMaterial<bool>(
         context,
-      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
+        (_) => screen,
+      );
       if (created == true) {
         await _loadNextPage(reset: true);
       }
@@ -879,9 +890,10 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final isCompact = MediaQuery.of(context).size.width < 600;
     final screen = FlightEditScreen(flightId: flightId);
     if (isCompact) {
-      final changed = await Navigator.of(
+      final changed = await AppNavigator.pushMaterial<bool>(
         context,
-      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
+        (_) => screen,
+      );
       if (changed == true) {
         await _refreshEntryByTimelineId(timelineId);
       }
@@ -900,9 +912,10 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final isCompact = MediaQuery.of(context).size.width < 600;
     const screen = FlightEditScreen();
     if (isCompact) {
-      final created = await Navigator.of(
+      final created = await AppNavigator.pushMaterial<bool>(
         context,
-      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
+        (_) => screen,
+      );
       if (created == true) {
         await _loadNextPage(reset: true);
       }
@@ -985,9 +998,10 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final isCompact = MediaQuery.of(context).size.width < 600;
     final screen = FlightEditScreen(prefill: prefill);
     if (isCompact) {
-      final created = await Navigator.of(
+      final created = await AppNavigator.pushMaterial<bool>(
         context,
-      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
+        (_) => screen,
+      );
       if (created == true) {
         await _loadNextPage(reset: true);
       }
@@ -1006,9 +1020,10 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final isCompact = MediaQuery.of(context).size.width < 600;
     final screen = SimulatorEditScreen(simulatorId: simulatorId);
     if (isCompact) {
-      final changed = await Navigator.of(
+      final changed = await AppNavigator.pushMaterial<bool>(
         context,
-      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
+        (_) => screen,
+      );
       if (changed == true) {
         await _refreshEntryByTimelineId(timelineId);
       }
@@ -1027,9 +1042,10 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final isCompact = MediaQuery.of(context).size.width < 600;
     const screen = SimulatorEditScreen();
     if (isCompact) {
-      final created = await Navigator.of(
+      final created = await AppNavigator.pushMaterial<bool>(
         context,
-      ).push<bool>(MaterialPageRoute(builder: (_) => screen));
+        (_) => screen,
+      );
       if (created == true) {
         await _loadNextPage(reset: true);
       }
@@ -1051,14 +1067,14 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
       final start = entry.dutyStart;
       if (start != null) {
         dutyRanges.putIfAbsent(start.id, () => _DutyRange(dutyId: start.id))
-          ..start = entry.timeLine.eventDateTime
+          ..start = DbDateTime.dbToUtc(entry.timeLine.eventDateTime)
           ..startTimelineId = entry.timeLine.id
           ..duty = start;
       }
       final end = entry.dutyEnd;
       if (end != null) {
         dutyRanges.putIfAbsent(end.id, () => _DutyRange(dutyId: end.id))
-          ..end = entry.timeLine.eventDateTime
+          ..end = DbDateTime.dbToUtc(entry.timeLine.eventDateTime)
           ..endTimelineId = entry.timeLine.id
           ..duty = end;
       }
@@ -1073,7 +1089,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
 
     for (final entry in entries) {
       if (!_isGroupable(entry.type)) continue;
-      final entryTime = entry.timeLine.eventDateTime;
+      final entryTime = DbDateTime.dbToUtc(entry.timeLine.eventDateTime);
       _DutyRange? matchedRange;
       for (final range in validRanges) {
         if (entryTime.isBefore(range.start!)) continue;

@@ -3,6 +3,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
 import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
 import 'package:simplelog/data/models/endorsement_data.dart';
 
@@ -19,6 +21,13 @@ class EndorsementDialog extends StatefulWidget {
     BuildContext context, {
     EndorsementData? initial,
   }) {
+    if (isCompactDialogScreen(context)) {
+      return Navigator.of(context).push<EndorsementData>(
+        MaterialPageRoute(
+          builder: (_) => EndorsementDialog(initial: initial),
+        ),
+      );
+    }
     return showDialog<EndorsementData>(
       context: context,
       builder: (_) => EndorsementDialog(initial: initial),
@@ -60,145 +69,117 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
   @override
   Widget build(BuildContext context) {
     final hasInitial = widget.initial != null && !widget.initial!.isEmpty;
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 760),
+    return AdaptiveFormShell(
+      onClose: () => Navigator.of(context).pop(),
+      longTitle: 'Endorsement',
+      shortTitle: 'Endorsement',
+      popupMaxWidth: 760,
+      actions: [
+        TextButton(
+          onPressed: _save,
+          child: const Text('Save'),
+        ),
+      ],
+      contentView: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Endorsement',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: _save,
-                    child: const Text('Save'),
-                  ),
-                ],
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Once saved with an endorsement signature, this entry '
+                'is locked and cannot be edited unless the signature '
+                'is removed.',
               ),
             ),
-            const Divider(height: 1),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Once saved with an endorsement signature, this entry '
-                        'is locked and cannot be edited unless the signature '
-                        'is removed.',
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Name'),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _certificateController,
-                      decoration: const InputDecoration(
-                        labelText: 'Certificate',
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _typeController,
-                      decoration: const InputDecoration(labelText: 'Type'),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _expiryController,
-                      readOnly: true,
-                      onTap: _pickExpiry,
-                      decoration: InputDecoration(
-                        labelText: 'Expiry',
-                        suffixIcon: IconButton(
-                          onPressed: _expiryController.text.trim().isEmpty
-                              ? null
-                              : () =>
-                                    setState(() => _expiryController.text = ''),
-                          icon: const Icon(Icons.clear),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      height: 130,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: _signatureImage == null
-                          ? const Center(child: Text('No signature'))
-                          : Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Image.memory(
-                                _signatureImage!,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        SquareOutlineButton(
-                          label: 'Sign on screen',
-                          icon: Icons.gesture,
-                          onPressed: _captureSignature,
-                        ),
-                        const SizedBox(width: 8),
-                        SquareOutlineButton(
-                          label: 'Clear signature',
-                          icon: Icons.delete_outline,
-                          onPressed: _signatureImage == null
-                              ? null
-                              : () => setState(() => _signatureImage = null),
-                        ),
-                        if (hasInitial) ...[
-                          const SizedBox(width: 8),
-                          SquareOutlineButton(
-                            label: 'Remove endorsement',
-                            icon: Icons.remove_circle_outline,
-                            onPressed: () => Navigator.of(context).pop(
-                              const EndorsementData(
-                                name: '',
-                                certificate: '',
-                                expiry: '',
-                                type: '',
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
+            const SizedBox(height: 12),
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _certificateController,
+              decoration: const InputDecoration(
+                labelText: 'Certificate',
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _typeController,
+              decoration: const InputDecoration(labelText: 'Type'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _expiryController,
+              readOnly: true,
+              onTap: _pickExpiry,
+              decoration: InputDecoration(
+                labelText: 'Expiry',
+                suffixIcon: IconButton(
+                  onPressed: _expiryController.text.trim().isEmpty
+                      ? null
+                      : () => setState(() => _expiryController.text = ''),
+                  icon: const Icon(Icons.clear),
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              height: 130,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: _signatureImage == null
+                  ? const Center(child: Text('No signature'))
+                  : Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Image.memory(
+                        _signatureImage!,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                SquareOutlineButton(
+                  label: 'Sign on screen',
+                  icon: Icons.gesture,
+                  onPressed: _captureSignature,
+                ),
+                const SizedBox(width: 8),
+                SquareOutlineButton(
+                  label: 'Clear signature',
+                  icon: Icons.delete_outline,
+                  onPressed: _signatureImage == null
+                      ? null
+                      : () => setState(() => _signatureImage = null),
+                ),
+                if (hasInitial) ...[
+                  const SizedBox(width: 8),
+                  SquareOutlineButton(
+                    label: 'Remove endorsement',
+                    icon: Icons.remove_circle_outline,
+                    onPressed: () => Navigator.of(context).pop(
+                      const EndorsementData(
+                        name: '',
+                        certificate: '',
+                        expiry: '',
+                        type: '',
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         ),

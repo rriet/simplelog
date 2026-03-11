@@ -1,7 +1,9 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
@@ -61,6 +63,14 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
   @override
   void initState() {
     super.initState();
+    EditScreenLifecycleLogger.onInit(
+      screen: 'AircraftEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.item.id,
+      },
+    );
     final item = widget.item;
     _registrationController = TextEditingController(
       text: widget.isCreate ? widget.initialRegistration : item.registration,
@@ -82,6 +92,14 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
 
   @override
   void dispose() {
+    EditScreenLifecycleLogger.onDispose(
+      screen: 'AircraftEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.item.id,
+      },
+    );
     _registrationController.dispose();
     _mtowController.dispose();
     _notesController.dispose();
@@ -364,38 +382,12 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     final title = widget.isCreate
         ? (_isSimulatorMode ? 'Add Simulator' : 'Add Aircraft')
         : (_isSimulatorMode ? 'Edit Simulator' : l10n.editAircraftTitle);
-    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
-
-    if (isInDialog) {
-      return Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-              title: Text(title),
-              trailing: TextButton(
-                onPressed: _save,
-                child: Text(l10n.saveAction),
-              ),
-            ),
-            const Divider(height: 1),
-            Flexible(child: form),
-          ],
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
-      ),
-      body: form,
+    return AdaptiveFormShell(
+      onClose: () => Navigator.of(context).maybePop(),
+      longTitle: title,
+      shortTitle: title,
+      actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
+      contentView: form,
     );
   }
 }

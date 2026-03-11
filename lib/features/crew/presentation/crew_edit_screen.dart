@@ -10,7 +10,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/data/database/app_database.dart';
@@ -45,6 +48,14 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
   @override
   void initState() {
     super.initState();
+    EditScreenLifecycleLogger.onInit(
+      screen: 'CrewEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.item.id,
+      },
+    );
     final item = widget.item;
     _nameController = TextEditingController(
       text: widget.isCreate ? '' : item.name,
@@ -65,6 +76,14 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
 
   @override
   void dispose() {
+    EditScreenLifecycleLogger.onDispose(
+      screen: 'CrewEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.item.id,
+      },
+    );
     _nameController.dispose();
     _emailController.dispose();
     _notesController.dispose();
@@ -131,7 +150,7 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
     }
 
     if (mounted) {
-      Navigator.of(context).pop(true);
+      AppNavigator.pop(context, true);
     }
   }
 
@@ -147,21 +166,22 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
   }
 
   Future<void> _pickAndCrop(ImageSource source) async {
-    final bytes = await Navigator.of(context, rootNavigator: true)
-        .push<Uint8List?>(
-          MaterialPageRoute(
-            fullscreenDialog: true,
-            builder: (_) => _PhotoPickRoute(
-              source: source,
-              title: AppLocalizations.of(context)!.cropPhotoTitle,
-            ),
-          ),
-        );
+    final bytes = await AppNavigator.pushMaterial<Uint8List?>(
+      context,
+      (_) => _PhotoPickRoute(
+        source: source,
+        title: AppLocalizations.of(context)!.cropPhotoTitle,
+      ),
+      rootNavigator: true,
+      fullscreenDialog: true,
+    );
 
     if (!mounted || bytes == null) {
       return;
     }
-    setState(() => _pictureBytes = bytes);
+    if (mounted) {
+      setState(() => _pictureBytes = bytes);
+    }
   }
 
   Future<void> _pickFromFiles() async {
@@ -180,7 +200,9 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
       if (!mounted || cropped == null) {
         return;
       }
-      setState(() => _pictureBytes = cropped);
+      if (mounted) {
+        setState(() => _pictureBytes = cropped);
+      }
       return;
     }
 
@@ -196,7 +218,9 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
     if (!mounted || cropped == null) {
       return;
     }
-    setState(() => _pictureBytes = cropped);
+    if (mounted) {
+      setState(() => _pictureBytes = cropped);
+    }
   }
 
   Future<Uint8List?> _cropFromPath(String sourcePath) async {
@@ -243,18 +267,18 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
               ListTile(
                 leading: const Icon(Icons.photo_camera),
                 title: Text(cameraLabel),
-                onTap: () => Navigator.of(context).pop(_PhotoAction.camera),
+                onTap: () => AppNavigator.pop(context, _PhotoAction.camera),
               ),
             ListTile(
               leading: const Icon(Icons.photo_library),
               title: Text(galleryLabel),
-              onTap: () => Navigator.of(context).pop(_PhotoAction.gallery),
+              onTap: () => AppNavigator.pop(context, _PhotoAction.gallery),
             ),
             ListTile(
               leading: const Icon(Icons.delete_outline),
               title: Text(removeLabel),
               enabled: _pictureBytes != null,
-              onTap: () => Navigator.of(context).pop(_PhotoAction.remove),
+              onTap: () => AppNavigator.pop(context, _PhotoAction.remove),
             ),
           ],
         ),
@@ -271,7 +295,9 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
           await _pickAndCrop(ImageSource.gallery);
         }
       case _PhotoAction.remove:
-        setState(() => _pictureBytes = null);
+        if (mounted) {
+          setState(() => _pictureBytes = null);
+        }
       case null:
         break;
     }
@@ -348,38 +374,12 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
         ),
       ),
     );
-    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
-
-    if (isInDialog) {
-      return Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-              title: Text(title),
-              trailing: TextButton(
-                onPressed: _save,
-                child: Text(l10n.saveAction),
-              ),
-            ),
-            const Divider(height: 1),
-            Flexible(child: form),
-          ],
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
-      ),
-      body: form,
+    return AdaptiveFormShell(
+      onClose: () => AppNavigator.pop(context),
+      longTitle: title,
+      shortTitle: title,
+      actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
+      contentView: form,
     );
   }
 }
@@ -463,7 +463,7 @@ class _PhotoPickRouteState extends State<_PhotoPickRoute> {
       return;
     }
     if (file == null) {
-      Navigator.of(context).pop();
+      AppNavigator.pop(context);
       return;
     }
 
@@ -486,7 +486,7 @@ class _PhotoPickRouteState extends State<_PhotoPickRoute> {
         return;
       }
       if (result == null) {
-        Navigator.of(context).pop();
+        AppNavigator.pop(context);
         return;
       }
       final byteData = await result.uiImage.toByteData(
@@ -497,15 +497,15 @@ class _PhotoPickRouteState extends State<_PhotoPickRoute> {
         return;
       }
       if (byteData == null) {
-        Navigator.of(context).pop();
+        AppNavigator.pop(context);
         return;
       }
-      Navigator.of(context).pop(byteData.buffer.asUint8List());
+      AppNavigator.pop(context, byteData.buffer.asUint8List());
     } on Object catch (_) {
       if (!mounted) {
         return;
       }
-      Navigator.of(context).pop();
+      AppNavigator.pop(context);
     }
   }
 

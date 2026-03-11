@@ -2,9 +2,9 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
-import 'package:simplelog/core/presentation/widgets/dialogs/dialog_header_bar.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
@@ -616,38 +616,14 @@ class _PreviousExperienceEditDialogState
       ),
     );
 
-    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
-    if (isInDialog) {
-      return Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          children: [
-            DialogHeaderBar(
-              title: displayTitle,
-              onClose: () => Navigator.of(context).maybePop(),
-              actions: [
-                TextButton(onPressed: _save, child: const Text('Save')),
-              ],
-            ),
-            const Divider(height: 1),
-            Expanded(child: formBody),
-          ],
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        title: Text(displayTitle),
-        actions: [
-          TextButton(onPressed: _save, child: const Text('Save')),
-        ],
-      ),
-      body: formBody,
+    return AdaptiveFormShell(
+      onClose: () => Navigator.of(context).maybePop(),
+      longTitle: displayTitle,
+      shortTitle: 'Previous Experience',
+      actions: [
+        TextButton(onPressed: _save, child: const Text('Save')),
+      ],
+      contentView: formBody,
     );
   }
 }

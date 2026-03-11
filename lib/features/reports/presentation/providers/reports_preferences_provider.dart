@@ -13,6 +13,7 @@ import 'package:simplelog/state/providers/database_provider.dart';
 const _reportsPreferencesFileName = 'reports_preferences.json';
 const _savedReportsQueriesFileName = 'saved_reports_queries.json';
 const _reportsEventTypesFileName = 'reports_event_types.json';
+const _reportsEventTypesSchemaVersion = 2;
 const _selectedReportTemplateFileNameKey = 'selectedReportTemplateFileName';
 const _openPdfAfterSavingKey = 'openPdfAfterSaving';
 
@@ -631,9 +632,16 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
       final raw = file.readAsStringSync();
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return;
-      state = ReportsEventTypesSelection.fromJson(
-        Map<String, dynamic>.from(decoded),
-      );
+      final json = Map<String, dynamic>.from(decoded);
+      final schemaVersion =
+          (json['schemaVersion'] as num?)?.toInt() ?? 1;
+      var next = ReportsEventTypesSelection.fromJson(json);
+      if (schemaVersion < _reportsEventTypesSchemaVersion &&
+          !next.positioning) {
+        next = next.copyWith(positioning: true);
+        await _save(next);
+      }
+      state = next;
     } on Object catch (_) {
       // Keep defaults.
     }
@@ -642,8 +650,12 @@ class ReportsEventTypesNotifier extends Notifier<ReportsEventTypesSelection> {
   Future<void> _save(ReportsEventTypesSelection value) async {
     try {
       final file = await _file();
+      final payload = <String, dynamic>{
+        ...value.toJson(),
+        'schemaVersion': _reportsEventTypesSchemaVersion,
+      };
       await file.writeAsString(
-        jsonEncode(value.toJson()),
+        jsonEncode(payload),
         flush: true,
       );
     } on Object catch (_) {

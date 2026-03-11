@@ -2,7 +2,9 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
@@ -24,6 +26,7 @@ class AircraftTypeEditScreen extends ConsumerStatefulWidget {
 
   /// Initial aircraft type value.
   final AircraftType item;
+
   /// Whether screen is in create mode.
   final bool isCreate;
 
@@ -52,6 +55,14 @@ class _AircraftTypeEditScreenState
   @override
   void initState() {
     super.initState();
+    EditScreenLifecycleLogger.onInit(
+      screen: 'AircraftTypeEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.item.id,
+      },
+    );
     final item = widget.item;
     _codeController = TextEditingController(
       text: widget.isCreate ? '' : item.code,
@@ -79,6 +90,14 @@ class _AircraftTypeEditScreenState
 
   @override
   void dispose() {
+    EditScreenLifecycleLogger.onDispose(
+      screen: 'AircraftTypeEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.item.id,
+      },
+    );
     _codeController.dispose();
     _familyController.dispose();
     _longNameController.dispose();
@@ -347,38 +366,12 @@ class _AircraftTypeEditScreenState
         ),
       ),
     );
-    final isInDialog = context.findAncestorWidgetOfExactType<Dialog>() != null;
-
-    if (isInDialog) {
-      return Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-              title: Text(title),
-              trailing: TextButton(
-                onPressed: _save,
-                child: Text(l10n.saveAction),
-              ),
-            ),
-            const Divider(height: 1),
-            Flexible(child: form),
-          ],
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
-      ),
-      body: form,
+    return AdaptiveFormShell(
+      onClose: () => Navigator.of(context).maybePop(),
+      longTitle: title,
+      shortTitle: title,
+      actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
+      contentView: form,
     );
   }
 }

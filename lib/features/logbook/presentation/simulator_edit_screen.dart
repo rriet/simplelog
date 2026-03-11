@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
+import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
@@ -73,6 +74,14 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   @override
   void initState() {
     super.initState();
+    EditScreenLifecycleLogger.onInit(
+      screen: 'SimulatorEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.simulatorId,
+      },
+    );
     _startTimeController.text = ClockTimeInputField.formatMinutesOfDay(
       _start.hour * 60 + _start.minute,
     );
@@ -83,6 +92,14 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
 
   @override
   void dispose() {
+    EditScreenLifecycleLogger.onDispose(
+      screen: 'SimulatorEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.simulatorId,
+      },
+    );
     _startTimeController.dispose();
     _endTimeController.dispose();
     _timeController.dispose();
@@ -505,8 +522,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     final shortTitle = widget.isCreate
         ? 'New Sim Training'
         : 'Edit Sim Training';
-    
-    
+
     return AdaptiveFormShell(
       onClose: () => unawaited(Navigator.of(context).maybePop()),
       longTitle: longTitle,

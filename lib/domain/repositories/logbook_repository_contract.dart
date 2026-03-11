@@ -52,6 +52,15 @@ abstract class LogbookRepositoryContract {
   /// Loads data needed to edit a duty period.
   Future<DutyEditData?> loadDutyEditData(int dutyId);
 
+  /// Finds a duty period whose start/end exactly matches [start]/[end].
+  Future<DutyPeriod?> findDutyByExactRange({
+    required DateTime start,
+    required DateTime end,
+  });
+
+  /// Finds a duty period that contains [instant] within its start/end range.
+  Future<DutyPeriod?> findDutyCoveringTime(DateTime instant);
+
   /// Loads data needed to edit a positioning entry.
   Future<PositioningEditData?> loadPositioningEditData(int positioningId);
 

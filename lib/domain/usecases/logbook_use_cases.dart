@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_info_item.dart';
 import 'package:simplelog/data/models/duty_edit_data.dart';
@@ -387,6 +388,427 @@ class LogbookUseCases {
   Future<void> deleteEntry(LogbookEntry entry) =>
       _repository.deleteEntry(entry);
 
+  /// Suggests duty start/end for creating a new duty from the latest event.
+  ///
+  /// The algorithm groups operational events (flight/positioning/simulator)
+  /// by [DutyCalculationRules.minimumRestTimeMinutes] and returns the duty
+  /// range for the latest contiguous block.
+  Future<DutyCalculationSuggestion?> suggestDutyForLatestEvent({
+    required DutyCalculationRules rules,
+  }) async {
+    final events = await _loadOperationalEvents();
+    if (events.isEmpty) return null;
+    final segments = _buildDutySegments(events: events, rules: rules);
+    if (segments.isEmpty) return null;
+    final latest = segments.last;
+    return _buildDutySuggestion(segment: latest, rules: rules);
+  }
+
+  /// Calculates duty periods for filtered [flightIds] and persists the result.
+  ///
+  /// For each filtered flight, it computes the contiguous duty segment and then
+  /// creates or updates one duty period per unique segment.
+  Future<DutyBatchCalculationResult> calculateDutyForFlights({
+    required Set<int> flightIds,
+    required DutyCalculationRules rules,
+  }) async {
+    if (flightIds.isEmpty) {
+      return const DutyBatchCalculationResult(
+        created: 0,
+        updated: 0,
+        unchanged: 0,
+        skippedLockedDuty: 0,
+        skippedMissingFlightEvent: 0,
+      );
+    }
+
+    final events = await _loadOperationalEvents();
+    if (events.isEmpty) {
+      return DutyBatchCalculationResult(
+        created: 0,
+        updated: 0,
+        unchanged: 0,
+        skippedLockedDuty: 0,
+        skippedMissingFlightEvent: flightIds.length,
+      );
+    }
+
+    final segments = _buildDutySegments(events: events, rules: rules);
+    final segmentByFlightId = <int, _DutySegment>{};
+    for (final segment in segments) {
+      for (final event in segment.events) {
+        final flightId = event.flightId;
+        if (flightId != null && flightIds.contains(flightId)) {
+          segmentByFlightId[flightId] = segment;
+        }
+      }
+    }
+
+    final uniqueSegments = <String, _DutySegment>{};
+    for (final flightId in flightIds) {
+      final segment = segmentByFlightId[flightId];
+      if (segment == null) continue;
+      uniqueSegments[_segmentKey(segment)] = segment;
+    }
+
+    var created = 0;
+    var updated = 0;
+    var unchanged = 0;
+    var skippedLockedDuty = 0;
+    var skippedMissingFlightEvent = 0;
+
+    for (final flightId in flightIds) {
+      if (!segmentByFlightId.containsKey(flightId)) {
+        skippedMissingFlightEvent++;
+      }
+    }
+
+    for (final segment in uniqueSegments.values) {
+      final suggestion = _buildDutySuggestion(segment: segment, rules: rules);
+      final exact = await _repository.findDutyByExactRange(
+        start: suggestion.startUtc,
+        end: suggestion.endUtc,
+      );
+      if (exact != null) {
+        unchanged++;
+        continue;
+      }
+
+      final covering = await _repository.findDutyCoveringTime(
+        segment.lastEvent.endUtc,
+      );
+      if (covering != null) {
+        if (covering.isLocked) {
+          skippedLockedDuty++;
+          continue;
+        }
+        await _repository.updateDuty(
+          duty: covering,
+          start: suggestion.startUtc,
+          end: suggestion.endUtc,
+          dutyMinutes: suggestion.dutyMinutes,
+          factoredMinutes: suggestion.factoredMinutes,
+        );
+        updated++;
+        continue;
+      }
+
+      await _repository.createDuty(
+        start: suggestion.startUtc,
+        end: suggestion.endUtc,
+        dutyMinutes: suggestion.dutyMinutes,
+        factoredMinutes: suggestion.factoredMinutes,
+      );
+      created++;
+    }
+
+    return DutyBatchCalculationResult(
+      created: created,
+      updated: updated,
+      unchanged: unchanged,
+      skippedLockedDuty: skippedLockedDuty,
+      skippedMissingFlightEvent: skippedMissingFlightEvent,
+    );
+  }
+
+  Future<List<_OperationalEvent>> _loadOperationalEvents() async {
+    const pageSize = 500;
+    var offset = 0;
+    final events = <_OperationalEvent>[];
+    while (true) {
+      final page = await _repository.fetchLogbookPage(
+        const LogbookFilters(
+          types: {
+            LogbookEventType.flight,
+            LogbookEventType.positioning,
+            LogbookEventType.simulatorTraining,
+          },
+        ),
+        limit: pageSize,
+        offset: offset,
+      );
+      if (page.isEmpty) break;
+      for (final entry in page) {
+        final event = _toOperationalEvent(entry);
+        if (event != null) {
+          events.add(event);
+        }
+      }
+      if (page.length < pageSize) break;
+      offset += page.length;
+    }
+    events.sort((a, b) {
+      final startCompare = a.startUtc.compareTo(b.startUtc);
+      if (startCompare != 0) return startCompare;
+      return a.timelineId.compareTo(b.timelineId);
+    });
+    return events;
+  }
+
+  _OperationalEvent? _toOperationalEvent(LogbookEntry entry) {
+    final timelineTime = DbDateTime.dbToUtc(entry.timeLine.eventDateTime);
+    if (entry.flight case final flight?) {
+      final fallbackMinutes = _maxInt(
+        0,
+        _maxInt(flight.timeBlockMinutes, flight.timeFlightMinutes),
+      );
+      final end = _normalizeEndTime(
+        start: timelineTime,
+        preferredEnd: DbDateTime.dbToUtcOrNull(
+          flight.arrivalDateTime ??
+              flight.landingDateTime ??
+              flight.takeOffDateTime,
+        ),
+        fallbackMinutes: fallbackMinutes,
+      );
+      return _OperationalEvent(
+        timelineId: entry.timeLine.id,
+        kind: _OperationalEventKind.flight,
+        startUtc: timelineTime,
+        endUtc: end,
+        startAirportId: flight.departureAirportId,
+        endAirportId: flight.arrivalAirportId,
+        flightId: flight.id,
+      );
+    }
+
+    if (entry.positioning case final positioning?) {
+      final end = _normalizeEndTime(
+        start: timelineTime,
+        preferredEnd: DbDateTime.dbToUtcOrNull(positioning.arrivalDateTime),
+        fallbackMinutes: _maxInt(0, positioning.timeTotalMinutes),
+      );
+      return _OperationalEvent(
+        timelineId: entry.timeLine.id,
+        kind: _OperationalEventKind.positioning,
+        startUtc: timelineTime,
+        endUtc: end,
+        startAirportId: positioning.departurePlaceId,
+        endAirportId: positioning.arrivalPlaceId,
+      );
+    }
+
+    if (entry.simulatorTraining case final simulator?) {
+      final end = _normalizeEndTime(
+        start: timelineTime,
+        preferredEnd: DbDateTime.dbToUtcOrNull(simulator.endDateTime),
+        fallbackMinutes: _maxInt(0, simulator.timeTotal),
+      );
+      return _OperationalEvent(
+        timelineId: entry.timeLine.id,
+        kind: _OperationalEventKind.simulator,
+        startUtc: timelineTime,
+        endUtc: end,
+      );
+    }
+
+    return null;
+  }
+
+  DateTime _normalizeEndTime({
+    required DateTime start,
+    required DateTime? preferredEnd,
+    required int fallbackMinutes,
+  }) {
+    final candidate =
+        preferredEnd ?? start.add(Duration(minutes: fallbackMinutes));
+    if (candidate.isBefore(start)) {
+      return start.add(Duration(minutes: fallbackMinutes));
+    }
+    return candidate;
+  }
+
+  List<_DutySegment> _buildDutySegments({
+    required List<_OperationalEvent> events,
+    required DutyCalculationRules rules,
+  }) {
+    if (events.isEmpty) return const <_DutySegment>[];
+    final minRest = _maxInt(0, rules.minimumRestTimeMinutes);
+    final segments = <_DutySegment>[];
+    var current = <_OperationalEvent>[events.first];
+    for (var i = 1; i < events.length; i++) {
+      final previous = events[i - 1];
+      final next = events[i];
+      final gapMinutes = next.startUtc.difference(previous.endUtc).inMinutes;
+      if (gapMinutes < minRest) {
+        current.add(next);
+      } else {
+        segments.add(
+          _DutySegment(events: List<_OperationalEvent>.from(current)),
+        );
+        current = <_OperationalEvent>[next];
+      }
+    }
+    segments.add(_DutySegment(events: List<_OperationalEvent>.from(current)));
+    return segments;
+  }
+
+  DutyCalculationSuggestion _buildDutySuggestion({
+    required _DutySegment segment,
+    required DutyCalculationRules rules,
+  }) {
+    final first = segment.firstEvent;
+    final last = segment.lastEvent;
+    final startsWithSimulator = first.kind == _OperationalEventKind.simulator;
+
+    final reportingOffsetMinutes = startsWithSimulator
+        ? 0
+        : _resolveReportingOffsetMinutes(
+            firstAirportId: first.startAirportId,
+            rules: rules,
+          );
+    final startUtc = first.startUtc.subtract(
+      Duration(minutes: _maxInt(0, reportingOffsetMinutes)),
+    );
+    final endUtc = last.endUtc.add(
+      Duration(minutes: _maxInt(0, rules.dutyEndTimeAllowanceMinutes)),
+    );
+    final normalizedEndUtc = endUtc.isBefore(startUtc) ? startUtc : endUtc;
+    final dutyMinutes = _maxInt(
+      0,
+      normalizedEndUtc.difference(startUtc).inMinutes,
+    );
+    return DutyCalculationSuggestion(
+      startUtc: startUtc,
+      endUtc: normalizedEndUtc,
+      dutyMinutes: dutyMinutes,
+      factoredMinutes: dutyMinutes,
+      startsWithSimulator: startsWithSimulator,
+    );
+  }
+
+  int _resolveReportingOffsetMinutes({
+    required int? firstAirportId,
+    required DutyCalculationRules rules,
+  }) {
+    final baseAirportId = rules.crewHomeBaseAirportId;
+    final onBase = baseAirportId != null && firstAirportId == baseAirportId;
+    return onBase
+        ? rules.reportingTimeOnBaseMinutes
+        : rules.reportingTimeOffBaseMinutes;
+  }
+
+  String _segmentKey(_DutySegment segment) {
+    return '${segment.firstEvent.startUtc.microsecondsSinceEpoch}|'
+        '${segment.lastEvent.endUtc.microsecondsSinceEpoch}';
+  }
+
+  int _maxInt(int left, int right) {
+    return left >= right ? left : right;
+  }
+
   /// Deletes duty entry with id [dutyId].
   Future<void> deleteDutyById(int dutyId) => _repository.deleteDutyById(dutyId);
+}
+
+/// Input rules used to derive duty periods from timeline events.
+class DutyCalculationRules {
+  /// Creates duty calculation rules.
+  const DutyCalculationRules({
+    required this.reportingTimeOnBaseMinutes,
+    required this.reportingTimeOffBaseMinutes,
+    required this.dutyEndTimeAllowanceMinutes,
+    required this.minimumRestTimeMinutes,
+    this.crewHomeBaseAirportId,
+  });
+
+  /// Airport id for crew home base.
+  final int? crewHomeBaseAirportId;
+
+  /// Reporting time before an on-base event.
+  final int reportingTimeOnBaseMinutes;
+
+  /// Reporting time before an off-base event.
+  final int reportingTimeOffBaseMinutes;
+
+  /// Buffer after last event before duty ends.
+  final int dutyEndTimeAllowanceMinutes;
+
+  /// Minimum rest break separating two duties.
+  final int minimumRestTimeMinutes;
+}
+
+/// Computed duty suggestion ready for UI prefill or persistence.
+class DutyCalculationSuggestion {
+  /// Creates a duty suggestion.
+  const DutyCalculationSuggestion({
+    required this.startUtc,
+    required this.endUtc,
+    required this.dutyMinutes,
+    required this.factoredMinutes,
+    required this.startsWithSimulator,
+  });
+
+  /// Suggested duty start.
+  final DateTime startUtc;
+
+  /// Suggested duty end.
+  final DateTime endUtc;
+
+  /// Suggested duty minutes.
+  final int dutyMinutes;
+
+  /// Suggested factored duty minutes.
+  final int factoredMinutes;
+
+  /// Whether the duty starts with a simulator event.
+  final bool startsWithSimulator;
+}
+
+/// Result summary for batch duty calculation.
+class DutyBatchCalculationResult {
+  /// Creates a batch result summary.
+  const DutyBatchCalculationResult({
+    required this.created,
+    required this.updated,
+    required this.unchanged,
+    required this.skippedLockedDuty,
+    required this.skippedMissingFlightEvent,
+  });
+
+  /// Number of duty periods created.
+  final int created;
+
+  /// Number of duty periods updated.
+  final int updated;
+
+  /// Number of target segments already matching persisted duty periods.
+  final int unchanged;
+
+  /// Number of locked duty rows skipped.
+  final int skippedLockedDuty;
+
+  /// Number of flights skipped because no operational event was resolved.
+  final int skippedMissingFlightEvent;
+}
+
+enum _OperationalEventKind { flight, positioning, simulator }
+
+class _OperationalEvent {
+  const _OperationalEvent({
+    required this.timelineId,
+    required this.kind,
+    required this.startUtc,
+    required this.endUtc,
+    this.startAirportId,
+    this.endAirportId,
+    this.flightId,
+  });
+
+  final int timelineId;
+  final _OperationalEventKind kind;
+  final DateTime startUtc;
+  final DateTime endUtc;
+  final int? startAirportId;
+  final int? endAirportId;
+  final int? flightId;
+}
+
+class _DutySegment {
+  const _DutySegment({required this.events});
+
+  final List<_OperationalEvent> events;
+
+  _OperationalEvent get firstEvent => events.first;
+  _OperationalEvent get lastEvent => events.last;
 }

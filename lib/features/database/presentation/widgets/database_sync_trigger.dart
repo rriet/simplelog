@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
@@ -196,7 +197,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         progress.dispose();
       }
       if (!context.mounted) return;
-      Navigator.of(context, rootNavigator: true).pop();
+      AppNavigator.popRoot(context);
       if (!context.mounted) return;
       if (!outcome.isSuccess) {
         final message = _buildImportErrorMessage(outcome.failure);
@@ -296,7 +297,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         progress.dispose();
       }
       if (!context.mounted) return;
-      Navigator.of(context, rootNavigator: true).pop();
+      AppNavigator.popRoot(context);
       if (!context.mounted) return;
       if (!outcome.isSuccess) {
         final message = _buildImportErrorMessage(outcome.failure);
@@ -342,7 +343,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         progress.dispose();
       }
       if (!context.mounted) return;
-      Navigator.of(context, rootNavigator: true).pop();
+      AppNavigator.popRoot(context);
       if (!context.mounted) return;
       if (!outcome.isSuccess) {
         final message = _buildImportErrorMessage(outcome.failure);
@@ -377,11 +378,11 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
+            onPressed: () => AppNavigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
+            onPressed: () => AppNavigator.pop(dialogContext, true),
             child: const Text('Import'),
           ),
         ],
@@ -531,11 +532,11 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
+            onPressed: () => AppNavigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
+            onPressed: () => AppNavigator.pop(dialogContext, true),
             child: const Text('Restore'),
           ),
         ],
@@ -677,7 +678,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         ),
         actions: [
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => AppNavigator.pop(context),
             child: const Text('OK'),
           ),
         ],
@@ -740,11 +741,11 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => AppNavigator.pop(context, false),
             child: Text(l10n.cancelAction),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => AppNavigator.pop(context, true),
             child: Text(l10n.clearAction),
           ),
         ],
@@ -788,7 +789,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       progress.dispose();
     }
     if (!context.mounted) return;
-    Navigator.of(context, rootNavigator: true).pop();
+    AppNavigator.popRoot(context);
     if (!context.mounted) return;
     if (!outcome.isSuccess) {
       final message = _buildImportErrorMessage(outcome.failure);
@@ -952,13 +953,12 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       isLocked: false,
     );
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => AirportEditScreen(
-            item: placeholder,
-            isCreate: true,
-            initialIata: iataCode,
-          ),
+      await AppNavigator.pushMaterial<void>(
+        context,
+        (_) => AirportEditScreen(
+          item: placeholder,
+          isCreate: true,
+          initialIata: iataCode,
         ),
       );
     } else {
@@ -1008,15 +1008,14 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       isLocked: false,
     );
     if (isCompact) {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => AircraftEditScreen(
-            item: placeholder,
-            isCreate: true,
-            initialIsSimulator: true,
-            initialRegistration: missingAircraft.registration,
-            initialAircraftTypeId: aircraftTypeId,
-          ),
+      await AppNavigator.pushMaterial<void>(
+        context,
+        (_) => AircraftEditScreen(
+          item: placeholder,
+          isCreate: true,
+          initialIsSimulator: true,
+          initialRegistration: missingAircraft.registration,
+          initialAircraftTypeId: aircraftTypeId,
         ),
       );
     } else {
@@ -1109,11 +1108,11 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         content: Text('File: $fileName\nDetected: $label'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => AppNavigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => AppNavigator.pop(context, true),
             child: const Text('Continue'),
           ),
         ],

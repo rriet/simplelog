@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/features/database/presentation/database_screen.dart';
+import 'package:simplelog/features/settings/presentation/widgets/duty_rules_settings_card.dart';
 import 'package:simplelog/features/settings/presentation/widgets/flight_factoring_settings_card.dart';
 import 'package:simplelog/features/settings/presentation/widgets/pilot_profile_settings_card.dart';
 import 'package:simplelog/features/settings/presentation/widgets/previous_experience_settings_tab.dart';
@@ -56,6 +57,8 @@ class SettingsScreen extends ConsumerWidget {
                             SizedBox(height: 8),
                             PilotProfileSettingsCard(),
                             FlightFactoringSettingsCard(),
+                            SizedBox(height: 8),
+                            DutyRulesSettingsCard(),
                           ],
                         ),
                       ],

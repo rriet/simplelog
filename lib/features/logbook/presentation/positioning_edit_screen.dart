@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
+import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
@@ -61,6 +62,14 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
   @override
   void initState() {
     super.initState();
+    EditScreenLifecycleLogger.onInit(
+      screen: 'PositioningEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.positioningId,
+      },
+    );
     _departureTimeController.text = ClockTimeInputField.formatMinutesOfDay(
       _departure.hour * 60 + _departure.minute,
     );
@@ -71,6 +80,14 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
 
   @override
   void dispose() {
+    EditScreenLifecycleLogger.onDispose(
+      screen: 'PositioningEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.positioningId,
+      },
+    );
     _departureTimeController.dispose();
     _arrivalTimeController.dispose();
     _timeController.dispose();

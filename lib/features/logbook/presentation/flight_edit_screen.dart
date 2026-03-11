@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
+import 'package:simplelog/core/debug/edit_screen_lifecycle_logger.dart';
 import 'package:simplelog/core/flight/flight_calculations.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
@@ -202,11 +204,27 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   @override
   void initState() {
     super.initState();
+    EditScreenLifecycleLogger.onInit(
+      screen: 'FlightEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.flightId,
+      },
+    );
     unawaited(_load());
   }
 
   @override
   void dispose() {
+    EditScreenLifecycleLogger.onDispose(
+      screen: 'FlightEditScreen',
+      state: this,
+      details: <String, Object?>{
+        'isCreate': widget.isCreate,
+        'id': widget.flightId,
+      },
+    );
     _remarksController.dispose();
     _notesController.dispose();
     _chocksOffTimeController.dispose();
@@ -286,8 +304,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         await _insertDefaultSelfCrewIfAny();
       }
       _refreshTotalBlockController();
-      if (!mounted) return;
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
       return;
     }
     final useCases = ref.read(logbookUseCasesProvider);
@@ -409,7 +428,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         ),
       );
     _refreshTotalBlockController();
-    setState(() => _loading = false);
+    if (mounted) {
+      setState(() => _loading = false);
+    }
   }
 
   Future<void> _insertDefaultSelfCrewIfAny() async {
@@ -438,15 +459,17 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       lastDate: DateTime(2100),
     );
     if (picked == null || !mounted) return;
-    setState(() {
-      _chocksOff = DateTime(
-        picked.year,
-        picked.month,
-        picked.day,
-        _chocksOff.hour,
-        _chocksOff.minute,
-      );
-    });
+    if (mounted) {
+      setState(() {
+        _chocksOff = DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          _chocksOff.hour,
+          _chocksOff.minute,
+        );
+      });
+    }
   }
 
   void _onChocksOffTimeChanged(int totalMinutes) {
@@ -527,7 +550,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     );
     _clearKeyboardFocus();
     if (selected == null || !mounted) return;
-    setState(() => _aircraftId = selected.id);
+    if (mounted) {
+      setState(() => _aircraftId = selected.id);
+    }
   }
 
   Future<void> _createAircraftAndSelect() async {
@@ -556,7 +581,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
               ..limit(1))
             .getSingleOrNull();
     if (!mounted || created == null) return;
-    setState(() => _aircraftId = created.id);
+    if (mounted) {
+      setState(() => _aircraftId = created.id);
+    }
   }
 
   Future<void> _pickAirport({required bool isFrom}) async {
@@ -571,13 +598,15 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     _airportLabelCache[selected.id] = name.isEmpty
         ? selected.icao
         : '${selected.icao} - $name';
-    setState(() {
-      if (isFrom) {
-        _fromAirportId = selected.id;
-      } else {
-        _toAirportId = selected.id;
-      }
-    });
+    if (mounted) {
+      setState(() {
+        if (isFrom) {
+          _fromAirportId = selected.id;
+        } else {
+          _toAirportId = selected.id;
+        }
+      });
+    }
   }
 
   Future<void> _createAirport({required bool isFrom}) async {
@@ -623,13 +652,15 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       }
     }
     if (airportId == null) return;
-    setState(() {
-      if (isFrom) {
-        _fromAirportId = airportId;
-      } else {
-        _toAirportId = airportId;
-      }
-    });
+    if (mounted) {
+      setState(() {
+        if (isFrom) {
+          _fromAirportId = airportId;
+        } else {
+          _toAirportId = airportId;
+        }
+      });
+    }
   }
 
   Future<void> _next() async {
@@ -650,12 +681,14 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       _distanceNmController.text = '${calc.distanceNm}';
     }
     if (!mounted) return;
-    setState(() {
-      _showFirstPageRequiredErrors = false;
-      _showChocksOffRequiredError = false;
-      _showCalculateRequiredError = false;
-      _page = 1;
-    });
+    if (mounted) {
+      setState(() {
+        _showFirstPageRequiredErrors = false;
+        _showChocksOffRequiredError = false;
+        _showCalculateRequiredError = false;
+        _page = 1;
+      });
+    }
   }
 
   Future<void> _calculateAndNext() async {
@@ -682,12 +715,14 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final calc = await _calculate();
     if (calc == null || !mounted) return;
     _applyCalculation(calc);
-    setState(() {
-      _showFirstPageRequiredErrors = false;
-      _showChocksOffRequiredError = false;
-      _showCalculateRequiredError = false;
-      _page = 1;
-    });
+    if (mounted) {
+      setState(() {
+        _showFirstPageRequiredErrors = false;
+        _showChocksOffRequiredError = false;
+        _showCalculateRequiredError = false;
+        _page = 1;
+      });
+    }
   }
 
   Future<void> _calculateInPlace() async {
@@ -715,12 +750,14 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     if (!_validateTimeSequence(requireChocksOn: true)) return;
     final calc = await _calculate();
     if (calc == null || !mounted) return;
-    setState(() {
-      _showFirstPageRequiredErrors = false;
-      _showChocksOffRequiredError = false;
-      _showCalculateRequiredError = false;
-      _applyCalculation(calc);
-    });
+    if (mounted) {
+      setState(() {
+        _showFirstPageRequiredErrors = false;
+        _showChocksOffRequiredError = false;
+        _showCalculateRequiredError = false;
+        _applyCalculation(calc);
+      });
+    }
   }
 
   void _applyCalculation(_FlightCalcResult calc) {
@@ -1137,7 +1174,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       return;
     }
     if (!mounted) return;
-    Navigator.of(context).pop(true);
+    AppNavigator.pop(context, true);
   }
 
   Future<bool> _confirmRuleWarnings(List<ValidationIssue> warnings) async {
@@ -1152,11 +1189,11 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => AppNavigator.pop(context, false),
             child: Text(l10n.reviewAction),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => AppNavigator.pop(context, true),
             child: Text(l10n.saveAnywayAction),
           ),
         ],
@@ -1349,13 +1386,21 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         setState(() => _page -= 1);
         return;
       }
-      unawaited(Navigator.of(context).maybePop());
+      AppNavigator.pop(context);
     }
+
+    final leading = _page == 1
+        ? IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new),
+            onPressed: () => setState(() => _page = 0),
+          )
+        : null;
 
     return AdaptiveFormShell(
       onClose: handleCloseOrBack,
       longTitle: title,
       shortTitle: title,
+      leading: leading,
       actions: actions,
       contentView: formBody,
     );
@@ -2100,7 +2145,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       target.text = TimeInputField.formatMinutes(minutes);
     }
     if (!mounted) return;
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   int _parseCount(String raw) {
@@ -2258,9 +2305,11 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       initial: _endorsement,
     );
     if (!mounted || value == null) return;
-    setState(() {
-      _endorsement = value.isEmpty ? null : value;
-    });
+    if (mounted) {
+      setState(() {
+        _endorsement = value.isEmpty ? null : value;
+      });
+    }
   }
 
   TimeOfDay? _toTimeOfDayFromDb(DateTime? d) {

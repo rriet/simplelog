@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/presentation/widgets/display/slidable_actions.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
@@ -570,10 +571,12 @@ class _LogbookDutyGroupCard extends StatelessWidget {
   String _formatDutyTitle(BuildContext context, DateTime start, DateTime end) {
     final locale = Localizations.localeOf(context).toString();
     final timeFormat = DateFormat('HH:mm', locale);
-    final startTime = timeFormat.format(start);
-    final endTime = timeFormat.format(end);
-    final startDate = DateTime.utc(start.year, start.month, start.day);
-    final endDate = DateTime.utc(end.year, end.month, end.day);
+    final startUtc = DbDateTime.dbToUtc(start);
+    final endUtc = DbDateTime.dbToUtc(end);
+    final startTime = timeFormat.format(startUtc);
+    final endTime = timeFormat.format(endUtc);
+    final startDate = DateTime.utc(startUtc.year, startUtc.month, startUtc.day);
+    final endDate = DateTime.utc(endUtc.year, endUtc.month, endUtc.day);
     final dayDelta = endDate.difference(startDate).inDays;
     final suffix = dayDelta > 0 ? ' (+$dayDelta)' : '';
     return 'Duty $startTime → $endTime$suffix';
