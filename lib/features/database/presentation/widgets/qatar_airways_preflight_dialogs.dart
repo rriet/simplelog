@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 
@@ -56,9 +57,6 @@ class QatarAirwaysMissingAirportsDialog extends StatefulWidget {
 
 class _QatarAirwaysMissingAirportsDialogState
     extends State<QatarAirwaysMissingAirportsDialog> {
-  static const _missingAirportsMessage =
-      'Create the missing airports before continuing the Qatar Airways import.';
-
   late final List<String> _pendingCodes;
   bool _busy = false;
 
@@ -90,6 +88,7 @@ class _QatarAirwaysMissingAirportsDialogState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
       title: const Text('Missing Airports'),
       content: SizedBox(
@@ -98,9 +97,7 @@ class _QatarAirwaysMissingAirportsDialogState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              _missingAirportsMessage,
-            ),
+            Text(l10n.qatarMissingAirportsMessage),
             const SizedBox(height: 12),
             SizedBox(
               height: 280,
@@ -193,9 +190,6 @@ class QatarAirwaysMissingAircraftDialog extends StatefulWidget {
 
 class _QatarAirwaysMissingAircraftDialogState
     extends State<QatarAirwaysMissingAircraftDialog> {
-  static const _missingAircraftMessage =
-      'Create the missing simulator aircraft before continuing the Qatar Airways import.';
-
   late final List<QatarAirwaysMissingAircraft> _pendingAircraft;
   bool _busy = false;
 
@@ -234,6 +228,7 @@ class _QatarAirwaysMissingAircraftDialogState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final body = Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Align(
@@ -243,9 +238,7 @@ class _QatarAirwaysMissingAircraftDialogState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                _missingAircraftMessage,
-              ),
+              Text(l10n.qatarMissingAircraftMessage),
               const SizedBox(height: 12),
               Expanded(
                 child: ListView.separated(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/features/database/presentation/database_screen.dart';
 import 'package:simplelog/features/settings/presentation/widgets/duty_rules_settings_card.dart';
@@ -16,11 +17,10 @@ class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   static const _calculationPilotProfileTitle = 'Calculation & Pilot Profile';
-  static const _calculationPilotProfileSubtitle =
-      'Pilot identity and signature preferences.';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return DefaultTabController(
       length: 4,
       child: Column(
@@ -44,19 +44,20 @@ class SettingsScreen extends ConsumerWidget {
                     constraints: const BoxConstraints(maxWidth: 760),
                     child: ListView(
                       padding: const EdgeInsets.all(16),
-                      children: const [
-                        _SettingsSectionCard(
+                      children: [
+                        const _SettingsSectionCard(
                           title: 'Appearance',
                           subtitle: 'Theme and display preferences.',
                           children: [
                             ThemeModeSelector(),
                           ],
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         _SettingsSectionCard(
                           title: _calculationPilotProfileTitle,
-                          subtitle: _calculationPilotProfileSubtitle,
-                          children: [
+                          subtitle: l10n.
+                            settingsCalculationPilotProfileSubtitle,
+                          children: const [
                             SimulatorDefaultPositionSelector(),
                             SizedBox(height: 8),
                             PilotProfileSettingsCard(),

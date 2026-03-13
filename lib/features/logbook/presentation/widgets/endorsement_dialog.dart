@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
@@ -39,9 +40,6 @@ class EndorsementDialog extends StatefulWidget {
 }
 
 class _EndorsementDialogState extends State<EndorsementDialog> {
-  static const _lockWarningText =
-      'Once saved with an endorsement signature, this entry is locked and cannot be edited unless the signature is removed.';
-
   final _nameController = TextEditingController();
   final _certificateController = TextEditingController();
   final _typeController = TextEditingController();
@@ -81,6 +79,7 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasInitial = widget.initial != null && !widget.initial!.isEmpty;
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
@@ -104,9 +103,7 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
                 color: Theme.of(context).colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
-                _lockWarningText,
-              ),
+              child: Text(l10n.endorsementLockWarning),
             ),
             const SizedBox(height: 12),
             TextField(

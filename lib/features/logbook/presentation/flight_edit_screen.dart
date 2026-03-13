@@ -42,7 +42,6 @@ import 'package:simplelog/features/logbook/application/providers/logbook_feature
 import 'package:simplelog/features/logbook/presentation/flight_prefill.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
-import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/endorsement_dialog.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_form_fields.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
@@ -558,6 +557,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
 
   Future<void> _createAircraftAndSelect() async {
     final screenContext = context;
+    final useRoutePresentation =
+        MediaQuery.of(screenContext).size.width < 600 ||
+        screenContext.findAncestorWidgetOfExactType<Dialog>() != null;
     const placeholder = Aircraft(
       id: kPlaceholderId,
       aircraftTypeId: 0,
@@ -566,14 +568,26 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       isFavorite: false,
       isLocked: false,
     );
-    final result = await showConstrainedEditDialog<dynamic>(
-      context: screenContext,
-      child: const AircraftEditScreen(
-        item: placeholder,
-        isCreate: true,
-        initialIsSimulator: false,
-      ),
-    );
+    dynamic result;
+    if (useRoutePresentation) {
+      result = await AppNavigator.pushMaterial<dynamic>(
+        screenContext,
+        (_) => const AircraftEditScreen(
+          item: placeholder,
+          isCreate: true,
+          initialIsSimulator: false,
+        ),
+      );
+    } else {
+      result = await showDialog<dynamic>(
+        context: screenContext,
+        builder: (_) => const AircraftEditScreen(
+          item: placeholder,
+          isCreate: true,
+          initialIsSimulator: false,
+        ),
+      );
+    }
     if (!mounted || result != true) return;
     final db = ref.read(databaseProvider);
     final created =
@@ -612,6 +626,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
 
   Future<void> _createAirport({required bool isFrom}) async {
     final screenContext = context;
+    final useRoutePresentation =
+        MediaQuery.of(screenContext).size.width < 600 ||
+        screenContext.findAncestorWidgetOfExactType<Dialog>() != null;
     const placeholder = Airport(
       id: kPlaceholderId,
       icao: '',
@@ -620,10 +637,19 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       isFavorite: false,
       isLocked: false,
     );
-    final result = await showConstrainedEditDialog<dynamic>(
-      context: screenContext,
-      child: const AirportEditScreen(item: placeholder, isCreate: true),
-    );
+    dynamic result;
+    if (useRoutePresentation) {
+      result = await AppNavigator.pushMaterial<dynamic>(
+        screenContext,
+        (_) => const AirportEditScreen(item: placeholder, isCreate: true),
+      );
+    } else {
+      result = await showDialog<dynamic>(
+        context: screenContext,
+        builder: (_) =>
+            const AirportEditScreen(item: placeholder, isCreate: true),
+      );
+    }
     if (!mounted) return;
     final db = ref.read(databaseProvider);
     var airportId = result is int ? result : null;

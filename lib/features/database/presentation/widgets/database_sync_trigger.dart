@@ -46,7 +46,6 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   static const _sourceDispatcher = ImportSourceDispatcher();
   static const _logTenProInspector = LogTenProTsvInspector();
   static const _qatarAirwaysInspector = QatarAirwaysWorkbookInspector();
-  static const _syncSubtitle = 'Connect two devices on the same network.';
   static const _importExportSubtitle =
       'Import supported files with automatic format detection, or export CSV.';
   static const _replaceDataWarningMessage =
@@ -99,7 +98,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
             const SizedBox(height: 16),
             _DatabaseSectionCard(
               title: 'Sync',
-              subtitle: _syncSubtitle,
+              subtitle: l10n.databaseSyncSubtitle,
               children: [
                 _DatabaseActionButton(
                   icon: Icons.sync,

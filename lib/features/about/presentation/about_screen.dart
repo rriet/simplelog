@@ -1,47 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const _aboutTagline = 'Pilot Logbook • Made by a Pilot, for Pilots';
-const _aboutAppName = 'SimpleLog';
 const _aboutLaunchErrorPrefix = 'Could not launch';
-const _aboutWhyTitle = 'Why SimpleLog';
-const _aboutGithubTitle = 'Open Source on GitHub';
-const _aboutSupportTitle = 'Support SimpleLog';
-const _aboutStoryText =
-    'SimpleLog was born in the cockpit: built by a real '
-    'airline pilot who got fed up with scribbling on paper '
-    "like it's 1976.\n\n"
-    'This app replaces my previous Java '
-    'logbook software, which I developed and used for '
-    'many years as an airline pilot. '
-    'The rewrite brings mobile support, modern UI, and '
-    'easier data portability — while preserving the core '
-    'focus on quick, accurate entries in real operations.\n\n'
-    'Just punch in takeoff, landing, airports and times → '
-    'smash Calculate → watch how fast totals and breakdowns '
-    'gets calculated automatically → save and done.\n\n'
-    'No nonsense, no subscriptions, no server drama. Your '
-    'flights stay yours, stored locally, synced on local '
-    'network.\n\n'
-    'Open source. Free forever. Fly. Log. Repeat.\n'
-    'If it saves you time, a coffee keeps the lights on. ☕✈️';
-const _githubDocsText =
-    'Documentation • Tutorials • Sync setup • '
-    'Desktop builds • Bug tracker • Future '
-    'features';
-const _supportBodyText =
-    'SimpleLog will always remain free and open source.\n\n'
-    'Ongoing costs include Apple & Google developer '
-    'accounts, '
-    'test devices, and countless hours improving the app '
-    'based on real pilot feedback.\n\n'
-    'If SimpleLog saves you time in the cockpit or makes '
-    'your logbook life easier — any support is deeply '
-    'appreciated.';
-const _supportFooterText =
-    '→ The GitHub page has full documentation, tutorials, '
-    'sync guides, desktop builds, and ways to support '
-    'the project.';
 
 /// About page with software details and license access.
 class AboutScreen extends StatelessWidget {
@@ -52,6 +13,7 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return DefaultTabController(
       length: 2,
       child: Column(
@@ -66,8 +28,8 @@ class AboutScreen extends StatelessWidget {
             child: TabBarView(
               children: [
                 _AboutTab(openRepository: _openRepository),
-                const LicensePage(
-                  applicationName: _aboutAppName,
+                LicensePage(
+                  applicationName: l10n.appTitle,
                 ),
               ],
             ),
@@ -93,6 +55,7 @@ class _AboutTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     return SingleChildScrollView(
@@ -111,7 +74,7 @@ class _AboutTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    _aboutAppName,
+                    l10n.appTitle,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
@@ -119,7 +82,7 @@ class _AboutTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _aboutTagline,
+                    l10n.aboutTagline,
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.primary.withValues(alpha: 0.8),
                     ),
@@ -134,22 +97,20 @@ class _AboutTab extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Padding(
-                padding: EdgeInsets.all(20),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _aboutWhyTitle,
-                      style: TextStyle(
+                      l10n.aboutWhyTitle,
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 12),
-                    Text(
-                      _aboutStoryText,
-                    ),
+                    const SizedBox(height: 12),
+                    Text(l10n.aboutStoryText),
                   ],
                 ),
               ),
@@ -182,7 +143,7 @@ class _AboutTab extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _aboutGithubTitle,
+                                  l10n.aboutGithubTitle,
                                   style: theme.textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: theme.colorScheme.primary,
@@ -190,7 +151,7 @@ class _AboutTab extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  _githubDocsText,
+                                  l10n.aboutGithubDocsText,
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
@@ -201,18 +162,18 @@ class _AboutTab extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Tap here to visit the project page →',
-                        style: TextStyle(
+                      Text(
+                        l10n.aboutTapProject,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 15,
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'github.com/rriet/simplelog',
-                        style: TextStyle(
+                      Text(
+                        l10n.aboutRepoAddress,
+                        style: const TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 15,
                           color: Colors.blueGrey,
@@ -229,36 +190,34 @@ class _AboutTab extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Padding(
-                padding: EdgeInsets.all(20),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.favorite_border_rounded,
                           color: Colors.redAccent,
                           size: 28,
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Text(
-                          _aboutSupportTitle,
-                          style: TextStyle(
+                          l10n.aboutSupportTitle,
+                          style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
+                    Text(l10n.aboutSupportBodyText),
+                    const SizedBox(height: 16),
                     Text(
-                      _supportBodyText,
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      _supportFooterText,
-                      style: TextStyle(fontStyle: FontStyle.italic),
+                      l10n.aboutSupportFooterText,
+                      style: const TextStyle(fontStyle: FontStyle.italic),
                     ),
                   ],
                 ),
@@ -269,7 +228,7 @@ class _AboutTab extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'Flutter • Riverpod • Drift',
+                    l10n.aboutTechStack,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant.withValues(
                         alpha: 0.7,
@@ -278,7 +237,7 @@ class _AboutTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'GNU GPLv3 License',
+                    l10n.aboutLicenseText,
                     style: theme.textTheme.bodySmall,
                   ),
                 ],

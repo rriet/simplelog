@@ -161,18 +161,8 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) {
-        final size = MediaQuery.sizeOf(context);
-        return Dialog(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 520,
-              maxHeight: size.height * 0.9,
-            ),
-            child: const CrewEditScreen(item: placeholder, isCreate: true),
-          ),
-        );
-      },
+      builder: (context) =>
+          const CrewEditScreen(item: placeholder, isCreate: true),
     );
   }
 
@@ -189,18 +179,7 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) {
-        final size = MediaQuery.sizeOf(context);
-        return Dialog(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 520,
-              maxHeight: size.height * 0.9,
-            ),
-            child: CrewEditScreen(item: row.crew),
-          ),
-        );
-      },
+      builder: (context) => CrewEditScreen(item: row.crew),
     );
   }
 

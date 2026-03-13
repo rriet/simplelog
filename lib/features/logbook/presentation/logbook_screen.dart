@@ -41,9 +41,6 @@ class LogbookScreen extends ConsumerStatefulWidget {
 
 class _LogbookScreenState extends ConsumerState<LogbookScreen>
     with SingleTickerProviderStateMixin {
-  static const _unlockEndorsementWarningMessage =
-      'If you unlock this entry, signature and endorsement information will be deleted. Continue?';
-
   int? _currentYear;
   bool _fabOpen = false;
   int _selectedTabIndex = 0;
@@ -725,12 +722,12 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
   }
 
   Future<bool?> _confirmEndorsementUnlock() {
-    const unlockTitle = 'Unlock endorsed entry?';
+    final l10n = AppLocalizations.of(context)!;
     return _showConfirmDialog(
-      title: const Text(unlockTitle),
-      content: const Text(_unlockEndorsementWarningMessage),
-      cancelLabel: const Text('Cancel'),
-      confirmLabel: const Text('Unlock'),
+      title: Text(l10n.logbookUnlockEndorsedEntryTitle),
+      content: Text(l10n.logbookUnlockEndorsementWarning),
+      cancelLabel: Text(l10n.cancelAction),
+      confirmLabel: Text(l10n.logbookUnlockAction),
     );
   }
 

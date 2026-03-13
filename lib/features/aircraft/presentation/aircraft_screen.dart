@@ -211,21 +211,10 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) => Dialog(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 520,
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
-          ),
-          child: SizedBox(
-            width: 520,
-            child: AircraftEditScreen(
-              item: placeholder,
-              isCreate: true,
-              initialIsSimulator: isSimulator,
-            ),
-          ),
-        ),
+      builder: (_) => AircraftEditScreen(
+        item: placeholder,
+        isCreate: true,
+        initialIsSimulator: isSimulator,
       ),
     );
   }
@@ -245,19 +234,8 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) => Dialog(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 520,
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
-          ),
-          child: SizedBox(
-            width: 520,
-            child: AircraftEditScreen(
-              item: row.aircraft,
-            ),
-          ),
-        ),
+      builder: (_) => AircraftEditScreen(
+        item: row.aircraft,
       ),
     );
   }

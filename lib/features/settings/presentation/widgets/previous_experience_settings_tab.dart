@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
@@ -15,6 +16,32 @@ import 'package:simplelog/data/models/previous_experience_row.dart';
 import 'package:simplelog/features/aircraft_types/application/providers/aircraft_type_repository_provider.dart';
 import 'package:simplelog/features/settings/presentation/providers/previous_experience_providers.dart';
 
+Future<bool?> _showPreviousExperienceConfirmationDialog({
+  required BuildContext context,
+  required String title,
+  required String content,
+  required String cancelLabel,
+  required String confirmLabel,
+}) {
+  return showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(title),
+      content: Text(content),
+      actions: [
+        TextButton(
+          onPressed: () => AppNavigator.pop(dialogContext, false),
+          child: Text(cancelLabel),
+        ),
+        FilledButton(
+          onPressed: () => AppNavigator.pop(dialogContext, true),
+          child: Text(confirmLabel),
+        ),
+      ],
+    ),
+  );
+}
+
 /// Settings tab to manage imported/manual previous-experience totals.
 ///
 /// Users can list, add, edit, and delete previous experience rows per aircraft
@@ -23,11 +50,9 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
   /// Creates the previous-experience tab.
   const PreviousExperienceSettingsTab({super.key});
 
-  static const _entriesSubtitle =
-      'Edit, add, or remove previous experience records.';
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final rowsAsync = ref.watch(previousExperiencesProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -51,7 +76,7 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
             const SizedBox(height: 16),
             _SettingsSectionCard(
               title: 'Entries',
-              subtitle: _entriesSubtitle,
+              subtitle: l10n.previousExperienceEntriesSubtitle,
               children: [
                 Align(
                   alignment: Alignment.centerRight,
@@ -123,7 +148,7 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
     WidgetRef ref,
     PreviousExperienceRow row,
   ) async {
-    final confirmed = await _showConfirmationDialog(
+    final confirmed = await _showPreviousExperienceConfirmationDialog(
       context: context,
       title: 'Delete Previous Experience',
       content: 'Delete entry for ${row.aircraftType.code}?',
@@ -155,37 +180,11 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
       return;
     }
     if (!context.mounted) return;
-    await showLargeDialogScreen<void>(
+    await showDialog<void>(
       context: context,
       builder: (_) => _PreviousExperienceEditDialog(
         aircraftTypes: typesAsync.map((e) => e.type).toList(),
         initial: initial,
-      ),
-    );
-  }
-
-  Future<bool?> _showConfirmationDialog({
-    required BuildContext context,
-    required String title,
-    required String content,
-    required String cancelLabel,
-    required String confirmLabel,
-  }) {
-    return showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          TextButton(
-            onPressed: () => AppNavigator.pop(dialogContext, false),
-            child: Text(cancelLabel),
-          ),
-          FilledButton(
-            onPressed: () => AppNavigator.pop(dialogContext, true),
-            child: Text(confirmLabel),
-          ),
-        ],
       ),
     );
   }
@@ -516,7 +515,7 @@ class _PreviousExperienceEditDialogState
 
   Future<bool> _showWarningsAndConfirm(List<String> warnings) async {
     if (!mounted) return false;
-    final decision = await _showConfirmationDialog(
+    final decision = await _showPreviousExperienceConfirmationDialog(
       context: context,
       title: 'Validation warnings',
       content: '${warnings.join('\n')}\n\nSave anyway?',
@@ -524,32 +523,6 @@ class _PreviousExperienceEditDialogState
       confirmLabel: 'Save anyway',
     );
     return decision ?? false;
-  }
-
-  Future<bool?> _showConfirmationDialog({
-    required BuildContext context,
-    required String title,
-    required String content,
-    required String cancelLabel,
-    required String confirmLabel,
-  }) {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          TextButton(
-            onPressed: () => AppNavigator.pop(context, false),
-            child: Text(cancelLabel),
-          ),
-          FilledButton(
-            onPressed: () => AppNavigator.pop(context, true),
-            child: Text(confirmLabel),
-          ),
-        ],
-      ),
-    );
   }
 
   @override

@@ -13,7 +13,6 @@ import 'package:simplelog/data/models/airport_row.dart';
 import 'package:simplelog/features/airports/application/providers/airport_repository_provider.dart';
 import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_picker_dialog.dart';
-import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/duty_rules_settings_provider.dart';
 
@@ -159,9 +158,10 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
       isFavorite: false,
       isLocked: false,
     );
-    final result = await showConstrainedEditDialog<dynamic>(
+    final result = await showDialog<dynamic>(
       context: context,
-      child: const AirportEditScreen(item: placeholder, isCreate: true),
+      builder: (_) =>
+          const AirportEditScreen(item: placeholder, isCreate: true),
     );
     if (!mounted) return;
 

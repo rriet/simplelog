@@ -208,11 +208,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   DateTime? _firstFlightDate;
   DateTime? _lastFlightDate;
   static const _mapSectionTitle = 'Map';
-  static const _mapSectionSubtitle =
-      'Preview the filtered routes and path overlay.';
   static const _pdfSectionTitle = 'PDF Generation';
-  static const _pdfSectionSubtitle =
-      'Select template and export the report PDF.';
 
   @override
   void initState() {
@@ -2683,7 +2679,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       children: [
         _ReportsSectionCard(
           title: _mapSectionTitle,
-          subtitle: _mapSectionSubtitle,
+          subtitle: l10n.reportsMapSectionSubtitle,
           children: [
             Row(
               children: [
@@ -2713,7 +2709,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         const SizedBox(height: 12),
         _ReportsSectionCard(
           title: _pdfSectionTitle,
-          subtitle: _pdfSectionSubtitle,
+          subtitle: l10n.reportsPdfSectionSubtitle,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,

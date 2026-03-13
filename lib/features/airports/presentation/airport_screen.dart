@@ -126,18 +126,8 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) {
-        final size = MediaQuery.sizeOf(context);
-        return Dialog(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 520,
-              maxHeight: size.height * 0.9,
-            ),
-            child: const AirportEditScreen(item: placeholder, isCreate: true),
-          ),
-        );
-      },
+      builder: (context) =>
+          const AirportEditScreen(item: placeholder, isCreate: true),
     );
   }
 
@@ -154,18 +144,7 @@ class _AirportsScreenState extends ConsumerState<AirportsScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (context) {
-        final size = MediaQuery.sizeOf(context);
-        return Dialog(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 520,
-              maxHeight: size.height * 0.9,
-            ),
-            child: AirportEditScreen(item: row.airport),
-          ),
-        );
-      },
+      builder: (context) => AirportEditScreen(item: row.airport),
     );
   }
 

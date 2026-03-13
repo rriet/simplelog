@@ -1474,4 +1474,109 @@ class AppLocalizationsLv extends AppLocalizations {
   @override
   String get clearDatabaseMessage =>
       'Tas dzēsīs visus datus un izveidos tukšas tabulas no jauna.';
+
+  @override
+  String get aboutTagline => 'Pilot Logbook • Made by a Pilot, for Pilots';
+
+  @override
+  String get aboutWhyTitle => 'Why SimpleLog';
+
+  @override
+  String get aboutStoryText =>
+      'SimpleLog was born in the cockpit: built by a real airline pilot who got fed up with scribbling on paper like it\'s 1976.\n\nThis app replaces my previous Java logbook software, which I developed and used for many years as an airline pilot. The rewrite brings mobile support, modern UI, and easier data portability while preserving the core focus on quick, accurate entries in real operations.\n\nJust punch in takeoff, landing, airports and times -> smash Calculate -> watch how fast totals and breakdowns get calculated automatically -> save and done.\n\nNo nonsense, no subscriptions, no server drama. Your flights stay yours, stored locally, synced on local network.\n\nOpen source. Free forever. Fly. Log. Repeat.\nIf it saves you time, a coffee keeps the lights on.';
+
+  @override
+  String get aboutGithubTitle => 'Open Source on GitHub';
+
+  @override
+  String get aboutGithubDocsText =>
+      'Documentation • Tutorials • Sync setup • Desktop builds • Bug tracker • Future features';
+
+  @override
+  String get aboutTapProject => 'Tap here to visit the project page ->';
+
+  @override
+  String get aboutRepoAddress => 'github.com/rriet/simplelog';
+
+  @override
+  String get aboutSupportTitle => 'Support SimpleLog';
+
+  @override
+  String get aboutSupportBodyText =>
+      'SimpleLog will always remain free and open source.\n\nOngoing costs include Apple and Google developer accounts, test devices, and countless hours improving the app based on real pilot feedback.\n\nIf SimpleLog saves you time in the cockpit or makes your logbook life easier, any support is deeply appreciated.';
+
+  @override
+  String get aboutSupportFooterText =>
+      '-> The GitHub page has full documentation, tutorials, sync guides, desktop builds, and ways to support the project.';
+
+  @override
+  String get aboutTechStack => 'Flutter • Riverpod • Drift';
+
+  @override
+  String get aboutLicenseText => 'GNU GPLv3 License';
+
+  @override
+  String get databaseSyncSubtitle => 'Connect two devices on the same network.';
+
+  @override
+  String get logtenReviewHelpText =>
+      'Fix the value for each invalid field, or ignore the full source line.';
+
+  @override
+  String get logtenReviewSimulatorSelectedHelp =>
+      'Simulator selected: airport fields are not required.';
+
+  @override
+  String get qatarMissingAirportsMessage =>
+      'Create the missing airports before continuing the Qatar Airways import.';
+
+  @override
+  String get qatarMissingAircraftMessage =>
+      'Create the missing simulator aircraft before continuing the Qatar Airways import.';
+
+  @override
+  String get logbookUnlockEndorsedEntryTitle => 'Unlock endorsed entry?';
+
+  @override
+  String get logbookUnlockEndorsementWarning =>
+      'If you unlock this entry, signature and endorsement information will be deleted. Continue?';
+
+  @override
+  String get logbookUnlockAction => 'Unlock';
+
+  @override
+  String get endorsementLockWarning =>
+      'Once saved with an endorsement signature, this entry is locked and cannot be edited unless the signature is removed.';
+
+  @override
+  String get endorsementMismatchWarning =>
+      'Warning: flight information does not match the original endorsed flight record.';
+
+  @override
+  String get reportsMapSectionSubtitle =>
+      'Preview the filtered routes and path overlay.';
+
+  @override
+  String get reportsPdfSectionSubtitle =>
+      'Select template and export the report PDF.';
+
+  @override
+  String get settingsCalculationPilotProfileSubtitle =>
+      'Pilot identity and signature preferences.';
+
+  @override
+  String get previousExperienceEntriesSubtitle =>
+      'Edit, add, or remove previous experience records.';
+
+  @override
+  String get timeFieldsIntro =>
+      'Control visible time columns and custom labels.';
+
+  @override
+  String get timeFieldsVisibleSubtitle =>
+      'Choose which columns are shown in forms and lists.';
+
+  @override
+  String get timeFieldsCustomLabelsSubtitle =>
+      'Rename custom fields used across the app.';
 }

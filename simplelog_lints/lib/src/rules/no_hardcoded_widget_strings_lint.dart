@@ -1,5 +1,4 @@
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart' hide LintCode;
 import 'package:analyzer/error/listener.dart';
@@ -32,6 +31,7 @@ class NoHardcodedWidgetStringsLint extends DartLintRule {
   ) {
     final path = resolver.source.fullName.replaceAll(r'\', '/');
     if (!_isUiFile(path)) return;
+
     context.registry.addInstanceCreationExpression((node) {
       if (!_isWidgetConstruction(node)) return;
 
@@ -39,14 +39,34 @@ class NoHardcodedWidgetStringsLint extends DartLintRule {
         final expression = argument is NamedExpression
             ? argument.expression
             : argument;
-        final stringLiteral = _extractHardcodedLiteral(expression);
-        if (stringLiteral == null) continue;
-        final value = stringLiteral.stringValue ?? '';
-        if (value.trim().isEmpty) continue;
-        if (_isLowRiskLiteral(value)) continue;
-        reporter.atNode(stringLiteral, code);
+        _checkExpression(expression, reporter);
       }
     });
+  }
+
+  void _checkExpression(Expression expression, DiagnosticReporter reporter) {
+    // Recurse into list literals only — nested widgets get their own
+    // addInstanceCreationExpression callback from the registry.
+    if (expression is ListLiteral) {
+      for (final element in expression.elements) {
+        if (element is Expression) {
+          _checkExpression(element, reporter);
+        }
+      }
+      return;
+    }
+
+    // Skip nested widget constructions — the registry fires for them
+    // independently, so we avoid double-reporting.
+    if (expression is InstanceCreationExpression) {
+      return;
+    }
+
+    final (stringValue, reportNode) = _resolveStringArgument(expression);
+    if (stringValue == null || reportNode == null) return;
+    if (stringValue.trim().isEmpty) return;
+    if (_isLowRiskLiteral(stringValue)) return;
+    reporter.atNode(reportNode, code);
   }
 
   bool _isUiFile(String path) {
@@ -61,75 +81,44 @@ class NoHardcodedWidgetStringsLint extends DartLintRule {
     return _widgetChecker.isAssignableFromType(type);
   }
 
-  StringLiteral? _extractHardcodedLiteral(Expression expression) {
+  (String?, AstNode?) _resolveStringArgument(Expression expression) {
     if (expression is StringLiteral) {
-      return expression;
+      return (expression.stringValue, expression);
     }
-    if (expression is SimpleIdentifier) {
-      final target = expression.element;
-      if (target == null) return null;
-      final unit = expression.thisOrAncestorOfType<CompilationUnit>();
-      if (unit == null) return null;
-      for (final declaration in unit.declarations) {
-        final literal = _findLiteralInDeclaration(declaration, target);
-        if (literal != null) {
-          return literal;
-        }
-      }
-    }
-    return null;
-  }
 
-  StringLiteral? _findLiteralInDeclaration(
-    CompilationUnitMember member,
-    Element target,
-  ) {
-    StringLiteral? result;
-    member.visitChildren(
-      _VariableLiteralVisitor(
-        onVariable: (variable, literal) {
-          final element = variable.declaredFragment?.element;
-          if (element == target) {
-            result = literal;
-          }
-        },
-      ),
-    );
-    return result;
+    Element? target;
+    if (expression is SimpleIdentifier) {
+      target = expression.element;
+    } else if (expression is PrefixedIdentifier) {
+      target = expression.identifier.element;
+    }
+    if (target == null) return (null, null);
+
+    if (target is GetterElement) {
+      final variable = target.variable;
+      if (!variable.isConst) return (null, null);
+      final value = variable.computeConstantValue()?.toStringValue();
+      return (value, expression);
+    }
+
+    if (target is VariableElement && target.isConst) {
+      final value = target.computeConstantValue()?.toStringValue();
+      return (value, expression);
+    }
+
+    return (null, null);
   }
 
   bool _isLowRiskLiteral(String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return true;
-    // Ignore short tokens/acronyms (e.g. PF, IFR, ICAO, OK, MM/DD).
     if (RegExp(r'^[A-Z0-9_./:+\- ]{1,18}$').hasMatch(trimmed)) return true;
-    // Ignore simple single-token labels;
-    // keep lint focused on sentence-like UI text.
     if (!trimmed.contains(' ') && trimmed.length <= 18) return true;
     final words = trimmed
         .split(RegExp(r'\s+'))
         .where((word) => word.isNotEmpty);
-    // Keep this lint focused on long sentence-like UI content.
     if (words.length < 3) return true;
     if (trimmed.length < 40) return true;
     return false;
-  }
-}
-
-class _VariableLiteralVisitor extends RecursiveAstVisitor<void> {
-  _VariableLiteralVisitor({
-    required this.onVariable,
-  });
-
-  final void Function(VariableDeclaration variable, StringLiteral literal)
-  onVariable;
-
-  @override
-  void visitVariableDeclaration(VariableDeclaration node) {
-    final initializer = node.initializer;
-    if (initializer is StringLiteral) {
-      onVariable(node, initializer);
-    }
-    super.visitVariableDeclaration(node);
   }
 }

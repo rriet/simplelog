@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/features/settings/presentation/widgets/flight_takeoff_landing_switch.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
@@ -27,12 +28,6 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
   final _c4 = TextEditingController();
   bool _loadedLabels = false;
   Timer? _labelsSaveDebounce;
-  static const _timeFieldsIntro =
-      'Control visible time columns and custom labels.';
-  static const _visibleFieldsSubtitle =
-      'Choose which columns are shown in forms and lists.';
-  static const _customLabelsSubtitle =
-      'Rename custom fields used across the app.';
 
   @override
   void dispose() {
@@ -116,6 +111,7 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final labelsAsync = ref.watch(customTimeLabelsProvider);
     final visibilityAsync = ref.watch(flightTimeFieldsVisibilityProvider);
     final labels = labelsAsync.valueOrNull ?? const CustomTimeLabels();
@@ -143,7 +139,7 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
             ),
             const SizedBox(height: 6),
             Text(
-              _timeFieldsIntro,
+              l10n.timeFieldsIntro,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -157,7 +153,7 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
             const SizedBox(height: 12),
             _SettingsSectionCard(
               title: 'Visible Time Fields',
-              subtitle: _visibleFieldsSubtitle,
+              subtitle: l10n.timeFieldsVisibleSubtitle,
               children: [
                 SwitchListTile(
                   value: visibility.pic,
@@ -238,7 +234,7 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
             const SizedBox(height: 12),
             _SettingsSectionCard(
               title: 'Custom Time Labels',
-              subtitle: _customLabelsSubtitle,
+              subtitle: l10n.timeFieldsCustomLabelsSubtitle,
               children: [
                 TextFormField(
                   controller: _c1,

@@ -4,13 +4,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/import/logten_pro_import_models.dart';
 import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_picker_dialog.dart';
-import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
 class LogTenImportReviewResult {
@@ -64,11 +64,6 @@ class LogTenProImportReviewDialog extends ConsumerStatefulWidget {
 
 class _LogTenProImportReviewDialogState
     extends ConsumerState<LogTenProImportReviewDialog> {
-  static const _reviewHelpText =
-      'Fix the value for each invalid field, or ignore the full source line.';
-  static const _simulatorSelectedHelp =
-      'Simulator selected: airport fields are not required.';
-
   late final Map<int, Map<LogTenFieldAssociation, TextEditingController>>
   _controllers;
   late final Set<int> _ignoredLines;
@@ -212,9 +207,9 @@ class _LogTenProImportReviewDialogState
 
   Future<void> _createAirport(LogTenImportIssue issue) async {
     final raw = issue.currentValue.trim().toUpperCase();
-    final result = await showConstrainedEditDialog<dynamic>(
+    final result = await showDialog<dynamic>(
       context: context,
-      child: AirportEditScreen(
+      builder: (_) => AirportEditScreen(
         item: const Airport(
           id: kPlaceholderId,
           icao: '',
@@ -259,6 +254,7 @@ class _LogTenProImportReviewDialogState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final lineNumbers =
         widget.issues.map((issue) => issue.lineNumber).toSet().toList()..sort();
     final body = ConstrainedBox(
@@ -271,10 +267,8 @@ class _LogTenProImportReviewDialogState
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Row(
               children: [
-                const Expanded(
-                  child: Text(
-                    _reviewHelpText,
-                  ),
+                Expanded(
+                  child: Text(l10n.logtenReviewHelpText),
                 ),
                 TextButton(
                   onPressed: _ignoreAll,
@@ -361,9 +355,7 @@ class _LogTenProImportReviewDialogState
                           ),
                           const SizedBox(height: 8),
                           if (simulatorSelected)
-                            const Text(
-                              _simulatorSelectedHelp,
-                            ),
+                            Text(l10n.logtenReviewSimulatorSelectedHelp),
                           const SizedBox(height: 12),
                         ],
                         for (final issue in lineIssues) ...[

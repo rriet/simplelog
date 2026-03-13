@@ -11,9 +11,6 @@ import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_details_dialog.dart';
 import 'package:simplelog/features/crew/presentation/widgets/crew_info_dialog.dart';
 
-const _endorsementMismatchWarningText =
-    'Warning: flight information does not match the original endorsed flight record.';
-
 /// Helper entry-point for displaying event detail dialogs from the logbook.
 class LogbookEntryDialogs {
   const LogbookEntryDialogs._();
@@ -543,6 +540,7 @@ class LogbookEntryDialogs {
     EndorsementData endorsement, {
     bool isHashValid = true,
   }) async {
+    final l10n = AppLocalizations.of(context)!;
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => Dialog(
@@ -584,7 +582,7 @@ class LogbookEntryDialogs {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      _endorsementMismatchWarningText,
+                      l10n.endorsementMismatchWarning,
                       style: Theme.of(dialogContext).textTheme.bodyMedium
                           ?.copyWith(
                             color: Theme.of(dialogContext).colorScheme.error,

@@ -1,10 +1,9 @@
 import 'package:drift/drift.dart' show OrderingTerm;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/features/crew/presentation/crew_edit_screen.dart';
-import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
 /// Creates a new crew member and returns its id for inline picker workflows.
@@ -21,9 +20,9 @@ Future<int?> createCrewAndReturnId({
     isLocked: false,
   );
 
-  final result = await showConstrainedEditDialog<dynamic>(
+  final result = await showDialog<dynamic>(
     context: context,
-    child: const CrewEditScreen(item: placeholder, isCreate: true),
+    builder: (_) => const CrewEditScreen(item: placeholder, isCreate: true),
   );
   if (result != true) return null;
 

@@ -197,7 +197,9 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
   }
 
   Future<void> _createAircraftType() async {
-    final isCompact = MediaQuery.of(context).size.width < 600;
+    final useRoutePresentation =
+        MediaQuery.of(context).size.width < 600 ||
+        context.findAncestorWidgetOfExactType<Dialog>() != null;
     const placeholder = AircraftType(
       id: -1,
       code: '',
@@ -214,7 +216,7 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
       isLocked: false,
     );
 
-    if (isCompact) {
+    if (useRoutePresentation) {
       final newId = await AppNavigator.pushMaterial<int?>(
         context,
         (_) => const AircraftTypeEditScreen(item: placeholder, isCreate: true),
@@ -228,21 +230,8 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
 
     final newId = await showDialog<int?>(
       context: context,
-      builder: (context) {
-        final size = MediaQuery.sizeOf(context);
-        return Dialog(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 520,
-              maxHeight: size.height * 0.9,
-            ),
-            child: const AircraftTypeEditScreen(
-              item: placeholder,
-              isCreate: true,
-            ),
-          ),
-        );
-      },
+      builder: (_) =>
+          const AircraftTypeEditScreen(item: placeholder, isCreate: true),
     );
     if (!mounted) return;
     if (newId != null) {

@@ -22,7 +22,6 @@ import 'package:simplelog/features/airports/application/providers/airports_featu
 import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_picker_dialog.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
-import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_form_fields.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 
@@ -225,6 +224,9 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
   }
 
   Future<void> _createAirportAndSelect({required bool asDeparture}) async {
+    final useRoutePresentation =
+        MediaQuery.of(context).size.width < 600 ||
+        context.findAncestorWidgetOfExactType<Dialog>() != null;
     const placeholder = Airport(
       id: kPlaceholderId,
       icao: '',
@@ -233,10 +235,19 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       isFavorite: false,
       isLocked: false,
     );
-    final result = await showConstrainedEditDialog<dynamic>(
-      context: context,
-      child: const AirportEditScreen(item: placeholder, isCreate: true),
-    );
+    dynamic result;
+    if (useRoutePresentation) {
+      result = await AppNavigator.pushMaterial<dynamic>(
+        context,
+        (_) => const AirportEditScreen(item: placeholder, isCreate: true),
+      );
+    } else {
+      result = await showDialog<dynamic>(
+        context: context,
+        builder: (_) =>
+            const AirportEditScreen(item: placeholder, isCreate: true),
+      );
+    }
 
     if (!mounted) return;
     final id = result is int ? result : null;

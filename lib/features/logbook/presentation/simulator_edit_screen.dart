@@ -28,7 +28,6 @@ import 'package:simplelog/features/crew/application/providers/crew_feature_provi
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/add_crew_dialog.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/crew_creation_helper.dart';
-import 'package:simplelog/features/logbook/presentation/widgets/edit_dialog_presenter.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/endorsement_dialog.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_form_fields.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
@@ -211,6 +210,9 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   }
 
   Future<void> _createSimulatorAndSelect() async {
+    final useRoutePresentation =
+        MediaQuery.of(context).size.width < 600 ||
+        context.findAncestorWidgetOfExactType<Dialog>() != null;
     const placeholder = Aircraft(
       id: kPlaceholderId,
       aircraftTypeId: 0,
@@ -219,14 +221,26 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       isFavorite: false,
       isLocked: false,
     );
-    final result = await showConstrainedEditDialog<dynamic>(
-      context: context,
-      child: const AircraftEditScreen(
-        item: placeholder,
-        isCreate: true,
-        initialIsSimulator: true,
-      ),
-    );
+    dynamic result;
+    if (useRoutePresentation) {
+      result = await AppNavigator.pushMaterial<dynamic>(
+        context,
+        (_) => const AircraftEditScreen(
+          item: placeholder,
+          isCreate: true,
+          initialIsSimulator: true,
+        ),
+      );
+    } else {
+      result = await showDialog<dynamic>(
+        context: context,
+        builder: (_) => const AircraftEditScreen(
+          item: placeholder,
+          isCreate: true,
+          initialIsSimulator: true,
+        ),
+      );
+    }
     if (!mounted || result != true) return;
     final db = ref.read(databaseProvider);
     final created =

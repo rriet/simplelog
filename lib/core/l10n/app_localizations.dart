@@ -2907,6 +2907,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This will delete all data and recreate empty tables.'**
   String get clearDatabaseMessage;
+
+  /// No description provided for @aboutTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot Logbook • Made by a Pilot, for Pilots'**
+  String get aboutTagline;
+
+  /// No description provided for @aboutWhyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Why SimpleLog'**
+  String get aboutWhyTitle;
+
+  /// No description provided for @aboutStoryText.
+  ///
+  /// In en, this message translates to:
+  /// **'SimpleLog was born in the cockpit: built by a real airline pilot who got fed up with scribbling on paper like it\'s 1976.\n\nThis app replaces my previous Java logbook software, which I developed and used for many years as an airline pilot. The rewrite brings mobile support, modern UI, and easier data portability while preserving the core focus on quick, accurate entries in real operations.\n\nJust punch in takeoff, landing, airports and times -> smash Calculate -> watch how fast totals and breakdowns get calculated automatically -> save and done.\n\nNo nonsense, no subscriptions, no server drama. Your flights stay yours, stored locally, synced on local network.\n\nOpen source. Free forever. Fly. Log. Repeat.\nIf it saves you time, a coffee keeps the lights on.'**
+  String get aboutStoryText;
+
+  /// No description provided for @aboutGithubTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Source on GitHub'**
+  String get aboutGithubTitle;
+
+  /// No description provided for @aboutGithubDocsText.
+  ///
+  /// In en, this message translates to:
+  /// **'Documentation • Tutorials • Sync setup • Desktop builds • Bug tracker • Future features'**
+  String get aboutGithubDocsText;
+
+  /// No description provided for @aboutTapProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap here to visit the project page ->'**
+  String get aboutTapProject;
+
+  /// No description provided for @aboutRepoAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'github.com/rriet/simplelog'**
+  String get aboutRepoAddress;
+
+  /// No description provided for @aboutSupportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Support SimpleLog'**
+  String get aboutSupportTitle;
+
+  /// No description provided for @aboutSupportBodyText.
+  ///
+  /// In en, this message translates to:
+  /// **'SimpleLog will always remain free and open source.\n\nOngoing costs include Apple and Google developer accounts, test devices, and countless hours improving the app based on real pilot feedback.\n\nIf SimpleLog saves you time in the cockpit or makes your logbook life easier, any support is deeply appreciated.'**
+  String get aboutSupportBodyText;
+
+  /// No description provided for @aboutSupportFooterText.
+  ///
+  /// In en, this message translates to:
+  /// **'-> The GitHub page has full documentation, tutorials, sync guides, desktop builds, and ways to support the project.'**
+  String get aboutSupportFooterText;
+
+  /// No description provided for @aboutTechStack.
+  ///
+  /// In en, this message translates to:
+  /// **'Flutter • Riverpod • Drift'**
+  String get aboutTechStack;
+
+  /// No description provided for @aboutLicenseText.
+  ///
+  /// In en, this message translates to:
+  /// **'GNU GPLv3 License'**
+  String get aboutLicenseText;
+
+  /// No description provided for @databaseSyncSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect two devices on the same network.'**
+  String get databaseSyncSubtitle;
+
+  /// No description provided for @logtenReviewHelpText.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix the value for each invalid field, or ignore the full source line.'**
+  String get logtenReviewHelpText;
+
+  /// No description provided for @logtenReviewSimulatorSelectedHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulator selected: airport fields are not required.'**
+  String get logtenReviewSimulatorSelectedHelp;
+
+  /// No description provided for @qatarMissingAirportsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Create the missing airports before continuing the Qatar Airways import.'**
+  String get qatarMissingAirportsMessage;
+
+  /// No description provided for @qatarMissingAircraftMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Create the missing simulator aircraft before continuing the Qatar Airways import.'**
+  String get qatarMissingAircraftMessage;
+
+  /// No description provided for @logbookUnlockEndorsedEntryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock endorsed entry?'**
+  String get logbookUnlockEndorsedEntryTitle;
+
+  /// No description provided for @logbookUnlockEndorsementWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'If you unlock this entry, signature and endorsement information will be deleted. Continue?'**
+  String get logbookUnlockEndorsementWarning;
+
+  /// No description provided for @logbookUnlockAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get logbookUnlockAction;
+
+  /// No description provided for @endorsementLockWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Once saved with an endorsement signature, this entry is locked and cannot be edited unless the signature is removed.'**
+  String get endorsementLockWarning;
+
+  /// No description provided for @endorsementMismatchWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning: flight information does not match the original endorsed flight record.'**
+  String get endorsementMismatchWarning;
+
+  /// No description provided for @reportsMapSectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview the filtered routes and path overlay.'**
+  String get reportsMapSectionSubtitle;
+
+  /// No description provided for @reportsPdfSectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select template and export the report PDF.'**
+  String get reportsPdfSectionSubtitle;
+
+  /// No description provided for @settingsCalculationPilotProfileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot identity and signature preferences.'**
+  String get settingsCalculationPilotProfileSubtitle;
+
+  /// No description provided for @previousExperienceEntriesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit, add, or remove previous experience records.'**
+  String get previousExperienceEntriesSubtitle;
+
+  /// No description provided for @timeFieldsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Control visible time columns and custom labels.'**
+  String get timeFieldsIntro;
+
+  /// No description provided for @timeFieldsVisibleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which columns are shown in forms and lists.'**
+  String get timeFieldsVisibleSubtitle;
+
+  /// No description provided for @timeFieldsCustomLabelsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename custom fields used across the app.'**
+  String get timeFieldsCustomLabelsSubtitle;
 }
 
 class _AppLocalizationsDelegate
