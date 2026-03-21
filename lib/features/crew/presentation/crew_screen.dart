@@ -10,12 +10,29 @@ import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/features/crew/application/providers/crew_feature_providers.dart';
 import 'package:simplelog/features/crew/presentation/crew_edit_screen.dart';
-import 'package:simplelog/features/crew/presentation/widgets/crew_filters_dialog.dart';
 import 'package:simplelog/features/crew/presentation/widgets/crew_info_dialog.dart';
 import 'package:simplelog/features/crew/presentation/widgets/crew_list.dart';
 import 'package:simplelog/features/crew/presentation/widgets/crew_search_bar.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
+
+/// Search field used when filtering the crew list.
+enum CrewSearchBy {
+  /// Search across all supported fields.
+  all,
+
+  /// Search by crew name.
+  name,
+
+  /// Search by email.
+  email,
+
+  /// Search by phone.
+  phone,
+
+  /// Search by notes.
+  notes,
+}
 
 /// Main screen for browsing, filtering and managing crew members.
 class CrewScreen extends ConsumerStatefulWidget {
@@ -49,31 +66,6 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
   Future<void> _toggleFavorite(CrewRow row) async {
     final controller = ref.read(crewControllerProvider.notifier);
     await controller.toggleFavorite(row.crew);
-  }
-
-  Future<void> _openFilters() async {
-    final selected = await CrewFiltersDialog.show(
-      context,
-      initialSearchBy: _searchBy,
-    );
-    if (selected == null) return;
-    if (!mounted) return;
-    _setSearchBy(selected);
-  }
-
-  String _searchLabel(AppLocalizations l10n) {
-    switch (_searchBy) {
-      case CrewSearchBy.all:
-        return l10n.searchCrew;
-      case CrewSearchBy.name:
-        return 'Search Name';
-      case CrewSearchBy.email:
-        return 'Search Email';
-      case CrewSearchBy.phone:
-        return 'Search Phone';
-      case CrewSearchBy.notes:
-        return 'Search Notes';
-    }
   }
 
   Future<void> _confirmDelete(CrewRow row) async {
@@ -194,12 +186,45 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
       children: [
         CrewSearchBar(
           controller: _searchController,
-          label: _searchLabel(l10n),
+          label: l10n.searchCrew,
           onChanged: (value) => setState(() => _query = value),
-          trailing: IconButton(
-            tooltip: AppLocalizations.of(context)!.logbookFilterAction,
-            onPressed: _openFilters,
-            icon: const Icon(Icons.filter_list),
+          trailing: SizedBox(
+            width: isCompact ? 132 : 190,
+            child: DropdownButtonFormField<CrewSearchBy>(
+              isExpanded: true,
+              initialValue: _searchBy,
+              decoration: InputDecoration(
+                labelText: l10n.searchByLabel,
+                border: const OutlineInputBorder(),
+                isDense: true,
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: CrewSearchBy.all,
+                  child: Text(l10n.optionAll),
+                ),
+                DropdownMenuItem(
+                  value: CrewSearchBy.name,
+                  child: Text(l10n.fieldName),
+                ),
+                DropdownMenuItem(
+                  value: CrewSearchBy.email,
+                  child: Text(l10n.fieldEmail),
+                ),
+                DropdownMenuItem(
+                  value: CrewSearchBy.phone,
+                  child: Text(l10n.fieldPhone),
+                ),
+                DropdownMenuItem(
+                  value: CrewSearchBy.notes,
+                  child: Text(l10n.fieldNotes),
+                ),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+                _setSearchBy(value);
+              },
+            ),
           ),
         ),
         const SizedBox(height: 12),

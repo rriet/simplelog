@@ -10,13 +10,30 @@ import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
 import 'package:simplelog/features/aircraft/presentation/aircraft_edit_screen.dart';
-import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_filters_dialog.dart';
 import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_list.dart';
 import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_search_bar.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_lazy_panel.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
+
+/// Field to search against when filtering the aircraft list.
+enum AircraftSearchBy {
+  /// Search in all supported fields.
+  all,
+
+  /// Search by registration only.
+  registration,
+
+  /// Search by aircraft type.
+  type,
+
+  /// Search by aircraft family.
+  family,
+
+  /// Search by notes.
+  notes,
+}
 
 /// Main aircraft management screen for aircraft and simulator records.
 class AircraftScreen extends ConsumerStatefulWidget {
@@ -52,31 +69,6 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
   Future<void> _toggleFavorite(AircraftRow row) async {
     final controller = ref.read(aircraftControllerProvider.notifier);
     await controller.toggleFavorite(row.aircraft);
-  }
-
-  Future<void> _openFilters() async {
-    final selected = await AircraftFiltersDialog.show(
-      context,
-      initialSearchBy: _searchBy,
-    );
-    if (selected == null) return;
-    if (!mounted) return;
-    _setSearchBy(selected);
-  }
-
-  String _searchLabel(AppLocalizations l10n) {
-    switch (_searchBy) {
-      case AircraftSearchBy.all:
-        return l10n.searchAircraft;
-      case AircraftSearchBy.registration:
-        return l10n.searchRegistration;
-      case AircraftSearchBy.type:
-        return l10n.searchType;
-      case AircraftSearchBy.family:
-        return l10n.searchFamily;
-      case AircraftSearchBy.notes:
-        return l10n.searchNotes;
-    }
   }
 
   Future<void> _confirmDelete(AircraftRow row) async {
@@ -252,12 +244,45 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
           children: [
             AircraftSearchBar(
               controller: _searchController,
-              label: _searchLabel(l10n),
+              label: l10n.searchAircraft,
               onChanged: (value) => setState(() => _query = value),
-              trailing: IconButton(
-                tooltip: l10n.logbookFilterAction,
-                onPressed: _openFilters,
-                icon: const Icon(Icons.filter_list),
+              trailing: SizedBox(
+                width: isCompact ? 132 : 190,
+                child: DropdownButtonFormField<AircraftSearchBy>(
+                  isExpanded: true,
+                  initialValue: _searchBy,
+                  decoration: InputDecoration(
+                    labelText: l10n.searchByLabel,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  items: [
+                    DropdownMenuItem(
+                      value: AircraftSearchBy.all,
+                      child: Text(l10n.optionAll),
+                    ),
+                    DropdownMenuItem(
+                      value: AircraftSearchBy.registration,
+                      child: Text(l10n.fieldRegistration),
+                    ),
+                    DropdownMenuItem(
+                      value: AircraftSearchBy.type,
+                      child: Text(l10n.searchFieldType),
+                    ),
+                    DropdownMenuItem(
+                      value: AircraftSearchBy.family,
+                      child: Text(l10n.fieldFamily),
+                    ),
+                    DropdownMenuItem(
+                      value: AircraftSearchBy.notes,
+                      child: Text(l10n.fieldNotes),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    _setSearchBy(value);
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 12),

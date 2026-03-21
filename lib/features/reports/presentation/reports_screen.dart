@@ -128,8 +128,9 @@ class _XslTemplateOption {
 String _sanitizeTemplateName(String raw) {
   return raw
       .trim()
-      .replaceAll(RegExp('[^A-Za-z0-9_-]'), '_')
-      .replaceAll(RegExp('_+'), '_');
+      .replaceAll('_', ' ')
+      .replaceAll(RegExp('[^A-Za-z0-9 -]'), '')
+      .replaceAll(RegExp(' +'), ' ');
 }
 
 /// Reports module screen for analytics, filtering, and PDF generation.
@@ -298,7 +299,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final changed = await _presentAdaptiveShellDialog<bool>(
       _EditTemplatesDialog(
         db: db,
-        initialReportName: _selectedTemplate?.fileName,
       ),
     );
     if (!mounted || changed != true) {
@@ -3216,21 +3216,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         }
         final base = next.timeBlockMinutes;
 
-        if (selection.crewMode == _BatchFieldMode.recalculate) {
-          final role = selection.crewRole;
-          next
-            ..timePICMinutes = role == _BatchCrewRole.pic ? base : 0
-            ..timePICUSMinutes = role == _BatchCrewRole.picus ? base : 0
-            ..timeSICMinutes = role == _BatchCrewRole.sic ? base : 0
-            ..timeDualMinutes = role == _BatchCrewRole.dual ? base : 0;
-        } else if (selection.crewMode == _BatchFieldMode.setZero) {
-          next
-            ..timePICMinutes = 0
-            ..timePICUSMinutes = 0
-            ..timeSICMinutes = 0
-            ..timeDualMinutes = 0;
-        }
-
         _applyTimeMode(
           mode: selection.modeFor(_BatchCalcField.instructor),
           recalculateValue: base,
@@ -3523,19 +3508,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (checks.custom4) {
       modes[_BatchCalcField.custom4] = _BatchFieldMode.recalculate;
     }
-    final crewRole = checks.pic
-        ? _BatchCrewRole.pic
-        : checks.picus
-        ? _BatchCrewRole.picus
-        : checks.sic
-        ? _BatchCrewRole.sic
-        : _BatchCrewRole.dual;
-    final hasCrew = checks.pic || checks.picus || checks.sic || checks.dual;
     return _BatchCalculateAllPreferences(
-      crewMode: hasCrew
-          ? _BatchFieldMode.recalculate
-          : _BatchFieldMode.dontChange,
-      crewRole: crewRole,
       fieldModes: modes,
     );
   }
@@ -4599,12 +4572,8 @@ enum _BatchCalcField {
 
 enum _BatchFieldMode { dontChange, recalculate, setZero }
 
-enum _BatchCrewRole { pic, picus, sic, dual }
-
 class _BatchCalculateAllPreferences {
   const _BatchCalculateAllPreferences({
-    required this.crewMode,
-    required this.crewRole,
     required this.fieldModes,
   });
 
@@ -4622,25 +4591,15 @@ class _BatchCalculateAllPreferences {
         fieldModes[field] = _modeFromRaw(raw) ?? _BatchFieldMode.dontChange;
       }
     }
-    return _BatchCalculateAllPreferences(
-      crewMode: _modeFromRaw(json['crewMode']) ?? _BatchFieldMode.dontChange,
-      crewRole: _crewRoleFromRaw(json['crewRole']) ?? _BatchCrewRole.sic,
-      fieldModes: fieldModes,
-    );
+    return _BatchCalculateAllPreferences(fieldModes: fieldModes);
   }
 
-  final _BatchFieldMode crewMode;
-  final _BatchCrewRole crewRole;
   final Map<_BatchCalcField, _BatchFieldMode> fieldModes;
 
   _BatchCalculateAllPreferences copyWith({
-    _BatchFieldMode? crewMode,
-    _BatchCrewRole? crewRole,
     Map<_BatchCalcField, _BatchFieldMode>? fieldModes,
   }) {
     return _BatchCalculateAllPreferences(
-      crewMode: crewMode ?? this.crewMode,
-      crewRole: crewRole ?? this.crewRole,
       fieldModes: fieldModes ?? this.fieldModes,
     );
   }
@@ -4651,8 +4610,6 @@ class _BatchCalculateAllPreferences {
 
   Map<String, dynamic> toJson() {
     return {
-      'crewMode': crewMode.name,
-      'crewRole': crewRole.name,
       'fieldModes': {
         for (final entry in fieldModes.entries)
           entry.key.name: entry.value.name,
@@ -4664,14 +4621,6 @@ class _BatchCalculateAllPreferences {
     if (raw is! String) return null;
     for (final mode in _BatchFieldMode.values) {
       if (mode.name == raw) return mode;
-    }
-    return null;
-  }
-
-  static _BatchCrewRole? _crewRoleFromRaw(Object? raw) {
-    if (raw is! String) return null;
-    for (final role in _BatchCrewRole.values) {
-      if (role.name == raw) return role;
     }
     return null;
   }
@@ -4772,15 +4721,6 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
       };
     }
 
-    String crewRoleLabel(_BatchCrewRole role) {
-      return switch (role) {
-        _BatchCrewRole.pic => 'PIC',
-        _BatchCrewRole.picus => 'PICUS',
-        _BatchCrewRole.sic => 'SIC',
-        _BatchCrewRole.dual => 'Dual',
-      };
-    }
-
     Widget modeDropdown({
       required _BatchFieldMode value,
       required ValueChanged<_BatchFieldMode?> onChanged,
@@ -4821,89 +4761,6 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            Text(AppLocalizations.of(context)!.crewPositionLabel),
-            const SizedBox(height: 8),
-            if (isNarrow) ...[
-              modeDropdown(
-                value: _preferences.crewMode,
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() {
-                    _preferences = _preferences.copyWith(crewMode: value);
-                  });
-                },
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<_BatchCrewRole>(
-                isExpanded: true,
-                initialValue: _preferences.crewRole,
-                items: _BatchCrewRole.values
-                    .map(
-                      (role) => DropdownMenuItem(
-                        value: role,
-                        child: Text(crewRoleLabel(role)),
-                      ),
-                    )
-                    .toList(growable: false),
-                decoration: const InputDecoration(isDense: true),
-                onChanged: _preferences.crewMode == _BatchFieldMode.recalculate
-                    ? (value) {
-                        if (value == null) return;
-                        setState(() {
-                          _preferences = _preferences.copyWith(
-                            crewRole: value,
-                          );
-                        });
-                      }
-                    : null,
-              ),
-            ] else
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: modeDropdown(
-                      value: _preferences.crewMode,
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() {
-                          _preferences = _preferences.copyWith(
-                            crewMode: value,
-                          );
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: DropdownButtonFormField<_BatchCrewRole>(
-                      isExpanded: true,
-                      initialValue: _preferences.crewRole,
-                      items: _BatchCrewRole.values
-                          .map(
-                            (role) => DropdownMenuItem(
-                              value: role,
-                              child: Text(crewRoleLabel(role)),
-                            ),
-                          )
-                          .toList(growable: false),
-                      decoration: const InputDecoration(isDense: true),
-                      onChanged:
-                          _preferences.crewMode == _BatchFieldMode.recalculate
-                          ? (value) {
-                              if (value == null) return;
-                              setState(() {
-                                _preferences = _preferences.copyWith(
-                                  crewRole: value,
-                                );
-                              });
-                            }
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
-            const SizedBox(height: 12),
             for (final field in _fields)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
@@ -7181,11 +7038,9 @@ class _TemplateEntryItem {
 class _EditTemplatesDialog extends StatefulWidget {
   const _EditTemplatesDialog({
     required this.db,
-    required this.initialReportName,
   });
 
   final AppDatabase db;
-  final String? initialReportName;
 
   @override
   State<_EditTemplatesDialog> createState() => _EditTemplatesDialogState();
@@ -7194,7 +7049,6 @@ class _EditTemplatesDialog extends StatefulWidget {
 class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
   static const _sharedCoverTemplateNames = <String>['cover_page_default'];
 
-  final _templateNameController = TextEditingController();
   List<_TemplateEntryItem> _items = const [];
   bool _isBusy = false;
   bool _changed = false;
@@ -7202,19 +7056,12 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
   @override
   void initState() {
     super.initState();
-    _templateNameController.text = widget.initialReportName ?? '';
     unawaited(_loadItems());
-  }
-
-  @override
-  void dispose() {
-    _templateNameController.dispose();
-    super.dispose();
   }
 
   String _displayTemplateName(String rawName) {
     if (rawName == 'cover_page_default') {
-      return 'Cover Page Default';
+      return 'Cover Page';
     }
     return rawName;
   }
@@ -7258,7 +7105,17 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
         continue;
       }
     }
-    items.sort((a, b) => a.templateName.compareTo(b.templateName));
+    items.sort((a, b) {
+      if (a.templateName == 'cover_page_default') {
+        return -1;
+      }
+      if (b.templateName == 'cover_page_default') {
+        return 1;
+      }
+      return a.templateName.toLowerCase().compareTo(
+        b.templateName.toLowerCase(),
+      );
+    });
     if (mounted) {
       setState(() {
         _items = items;
@@ -7341,6 +7198,9 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
   }
 
   Future<void> _deleteTemplate(_TemplateEntryItem item) async {
+    if (item.templateName == 'cover_page_default') {
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -7441,21 +7301,6 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
   }
 
   Future<void> _uploadAsNewTemplate() async {
-    final rawName = _templateNameController.text.trim();
-    final templateName = _sanitizeTemplateName(rawName);
-    if (templateName.isEmpty) {
-      await showAppMessageDialog(context, message: 'Type a template name.');
-      return;
-    }
-    final exists = _items.any((item) => item.templateName == templateName);
-    if (exists) {
-      await showAppMessageDialog(
-        context,
-        message: 'Template name already exists. Use a different name.',
-      );
-      return;
-    }
-
     final picked = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['json'],
@@ -7483,6 +7328,7 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
       await showAppMessageDialog(context, message: 'Selected JSON is invalid.');
       return;
     }
+    final templateName = _templateNameFromFile(file);
     decoded['templateName'] = templateName;
     decoded
       ..remove('reportName')
@@ -7493,8 +7339,46 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
       [templateName, jsonEncode(decoded)],
     );
     _changed = true;
-    _templateNameController.clear();
     await _loadItems();
+  }
+
+  String _templateNameFromFile(PlatformFile file) {
+    final sourceName = file.name.trim().isNotEmpty
+        ? file.name.trim()
+        : _fileNameFromPath(file.path);
+    final withoutExtension = _removeJsonExtension(sourceName).trim();
+    final sanitized = _sanitizeTemplateName(withoutExtension);
+    final baseName = sanitized.isEmpty ? 'template' : sanitized;
+    return _makeUniqueTemplateName(baseName);
+  }
+
+  String _fileNameFromPath(String? path) {
+    if (path == null || path.trim().isEmpty) {
+      return '';
+    }
+    final normalized = path.replaceAll(String.fromCharCode(92), '/');
+    final segments = normalized.split('/');
+    return segments.isEmpty ? normalized : segments.last;
+  }
+
+  String _removeJsonExtension(String fileName) {
+    final trimmed = fileName.trim();
+    if (trimmed.toLowerCase().endsWith('.json')) {
+      return trimmed.substring(0, trimmed.length - 5);
+    }
+    return trimmed;
+  }
+
+  String _makeUniqueTemplateName(String baseName) {
+    final usedNames = _items.map((item) => item.templateName).toSet();
+    if (!usedNames.contains(baseName)) {
+      return baseName;
+    }
+    var suffix = 1;
+    while (usedNames.contains('$baseName ($suffix)')) {
+      suffix++;
+    }
+    return '$baseName ($suffix)';
   }
 
   @override
@@ -7504,31 +7388,6 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _templateNameController,
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(
-                      context,
-                    )!.reportsTemplateNameLabel,
-                    border: const OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              SquareOutlineButton(
-                onPressed: _uploadAsNewTemplate,
-                icon: Icons.upload_file,
-                label: AppLocalizations.of(context)!.reportsUploadJson,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Divider(height: 1),
-          const SizedBox(height: 8),
           Expanded(
             child: _isBusy
                 ? const Center(child: CircularProgressIndicator())
@@ -7537,81 +7396,85 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
                     separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final item = _items[index];
+                      final canDelete =
+                          item.templateName != 'cover_page_default';
                       final tile = ListTile(
                         title: Text(_displayTemplateName(item.templateName)),
                       );
                       if (isCompact) {
+                        final actions = <Widget>[
+                          SlidableAction(
+                            onPressed: (_) => unawaited(_editTemplate(item)),
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimary,
+                            icon: Icons.edit_note,
+                          ),
+                          SlidableAction(
+                            onPressed: (_) =>
+                                unawaited(_downloadTemplate(item)),
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primaryContainer,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimaryContainer,
+                            icon: Icons.download,
+                          ),
+                        ];
+                        if (canDelete) {
+                          actions.add(
+                            SlidableAction(
+                              onPressed: (_) =>
+                                  unawaited(_deleteTemplate(item)),
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.error,
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.onError,
+                              icon: Icons.delete_outline,
+                            ),
+                          );
+                        }
                         return Slidable(
                           key: ValueKey(item.templateName),
                           endActionPane: ActionPane(
                             motion: const ScrollMotion(),
-                            children: [
-                              SlidableAction(
-                                onPressed: (_) =>
-                                    unawaited(_editTemplate(item)),
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.primary,
-                                foregroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.onPrimary,
-                                icon: Icons.edit_note,
-                              ),
-                              SlidableAction(
-                                onPressed: (_) =>
-                                    unawaited(_downloadTemplate(item)),
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.primaryContainer,
-                                foregroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.onPrimaryContainer,
-                                icon: Icons.download,
-                              ),
-                              SlidableAction(
-                                onPressed: (_) =>
-                                    unawaited(_deleteTemplate(item)),
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.error,
-                                foregroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.onError,
-                                icon: Icons.delete_outline,
-                              ),
-                            ],
+                            children: actions,
                           ),
                           child: tile,
+                        );
+                      }
+                      final trailingActions = <Widget>[
+                        SquareOutlineButton(
+                          onPressed: () => unawaited(_editTemplate(item)),
+                          icon: Icons.edit_note,
+                          label: AppLocalizations.of(context)!.editAction,
+                        ),
+                        SquareOutlineButton(
+                          onPressed: () => unawaited(_downloadTemplate(item)),
+                          icon: Icons.download,
+                          label: AppLocalizations.of(
+                            context,
+                          )!.reportsDownloadAction,
+                        ),
+                      ];
+                      if (canDelete) {
+                        trailingActions.add(
+                          SquareOutlineButton(
+                            onPressed: () => unawaited(_deleteTemplate(item)),
+                            icon: Icons.delete_outline,
+                            label: AppLocalizations.of(context)!.deleteAction,
+                          ),
                         );
                       }
                       return ListTile(
                         title: Text(_displayTemplateName(item.templateName)),
                         trailing: Wrap(
                           spacing: 8,
-                          children: [
-                            SquareOutlineButton(
-                              onPressed: () => unawaited(_editTemplate(item)),
-                              icon: Icons.edit_note,
-                              label: AppLocalizations.of(
-                                context,
-                              )!.editAction,
-                            ),
-                            SquareOutlineButton(
-                              onPressed: () =>
-                                  unawaited(_downloadTemplate(item)),
-                              icon: Icons.download,
-                              label: AppLocalizations.of(
-                                context,
-                              )!.reportsDownloadAction,
-                            ),
-                            SquareOutlineButton(
-                              onPressed: () => unawaited(_deleteTemplate(item)),
-                              icon: Icons.delete_outline,
-                              label: AppLocalizations.of(
-                                context,
-                              )!.deleteAction,
-                            ),
-                          ],
+                          children: trailingActions,
                         ),
                       );
                     },
@@ -7624,6 +7487,12 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context, _changed),
       title: AppLocalizations.of(context)!.reportsEditTemplates,
+      actions: [
+        TextButton(
+          onPressed: _uploadAsNewTemplate,
+          child: Text(AppLocalizations.of(context)!.reportsUploadJson),
+        ),
+      ],
       popupMaxWidth: 980,
       contentView: body,
     );

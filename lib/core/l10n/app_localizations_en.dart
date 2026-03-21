@@ -362,7 +362,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get databaseSyncTitle => 'Local sync';
 
   @override
-  String get databaseSyncStartLocal => 'Start Local Sync';
+  String get databaseSyncStartLocal => 'Start local sync';
 
   @override
   String get databaseSyncFoundTitle => 'Available devices';
@@ -483,34 +483,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsOrderByLabel => 'Order by';
 
   @override
-  String get reportsAnalyzeByAircraft => 'By Aircraft';
+  String get reportsAnalyzeByAircraft => 'Aircraft';
 
   @override
-  String get reportsAnalyzeByType => 'By Type';
+  String get reportsAnalyzeByType => 'Type';
 
   @override
-  String get reportsAnalyzeByFamily => 'By Family';
+  String get reportsAnalyzeByFamily => 'Family';
 
   @override
-  String get reportsAnalyzeByYear => 'By Year';
+  String get reportsAnalyzeByYear => 'Year';
 
   @override
-  String get reportsAnalyzeByMonth => 'By Month';
+  String get reportsAnalyzeByMonth => 'Month';
 
   @override
   String get reportsOrderByNatural => 'Natural';
 
   @override
-  String get reportsShowMap => 'Show Map';
+  String get reportsShowMap => 'Show map';
 
   @override
-  String get reportsShowPath => 'Include Path';
+  String get reportsShowPath => 'Include path';
 
   @override
   String get reportsIncludeHoursBefore => 'Include hours before';
 
   @override
-  String get reportsXmlTemplateLabel => 'XML Template';
+  String get reportsXmlTemplateLabel => 'Template';
 
   @override
   String get reportsGeneratingShort => 'Generating...';
@@ -554,11 +554,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsSavedQueriesLabel => 'Saved queries';
 
   @override
-  String get reportsSaveQuery => 'Save Query';
+  String get reportsSaveQuery => 'Save query';
 
   @override
   String reportsDeleteSavedQuery(String name) {
-    return 'Delete: $name';
+    return 'Delete \"$name\"?';
   }
 
   @override
@@ -646,7 +646,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsValueLabel => 'Value';
 
   @override
-  String get reportsFlightsAndSimulatorTitle => 'Flights & Simulator';
+  String get reportsFlightsAndSimulatorTitle => 'Flights & simulator';
 
   @override
   String reportsEntriesCount(int count) {
@@ -654,10 +654,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get reportsNoFlightsInPeriod => 'No flights/sim in selected period.';
+  String get reportsNoFlightsInPeriod =>
+      'No flights or sim entries in this period.';
 
   @override
-  String get reportsFlightMapTitle => 'Flight Map';
+  String get reportsFlightMapTitle => 'Flight map';
 
   @override
   String get reportsHideLines => 'Hide lines';
@@ -851,7 +852,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageLatvian => 'Latvian';
 
   @override
-  String get reportsAnalyzeByAirport => 'By Airport';
+  String get reportsAnalyzeByAirport => 'Airport';
 
   @override
   String get reportsUnknownAirport => 'Unknown airport';
@@ -863,13 +864,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsOrderByLandings => 'Landings';
 
   @override
-  String get reportsOrderByTakeoff => 'TakeOff';
+  String get reportsOrderByTakeoff => 'Takeoff';
 
   @override
   String get reportsOrderByOperations => 'Operations';
 
   @override
-  String get reportsMetricTakeoff => 'TakeOff';
+  String get reportsMetricTakeoff => 'Takeoff';
 
   @override
   String get reportsMetricOperations => 'Operations';
@@ -1363,12 +1364,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Warning: flight information does not match the original endorsed flight record.';
 
   @override
-  String get reportsMapSectionSubtitle =>
-      'Display filtered flight on world map.';
+  String get reportsMapSectionSubtitle => 'Show filtered flights on the map.';
 
   @override
   String get reportsPdfSectionSubtitle =>
-      'Select template and export the report PDF.';
+      'Choose a template and export a PDF report.';
 
   @override
   String get settingsCalculationPilotProfileSubtitle =>
@@ -1592,235 +1592,229 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoUi068 => '→';
 
   @override
-  String get databaseBackupLogbookAction => 'Database Backup Logbook Action';
+  String get databaseBackupLogbookAction => 'Backup logbook';
 
   @override
-  String get databaseBackupRestoreSubtitle =>
-      'Database Backup Restore Subtitle';
+  String get databaseBackupRestoreSubtitle => 'Back up or restore your data.';
 
   @override
-  String get databaseBackupRestoreTitle => 'Database Backup Restore Title';
+  String get databaseBackupRestoreTitle => 'Backup & Restore';
 
   @override
-  String get databaseDangerZoneSubtitle => 'Database Danger Zone Subtitle';
+  String get databaseDangerZoneSubtitle => 'Irreversible actions.';
 
   @override
-  String get databaseDangerZoneTitle => 'Database Danger Zone Title';
+  String get databaseDangerZoneTitle => 'Danger zone';
 
   @override
-  String get databaseDumpTemporaryAction => 'Database Dump Temporary Action';
+  String get databaseDumpTemporaryAction => 'Export debug dump';
 
   @override
-  String get databaseExportCsvAction => 'Database Export Csv Action';
+  String get databaseExportCsvAction => 'Export CSV';
 
   @override
-  String get databaseImportExportSubtitle => 'Database Import Export Subtitle';
+  String get databaseImportExportSubtitle => 'Import or export data files.';
 
   @override
-  String get databaseImportExportTitle => 'Database Import Export Title';
+  String get databaseImportExportTitle => 'Import & Export';
 
   @override
-  String get databaseImportFileAction => 'Database Import File Action';
+  String get databaseImportFileAction => 'Import file';
 
   @override
-  String get databaseImportSummaryTitle => 'Database Import Summary Title';
+  String get databaseImportSummaryTitle => 'Import summary';
 
   @override
-  String get databaseImportingTitle => 'Database Importing Title';
+  String get databaseImportingTitle => 'Importing data';
 
   @override
-  String get databasePreparingLabel => 'Database Preparing Label';
+  String get databasePreparingLabel => 'Preparing...';
 
   @override
-  String get databaseRestoreLogbookAction => 'Database Restore Logbook Action';
+  String get databaseRestoreLogbookAction => 'Restore logbook';
 
   @override
-  String get databaseSkippedLinesTitle => 'Database Skipped Lines Title';
+  String get databaseSkippedLinesTitle => 'Skipped lines';
 
   @override
-  String get databaseToolsTitle => 'Database Tools Title';
+  String get databaseToolsTitle => 'Tools';
 
   @override
-  String get logtenAssociationHeader => 'Logten Association Header';
+  String get logtenAssociationHeader => 'Mapped to';
 
   @override
-  String get logtenContinueAction => 'Logten Continue Action';
+  String get logtenContinueAction => 'Continue';
 
   @override
-  String get logtenCorrectedValueLabel => 'Logten Corrected Value Label';
+  String get logtenCorrectedValueLabel => 'Corrected value';
 
   @override
-  String get logtenCreateAirportTooltip => 'Logten Create Airport Tooltip';
+  String get logtenCreateAirportTooltip => 'Create airport';
 
   @override
-  String get logtenEntryTypeLabel => 'Logten Entry Type Label';
+  String get logtenEntryTypeLabel => 'Entry type';
 
   @override
-  String get logtenFlightLabel => 'Logten Flight Label';
+  String get logtenFlightLabel => 'Flight';
 
   @override
-  String get logtenIgnoreAllAction => 'Logten Ignore All Action';
+  String get logtenIgnoreAllAction => 'Ignore all';
 
   @override
-  String get logtenIgnoreLineAction => 'Logten Ignore Line Action';
+  String get logtenIgnoreLineAction => 'Ignore line';
 
   @override
-  String get logtenImportAction => 'Logten Import Action';
+  String get logtenImportAction => 'Import';
 
   @override
-  String get logtenImportTitle => 'Logten Import Short Title';
+  String get logtenImportTitle => 'Import LogTen';
 
   @override
-  String get logtenReviewTitle => 'Logten Review Short Title';
+  String get logtenReviewTitle => 'Review LogTen';
 
   @override
-  String get logtenSelectAirportTooltip => 'Logten Select Airport Tooltip';
+  String get logtenSelectAirportTooltip => 'Select airport';
 
   @override
-  String get logtenSelectArrivalAirport => 'Logten Select Arrival Airport';
+  String get logtenSelectArrivalAirport => 'Select arrival airport';
 
   @override
-  String get logtenSelectDepartureAirport => 'Logten Select Departure Airport';
+  String get logtenSelectDepartureAirport => 'Select departure airport';
 
   @override
-  String get logtenSelectedAirport => 'Logten Selected Airport';
+  String get logtenSelectedAirport => 'Selected airport';
 
   @override
-  String get logtenSimulatorLabel => 'Logten Simulator Label';
+  String get logtenSimulatorLabel => 'Simulator';
 
   @override
-  String get logtenSourceColumnHeader => 'Logten Source Column Header';
+  String get logtenSourceColumnHeader => 'Source column';
 
   @override
-  String get logtenTimezoneLabel => 'Logten Timezone Label';
+  String get logtenTimezoneLabel => 'Time zone';
 
   @override
-  String get qatarContinueAction => 'Qatar Continue Action';
+  String get qatarContinueAction => 'Continue';
 
   @override
-  String get qatarCreateAircraftAction => 'Qatar Create Aircraft Action';
+  String get qatarCreateAircraftAction => 'Create aircraft';
 
   @override
-  String get qatarCreateAirportAction => 'Qatar Create Airport Action';
+  String get qatarCreateAirportAction => 'Create airport';
 
   @override
-  String get qatarDefaultPositionLabel => 'Qatar Default Position Label';
+  String get qatarDefaultPositionLabel => 'Default position';
 
   @override
-  String get qatarImportAction => 'Qatar Import Action';
+  String get qatarImportAction => 'Import';
 
   @override
-  String get qatarImportTitle => 'Qatar Import Short Title';
+  String get qatarImportTitle => 'Import Qatar';
 
   @override
-  String get qatarMissingAircraftTitle => 'Qatar Missing Aircraft Title';
+  String get qatarMissingAircraftTitle => 'Missing aircraft';
 
   @override
-  String get qatarMissingAirportsTitle => 'Qatar Missing Airports Title';
+  String get qatarMissingAirportsTitle => 'Missing airports';
 
   @override
-  String get qatarPilotNameAsWrittenLabel =>
-      'Qatar Pilot Name As Written Label';
+  String get qatarPilotNameAsWrittenLabel => 'Keep pilot name as-is';
 
   @override
-  String get qatarPositionPic => 'Qatar Position Pic';
+  String get qatarPositionPic => 'PIC';
 
   @override
-  String get qatarPositionSic => 'Qatar Position Sic';
+  String get qatarPositionSic => 'SIC';
 
   @override
-  String get reportsBatchChangesTitle => 'Reports Batch Changes Title';
+  String get reportsBatchChangesTitle => 'Batch changes';
 
   @override
-  String get reportsBatchSubtitle => 'Edit multile entries at once';
+  String get reportsBatchSubtitle => 'Edit multiple entries at once';
 
   @override
-  String get reportsBatchTitle => 'Batch Edit';
+  String get reportsBatchTitle => 'Batch edit';
 
   @override
   String get reportsCalculateAction => 'Calculate';
 
   @override
-  String get reportsCalculateAll => 'Calculate All';
+  String get reportsCalculateAll => 'Calculate all';
 
   @override
-  String get reportsCalculateDuty => 'Calculate Duty';
+  String get reportsCalculateDuty => 'Calculate duty';
 
   @override
-  String get reportsCalculateDutyConfirmTitle => 'Calculate Duty';
+  String get reportsCalculateDutyConfirmTitle => 'Calculate duty';
 
   @override
-  String get reportsCalculatingDutyPeriods =>
-      'Reports Calculating Duty Periods';
+  String get reportsCalculatingDutyPeriods => 'Calculating duty periods...';
 
   @override
-  String get reportsCalculatingDutyShort => 'Reports Calculating Duty Short';
+  String get reportsCalculatingDutyShort => 'Calculating duty...';
 
   @override
-  String get reportsCheckFlights => 'Check Flights';
+  String get reportsCheckFlights => 'Check flights';
 
   @override
-  String get reportsCheckingShort => 'Reports Checking Short';
+  String get reportsCheckingShort => 'Checking flights...';
 
   @override
-  String get reportsChecksTitle => 'Reports Checks Short Title';
+  String get reportsChecksTitle => 'Check flights';
 
   @override
-  String get reportsClearAction => 'Reports Clear Action';
+  String get reportsClearAction => 'Clear';
 
   @override
-  String get reportsDeleteTemplateTitle => 'Reports Delete Template Title';
+  String get reportsDeleteTemplateTitle => 'Delete template';
 
   @override
   String get reportsDownloadAction => 'Download';
 
   @override
-  String get reportsEditPilotProfile => 'Reports Edit Pilot Profile';
+  String get reportsEditPilotProfile => 'Edit pilot profile';
 
   @override
-  String get reportsEditTemplates => 'Edit Templates';
+  String get reportsEditTemplates => 'Edit templates';
 
   @override
-  String get reportsExportInteractiveMap => 'Reports Export Interactive Map';
+  String get reportsExportInteractiveMap => 'Export map';
 
   @override
-  String get reportsLock => 'Reports Lock';
+  String get reportsLock => 'Lock';
 
   @override
-  String get reportsNoChangesApplied => 'Reports No Changes Applied';
+  String get reportsNoChangesApplied => 'No changes applied.';
 
   @override
-  String get reportsNoFlightIssuesFound => 'Reports No Flight Issues Found';
+  String get reportsNoFlightIssuesFound => 'No flight issues found.';
 
   @override
-  String get reportsOpenPdfAfterSaving => 'Reports Open Pdf After Saving';
+  String get reportsOpenPdfAfterSaving => 'Open PDF after saving';
 
   @override
-  String get reportsPdfGenerationTitle => 'Print Logbook';
+  String get reportsPdfGenerationTitle => 'Print logbook';
 
   @override
-  String get reportsPdfTitle => 'PDF Options';
+  String get reportsPdfTitle => 'PDF options';
 
   @override
-  String get reportsPreparingBatchData => 'Reports Preparing Batch Data';
+  String get reportsPreparingBatchData => 'Preparing batch data...';
 
   @override
-  String get reportsRunAction => 'Reports Run Action';
+  String get reportsRunAction => 'Run';
 
   @override
-  String get reportsSelectAll => 'Reports Select All';
+  String get reportsSelectAll => 'Select all';
 
   @override
-  String get reportsSetCrew => 'Reports Set Crew';
+  String get reportsSetCrew => 'Set crew';
 
   @override
   String get reportsTabBatch => 'Batch';
 
   @override
-  String get reportsTemplateNameLabel => 'Template Name';
-
-  @override
-  String get reportsUnlock => 'Reports Unlock';
+  String get reportsUnlock => 'Unlock';
 
   @override
   String get reportsUploadJson => 'Upload';
@@ -1829,8 +1823,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppearanceSubtitle => 'Appearance';
 
   @override
-  String get settingsCalculationPilotProfileTitle =>
-      'Calculation Pilot Profile Title';
+  String get settingsCalculationPilotProfileTitle => 'Pilot Profile';
 
   @override
   String get settingsTabDatabase => 'Database';
@@ -1845,119 +1838,107 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTabTimeFields => 'Time Fields';
 
   @override
-  String get simplelogConflictResolutionTitle =>
-      'Simplelog Conflict Resolution Title';
+  String get simplelogConflictResolutionTitle => 'Conflict resolution';
 
   @override
-  String get simplelogCrossCountryLabel => 'Simplelog Cross Country Label';
+  String get simplelogCrossCountryLabel => 'Cross-country time';
 
   @override
-  String get simplelogCrossCountryNmLabel => 'Simplelog Cross Country Nm Label';
+  String get simplelogCrossCountryNmLabel => 'Distance threshold (NM)';
 
   @override
-  String get simplelogIfrPercentLabel => 'Simplelog Ifr Percent Label';
+  String get simplelogIfrPercentLabel => 'IFR %';
 
   @override
-  String get simplelogIfrTimeLabel => 'Simplelog Ifr Time Label';
+  String get simplelogIfrTimeLabel => 'IFR time';
 
   @override
-  String get simplelogImportAction => 'Simplelog Import Action';
+  String get simplelogImportAction => 'Import';
 
   @override
-  String get simplelogImportOptionsTitle =>
-      'Simplelog Import Options Short Title';
+  String get simplelogImportOptionsTitle => 'Import SimpleLog';
 
   @override
-  String get simplelogInstrumentPercentLabel =>
-      'Simplelog Instrument Percent Label';
+  String get simplelogInstrumentPercentLabel => 'Instrument %';
 
   @override
-  String get simplelogInstrumentTimeLabel => 'Simplelog Instrument Time Label';
+  String get simplelogInstrumentTimeLabel => 'Instrument time';
 
   @override
-  String get simplelogIrp3PercentLabel => 'Simplelog Irp3 Percent Label';
+  String get simplelogIrp3PercentLabel => 'IRP3 %';
 
   @override
-  String get simplelogIrp3TimeLabel => 'Simplelog Irp3 Time Label';
+  String get simplelogIrp3TimeLabel => 'IRP3 time';
 
   @override
-  String get simplelogIrp4PercentLabel => 'Simplelog Irp4 Percent Label';
+  String get simplelogIrp4PercentLabel => 'IRP4 %';
 
   @override
-  String get simplelogIrp4TimeLabel => 'Simplelog Irp4 Time Label';
+  String get simplelogIrp4TimeLabel => 'IRP4 time';
 
   @override
-  String get simplelogNightTimeLabel => 'Simplelog Night Time Label';
+  String get simplelogNightTimeLabel => 'Night time';
 
   @override
   String get simplelogOverrideAircraftOnConflict =>
-      'Simplelog Override Aircraft On Conflict';
+      'Overwrite aircraft on conflict';
 
   @override
   String get simplelogOverrideAircraftTypeOnConflict =>
-      'Simplelog Override Aircraft Type On Conflict';
+      'Overwrite type on conflict';
 
   @override
   String get simplelogOverrideAirportOnConflict =>
-      'Simplelog Override Airport On Conflict';
+      'Overwrite airport on conflict';
 
   @override
-  String get simplelogRecalcTotalTimeLabel =>
-      'Simplelog Recalc Total Time Label';
+  String get simplelogRecalcTotalTimeLabel => 'Recalculate total time';
 
   @override
-  String get simplelogRecalculationsTitle => 'Simplelog Recalculations Title';
+  String get simplelogRecalculationsTitle => 'Recalculations';
 
   @override
-  String get simplelogTakeoffLandingsLabel =>
-      'Simplelog Takeoff Landings Label';
+  String get simplelogTakeoffLandingsLabel => 'Takeoffs and landings';
 
   @override
-  String get southwestAddCopilotStaffNumberLabel =>
-      'Southwest Add Copilot Staff Number Label';
+  String get southwestAddCopilotStaffNumberLabel => 'Add copilot staff number';
 
   @override
   String get southwestAddFlightNumberToNotesLabel =>
-      'Southwest Add Flight Number To Notes Label';
+      'Add flight number to notes';
 
   @override
   String get southwestCalculateCrossCountryTimeLabel =>
-      'Southwest Calculate Cross Country Time Label';
+      'Calculate cross-country time';
 
   @override
-  String get southwestCalculateIfrTimeLabel =>
-      'Southwest Calculate Ifr Time Label';
+  String get southwestCalculateIfrTimeLabel => 'Calculate IFR time';
 
   @override
   String get southwestCalculateInstrumentTimeLabel =>
-      'Southwest Calculate Instrument Time Label';
+      'Calculate instrument time';
 
   @override
-  String get southwestCalculateNightTimeLabel =>
-      'Southwest Calculate Night Time Label';
+  String get southwestCalculateNightTimeLabel => 'Calculate night time';
 
   @override
   String get southwestCrossCountryThresholdLabel =>
-      'Southwest Cross Country Threshold Label';
+      'Cross-country threshold (NM)';
 
   @override
-  String get southwestDefaultSelfPositionLabel =>
-      'Southwest Default Self Position Label';
+  String get southwestDefaultSelfPositionLabel => 'Default self position';
 
   @override
-  String get southwestImportAction => 'Southwest Import Action';
+  String get southwestImportAction => 'Import';
 
   @override
-  String get southwestImportOptionsTitle =>
-      'Southwest Import Options Short Title';
+  String get southwestImportOptionsTitle => 'Import Southwest';
 
   @override
-  String get southwestOverrideExistingDataLabel =>
-      'Southwest Override Existing Data Label';
+  String get southwestOverrideExistingDataLabel => 'Overwrite existing data';
 
   @override
-  String get southwestRecalculateBlockTimeLabel =>
-      'Southwest Recalculate Block Time Label';
+  String get southwestRecalculateBlockTimeLabel => 'Recalculate block time';
 
   @override
   String databaseAircraftLabel(int count) {

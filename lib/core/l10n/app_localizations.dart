@@ -787,7 +787,7 @@ abstract class AppLocalizations {
   /// No description provided for @databaseSyncStartLocal.
   ///
   /// In en, this message translates to:
-  /// **'Start Local Sync'**
+  /// **'Start local sync'**
   String get databaseSyncStartLocal;
 
   /// No description provided for @databaseSyncFoundTitle.
@@ -1003,31 +1003,31 @@ abstract class AppLocalizations {
   /// No description provided for @reportsAnalyzeByAircraft.
   ///
   /// In en, this message translates to:
-  /// **'By Aircraft'**
+  /// **'Aircraft'**
   String get reportsAnalyzeByAircraft;
 
   /// No description provided for @reportsAnalyzeByType.
   ///
   /// In en, this message translates to:
-  /// **'By Type'**
+  /// **'Type'**
   String get reportsAnalyzeByType;
 
   /// No description provided for @reportsAnalyzeByFamily.
   ///
   /// In en, this message translates to:
-  /// **'By Family'**
+  /// **'Family'**
   String get reportsAnalyzeByFamily;
 
   /// No description provided for @reportsAnalyzeByYear.
   ///
   /// In en, this message translates to:
-  /// **'By Year'**
+  /// **'Year'**
   String get reportsAnalyzeByYear;
 
   /// No description provided for @reportsAnalyzeByMonth.
   ///
   /// In en, this message translates to:
-  /// **'By Month'**
+  /// **'Month'**
   String get reportsAnalyzeByMonth;
 
   /// No description provided for @reportsOrderByNatural.
@@ -1039,13 +1039,13 @@ abstract class AppLocalizations {
   /// No description provided for @reportsShowMap.
   ///
   /// In en, this message translates to:
-  /// **'Show Map'**
+  /// **'Show map'**
   String get reportsShowMap;
 
   /// No description provided for @reportsShowPath.
   ///
   /// In en, this message translates to:
-  /// **'Include Path'**
+  /// **'Include path'**
   String get reportsShowPath;
 
   /// No description provided for @reportsIncludeHoursBefore.
@@ -1057,7 +1057,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportsXmlTemplateLabel.
   ///
   /// In en, this message translates to:
-  /// **'XML Template'**
+  /// **'Template'**
   String get reportsXmlTemplateLabel;
 
   /// No description provided for @reportsGeneratingShort.
@@ -1141,13 +1141,13 @@ abstract class AppLocalizations {
   /// No description provided for @reportsSaveQuery.
   ///
   /// In en, this message translates to:
-  /// **'Save Query'**
+  /// **'Save query'**
   String get reportsSaveQuery;
 
   /// No description provided for @reportsDeleteSavedQuery.
   ///
   /// In en, this message translates to:
-  /// **'Delete: {name}'**
+  /// **'Delete \"{name}\"?'**
   String reportsDeleteSavedQuery(String name);
 
   /// No description provided for @reportsMetricIfrApproaches.
@@ -1309,7 +1309,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportsFlightsAndSimulatorTitle.
   ///
   /// In en, this message translates to:
-  /// **'Flights & Simulator'**
+  /// **'Flights & simulator'**
   String get reportsFlightsAndSimulatorTitle;
 
   /// No description provided for @reportsEntriesCount.
@@ -1321,13 +1321,13 @@ abstract class AppLocalizations {
   /// No description provided for @reportsNoFlightsInPeriod.
   ///
   /// In en, this message translates to:
-  /// **'No flights/sim in selected period.'**
+  /// **'No flights or sim entries in this period.'**
   String get reportsNoFlightsInPeriod;
 
   /// No description provided for @reportsFlightMapTitle.
   ///
   /// In en, this message translates to:
-  /// **'Flight Map'**
+  /// **'Flight map'**
   String get reportsFlightMapTitle;
 
   /// No description provided for @reportsHideLines.
@@ -1711,7 +1711,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportsAnalyzeByAirport.
   ///
   /// In en, this message translates to:
-  /// **'By Airport'**
+  /// **'Airport'**
   String get reportsAnalyzeByAirport;
 
   /// No description provided for @reportsUnknownAirport.
@@ -1735,7 +1735,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportsOrderByTakeoff.
   ///
   /// In en, this message translates to:
-  /// **'TakeOff'**
+  /// **'Takeoff'**
   String get reportsOrderByTakeoff;
 
   /// No description provided for @reportsOrderByOperations.
@@ -1747,7 +1747,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportsMetricTakeoff.
   ///
   /// In en, this message translates to:
-  /// **'TakeOff'**
+  /// **'Takeoff'**
   String get reportsMetricTakeoff;
 
   /// No description provided for @reportsMetricOperations.
@@ -2707,13 +2707,13 @@ abstract class AppLocalizations {
   /// No description provided for @reportsMapSectionSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Display filtered flight on world map.'**
+  /// **'Show filtered flights on the map.'**
   String get reportsMapSectionSubtitle;
 
   /// No description provided for @reportsPdfSectionSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Select template and export the report PDF.'**
+  /// **'Choose a template and export a PDF report.'**
   String get reportsPdfSectionSubtitle;
 
   /// No description provided for @settingsCalculationPilotProfileSubtitle.
@@ -3151,289 +3151,289 @@ abstract class AppLocalizations {
   /// No description provided for @databaseBackupLogbookAction.
   ///
   /// In en, this message translates to:
-  /// **'Database Backup Logbook Action'**
+  /// **'Backup logbook'**
   String get databaseBackupLogbookAction;
 
   /// No description provided for @databaseBackupRestoreSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Database Backup Restore Subtitle'**
+  /// **'Back up or restore your data.'**
   String get databaseBackupRestoreSubtitle;
 
   /// No description provided for @databaseBackupRestoreTitle.
   ///
   /// In en, this message translates to:
-  /// **'Database Backup Restore Title'**
+  /// **'Backup & Restore'**
   String get databaseBackupRestoreTitle;
 
   /// No description provided for @databaseDangerZoneSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Database Danger Zone Subtitle'**
+  /// **'Irreversible actions.'**
   String get databaseDangerZoneSubtitle;
 
   /// No description provided for @databaseDangerZoneTitle.
   ///
   /// In en, this message translates to:
-  /// **'Database Danger Zone Title'**
+  /// **'Danger zone'**
   String get databaseDangerZoneTitle;
 
   /// No description provided for @databaseDumpTemporaryAction.
   ///
   /// In en, this message translates to:
-  /// **'Database Dump Temporary Action'**
+  /// **'Export debug dump'**
   String get databaseDumpTemporaryAction;
 
   /// No description provided for @databaseExportCsvAction.
   ///
   /// In en, this message translates to:
-  /// **'Database Export Csv Action'**
+  /// **'Export CSV'**
   String get databaseExportCsvAction;
 
   /// No description provided for @databaseImportExportSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Database Import Export Subtitle'**
+  /// **'Import or export data files.'**
   String get databaseImportExportSubtitle;
 
   /// No description provided for @databaseImportExportTitle.
   ///
   /// In en, this message translates to:
-  /// **'Database Import Export Title'**
+  /// **'Import & Export'**
   String get databaseImportExportTitle;
 
   /// No description provided for @databaseImportFileAction.
   ///
   /// In en, this message translates to:
-  /// **'Database Import File Action'**
+  /// **'Import file'**
   String get databaseImportFileAction;
 
   /// No description provided for @databaseImportSummaryTitle.
   ///
   /// In en, this message translates to:
-  /// **'Database Import Summary Title'**
+  /// **'Import summary'**
   String get databaseImportSummaryTitle;
 
   /// No description provided for @databaseImportingTitle.
   ///
   /// In en, this message translates to:
-  /// **'Database Importing Title'**
+  /// **'Importing data'**
   String get databaseImportingTitle;
 
   /// No description provided for @databasePreparingLabel.
   ///
   /// In en, this message translates to:
-  /// **'Database Preparing Label'**
+  /// **'Preparing...'**
   String get databasePreparingLabel;
 
   /// No description provided for @databaseRestoreLogbookAction.
   ///
   /// In en, this message translates to:
-  /// **'Database Restore Logbook Action'**
+  /// **'Restore logbook'**
   String get databaseRestoreLogbookAction;
 
   /// No description provided for @databaseSkippedLinesTitle.
   ///
   /// In en, this message translates to:
-  /// **'Database Skipped Lines Title'**
+  /// **'Skipped lines'**
   String get databaseSkippedLinesTitle;
 
   /// No description provided for @databaseToolsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Database Tools Title'**
+  /// **'Tools'**
   String get databaseToolsTitle;
 
   /// No description provided for @logtenAssociationHeader.
   ///
   /// In en, this message translates to:
-  /// **'Logten Association Header'**
+  /// **'Mapped to'**
   String get logtenAssociationHeader;
 
   /// No description provided for @logtenContinueAction.
   ///
   /// In en, this message translates to:
-  /// **'Logten Continue Action'**
+  /// **'Continue'**
   String get logtenContinueAction;
 
   /// No description provided for @logtenCorrectedValueLabel.
   ///
   /// In en, this message translates to:
-  /// **'Logten Corrected Value Label'**
+  /// **'Corrected value'**
   String get logtenCorrectedValueLabel;
 
   /// No description provided for @logtenCreateAirportTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Logten Create Airport Tooltip'**
+  /// **'Create airport'**
   String get logtenCreateAirportTooltip;
 
   /// No description provided for @logtenEntryTypeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Logten Entry Type Label'**
+  /// **'Entry type'**
   String get logtenEntryTypeLabel;
 
   /// No description provided for @logtenFlightLabel.
   ///
   /// In en, this message translates to:
-  /// **'Logten Flight Label'**
+  /// **'Flight'**
   String get logtenFlightLabel;
 
   /// No description provided for @logtenIgnoreAllAction.
   ///
   /// In en, this message translates to:
-  /// **'Logten Ignore All Action'**
+  /// **'Ignore all'**
   String get logtenIgnoreAllAction;
 
   /// No description provided for @logtenIgnoreLineAction.
   ///
   /// In en, this message translates to:
-  /// **'Logten Ignore Line Action'**
+  /// **'Ignore line'**
   String get logtenIgnoreLineAction;
 
   /// No description provided for @logtenImportAction.
   ///
   /// In en, this message translates to:
-  /// **'Logten Import Action'**
+  /// **'Import'**
   String get logtenImportAction;
 
   /// No description provided for @logtenImportTitle.
   ///
   /// In en, this message translates to:
-  /// **'Logten Import Short Title'**
+  /// **'Import LogTen'**
   String get logtenImportTitle;
 
   /// No description provided for @logtenReviewTitle.
   ///
   /// In en, this message translates to:
-  /// **'Logten Review Short Title'**
+  /// **'Review LogTen'**
   String get logtenReviewTitle;
 
   /// No description provided for @logtenSelectAirportTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Logten Select Airport Tooltip'**
+  /// **'Select airport'**
   String get logtenSelectAirportTooltip;
 
   /// No description provided for @logtenSelectArrivalAirport.
   ///
   /// In en, this message translates to:
-  /// **'Logten Select Arrival Airport'**
+  /// **'Select arrival airport'**
   String get logtenSelectArrivalAirport;
 
   /// No description provided for @logtenSelectDepartureAirport.
   ///
   /// In en, this message translates to:
-  /// **'Logten Select Departure Airport'**
+  /// **'Select departure airport'**
   String get logtenSelectDepartureAirport;
 
   /// No description provided for @logtenSelectedAirport.
   ///
   /// In en, this message translates to:
-  /// **'Logten Selected Airport'**
+  /// **'Selected airport'**
   String get logtenSelectedAirport;
 
   /// No description provided for @logtenSimulatorLabel.
   ///
   /// In en, this message translates to:
-  /// **'Logten Simulator Label'**
+  /// **'Simulator'**
   String get logtenSimulatorLabel;
 
   /// No description provided for @logtenSourceColumnHeader.
   ///
   /// In en, this message translates to:
-  /// **'Logten Source Column Header'**
+  /// **'Source column'**
   String get logtenSourceColumnHeader;
 
   /// No description provided for @logtenTimezoneLabel.
   ///
   /// In en, this message translates to:
-  /// **'Logten Timezone Label'**
+  /// **'Time zone'**
   String get logtenTimezoneLabel;
 
   /// No description provided for @qatarContinueAction.
   ///
   /// In en, this message translates to:
-  /// **'Qatar Continue Action'**
+  /// **'Continue'**
   String get qatarContinueAction;
 
   /// No description provided for @qatarCreateAircraftAction.
   ///
   /// In en, this message translates to:
-  /// **'Qatar Create Aircraft Action'**
+  /// **'Create aircraft'**
   String get qatarCreateAircraftAction;
 
   /// No description provided for @qatarCreateAirportAction.
   ///
   /// In en, this message translates to:
-  /// **'Qatar Create Airport Action'**
+  /// **'Create airport'**
   String get qatarCreateAirportAction;
 
   /// No description provided for @qatarDefaultPositionLabel.
   ///
   /// In en, this message translates to:
-  /// **'Qatar Default Position Label'**
+  /// **'Default position'**
   String get qatarDefaultPositionLabel;
 
   /// No description provided for @qatarImportAction.
   ///
   /// In en, this message translates to:
-  /// **'Qatar Import Action'**
+  /// **'Import'**
   String get qatarImportAction;
 
   /// No description provided for @qatarImportTitle.
   ///
   /// In en, this message translates to:
-  /// **'Qatar Import Short Title'**
+  /// **'Import Qatar'**
   String get qatarImportTitle;
 
   /// No description provided for @qatarMissingAircraftTitle.
   ///
   /// In en, this message translates to:
-  /// **'Qatar Missing Aircraft Title'**
+  /// **'Missing aircraft'**
   String get qatarMissingAircraftTitle;
 
   /// No description provided for @qatarMissingAirportsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Qatar Missing Airports Title'**
+  /// **'Missing airports'**
   String get qatarMissingAirportsTitle;
 
   /// No description provided for @qatarPilotNameAsWrittenLabel.
   ///
   /// In en, this message translates to:
-  /// **'Qatar Pilot Name As Written Label'**
+  /// **'Keep pilot name as-is'**
   String get qatarPilotNameAsWrittenLabel;
 
   /// No description provided for @qatarPositionPic.
   ///
   /// In en, this message translates to:
-  /// **'Qatar Position Pic'**
+  /// **'PIC'**
   String get qatarPositionPic;
 
   /// No description provided for @qatarPositionSic.
   ///
   /// In en, this message translates to:
-  /// **'Qatar Position Sic'**
+  /// **'SIC'**
   String get qatarPositionSic;
 
   /// No description provided for @reportsBatchChangesTitle.
   ///
   /// In en, this message translates to:
-  /// **'Reports Batch Changes Title'**
+  /// **'Batch changes'**
   String get reportsBatchChangesTitle;
 
   /// No description provided for @reportsBatchSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Edit multile entries at once'**
+  /// **'Edit multiple entries at once'**
   String get reportsBatchSubtitle;
 
   /// No description provided for @reportsBatchTitle.
   ///
   /// In en, this message translates to:
-  /// **'Batch Edit'**
+  /// **'Batch edit'**
   String get reportsBatchTitle;
 
   /// No description provided for @reportsCalculateAction.
@@ -3445,61 +3445,61 @@ abstract class AppLocalizations {
   /// No description provided for @reportsCalculateAll.
   ///
   /// In en, this message translates to:
-  /// **'Calculate All'**
+  /// **'Calculate all'**
   String get reportsCalculateAll;
 
   /// No description provided for @reportsCalculateDuty.
   ///
   /// In en, this message translates to:
-  /// **'Calculate Duty'**
+  /// **'Calculate duty'**
   String get reportsCalculateDuty;
 
   /// No description provided for @reportsCalculateDutyConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'Calculate Duty'**
+  /// **'Calculate duty'**
   String get reportsCalculateDutyConfirmTitle;
 
   /// No description provided for @reportsCalculatingDutyPeriods.
   ///
   /// In en, this message translates to:
-  /// **'Reports Calculating Duty Periods'**
+  /// **'Calculating duty periods...'**
   String get reportsCalculatingDutyPeriods;
 
   /// No description provided for @reportsCalculatingDutyShort.
   ///
   /// In en, this message translates to:
-  /// **'Reports Calculating Duty Short'**
+  /// **'Calculating duty...'**
   String get reportsCalculatingDutyShort;
 
   /// No description provided for @reportsCheckFlights.
   ///
   /// In en, this message translates to:
-  /// **'Check Flights'**
+  /// **'Check flights'**
   String get reportsCheckFlights;
 
   /// No description provided for @reportsCheckingShort.
   ///
   /// In en, this message translates to:
-  /// **'Reports Checking Short'**
+  /// **'Checking flights...'**
   String get reportsCheckingShort;
 
   /// No description provided for @reportsChecksTitle.
   ///
   /// In en, this message translates to:
-  /// **'Reports Checks Short Title'**
+  /// **'Check flights'**
   String get reportsChecksTitle;
 
   /// No description provided for @reportsClearAction.
   ///
   /// In en, this message translates to:
-  /// **'Reports Clear Action'**
+  /// **'Clear'**
   String get reportsClearAction;
 
   /// No description provided for @reportsDeleteTemplateTitle.
   ///
   /// In en, this message translates to:
-  /// **'Reports Delete Template Title'**
+  /// **'Delete template'**
   String get reportsDeleteTemplateTitle;
 
   /// No description provided for @reportsDownloadAction.
@@ -3511,79 +3511,79 @@ abstract class AppLocalizations {
   /// No description provided for @reportsEditPilotProfile.
   ///
   /// In en, this message translates to:
-  /// **'Reports Edit Pilot Profile'**
+  /// **'Edit pilot profile'**
   String get reportsEditPilotProfile;
 
   /// No description provided for @reportsEditTemplates.
   ///
   /// In en, this message translates to:
-  /// **'Edit Templates'**
+  /// **'Edit templates'**
   String get reportsEditTemplates;
 
   /// No description provided for @reportsExportInteractiveMap.
   ///
   /// In en, this message translates to:
-  /// **'Reports Export Interactive Map'**
+  /// **'Export map'**
   String get reportsExportInteractiveMap;
 
   /// No description provided for @reportsLock.
   ///
   /// In en, this message translates to:
-  /// **'Reports Lock'**
+  /// **'Lock'**
   String get reportsLock;
 
   /// No description provided for @reportsNoChangesApplied.
   ///
   /// In en, this message translates to:
-  /// **'Reports No Changes Applied'**
+  /// **'No changes applied.'**
   String get reportsNoChangesApplied;
 
   /// No description provided for @reportsNoFlightIssuesFound.
   ///
   /// In en, this message translates to:
-  /// **'Reports No Flight Issues Found'**
+  /// **'No flight issues found.'**
   String get reportsNoFlightIssuesFound;
 
   /// No description provided for @reportsOpenPdfAfterSaving.
   ///
   /// In en, this message translates to:
-  /// **'Reports Open Pdf After Saving'**
+  /// **'Open PDF after saving'**
   String get reportsOpenPdfAfterSaving;
 
   /// No description provided for @reportsPdfGenerationTitle.
   ///
   /// In en, this message translates to:
-  /// **'Print Logbook'**
+  /// **'Print logbook'**
   String get reportsPdfGenerationTitle;
 
   /// No description provided for @reportsPdfTitle.
   ///
   /// In en, this message translates to:
-  /// **'PDF Options'**
+  /// **'PDF options'**
   String get reportsPdfTitle;
 
   /// No description provided for @reportsPreparingBatchData.
   ///
   /// In en, this message translates to:
-  /// **'Reports Preparing Batch Data'**
+  /// **'Preparing batch data...'**
   String get reportsPreparingBatchData;
 
   /// No description provided for @reportsRunAction.
   ///
   /// In en, this message translates to:
-  /// **'Reports Run Action'**
+  /// **'Run'**
   String get reportsRunAction;
 
   /// No description provided for @reportsSelectAll.
   ///
   /// In en, this message translates to:
-  /// **'Reports Select All'**
+  /// **'Select all'**
   String get reportsSelectAll;
 
   /// No description provided for @reportsSetCrew.
   ///
   /// In en, this message translates to:
-  /// **'Reports Set Crew'**
+  /// **'Set crew'**
   String get reportsSetCrew;
 
   /// No description provided for @reportsTabBatch.
@@ -3592,16 +3592,10 @@ abstract class AppLocalizations {
   /// **'Batch'**
   String get reportsTabBatch;
 
-  /// No description provided for @reportsTemplateNameLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Template Name'**
-  String get reportsTemplateNameLabel;
-
   /// No description provided for @reportsUnlock.
   ///
   /// In en, this message translates to:
-  /// **'Reports Unlock'**
+  /// **'Unlock'**
   String get reportsUnlock;
 
   /// No description provided for @reportsUploadJson.
@@ -3619,7 +3613,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsCalculationPilotProfileTitle.
   ///
   /// In en, this message translates to:
-  /// **'Calculation Pilot Profile Title'**
+  /// **'Pilot Profile'**
   String get settingsCalculationPilotProfileTitle;
 
   /// No description provided for @settingsTabDatabase.
@@ -3649,193 +3643,193 @@ abstract class AppLocalizations {
   /// No description provided for @simplelogConflictResolutionTitle.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Conflict Resolution Title'**
+  /// **'Conflict resolution'**
   String get simplelogConflictResolutionTitle;
 
   /// No description provided for @simplelogCrossCountryLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Cross Country Label'**
+  /// **'Cross-country time'**
   String get simplelogCrossCountryLabel;
 
   /// No description provided for @simplelogCrossCountryNmLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Cross Country Nm Label'**
+  /// **'Distance threshold (NM)'**
   String get simplelogCrossCountryNmLabel;
 
   /// No description provided for @simplelogIfrPercentLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Ifr Percent Label'**
+  /// **'IFR %'**
   String get simplelogIfrPercentLabel;
 
   /// No description provided for @simplelogIfrTimeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Ifr Time Label'**
+  /// **'IFR time'**
   String get simplelogIfrTimeLabel;
 
   /// No description provided for @simplelogImportAction.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Import Action'**
+  /// **'Import'**
   String get simplelogImportAction;
 
   /// No description provided for @simplelogImportOptionsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Import Options Short Title'**
+  /// **'Import SimpleLog'**
   String get simplelogImportOptionsTitle;
 
   /// No description provided for @simplelogInstrumentPercentLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Instrument Percent Label'**
+  /// **'Instrument %'**
   String get simplelogInstrumentPercentLabel;
 
   /// No description provided for @simplelogInstrumentTimeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Instrument Time Label'**
+  /// **'Instrument time'**
   String get simplelogInstrumentTimeLabel;
 
   /// No description provided for @simplelogIrp3PercentLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Irp3 Percent Label'**
+  /// **'IRP3 %'**
   String get simplelogIrp3PercentLabel;
 
   /// No description provided for @simplelogIrp3TimeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Irp3 Time Label'**
+  /// **'IRP3 time'**
   String get simplelogIrp3TimeLabel;
 
   /// No description provided for @simplelogIrp4PercentLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Irp4 Percent Label'**
+  /// **'IRP4 %'**
   String get simplelogIrp4PercentLabel;
 
   /// No description provided for @simplelogIrp4TimeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Irp4 Time Label'**
+  /// **'IRP4 time'**
   String get simplelogIrp4TimeLabel;
 
   /// No description provided for @simplelogNightTimeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Night Time Label'**
+  /// **'Night time'**
   String get simplelogNightTimeLabel;
 
   /// No description provided for @simplelogOverrideAircraftOnConflict.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Override Aircraft On Conflict'**
+  /// **'Overwrite aircraft on conflict'**
   String get simplelogOverrideAircraftOnConflict;
 
   /// No description provided for @simplelogOverrideAircraftTypeOnConflict.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Override Aircraft Type On Conflict'**
+  /// **'Overwrite type on conflict'**
   String get simplelogOverrideAircraftTypeOnConflict;
 
   /// No description provided for @simplelogOverrideAirportOnConflict.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Override Airport On Conflict'**
+  /// **'Overwrite airport on conflict'**
   String get simplelogOverrideAirportOnConflict;
 
   /// No description provided for @simplelogRecalcTotalTimeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Recalc Total Time Label'**
+  /// **'Recalculate total time'**
   String get simplelogRecalcTotalTimeLabel;
 
   /// No description provided for @simplelogRecalculationsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Recalculations Title'**
+  /// **'Recalculations'**
   String get simplelogRecalculationsTitle;
 
   /// No description provided for @simplelogTakeoffLandingsLabel.
   ///
   /// In en, this message translates to:
-  /// **'Simplelog Takeoff Landings Label'**
+  /// **'Takeoffs and landings'**
   String get simplelogTakeoffLandingsLabel;
 
   /// No description provided for @southwestAddCopilotStaffNumberLabel.
   ///
   /// In en, this message translates to:
-  /// **'Southwest Add Copilot Staff Number Label'**
+  /// **'Add copilot staff number'**
   String get southwestAddCopilotStaffNumberLabel;
 
   /// No description provided for @southwestAddFlightNumberToNotesLabel.
   ///
   /// In en, this message translates to:
-  /// **'Southwest Add Flight Number To Notes Label'**
+  /// **'Add flight number to notes'**
   String get southwestAddFlightNumberToNotesLabel;
 
   /// No description provided for @southwestCalculateCrossCountryTimeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Southwest Calculate Cross Country Time Label'**
+  /// **'Calculate cross-country time'**
   String get southwestCalculateCrossCountryTimeLabel;
 
   /// No description provided for @southwestCalculateIfrTimeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Southwest Calculate Ifr Time Label'**
+  /// **'Calculate IFR time'**
   String get southwestCalculateIfrTimeLabel;
 
   /// No description provided for @southwestCalculateInstrumentTimeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Southwest Calculate Instrument Time Label'**
+  /// **'Calculate instrument time'**
   String get southwestCalculateInstrumentTimeLabel;
 
   /// No description provided for @southwestCalculateNightTimeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Southwest Calculate Night Time Label'**
+  /// **'Calculate night time'**
   String get southwestCalculateNightTimeLabel;
 
   /// No description provided for @southwestCrossCountryThresholdLabel.
   ///
   /// In en, this message translates to:
-  /// **'Southwest Cross Country Threshold Label'**
+  /// **'Cross-country threshold (NM)'**
   String get southwestCrossCountryThresholdLabel;
 
   /// No description provided for @southwestDefaultSelfPositionLabel.
   ///
   /// In en, this message translates to:
-  /// **'Southwest Default Self Position Label'**
+  /// **'Default self position'**
   String get southwestDefaultSelfPositionLabel;
 
   /// No description provided for @southwestImportAction.
   ///
   /// In en, this message translates to:
-  /// **'Southwest Import Action'**
+  /// **'Import'**
   String get southwestImportAction;
 
   /// No description provided for @southwestImportOptionsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Southwest Import Options Short Title'**
+  /// **'Import Southwest'**
   String get southwestImportOptionsTitle;
 
   /// No description provided for @southwestOverrideExistingDataLabel.
   ///
   /// In en, this message translates to:
-  /// **'Southwest Override Existing Data Label'**
+  /// **'Overwrite existing data'**
   String get southwestOverrideExistingDataLabel;
 
   /// No description provided for @southwestRecalculateBlockTimeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Southwest Recalculate Block Time Label'**
+  /// **'Recalculate block time'**
   String get southwestRecalculateBlockTimeLabel;
 
   /// No description provided for @databaseAircraftLabel.
