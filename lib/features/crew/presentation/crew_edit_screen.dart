@@ -399,8 +399,7 @@ class _CrewEditScreenState extends ConsumerState<CrewEditScreen> {
     );
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: title,
-      shortTitle: title,
+      title: title,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
       contentView: form,
     );

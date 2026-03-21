@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/picker_with_add_input_field.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
@@ -22,10 +23,14 @@ class DutyRulesSettingsCard extends ConsumerStatefulWidget {
   const DutyRulesSettingsCard({
     super.key,
     this.showTitle = true,
+    this.initiallyExpanded = false,
   });
 
   /// Whether the internal expansion tile title should be shown.
   final bool showTitle;
+
+  /// Whether the expansion tile should start opened.
+  final bool initiallyExpanded;
 
   @override
   ConsumerState<DutyRulesSettingsCard> createState() =>
@@ -200,8 +205,9 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
 
     return Card(
       child: ExpansionTile(
+        initiallyExpanded: widget.initiallyExpanded,
         title: widget.showTitle
-            ? const Text('Duty Rules')
+            ? Text(AppLocalizations.of(context)!.autoUi023)
             : const SizedBox.shrink(),
         tilePadding: widget.showTitle
             ? null
@@ -214,15 +220,15 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
               child: LinearProgressIndicator(),
             ),
           if (hasLoadError)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 8),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Unable to load duty rules settings.'),
+                child: Text(AppLocalizations.of(context)!.autoUi064),
               ),
             ),
           PickerWithAddInputField(
-            label: 'Crew home base airport',
+            label: AppLocalizations.of(context)!.autoUi016,
             valueText: _airportLabelForId(_homeBaseAirportId, airports),
             onTap: _pickHomeBaseAirport,
             onAdd: _createAndSelectHomeBaseAirport,
@@ -231,7 +237,7 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
           const SizedBox(height: 8),
           ClockTimeInputField(
             controller: _onBaseController,
-            label: 'Reporting time on base',
+            label: AppLocalizations.of(context)!.autoUi050,
             fallbackMinutes: _onBaseMinutes,
             onChangedMinutes: (minutes) {
               if (_isHydrating) return;
@@ -242,7 +248,7 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
           const SizedBox(height: 8),
           ClockTimeInputField(
             controller: _offBaseController,
-            label: 'Reporting time offbase',
+            label: AppLocalizations.of(context)!.autoUi049,
             fallbackMinutes: _offBaseMinutes,
             onChangedMinutes: (minutes) {
               if (_isHydrating) return;
@@ -253,7 +259,7 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
           const SizedBox(height: 8),
           ClockTimeInputField(
             controller: _dutyEndAllowanceController,
-            label: 'Duty end time allowance',
+            label: AppLocalizations.of(context)!.autoUi025,
             fallbackMinutes: _dutyEndAllowanceMinutes,
             onChangedMinutes: (minutes) {
               if (_isHydrating) return;
@@ -264,7 +270,7 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
           const SizedBox(height: 8),
           ClockTimeInputField(
             controller: _minimumRestController,
-            label: 'Minimum rest time',
+            label: AppLocalizations.of(context)!.autoUi041,
             fallbackMinutes: _minimumRestMinutes,
             onChangedMinutes: (minutes) {
               if (_isHydrating) return;

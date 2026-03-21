@@ -189,9 +189,9 @@ class LogbookListItem extends StatelessWidget {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SimpleTopLine(
+        _SimpleTopLine(
           icon: Icons.airplane_ticket_outlined,
-          label: 'Positioning',
+          label: AppLocalizations.of(context)!.logbookEventPositioning,
         ),
         const SizedBox(height: 6),
         Row(
@@ -271,7 +271,7 @@ class LogbookListItem extends StatelessWidget {
         _FlightTopLine(
           tailNumber: tailNumber,
           typeLongName: typeLongName,
-          label: 'Simulator',
+          label: AppLocalizations.of(context)!.fieldIsSimulator,
           icon: Icons.monitor,
           hasEndorsement: _hasEndorsement(
             simulator?.endorsementData,
@@ -452,9 +452,21 @@ class LogbookListItem extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _RightLine(label: 'Position', value: position, style: textStyle),
-        _RightLine(label: 'TakeOff', value: '$totalTakeOffs', style: textStyle),
-        _RightLine(label: 'Landing', value: '$totalLandings', style: textStyle),
+        _RightLine(
+          label: AppLocalizations.of(context)!.crewPositionLabel,
+          value: position,
+          style: textStyle,
+        ),
+        _RightLine(
+          label: AppLocalizations.of(context)!.reportsOrderByTakeoff,
+          value: '$totalTakeOffs',
+          style: textStyle,
+        ),
+        _RightLine(
+          label: AppLocalizations.of(context)!.autoUi036,
+          value: '$totalLandings',
+          style: textStyle,
+        ),
       ],
     );
   }

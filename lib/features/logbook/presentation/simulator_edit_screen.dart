@@ -68,9 +68,11 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   final Map<int, String> _crewLabelCache = {};
   EndorsementData? _endorsement;
   String? _simulatorErrorText;
+  String? _startTimeErrorText;
   String? _startEndErrorText;
   String? _sessionTimeErrorText;
   String? _crewErrorText;
+  bool _hasStartTime = true;
 
   @override
   void initState() {
@@ -86,6 +88,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     _startTimeController.text = ClockTimeInputField.formatMinutesOfDay(
       _start.hour * 60 + _start.minute,
     );
+    _hasStartTime = true;
     _endTimeController.text = '';
     _timeController.text = HourInputField.formatHours(0);
     unawaited(_loadExisting());
@@ -138,6 +141,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     _startTimeController.text = ClockTimeInputField.formatMinutesOfDay(
       _start.hour * 60 + _start.minute,
     );
+    _hasStartTime = true;
     _endTimeController.text = _end == null
         ? ''
         : ClockTimeInputField.formatMinutesOfDay(
@@ -307,6 +311,8 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     final hour = (minutes ~/ 60) % 24;
     final minute = minutes % 60;
     setState(() {
+      _hasStartTime = true;
+      _startTimeErrorText = null;
       _start = DateTime(_start.year, _start.month, _start.day, hour, minute);
       _startEndErrorText = null;
       _updateTimeIfAuto();
@@ -336,6 +342,15 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
     });
   }
 
+  void _clearStartTime() {
+    setState(() {
+      _hasStartTime = false;
+      _startTimeController.text = '';
+      _startTimeErrorText = null;
+      _startEndErrorText = null;
+    });
+  }
+
   String _dateLabel(DateTime value) {
     final locale = Localizations.localeOf(context).toString();
     return DateFormat('dd/MMM yyyy', locale).format(value);
@@ -344,6 +359,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
   Future<void> _save() async {
     final formValid = _formKey.currentState?.validate() ?? false;
     String? simulatorErrorText;
+    String? startTimeErrorText;
     String? startEndErrorText;
     String? sessionTimeErrorText;
     String? crewErrorText;
@@ -352,10 +368,14 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       simulatorErrorText = 'Select a simulator.';
     }
     final end = _end;
-    if (end != null && !end.isAfter(_start)) {
+    if (!_hasStartTime) {
+      startTimeErrorText = 'Start time is required.';
+    } else if (end != null && !end.isAfter(_start)) {
       startEndErrorText = 'End time must be after start time.';
     }
-    if (end != null && end.difference(_start) > const Duration(hours: 24)) {
+    if (_hasStartTime &&
+        end != null &&
+        end.difference(_start) > const Duration(hours: 24)) {
       startEndErrorText = 'End time cannot be more than 24 hours after start.';
     }
     final parsed = HourInputField.parseHours(_timeController.text);
@@ -369,6 +389,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
 
     setState(() {
       _simulatorErrorText = simulatorErrorText;
+      _startTimeErrorText = startTimeErrorText;
       _startEndErrorText = startEndErrorText;
       _sessionTimeErrorText = sessionTimeErrorText;
       _crewErrorText = crewErrorText;
@@ -376,6 +397,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
 
     if (!formValid ||
         simulatorErrorText != null ||
+        startTimeErrorText != null ||
         startEndErrorText != null ||
         sessionTimeErrorText != null ||
         crewErrorText != null) {
@@ -442,24 +464,29 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             DateSelectorInputField(
-              label: 'Date',
+              label: AppLocalizations.of(context)!.fieldDate,
               valueText: _dateLabel(_start),
               onTap: _pickStartDate,
             ),
             const SizedBox(height: 8),
             TwoColumnFieldRow(
-              left: ClockTimeInputField(
+              left: LabeledClockFieldWithClear(
                 controller: _startTimeController,
-                label: 'Start Time',
+                label: AppLocalizations.of(context)!.autoUi059,
                 onChangedMinutes: _onStartTimeChanged,
+                onCleared: _clearStartTime,
+                errorText: _startTimeErrorText,
+                clearTooltip: AppLocalizations.of(context)!.clearAction,
+                clearEnabled: _hasStartTime,
+                onPressedClear: _clearStartTime,
               ),
               right: LabeledClockFieldWithClear(
                 controller: _endTimeController,
-                label: 'End Time',
+                label: AppLocalizations.of(context)!.autoUi027,
                 onChangedMinutes: _onEndTimeChanged,
                 onCleared: _clearEndTime,
                 errorText: _startEndErrorText,
-                clearTooltip: 'Clear',
+                clearTooltip: AppLocalizations.of(context)!.clearAction,
                 clearEnabled: _end != null,
                 onPressedClear: _clearEndTime,
               ),
@@ -467,7 +494,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
             const SizedBox(height: 8),
             HourInputField(
               controller: _timeController,
-              label: 'Session Time',
+              label: AppLocalizations.of(context)!.autoUi052,
               fallbackMinutes: _calculatedMinutes(),
               onChangedMinutes: (_) {
                 _timeEdited = true;
@@ -477,7 +504,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
               },
               errorText: _sessionTimeErrorText,
               suffixIcon: IconButton(
-                tooltip: 'Use calculated time',
+                tooltip: AppLocalizations.of(context)!.autoUi066,
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
                 constraints: const BoxConstraints.tightFor(
@@ -507,7 +534,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
             ),
             const SizedBox(height: 8),
             PickerWithAddInputField(
-              label: 'Simulator',
+              label: AppLocalizations.of(context)!.fieldIsSimulator,
               valueText: _simulatorLabel(_aircraftId, aircraftAsync),
               onTap: _pickSimulator,
               onAdd: _createSimulatorAndSelect,
@@ -517,11 +544,14 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
             const SizedBox(height: 8),
             _buildCrewList(crewAsync),
             const SizedBox(height: 8),
-            TextInputField(controller: _remarksController, label: 'Remarks'),
+            TextInputField(
+              controller: _remarksController,
+              label: AppLocalizations.of(context)!.reportsFilterFieldRemarks,
+            ),
             const SizedBox(height: 8),
             TextInputField(
               controller: _notesController,
-              label: 'Notes',
+              label: AppLocalizations.of(context)!.fieldNotes,
               minLines: 3,
               maxLines: 3,
             ),
@@ -530,17 +560,13 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       ),
     );
 
-    final longTitle = widget.isCreate
-        ? 'New Simulator Training'
-        : 'Edit Simulator Training';
-    final shortTitle = widget.isCreate
-        ? 'New Sim Training'
-        : 'Edit Sim Training';
+    final title = widget.isCreate
+        ? l10n.newSimTrainingTitle
+        : l10n.editSimTrainingTitle;
 
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: longTitle,
-      shortTitle: shortTitle,
+      title: title,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
       contentView: form,
     );
@@ -553,10 +579,10 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Crew',
-                style: TextStyle(fontWeight: FontWeight.w600),
+                AppLocalizations.of(context)!.screenCrew,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
             Wrap(
@@ -571,7 +597,9 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
           child: Card(
             margin: EdgeInsets.zero,
             child: _crewRows.isEmpty
-                ? const Center(child: Text('No crew assigned'))
+                ? Center(
+                    child: Text(AppLocalizations.of(context)!.noCrewAssigned),
+                  )
                 : Scrollbar(
                     controller: _crewListController,
                     thumbVisibility: true,
@@ -610,7 +638,9 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
                                 ),
                               ),
                               IconButton(
-                                tooltip: 'Remove',
+                                tooltip: AppLocalizations.of(
+                                  context,
+                                )!.removeAction,
                                 visualDensity: VisualDensity.compact,
                                 onPressed: () => setState(() {
                                   _crewRows.removeAt(index);
@@ -650,7 +680,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
         icon: _endorsement == null
             ? Icons.draw_outlined
             : Icons.verified_outlined,
-        label: const Text('Endorsement'),
+        label: Text(AppLocalizations.of(context)!.autoUi028),
       ),
       _crewHeaderActionButton(
         onPressed: () async {
@@ -669,7 +699,7 @@ class _SimulatorEditScreenState extends ConsumerState<SimulatorEditScreen> {
           });
         },
         icon: Icons.add,
-        label: const Text('Add Crew'),
+        label: Text(AppLocalizations.of(context)!.autoUi003),
       ),
     ];
   }

@@ -1425,8 +1425,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
 
     return AdaptiveFormShell(
       onClose: handleCloseOrBack,
-      longTitle: title,
-      shortTitle: title,
+      title: title,
       leading: leading,
       actions: actions,
       contentView: formBody,
@@ -1478,7 +1477,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             left: LabeledClockFieldWithClear(
               controller: _chocksOffTimeController,
-              label: 'Chocks OFF',
+              label: AppLocalizations.of(context)!.autoUi010,
               onChangedMinutes: _onChocksOffTimeChanged,
               onCleared: () => setState(
                 () => _chocksOff = DateTime(
@@ -1497,7 +1496,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
             ),
             right: LabeledClockFieldWithClear(
               controller: _takeOffTimeController,
-              label: 'TakeOff',
+              label: AppLocalizations.of(context)!.reportsOrderByTakeoff,
               onChangedMinutes: _onTakeoffTimeChanged,
               onCleared: () => setState(() => _takeOff = null),
               clearTooltip: l10n.clearAction,
@@ -1510,7 +1509,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             left: LabeledClockFieldWithClear(
               controller: _landingTimeController,
-              label: 'Landing',
+              label: AppLocalizations.of(context)!.autoUi036,
               onChangedMinutes: _onLandingTimeChanged,
               onCleared: () => setState(() => _landing = null),
               clearTooltip: l10n.clearAction,
@@ -1519,7 +1518,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
             ),
             right: LabeledClockFieldWithClear(
               controller: _chocksOnTimeController,
-              label: 'Chocks ON',
+              label: AppLocalizations.of(context)!.autoUi011,
               onChangedMinutes: _onChocksOnTimeChanged,
               onCleared: () => setState(() => _chocksOn = null),
               errorText: _showCalculateRequiredError && _chocksOn == null
@@ -1535,7 +1534,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             left: LabeledClockFieldWithClear(
               controller: _chocksOffTimeController,
-              label: 'Chocks OFF',
+              label: AppLocalizations.of(context)!.autoUi010,
               onChangedMinutes: _onChocksOffTimeChanged,
               onCleared: () => setState(
                 () => _chocksOff = DateTime(
@@ -1554,7 +1553,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
             ),
             right: LabeledClockFieldWithClear(
               controller: _chocksOnTimeController,
-              label: 'Chocks ON',
+              label: AppLocalizations.of(context)!.autoUi011,
               onChangedMinutes: _onChocksOnTimeChanged,
               onCleared: () => setState(() => _chocksOn = null),
               errorText: _showCalculateRequiredError && _chocksOn == null
@@ -1573,29 +1572,29 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           onAdd: _createAircraftAndSelect,
           addTooltip: l10n.createAircraftTitle,
           errorText: _showFirstPageRequiredErrors && _aircraftId == null
-              ? 'Aircraft is required.'
+              ? l10n.aircraftRequiredError
               : null,
         ),
         const SizedBox(height: 8),
         PickerWithAddInputField(
-          label: 'From Airport',
+          label: AppLocalizations.of(context)!.autoUi035,
           valueText: _airportLabel(_fromAirportId, airportsAsync),
           onTap: () => _pickAirport(isFrom: true),
           onAdd: () => _createAirport(isFrom: true),
-          addTooltip: 'Add airport',
+          addTooltip: l10n.createAirportTitle,
           errorText: _showFirstPageRequiredErrors && _fromAirportId == null
-              ? 'From Airport is required.'
+              ? l10n.fromAirportRequiredError
               : null,
         ),
         const SizedBox(height: 8),
         PickerWithAddInputField(
-          label: 'To Airport',
+          label: AppLocalizations.of(context)!.autoUi062,
           valueText: _airportLabel(_toAirportId, airportsAsync),
           onTap: () => _pickAirport(isFrom: false),
           onAdd: () => _createAirport(isFrom: false),
-          addTooltip: 'Add airport',
+          addTooltip: l10n.createAirportTitle,
           errorText: _showFirstPageRequiredErrors && _toAirportId == null
-              ? 'To Airport is required.'
+              ? l10n.toAirportRequiredError
               : null,
         ),
       ],
@@ -1629,14 +1628,16 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
             Expanded(
               child: NumberInputField(
                 controller: _ifrApproachesController,
-                label: 'IFR Approaches',
+                label: AppLocalizations.of(context)!.reportsMetricIfrApproaches,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: TextInputField(
                 controller: _approachTypeController,
-                label: 'Approach Type',
+                label: AppLocalizations.of(
+                  context,
+                )!.reportsFilterFieldApproachType,
               ),
             ),
           ],
@@ -1660,7 +1661,9 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
             Expanded(
               child: HourInputField(
                 controller: _blockController,
-                label: 'Block Time',
+                label: AppLocalizations.of(
+                  context,
+                )!.reportsFilterFieldBlockTime,
                 onChangedMinutes: (_) => _refreshTotalBlockController(),
               ),
             ),
@@ -1681,7 +1684,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
             ),
             left: HourInputField(
               controller: _flightController,
-              label: 'Flight',
+              label: AppLocalizations.of(context)!.logbookEventFlight,
               suffixIcon: Checkbox(
                 value: _checks.flight,
                 onChanged: (_takeOff != null && _landing != null)
@@ -1697,7 +1700,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
             rightLabel: 'Distance NM',
             right: NumberInputField(
               controller: _distanceNmController,
-              label: 'Distance NM',
+              label: AppLocalizations.of(context)!.reportsMetricDistanceNm,
             ),
           )
         else
@@ -1705,7 +1708,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
             padding: const EdgeInsets.only(bottom: 8),
             child: NumberInputField(
               controller: _distanceNmController,
-              label: 'Distance NM',
+              label: AppLocalizations.of(context)!.reportsMetricDistanceNm,
             ),
           ),
         _buildTimeFieldsGrid([
@@ -2125,7 +2128,7 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
               icon: _endorsement == null
                   ? Icons.draw_outlined
                   : Icons.verified_outlined,
-              label: const Text('Endorsement'),
+              label: Text(AppLocalizations.of(context)!.autoUi028),
             ),
             _crewHeaderActionButton(
               onPressed: () async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
@@ -58,7 +59,7 @@ class _CustomTimeLabelsCardState extends ConsumerState<CustomTimeLabelsCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Custom Time Labels',
+          AppLocalizations.of(context)!.autoUi018,
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 8),
@@ -86,7 +87,7 @@ class _CustomTimeLabelsCardState extends ConsumerState<CustomTimeLabelsCard> {
           alignment: Alignment.centerRight,
           child: FilledButton(
             onPressed: labelsAsync.isLoading ? null : _save,
-            child: const Text('Save Labels'),
+            child: Text(AppLocalizations.of(context)!.autoUi051),
           ),
         ),
       ],

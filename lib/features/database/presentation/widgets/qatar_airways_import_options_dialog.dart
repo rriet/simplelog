@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
@@ -90,28 +91,29 @@ class _QatarAirwaysImportOptionsDialogState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final showMyName = _defaultPosition == CrewPosition.pic;
     final body = SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('File: ${widget.fileName}'),
+          Text(l10n.databaseFileLabel(widget.fileName)),
           const SizedBox(height: 12),
           DropdownButtonFormField<CrewPosition>(
             initialValue: _defaultPosition,
-            decoration: const InputDecoration(
-              labelText: 'Default position',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.qatarDefaultPositionLabel,
+              border: const OutlineInputBorder(),
             ),
-            items: const [
+            items: [
               DropdownMenuItem(
                 value: CrewPosition.pic,
-                child: Text('PIC'),
+                child: Text(l10n.qatarPositionPic),
               ),
               DropdownMenuItem(
                 value: CrewPosition.sic,
-                child: Text('SIC'),
+                child: Text(l10n.qatarPositionSic),
               ),
             ],
             onChanged: (value) {
@@ -124,7 +126,7 @@ class _QatarAirwaysImportOptionsDialogState
             const SizedBox(height: 12),
             TextInputField(
               controller: _myNameController,
-              label: 'Pilot name as written on file',
+              label: l10n.qatarPilotNameAsWrittenLabel,
             ),
           ],
         ],
@@ -132,10 +134,9 @@ class _QatarAirwaysImportOptionsDialogState
     );
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: 'Import Qatar Airways',
-      shortTitle: 'Import Qatar',
+      title: l10n.qatarImportTitle,
       actions: [
-        TextButton(onPressed: _submit, child: const Text('Import')),
+        TextButton(onPressed: _submit, child: Text(l10n.qatarImportAction)),
       ],
       contentView: body,
     );

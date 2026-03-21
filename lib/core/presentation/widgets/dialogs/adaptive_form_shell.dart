@@ -6,8 +6,7 @@ class AdaptiveFormShell extends StatelessWidget {
   /// Creates an adaptive form shell.
   const AdaptiveFormShell({
     required this.onClose,
-    required this.longTitle,
-    required this.shortTitle,
+    required this.title,
     required this.contentView,
     super.key,
     this.actions = const <Widget>[],
@@ -19,11 +18,8 @@ class AdaptiveFormShell extends StatelessWidget {
   /// Called when user closes the screen.
   final VoidCallback onClose;
 
-  /// Title used on wide layouts.
-  final String longTitle;
-
-  /// Title used on compact layouts.
-  final String shortTitle;
+  /// Single title used for both compact and wide layouts.
+  final String title;
 
   /// Action widgets shown on the top-right.
   final List<Widget> actions;
@@ -51,7 +47,7 @@ class AdaptiveFormShell extends StatelessWidget {
     final screenSize = MediaQuery.sizeOf(context);
     final isCompact = isCompactDialogScreen(context);
     final isDialogRoute = ModalRoute.of(context) is DialogRoute<dynamic>;
-    final title = isCompact ? shortTitle : longTitle;
+    final resolvedTitle = title;
     final useDialogStyle = !isCompact || !fullScreen || isDialogRoute;
 
     if (useDialogStyle) {
@@ -88,7 +84,7 @@ class AdaptiveFormShell extends StatelessWidget {
                         leadingWidget,
                         Expanded(
                           child: Text(
-                            title,
+                            resolvedTitle,
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                         ),
@@ -110,7 +106,7 @@ class AdaptiveFormShell extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading: leadingWidget,
-        title: Text(title),
+        title: Text(resolvedTitle),
         actions: actions,
       ),
       body: contentView,

@@ -196,8 +196,8 @@ class _LogTenProImportReviewDialogState
     final selected = await AirportPickerDialog.show(
       context,
       title: issue.association == LogTenFieldAssociation.fromAirport
-          ? 'Select departure airport'
-          : 'Select arrival airport',
+          ? AppLocalizations.of(context)!.logtenSelectDepartureAirport
+          : AppLocalizations.of(context)!.logtenSelectArrivalAirport,
     );
     if (selected == null) return;
     if (!mounted) return;
@@ -272,7 +272,7 @@ class _LogTenProImportReviewDialogState
                 ),
                 TextButton(
                   onPressed: _ignoreAll,
-                  child: const Text('Ignore all'),
+                  child: Text(l10n.logtenIgnoreAllAction),
                 ),
               ],
             ),
@@ -302,7 +302,7 @@ class _LogTenProImportReviewDialogState
                           children: [
                             Expanded(
                               child: Text(
-                                'Line $lineNumber',
+                                l10n.logtenLineLabel(lineNumber),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -310,7 +310,7 @@ class _LogTenProImportReviewDialogState
                             ),
                             FilterChip(
                               selected: ignored,
-                              label: const Text('Ignore line'),
+                              label: Text(l10n.logtenIgnoreLineAction),
                               onSelected: (selected) {
                                 setState(() {
                                   if (selected) {
@@ -330,9 +330,9 @@ class _LogTenProImportReviewDialogState
                             runSpacing: 8,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              const Text('Entry type'),
+                              Text(l10n.logtenEntryTypeLabel),
                               ChoiceChip(
-                                label: const Text('Flight'),
+                                label: Text(l10n.logtenFlightLabel),
                                 selected: !simulatorSelected,
                                 onSelected: ignored
                                     ? null
@@ -342,7 +342,7 @@ class _LogTenProImportReviewDialogState
                                       ),
                               ),
                               ChoiceChip(
-                                label: const Text('Simulator'),
+                                label: Text(l10n.logtenSimulatorLabel),
                                 selected: simulatorSelected,
                                 onSelected: ignored
                                     ? null
@@ -381,9 +381,9 @@ class _LogTenProImportReviewDialogState
                                               .association],
                                       readOnly: true,
                                       enabled: !ignored,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Selected airport',
-                                        border: OutlineInputBorder(),
+                                      decoration: InputDecoration(
+                                        labelText: l10n.logtenSelectedAirport,
+                                        border: const OutlineInputBorder(),
                                       ),
                                     ),
                                   ),
@@ -393,7 +393,7 @@ class _LogTenProImportReviewDialogState
                                         ? null
                                         : () => _pickAirport(issue),
                                     icon: const Icon(Icons.search),
-                                    tooltip: 'Select airport',
+                                    tooltip: l10n.logtenSelectAirportTooltip,
                                   ),
                                   const SizedBox(width: 8),
                                   IconButton.filledTonal(
@@ -401,7 +401,7 @@ class _LogTenProImportReviewDialogState
                                         ? null
                                         : () => _createAirport(issue),
                                     icon: const Icon(Icons.add),
-                                    tooltip: 'Create airport',
+                                    tooltip: l10n.logtenCreateAirportTooltip,
                                   ),
                                 ],
                               )
@@ -411,9 +411,9 @@ class _LogTenProImportReviewDialogState
                                     _controllers[lineNumber]![issue
                                         .association],
                                 enabled: !ignored,
-                                decoration: const InputDecoration(
-                                  labelText: 'Corrected value',
-                                  border: OutlineInputBorder(),
+                                decoration: InputDecoration(
+                                  labelText: l10n.logtenCorrectedValueLabel,
+                                  border: const OutlineInputBorder(),
                                 ),
                               ),
                             const SizedBox(height: 12),
@@ -434,10 +434,12 @@ class _LogTenProImportReviewDialogState
       width: 980,
       child: AdaptiveFormShell(
         onClose: () => AppNavigator.pop(context),
-        longTitle: 'Review Invalid LogTen Lines',
-        shortTitle: 'Review Import',
+        title: l10n.logtenReviewTitle,
         actions: [
-          TextButton(onPressed: _submit, child: const Text('Continue')),
+          TextButton(
+            onPressed: _submit,
+            child: Text(l10n.logtenContinueAction),
+          ),
         ],
         contentView: body,
       ),

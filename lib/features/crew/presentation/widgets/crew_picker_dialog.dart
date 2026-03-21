@@ -35,8 +35,7 @@ class CrewPickerDialog extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: title,
-      shortTitle: title,
+      title: title,
       contentView: EntityPickerDialog<CrewRow>(
         title: title,
         showHeader: false,

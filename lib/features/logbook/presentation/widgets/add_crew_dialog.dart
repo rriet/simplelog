@@ -86,8 +86,7 @@ Future<CrewDraftSelection?> showAddCrewDialog({
       child: StatefulBuilder(
         builder: (context, setLocalState) => AdaptiveFormShell(
           onClose: () => AppNavigator.pop(dialogContext),
-          longTitle: l10n.addCrewTitle,
-          shortTitle: l10n.addCrewTitle,
+          title: l10n.addCrewTitle,
           fullScreen: false,
           actions: [
             TextButton(

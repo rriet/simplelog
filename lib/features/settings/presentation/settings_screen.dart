@@ -16,8 +16,6 @@ class SettingsScreen extends ConsumerWidget {
   /// Creates the settings screen widget.
   const SettingsScreen({super.key});
 
-  static const _calculationPilotProfileTitle = 'Calculation & Pilot Profile';
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
@@ -25,15 +23,15 @@ class SettingsScreen extends ConsumerWidget {
       length: 4,
       child: Column(
         children: [
-          const TabBar(
+          TabBar(
             isScrollable: AppTabBarStyles.isScrollable,
             tabAlignment: AppTabBarStyles.tabAlignment,
             labelPadding: AppTabBarStyles.labelPadding,
             tabs: [
-              Tab(text: 'General'),
-              Tab(text: 'Database'),
-              Tab(text: 'Experience'),
-              Tab(text: 'Time Fields'),
+              Tab(text: l10n.settingsTabGeneral),
+              Tab(text: l10n.settingsTabDatabase),
+              Tab(text: l10n.settingsTabExperience),
+              Tab(text: l10n.settingsTabTimeFields),
             ],
           ),
           Expanded(
@@ -45,18 +43,18 @@ class SettingsScreen extends ConsumerWidget {
                     child: ListView(
                       padding: const EdgeInsets.all(16),
                       children: [
-                        const _SettingsSectionCard(
-                          title: 'Appearance',
-                          subtitle: 'Theme and display preferences.',
-                          children: [
+                        _SettingsSectionCard(
+                          title: l10n.settingsAppearance,
+                          subtitle: l10n.settingsAppearanceSubtitle,
+                          children: const [
                             ThemeModeSelector(),
                           ],
                         ),
                         const SizedBox(height: 12),
                         _SettingsSectionCard(
-                          title: _calculationPilotProfileTitle,
-                          subtitle: l10n.
-                            settingsCalculationPilotProfileSubtitle,
+                          title: l10n.settingsCalculationPilotProfileTitle,
+                          subtitle:
+                              l10n.settingsCalculationPilotProfileSubtitle,
                           children: const [
                             SimulatorDefaultPositionSelector(),
                             SizedBox(height: 8),

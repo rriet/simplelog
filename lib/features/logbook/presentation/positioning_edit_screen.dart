@@ -411,7 +411,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             DateSelectorInputField(
-              label: 'Date',
+              label: AppLocalizations.of(context)!.fieldDate,
               valueText: _dateLabel(_departure),
               onTap: _pickDate,
             ),
@@ -419,12 +419,12 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
             TwoColumnFieldRow(
               left: ClockTimeInputField(
                 controller: _departureTimeController,
-                label: 'Departure Time',
+                label: AppLocalizations.of(context)!.autoUi021,
                 onChangedMinutes: _onDepartureTimeChanged,
               ),
               right: LabeledClockFieldWithClear(
                 controller: _arrivalTimeController,
-                label: 'Arrival Time',
+                label: AppLocalizations.of(context)!.autoUi007,
                 onChangedMinutes: _onArrivalTimeChanged,
                 onCleared: _clearArrivalTime,
                 errorText: _arrivalTimeErrorText,
@@ -436,7 +436,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
             const SizedBox(height: 8),
             HourInputField(
               controller: _timeController,
-              label: 'Total Time',
+              label: AppLocalizations.of(context)!.reportsFilterFieldTotalTime,
               fallbackMinutes: _calculatedMinutes(),
               onChangedMinutes: (_) {
                 _timeEdited = true;
@@ -446,7 +446,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
               },
               errorText: _totalTimeErrorText,
               suffixIcon: IconButton(
-                tooltip: 'Use calculated time',
+                tooltip: AppLocalizations.of(context)!.autoUi066,
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
                 constraints: const BoxConstraints.tightFor(
@@ -476,7 +476,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
             ),
             const SizedBox(height: 8),
             PickerWithAddInputField(
-              label: 'Departure Airport',
+              label: AppLocalizations.of(context)!.autoUi020,
               valueText: _airportLabelForId(_departureAirportId, airportsAsync),
               onTap: _pickDepartureAirport,
               onAdd: () => _createAirportAndSelect(asDeparture: true),
@@ -485,7 +485,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
             ),
             const SizedBox(height: 8),
             PickerWithAddInputField(
-              label: 'Arrival Airport',
+              label: AppLocalizations.of(context)!.autoUi006,
               valueText: _airportLabelForId(_arrivalAirportId, airportsAsync),
               onTap: _pickArrivalAirport,
               onAdd: () => _createAirportAndSelect(asDeparture: false),
@@ -495,7 +495,7 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
             const SizedBox(height: 8),
             TextInputField(
               controller: _notesController,
-              label: 'Notes',
+              label: AppLocalizations.of(context)!.fieldNotes,
               minLines: 3,
               maxLines: 3,
             ),
@@ -504,11 +504,12 @@ class _PositioningEditScreenState extends ConsumerState<PositioningEditScreen> {
       ),
     );
 
-    final title = widget.isCreate ? 'New Positioning' : 'Edit Positioning';
+    final title = widget.isCreate
+        ? l10n.newPositioningTitle
+        : l10n.editPositioningTitle;
     return AdaptiveFormShell(
       onClose: () => unawaited(AppNavigator.maybePop(context)),
-      longTitle: title,
-      shortTitle: title,
+      title: title,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
       contentView: form,
     );

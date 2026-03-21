@@ -14,8 +14,7 @@ Widget _testHost({
     child: MaterialApp(
       home: AdaptiveFormShell(
         onClose: () {},
-        longTitle: 'Long title',
-        shortTitle: 'Short title',
+        title: 'title',
         fullScreen: fullScreen,
         leading: leading,
         actions: const [Text('Action')],
@@ -37,7 +36,7 @@ void main() {
     );
 
     expect(find.byType(Scaffold), findsOneWidget);
-    expect(find.text('Short title'), findsOneWidget);
+    expect(find.text('title'), findsOneWidget);
     expect(find.text('Content'), findsOneWidget);
   });
 
@@ -52,7 +51,7 @@ void main() {
     );
 
     expect(find.byType(Scaffold), findsNothing);
-    expect(find.text('Short title'), findsOneWidget);
+    expect(find.text('title'), findsOneWidget);
     expect(find.byIcon(Icons.close), findsOneWidget);
     expect(find.text('Content'), findsOneWidget);
   });
@@ -68,7 +67,7 @@ void main() {
     );
 
     expect(find.byType(Scaffold), findsNothing);
-    expect(find.text('Long title'), findsOneWidget);
+    expect(find.text('title'), findsOneWidget);
     expect(find.byIcon(Icons.close), findsOneWidget);
     expect(find.text('Content'), findsOneWidget);
   });
@@ -85,7 +84,7 @@ void main() {
     );
 
     expect(find.byIcon(Icons.close), findsNothing);
-    expect(find.text('Long title'), findsOneWidget);
+    expect(find.text('title'), findsOneWidget);
     expect(find.text('Content'), findsOneWidget);
   });
 }

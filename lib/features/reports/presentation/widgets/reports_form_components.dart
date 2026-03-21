@@ -172,8 +172,7 @@ class ReportsConfirmActionDialog extends StatelessWidget {
       width: 560,
       child: AdaptiveFormShell(
         onClose: () => AppNavigator.pop(context, false),
-        longTitle: title,
-        shortTitle: title,
+        title: title,
         fullScreen: false,
         actions: [
           TextButton(

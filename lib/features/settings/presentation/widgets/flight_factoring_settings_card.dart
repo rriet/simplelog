@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
@@ -16,10 +17,14 @@ class FlightFactoringSettingsCard extends ConsumerStatefulWidget {
   const FlightFactoringSettingsCard({
     super.key,
     this.showTitle = true,
+    this.initiallyExpanded = false,
   });
 
   /// Whether the internal expansion tile title should be shown.
   final bool showTitle;
+
+  /// Whether the expansion tile should start opened.
+  final bool initiallyExpanded;
 
   @override
   ConsumerState<FlightFactoringSettingsCard> createState() =>
@@ -139,12 +144,15 @@ class _FlightFactoringSettingsCardState
 
     return Card(
       child: ExpansionTile(
+        initiallyExpanded: widget.initiallyExpanded,
         title: widget.showTitle
-            ? const Text('Calculation Rules')
+            ? Text(AppLocalizations.of(context)!.autoUi008)
             : const SizedBox.shrink(),
-        tilePadding: widget.showTitle ? null : const EdgeInsets.symmetric(
-          horizontal: 8,
-        ),
+        tilePadding: widget.showTitle
+            ? null
+            : const EdgeInsets.symmetric(
+                horizontal: 8,
+              ),
         childrenPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         children: [
           _compactFieldRow(

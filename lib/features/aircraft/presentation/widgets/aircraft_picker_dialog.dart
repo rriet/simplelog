@@ -50,8 +50,7 @@ class AircraftPickerDialog extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: title,
-      shortTitle: title,
+      title: title,
       contentView: SizedBox(
         height: 700,
         child: EntityPickerDialog<AircraftRow>(

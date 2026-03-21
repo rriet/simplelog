@@ -83,13 +83,12 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
     final hasInitial = widget.initial != null && !widget.initial!.isEmpty;
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: 'Endorsement',
-      shortTitle: 'Endorsement',
+      title: AppLocalizations.of(context)!.autoUi028,
       popupMaxWidth: 760,
       actions: [
         TextButton(
           onPressed: _save,
-          child: const Text('Save'),
+          child: Text(AppLocalizations.of(context)!.saveAction),
         ),
       ],
       contentView: SingleChildScrollView(
@@ -141,7 +140,7 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
             _SignaturePreviewPanel(
               height: 130,
               child: _signatureImage == null
-                  ? const Center(child: Text('No signature'))
+                  ? Center(child: Text(AppLocalizations.of(context)!.autoUi044))
                   : Padding(
                       padding: const EdgeInsets.all(8),
                       child: Image.memory(
@@ -154,13 +153,13 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
             Row(
               children: [
                 SquareOutlineButton(
-                  label: 'Sign on screen',
+                  label: AppLocalizations.of(context)!.autoUi055,
                   icon: Icons.gesture,
                   onPressed: _captureSignature,
                 ),
                 const SizedBox(width: 8),
                 SquareOutlineButton(
-                  label: 'Clear signature',
+                  label: AppLocalizations.of(context)!.autoUi012,
                   icon: Icons.delete_outline,
                   onPressed: _signatureImage == null
                       ? null
@@ -169,7 +168,7 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
                 if (hasInitial) ...[
                   const SizedBox(width: 8),
                   SquareOutlineButton(
-                    label: 'Remove endorsement',
+                    label: AppLocalizations.of(context)!.autoUi048,
                     icon: Icons.remove_circle_outline,
                     onPressed: () => AppNavigator.pop(
                       context,
@@ -258,10 +257,10 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
               padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Sign on screen',
-                      style: TextStyle(
+                      AppLocalizations.of(context)!.autoUi055,
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w500,
                       ),
@@ -269,7 +268,7 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
                   ),
                   TextButton(
                     onPressed: _save,
-                    child: const Text('Save'),
+                    child: Text(AppLocalizations.of(context)!.saveAction),
                   ),
                 ],
               ),
@@ -308,7 +307,7 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: SquareOutlineButton(
-                  label: 'Clear',
+                  label: AppLocalizations.of(context)!.reportsClearAction,
                   icon: Icons.delete_outline,
                   onPressed: () => setState(_strokes.clear),
                 ),

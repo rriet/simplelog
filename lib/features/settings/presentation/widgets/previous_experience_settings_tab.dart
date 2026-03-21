@@ -63,19 +63,19 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           children: [
             Text(
-              'Previous Experience',
+              AppLocalizations.of(context)!.autoUi046,
               style: theme.textTheme.headlineSmall,
             ),
             const SizedBox(height: 6),
             Text(
-              'Manage prior totals by aircraft type.',
+              AppLocalizations.of(context)!.autoUi040,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 16),
             _SettingsSectionCard(
-              title: 'Entries',
+              title: AppLocalizations.of(context)!.autoUi029,
               subtitle: l10n.previousExperienceEntriesSubtitle,
               children: [
                 Align(
@@ -83,7 +83,7 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
                   child: FilledButton.icon(
                     onPressed: () => _openEditor(context, ref),
                     icon: const Icon(Icons.add),
-                    label: const Text('Add'),
+                    label: Text(AppLocalizations.of(context)!.addAction),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -93,7 +93,7 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (rows.isEmpty)
-                          const Text('No previous experience entries yet.'),
+                          Text(AppLocalizations.of(context)!.autoUi043),
                         ...rows.map<Widget>((row) {
                           final block = _formatMinutes(
                             row.previousExperience.timeBlockMinutes,
@@ -119,7 +119,9 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
                                 initial: row.previousExperience,
                               ),
                               trailing: IconButton(
-                                tooltip: 'Delete',
+                                tooltip: AppLocalizations.of(
+                                  context,
+                                )!.deleteAction,
                                 icon: const Icon(Icons.delete_outline),
                                 onPressed: () =>
                                     _deleteEntry(context, ref, row),
@@ -517,21 +519,22 @@ class _PreviousExperienceEditDialogState
     if (!mounted) return false;
     final decision = await _showPreviousExperienceConfirmationDialog(
       context: context,
-      title: 'Validation warnings',
-      content: '${warnings.join('\n')}\n\nSave anyway?',
-      cancelLabel: 'Review',
-      confirmLabel: 'Save anyway',
+      title: AppLocalizations.of(context)!.previousExperienceValidationTitle,
+      content:
+          '${warnings.join('\n')}\n\n'
+          '${AppLocalizations.of(context)!.previousExperienceSaveAnywayPrompt}',
+      cancelLabel: AppLocalizations.of(context)!.previousExperienceReviewAction,
+      confirmLabel: AppLocalizations.of(
+        context,
+      )!.previousExperienceSaveAnywayAction,
     );
     return decision ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.initial == null
-        ? 'Add Previous Experience'
-        : 'Edit Previous Experience';
     final isCompact = isCompactDialogScreen(context);
-    final displayTitle = isCompact ? 'Previous Experience' : title;
+    final displayTitle = AppLocalizations.of(context)!.autoUi046;
     final firstFlightField = _buildFirstFlightField();
     final lastFlightField = _buildLastFlightField();
     final dateFields = isCompact
@@ -558,7 +561,7 @@ class _PreviousExperienceEditDialogState
           children: [
             DropdownInputField<int>(
               value: _aircraftTypeId,
-              label: 'Aircraft Type',
+              label: AppLocalizations.of(context)!.autoUi004,
               items: widget.aircraftTypes
                   .map(
                     (type) => DropdownMenuItem<int>(
@@ -572,7 +575,9 @@ class _PreviousExperienceEditDialogState
                 _showRequiredErrors = false;
               }),
               errorText: _showRequiredErrors && _aircraftTypeId == null
-                  ? 'Select aircraft type.'
+                  ? AppLocalizations.of(
+                      context,
+                    )!.previousExperienceSelectAircraftType
                   : null,
             ),
             const SizedBox(height: 12),
@@ -590,10 +595,12 @@ class _PreviousExperienceEditDialogState
 
     return AdaptiveFormShell(
       onClose: () => AppNavigator.maybePop(context),
-      longTitle: displayTitle,
-      shortTitle: 'Previous Experience',
+      title: displayTitle,
       actions: [
-        TextButton(onPressed: _save, child: const Text('Save')),
+        TextButton(
+          onPressed: _save,
+          child: Text(AppLocalizations.of(context)!.saveAction),
+        ),
       ],
       contentView: formBody,
     );
@@ -601,7 +608,7 @@ class _PreviousExperienceEditDialogState
 
   Widget _buildFirstFlightField() {
     return _DateField(
-      label: 'First Flight',
+      label: AppLocalizations.of(context)!.autoUi032,
       value: _firstFlight,
       onPick: () => _pickDateTime(first: true),
       onClear: () => setState(() {
@@ -609,14 +616,14 @@ class _PreviousExperienceEditDialogState
         _showRequiredErrors = true;
       }),
       errorText: _showRequiredErrors && _firstFlight == null
-          ? 'First Flight is required.'
+          ? AppLocalizations.of(context)!.previousExperienceFirstFlightRequired
           : null,
     );
   }
 
   Widget _buildLastFlightField() {
     return _DateField(
-      label: 'Last Flight',
+      label: AppLocalizations.of(context)!.autoUi037,
       value: _lastFlight,
       onPick: () => _pickDateTime(first: false),
       onClear: () => setState(() {
@@ -624,7 +631,7 @@ class _PreviousExperienceEditDialogState
         _showRequiredErrors = true;
       }),
       errorText: _showRequiredErrors && _lastFlight == null
-          ? 'Last Flight is required.'
+          ? AppLocalizations.of(context)!.previousExperienceLastFlightRequired
           : null,
     );
   }
@@ -720,7 +727,10 @@ class _TimeGrid extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Times', style: Theme.of(context).textTheme.titleSmall),
+            Text(
+              AppLocalizations.of(context)!.autoUi060,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 12,

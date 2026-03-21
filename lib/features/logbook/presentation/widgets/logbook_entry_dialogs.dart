@@ -149,7 +149,7 @@ class LogbookEntryDialogs {
                 const SizedBox(height: 10),
                 _PositioningInfoCard(
                   child: _PositioningInfoValue(
-                    label: 'Notes',
+                    label: AppLocalizations.of(context)!.fieldNotes,
                     value: notes,
                   ),
                 ),
@@ -307,7 +307,7 @@ class LogbookEntryDialogs {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'Crew',
+                          AppLocalizations.of(context)!.screenCrew,
                           textAlign: TextAlign.left,
                           style: theme.textTheme.labelLarge?.copyWith(
                             color: colorScheme.onSurfaceVariant,
@@ -338,14 +338,16 @@ class LogbookEntryDialogs {
                     if (remarks.isNotEmpty) ...[
                       _SectionDivider(color: colorScheme.outlineVariant),
                       _SectionLabelAndText(
-                        label: 'Remarks',
+                        label: AppLocalizations.of(
+                          context,
+                        )!.reportsFilterFieldRemarks,
                         value: remarks,
                       ),
                     ],
                     if (notes.isNotEmpty) ...[
                       _SectionDivider(color: colorScheme.outlineVariant),
                       _SectionLabelAndText(
-                        label: 'Notes',
+                        label: AppLocalizations.of(context)!.fieldNotes,
                         value: notes,
                       ),
                     ],
@@ -433,7 +435,7 @@ class LogbookEntryDialogs {
                 const SizedBox(height: 10),
                 _PositioningInfoCard(
                   child: _CrewInfoList(
-                    title: 'Crew',
+                    title: AppLocalizations.of(context)!.screenCrew,
                     crewList: crewList,
                     onTap: (crew) => _showCrewInfo(context, crew, useCases),
                     titleStyle: theme.textTheme.labelLarge?.copyWith(
@@ -445,13 +447,21 @@ class LogbookEntryDialogs {
               if (remarks.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 _PositioningInfoCard(
-                  child: _SectionLabelAndText(label: 'Remarks', value: remarks),
+                  child: _SectionLabelAndText(
+                    label: AppLocalizations.of(
+                      context,
+                    )!.reportsFilterFieldRemarks,
+                    value: remarks,
+                  ),
                 ),
               ],
               if (notes.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 _PositioningInfoCard(
-                  child: _SectionLabelAndText(label: 'Notes', value: notes),
+                  child: _SectionLabelAndText(
+                    label: AppLocalizations.of(context)!.fieldNotes,
+                    value: notes,
+                  ),
                 ),
               ],
             ],
@@ -520,7 +530,7 @@ class LogbookEntryDialogs {
       onClose: () => AppNavigator.pop(context),
       trailing: hasEndorsement
           ? IconButton(
-              tooltip: 'Show endorsement',
+              tooltip: AppLocalizations.of(context)!.autoUi053,
               onPressed: () => _showEndorsementInfo(
                 context,
                 endorsement!,
@@ -554,10 +564,10 @@ class LogbookEntryDialogs {
               children: [
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Endorsement',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.autoUi028,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                         ),
@@ -565,7 +575,7 @@ class LogbookEntryDialogs {
                     ),
                     TextButton(
                       onPressed: () => AppNavigator.pop(dialogContext),
-                      child: const Text('Close'),
+                      child: Text(AppLocalizations.of(context)!.autoUi013),
                     ),
                   ],
                 ),
@@ -596,28 +606,28 @@ class LogbookEntryDialogs {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _PositioningInfoValue(
-                        label: 'Name',
+                        label: AppLocalizations.of(context)!.fieldName,
                         value: endorsement.name.isEmpty
                             ? '-'
                             : endorsement.name,
                       ),
                       const SizedBox(height: 8),
                       _PositioningInfoValue(
-                        label: 'Certificate',
+                        label: AppLocalizations.of(context)!.autoUi009,
                         value: endorsement.certificate.isEmpty
                             ? '-'
                             : endorsement.certificate,
                       ),
                       const SizedBox(height: 8),
                       _PositioningInfoValue(
-                        label: 'Expiry',
+                        label: AppLocalizations.of(context)!.autoUi030,
                         value: endorsement.expiry.isEmpty
                             ? '-'
                             : endorsement.expiry,
                       ),
                       const SizedBox(height: 8),
                       _PositioningInfoValue(
-                        label: 'Type',
+                        label: AppLocalizations.of(context)!.searchFieldType,
                         value: endorsement.type.isEmpty
                             ? '-'
                             : endorsement.type,
@@ -809,7 +819,7 @@ class _FromToInfoRow extends StatelessWidget {
       children: [
         Expanded(
           child: _PositioningInfoValue(
-            label: 'From',
+            label: AppLocalizations.of(context)!.autoUi034,
             value: leftValue,
             onTap: leftOnTap,
           ),
@@ -817,7 +827,7 @@ class _FromToInfoRow extends StatelessWidget {
         Expanded(
           child: Center(
             child: Text(
-              '→',
+              AppLocalizations.of(context)!.autoUi068,
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.primary,
               ),
@@ -826,7 +836,7 @@ class _FromToInfoRow extends StatelessWidget {
         ),
         Expanded(
           child: _PositioningInfoValue(
-            label: 'To',
+            label: AppLocalizations.of(context)!.autoUi061,
             value: rightValue,
             alignEnd: true,
             onTap: rightOnTap,
@@ -855,7 +865,7 @@ class _DepartureBlockArrivalRow extends StatelessWidget {
       children: [
         Expanded(
           child: _PositioningInfoValue(
-            label: 'Departure',
+            label: AppLocalizations.of(context)!.autoUi019,
             value: departure,
           ),
         ),
@@ -863,7 +873,7 @@ class _DepartureBlockArrivalRow extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                'Block',
+                AppLocalizations.of(context)!.dashboardBlockLabel,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -879,7 +889,7 @@ class _DepartureBlockArrivalRow extends StatelessWidget {
         ),
         Expanded(
           child: _PositioningInfoValue(
-            label: 'Arrival',
+            label: AppLocalizations.of(context)!.autoUi005,
             value: arrival,
             alignEnd: true,
           ),

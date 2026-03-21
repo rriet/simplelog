@@ -291,7 +291,7 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
       subtitle: Text(subtitle),
       trailing: TextButton(
         onPressed: onDone,
-        child: const Text('Done'),
+        child: Text(AppLocalizations.of(context)!.reportsDone),
       ),
     );
   }

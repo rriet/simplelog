@@ -372,8 +372,7 @@ class _AircraftTypeEditScreenState
     );
     return AdaptiveFormShell(
       onClose: () => AppNavigator.maybePop(context),
-      longTitle: title,
-      shortTitle: title,
+      title: title,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
       contentView: form,
     );

@@ -30,9 +30,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageSpanish => 'Spanish';
 
   @override
-  String get screenMenu => 'Screens';
-
-  @override
   String get screenLogbook => 'Logbook';
 
   @override
@@ -126,9 +123,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get screenCrew => 'Crew';
 
   @override
-  String get screenReports => 'Reports';
-
-  @override
   String get screenDatabase => 'Database';
 
   @override
@@ -188,9 +182,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppearance => 'Appearance';
 
   @override
-  String get settingsDeveloper => 'Developer';
-
-  @override
   String get themeSystem => 'System';
 
   @override
@@ -210,6 +201,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createAircraftTitle => 'Add aircraft';
+
+  @override
+  String get editSimulatorTitle => 'Edit simulator';
+
+  @override
+  String get createSimulatorTitle => 'Add simulator';
 
   @override
   String get editCrewTitle => 'Edit crew';
@@ -240,22 +237,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nameRequired => 'Name is required';
-
-  @override
-  String get codeDuplicateTitle => 'Duplicate code';
-
-  @override
-  String codeDuplicateMessage(String code) {
-    return 'Code $code already exists.';
-  }
-
-  @override
-  String get deleteBlockedTitle => 'Delete blocked';
-
-  @override
-  String deleteBlockedAircraftType(int count) {
-    return 'This aircraft type is used by $count aircraft and can\'t be deleted.';
-  }
 
   @override
   String get fieldCode => 'Code';
@@ -360,31 +341,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aircraftTypeRequired => 'Select an aircraft type';
 
   @override
-  String get registrationDuplicateTitle => 'Duplicate registration';
-
-  @override
-  String registrationDuplicateMessage(String registration) {
-    return 'Registration $registration already exists.';
-  }
-
-  @override
-  String get nameDuplicateTitle => 'Duplicate name';
-
-  @override
-  String nameDuplicateMessage(String name) {
-    return 'Name $name already exists.';
-  }
-
-  @override
   String get icaoLengthError => 'ICAO must be 4 characters';
-
-  @override
-  String get icaoDuplicateTitle => 'Duplicate ICAO';
-
-  @override
-  String icaoDuplicateMessage(String icao) {
-    return 'ICAO $icao already exists.';
-  }
 
   @override
   String get callNumber => 'Call number';
@@ -400,12 +357,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get copyEmail => 'Copy email';
-
-  @override
-  String get seedTestData => 'Seed test data';
-
-  @override
-  String get seedDataDone => 'Test data inserted';
 
   @override
   String get databaseSyncTitle => 'Local sync';
@@ -453,88 +404,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get databaseSyncCopyDebug => 'Copy debug info';
-
-  @override
-  String get databaseSyncCopied => 'Debug info copied';
-
-  @override
-  String get databaseSyncLocalServer => 'Local server';
-
-  @override
-  String get databaseSyncTestServer => 'Test local server';
-
-  @override
-  String get databaseSyncSessionInfo =>
-      'Start a session on one device and join from another.';
-
-  @override
-  String get databaseSyncStartSession => 'Start session';
-
-  @override
-  String get databaseSyncStopSession => 'Stop session';
-
-  @override
-  String get databaseSyncJoinSession => 'Connect device';
-
-  @override
-  String get databaseSyncHosting => 'Hosting session';
-
-  @override
-  String get databaseSyncEnterAddress => 'Enter address';
-
-  @override
-  String get databaseSyncAddressHint =>
-      'simplelog://sync?host=192.168.1.10&port=49200';
-
-  @override
-  String get databaseSyncConnectedLabel => 'Connected to';
-
-  @override
-  String get databaseSyncNotConnected => 'Not connected';
-
-  @override
-  String get databaseSyncConnectHint =>
-      'To send from this device, connect to the other device first.';
-
-  @override
-  String get databaseSyncSend => 'Send database';
-
-  @override
-  String get databaseSyncEnterLastTwo => 'Enter last two IP groups';
-
-  @override
-  String get databaseSyncOctet3 => 'Third group';
-
-  @override
-  String get databaseSyncOctet4 => 'Fourth group';
-
-  @override
-  String databaseSyncInstruction(String prefix, String octet3, String octet4) {
-    return 'On the other device, enter only the last two numbers: $octet3.$octet4 (prefix $prefix, port 54742).';
-  }
-
-  @override
   String get databaseSyncSuccess => 'Sync complete';
 
   @override
-  String get databaseSyncInvalidSession => 'Unable to connect to that session.';
-
-  @override
-  String get databaseSyncNoNetwork => 'No local network IP found.';
-
-  @override
-  String get databaseSyncScanQr => 'Scan QR code';
-
-  @override
   String get databaseSyncDisconnected => 'Disconnected from the other device.';
-
-  @override
-  String get databaseSyncStopWarning =>
-      'Stopping will disconnect other devices. Continue?';
-
-  @override
-  String get reportsTabOverview => 'Overview';
 
   @override
   String get reportsTabFlights => 'Flights';
@@ -593,11 +466,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsPdfDone => 'Done.';
 
   @override
-  String reportsPdfExported(String path) {
-    return 'PDF exported to: $path';
-  }
-
-  @override
   String reportsPdfFailed(String error) {
     return 'Failed to generate PDF: $error';
   }
@@ -607,12 +475,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportsSavePdfDialogTitle => 'Save PDF';
-
-  @override
-  String get reportsChooseExportFolderTitle => 'Choose export folder';
-
-  @override
-  String get reportsCancelled => 'Cancelled';
 
   @override
   String get reportsAnalyzeByLabel => 'Analyze by';
@@ -636,22 +498,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsAnalyzeByMonth => 'By Month';
 
   @override
-  String get reportsOrderByGreater => 'Greater';
-
-  @override
   String get reportsOrderByNatural => 'Natural';
 
   @override
   String get reportsShowMap => 'Show Map';
 
   @override
-  String get reportsShowPath => 'Show Path';
+  String get reportsShowPath => 'Include Path';
 
   @override
   String get reportsIncludeHoursBefore => 'Include hours before';
-
-  @override
-  String get reportsPageSizeLabel => 'Page Size';
 
   @override
   String get reportsXmlTemplateLabel => 'XML Template';
@@ -675,21 +531,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsUnknownFamily => 'Unknown family';
 
   @override
-  String reportsFiltersSummary(int count, String from, String to) {
-    return '$count filters • $from UTC - $to UTC';
-  }
-
-  @override
-  String get reportsEventSimShort => 'Sim';
-
-  @override
   String get reportsPreviousExperienceLabel => 'Previous experience';
-
-  @override
-  String get reportsInclude => 'Include';
-
-  @override
-  String get reportsExclude => 'Exclude';
 
   @override
   String get reportsMatchModeLabel => 'Match mode';
@@ -718,9 +560,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String reportsDeleteSavedQuery(String name) {
     return 'Delete: $name';
   }
-
-  @override
-  String get reportsDeleteSavedLabel => 'Delete Saved';
 
   @override
   String get reportsMetricIfrApproaches => 'IFR Approaches';
@@ -778,7 +617,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String reportsFlightCount(String count) {
-    return 'Flight count: $count';
+    return 'Flights: $count';
   }
 
   @override
@@ -789,12 +628,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String reportsFirstFlightAt(String date) {
-    return 'First flight $date UTC';
+    return 'First $date UTC';
   }
 
   @override
   String reportsLastFlightAt(String date) {
-    return 'Last flight $date UTC';
+    return 'Last $date UTC';
   }
 
   @override
@@ -878,21 +717,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportsFilterFieldAircraftTypeName => 'Aircraft Type Name';
-
-  @override
-  String get reportsFilterFieldPilotName => 'Pilot Name';
-
-  @override
-  String get reportsFilterFieldPilotOnBoard => 'Pilot On Board';
-
-  @override
-  String get reportsFilterFieldPilotPic => 'Pilot PIC';
-
-  @override
-  String get reportsFilterFieldPilotSic => 'Pilot SIC';
-
-  @override
-  String get reportsFilterFieldPilotTrainee => 'Pilot Trainee';
 
   @override
   String get reportsFilterFieldApproachType => 'Approach Type';
@@ -1030,13 +854,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsAnalyzeByAirport => 'By Airport';
 
   @override
-  String get reportsAnalyzeByPilot => 'By Pilot';
-
-  @override
   String get reportsUnknownAirport => 'Unknown airport';
-
-  @override
-  String get reportsUnknownPilot => 'Unknown pilot';
 
   @override
   String get reportsOrderByHours => 'Hours';
@@ -1190,9 +1008,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchIcaoIata => 'Search ICAO/IATA';
-
-  @override
-  String get createSimulatorTitle => 'Add simulator';
 
   @override
   String get mapTitle => 'Map';
@@ -1549,7 +1364,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportsMapSectionSubtitle =>
-      'Preview the filtered routes and path overlay.';
+      'Display filtered flight on world map.';
 
   @override
   String get reportsPdfSectionSubtitle =>
@@ -1574,4 +1389,776 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get timeFieldsCustomLabelsSubtitle =>
       'Rename custom fields used across the app.';
+
+  @override
+  String get autoUi001 => '25.325399/-80.274803';
+
+  @override
+  String get autoUi002 => 'About';
+
+  @override
+  String get autoUi003 => 'Add Crew';
+
+  @override
+  String get autoUi004 => 'Aircraft Type';
+
+  @override
+  String get autoUi005 => 'Arrival';
+
+  @override
+  String get autoUi006 => 'Arrival Airport';
+
+  @override
+  String get autoUi007 => 'Arrival Time';
+
+  @override
+  String get autoUi008 => 'Calculation Rules';
+
+  @override
+  String get autoUi009 => 'Certificate';
+
+  @override
+  String get autoUi010 => 'Chocks OFF';
+
+  @override
+  String get autoUi011 => 'Chocks ON';
+
+  @override
+  String get autoUi012 => 'Clear signature';
+
+  @override
+  String get autoUi013 => 'Close';
+
+  @override
+  String get autoUi014 => 'Could not open camera.';
+
+  @override
+  String get autoUi015 => 'Could not select image file.';
+
+  @override
+  String get autoUi016 => 'Crew home base airport';
+
+  @override
+  String get autoUi017 => 'CrossCountry';
+
+  @override
+  String get autoUi018 => 'Custom Time Labels';
+
+  @override
+  String get autoUi019 => 'Departure';
+
+  @override
+  String get autoUi020 => 'Departure Airport';
+
+  @override
+  String get autoUi021 => 'Departure Time';
+
+  @override
+  String get autoUi022 => 'Duty End';
+
+  @override
+  String get autoUi023 => 'Duty Rules';
+
+  @override
+  String get autoUi024 => 'Duty Start';
+
+  @override
+  String get autoUi025 => 'Duty end time allowance';
+
+  @override
+  String get autoUi026 => 'Edit profile';
+
+  @override
+  String get autoUi027 => 'End Time';
+
+  @override
+  String get autoUi028 => 'Endorsement';
+
+  @override
+  String get autoUi029 => 'Entries';
+
+  @override
+  String get autoUi030 => 'Expiry';
+
+  @override
+  String get autoUi031 => 'Factored Duty Time';
+
+  @override
+  String get autoUi032 => 'First Flight';
+
+  @override
+  String get autoUi033 => 'Format';
+
+  @override
+  String get autoUi034 => 'From';
+
+  @override
+  String get autoUi035 => 'From Airport';
+
+  @override
+  String get autoUi036 => 'Landing';
+
+  @override
+  String get autoUi037 => 'Last Flight';
+
+  @override
+  String get autoUi038 => 'Licenses';
+
+  @override
+  String get autoUi039 => 'Log takeoff and landing times';
+
+  @override
+  String get autoUi040 => 'Manage prior totals by aircraft type.';
+
+  @override
+  String get autoUi041 => 'Minimum rest time';
+
+  @override
+  String get autoUi042 => 'N25°19.31/W080°16.29';
+
+  @override
+  String get autoUi043 => 'No previous experience entries yet.';
+
+  @override
+  String get autoUi044 => 'No signature';
+
+  @override
+  String get autoUi046 => 'Previous Experience';
+
+  @override
+  String get autoUi047 => 'Profile';
+
+  @override
+  String get autoUi048 => 'Remove endorsement';
+
+  @override
+  String get autoUi049 => 'Reporting time offbase';
+
+  @override
+  String get autoUi050 => 'Reporting time on base';
+
+  @override
+  String get autoUi051 => 'Save Labels';
+
+  @override
+  String get autoUi052 => 'Session Time';
+
+  @override
+  String get autoUi053 => 'Show endorsement';
+
+  @override
+  String get autoUi054 => 'Sign';
+
+  @override
+  String get autoUi055 => 'Sign on screen';
+
+  @override
+  String get autoUi056 => 'Signature';
+
+  @override
+  String get autoUi057 => 'Signature options';
+
+  @override
+  String get autoUi058 => 'Sim Instrument';
+
+  @override
+  String get autoUi059 => 'Start Time';
+
+  @override
+  String get autoUi060 => 'Times';
+
+  @override
+  String get autoUi061 => 'To';
+
+  @override
+  String get autoUi062 => 'To Airport';
+
+  @override
+  String get autoUi063 => 'Unable to load default position';
+
+  @override
+  String get autoUi064 => 'Unable to load duty rules settings.';
+
+  @override
+  String get autoUi065 => 'Unable to load option';
+
+  @override
+  String get autoUi066 => 'Use calculated time';
+
+  @override
+  String get autoUi067 => 'Visible Time Fields';
+
+  @override
+  String get autoUi068 => '→';
+
+  @override
+  String get databaseBackupLogbookAction => 'Database Backup Logbook Action';
+
+  @override
+  String get databaseBackupRestoreSubtitle =>
+      'Database Backup Restore Subtitle';
+
+  @override
+  String get databaseBackupRestoreTitle => 'Database Backup Restore Title';
+
+  @override
+  String get databaseDangerZoneSubtitle => 'Database Danger Zone Subtitle';
+
+  @override
+  String get databaseDangerZoneTitle => 'Database Danger Zone Title';
+
+  @override
+  String get databaseDumpTemporaryAction => 'Database Dump Temporary Action';
+
+  @override
+  String get databaseExportCsvAction => 'Database Export Csv Action';
+
+  @override
+  String get databaseImportExportSubtitle => 'Database Import Export Subtitle';
+
+  @override
+  String get databaseImportExportTitle => 'Database Import Export Title';
+
+  @override
+  String get databaseImportFileAction => 'Database Import File Action';
+
+  @override
+  String get databaseImportSummaryTitle => 'Database Import Summary Title';
+
+  @override
+  String get databaseImportingTitle => 'Database Importing Title';
+
+  @override
+  String get databasePreparingLabel => 'Database Preparing Label';
+
+  @override
+  String get databaseRestoreLogbookAction => 'Database Restore Logbook Action';
+
+  @override
+  String get databaseSkippedLinesTitle => 'Database Skipped Lines Title';
+
+  @override
+  String get databaseToolsTitle => 'Database Tools Title';
+
+  @override
+  String get logtenAssociationHeader => 'Logten Association Header';
+
+  @override
+  String get logtenContinueAction => 'Logten Continue Action';
+
+  @override
+  String get logtenCorrectedValueLabel => 'Logten Corrected Value Label';
+
+  @override
+  String get logtenCreateAirportTooltip => 'Logten Create Airport Tooltip';
+
+  @override
+  String get logtenEntryTypeLabel => 'Logten Entry Type Label';
+
+  @override
+  String get logtenFlightLabel => 'Logten Flight Label';
+
+  @override
+  String get logtenIgnoreAllAction => 'Logten Ignore All Action';
+
+  @override
+  String get logtenIgnoreLineAction => 'Logten Ignore Line Action';
+
+  @override
+  String get logtenImportAction => 'Logten Import Action';
+
+  @override
+  String get logtenImportTitle => 'Logten Import Short Title';
+
+  @override
+  String get logtenReviewTitle => 'Logten Review Short Title';
+
+  @override
+  String get logtenSelectAirportTooltip => 'Logten Select Airport Tooltip';
+
+  @override
+  String get logtenSelectArrivalAirport => 'Logten Select Arrival Airport';
+
+  @override
+  String get logtenSelectDepartureAirport => 'Logten Select Departure Airport';
+
+  @override
+  String get logtenSelectedAirport => 'Logten Selected Airport';
+
+  @override
+  String get logtenSimulatorLabel => 'Logten Simulator Label';
+
+  @override
+  String get logtenSourceColumnHeader => 'Logten Source Column Header';
+
+  @override
+  String get logtenTimezoneLabel => 'Logten Timezone Label';
+
+  @override
+  String get qatarContinueAction => 'Qatar Continue Action';
+
+  @override
+  String get qatarCreateAircraftAction => 'Qatar Create Aircraft Action';
+
+  @override
+  String get qatarCreateAirportAction => 'Qatar Create Airport Action';
+
+  @override
+  String get qatarDefaultPositionLabel => 'Qatar Default Position Label';
+
+  @override
+  String get qatarImportAction => 'Qatar Import Action';
+
+  @override
+  String get qatarImportTitle => 'Qatar Import Short Title';
+
+  @override
+  String get qatarMissingAircraftTitle => 'Qatar Missing Aircraft Title';
+
+  @override
+  String get qatarMissingAirportsTitle => 'Qatar Missing Airports Title';
+
+  @override
+  String get qatarPilotNameAsWrittenLabel =>
+      'Qatar Pilot Name As Written Label';
+
+  @override
+  String get qatarPositionPic => 'Qatar Position Pic';
+
+  @override
+  String get qatarPositionSic => 'Qatar Position Sic';
+
+  @override
+  String get reportsBatchChangesTitle => 'Reports Batch Changes Title';
+
+  @override
+  String get reportsBatchSubtitle => 'Edit multile entries at once';
+
+  @override
+  String get reportsBatchTitle => 'Batch Edit';
+
+  @override
+  String get reportsCalculateAction => 'Calculate';
+
+  @override
+  String get reportsCalculateAll => 'Calculate All';
+
+  @override
+  String get reportsCalculateDuty => 'Calculate Duty';
+
+  @override
+  String get reportsCalculateDutyConfirmTitle => 'Calculate Duty';
+
+  @override
+  String get reportsCalculatingDutyPeriods =>
+      'Reports Calculating Duty Periods';
+
+  @override
+  String get reportsCalculatingDutyShort => 'Reports Calculating Duty Short';
+
+  @override
+  String get reportsCheckFlights => 'Check Flights';
+
+  @override
+  String get reportsCheckingShort => 'Reports Checking Short';
+
+  @override
+  String get reportsChecksTitle => 'Reports Checks Short Title';
+
+  @override
+  String get reportsClearAction => 'Reports Clear Action';
+
+  @override
+  String get reportsDeleteTemplateTitle => 'Reports Delete Template Title';
+
+  @override
+  String get reportsDownloadAction => 'Download';
+
+  @override
+  String get reportsEditPilotProfile => 'Reports Edit Pilot Profile';
+
+  @override
+  String get reportsEditTemplates => 'Edit Templates';
+
+  @override
+  String get reportsExportInteractiveMap => 'Reports Export Interactive Map';
+
+  @override
+  String get reportsLock => 'Reports Lock';
+
+  @override
+  String get reportsNoChangesApplied => 'Reports No Changes Applied';
+
+  @override
+  String get reportsNoFlightIssuesFound => 'Reports No Flight Issues Found';
+
+  @override
+  String get reportsOpenPdfAfterSaving => 'Reports Open Pdf After Saving';
+
+  @override
+  String get reportsPdfGenerationTitle => 'Print Logbook';
+
+  @override
+  String get reportsPdfTitle => 'PDF Options';
+
+  @override
+  String get reportsPreparingBatchData => 'Reports Preparing Batch Data';
+
+  @override
+  String get reportsRunAction => 'Reports Run Action';
+
+  @override
+  String get reportsSelectAll => 'Reports Select All';
+
+  @override
+  String get reportsSetCrew => 'Reports Set Crew';
+
+  @override
+  String get reportsTabBatch => 'Batch';
+
+  @override
+  String get reportsTemplateNameLabel => 'Template Name';
+
+  @override
+  String get reportsUnlock => 'Reports Unlock';
+
+  @override
+  String get reportsUploadJson => 'Upload';
+
+  @override
+  String get settingsAppearanceSubtitle => 'Appearance';
+
+  @override
+  String get settingsCalculationPilotProfileTitle =>
+      'Calculation Pilot Profile Title';
+
+  @override
+  String get settingsTabDatabase => 'Database';
+
+  @override
+  String get settingsTabExperience => 'Experience';
+
+  @override
+  String get settingsTabGeneral => 'General';
+
+  @override
+  String get settingsTabTimeFields => 'Time Fields';
+
+  @override
+  String get simplelogConflictResolutionTitle =>
+      'Simplelog Conflict Resolution Title';
+
+  @override
+  String get simplelogCrossCountryLabel => 'Simplelog Cross Country Label';
+
+  @override
+  String get simplelogCrossCountryNmLabel => 'Simplelog Cross Country Nm Label';
+
+  @override
+  String get simplelogIfrPercentLabel => 'Simplelog Ifr Percent Label';
+
+  @override
+  String get simplelogIfrTimeLabel => 'Simplelog Ifr Time Label';
+
+  @override
+  String get simplelogImportAction => 'Simplelog Import Action';
+
+  @override
+  String get simplelogImportOptionsTitle =>
+      'Simplelog Import Options Short Title';
+
+  @override
+  String get simplelogInstrumentPercentLabel =>
+      'Simplelog Instrument Percent Label';
+
+  @override
+  String get simplelogInstrumentTimeLabel => 'Simplelog Instrument Time Label';
+
+  @override
+  String get simplelogIrp3PercentLabel => 'Simplelog Irp3 Percent Label';
+
+  @override
+  String get simplelogIrp3TimeLabel => 'Simplelog Irp3 Time Label';
+
+  @override
+  String get simplelogIrp4PercentLabel => 'Simplelog Irp4 Percent Label';
+
+  @override
+  String get simplelogIrp4TimeLabel => 'Simplelog Irp4 Time Label';
+
+  @override
+  String get simplelogNightTimeLabel => 'Simplelog Night Time Label';
+
+  @override
+  String get simplelogOverrideAircraftOnConflict =>
+      'Simplelog Override Aircraft On Conflict';
+
+  @override
+  String get simplelogOverrideAircraftTypeOnConflict =>
+      'Simplelog Override Aircraft Type On Conflict';
+
+  @override
+  String get simplelogOverrideAirportOnConflict =>
+      'Simplelog Override Airport On Conflict';
+
+  @override
+  String get simplelogRecalcTotalTimeLabel =>
+      'Simplelog Recalc Total Time Label';
+
+  @override
+  String get simplelogRecalculationsTitle => 'Simplelog Recalculations Title';
+
+  @override
+  String get simplelogTakeoffLandingsLabel =>
+      'Simplelog Takeoff Landings Label';
+
+  @override
+  String get southwestAddCopilotStaffNumberLabel =>
+      'Southwest Add Copilot Staff Number Label';
+
+  @override
+  String get southwestAddFlightNumberToNotesLabel =>
+      'Southwest Add Flight Number To Notes Label';
+
+  @override
+  String get southwestCalculateCrossCountryTimeLabel =>
+      'Southwest Calculate Cross Country Time Label';
+
+  @override
+  String get southwestCalculateIfrTimeLabel =>
+      'Southwest Calculate Ifr Time Label';
+
+  @override
+  String get southwestCalculateInstrumentTimeLabel =>
+      'Southwest Calculate Instrument Time Label';
+
+  @override
+  String get southwestCalculateNightTimeLabel =>
+      'Southwest Calculate Night Time Label';
+
+  @override
+  String get southwestCrossCountryThresholdLabel =>
+      'Southwest Cross Country Threshold Label';
+
+  @override
+  String get southwestDefaultSelfPositionLabel =>
+      'Southwest Default Self Position Label';
+
+  @override
+  String get southwestImportAction => 'Southwest Import Action';
+
+  @override
+  String get southwestImportOptionsTitle =>
+      'Southwest Import Options Short Title';
+
+  @override
+  String get southwestOverrideExistingDataLabel =>
+      'Southwest Override Existing Data Label';
+
+  @override
+  String get southwestRecalculateBlockTimeLabel =>
+      'Southwest Recalculate Block Time Label';
+
+  @override
+  String databaseAircraftLabel(int count) {
+    return 'Aircraft: $count';
+  }
+
+  @override
+  String databaseAircraftTypesLabel(int count) {
+    return 'Aircraft types: $count';
+  }
+
+  @override
+  String databaseAirportsLabel(int count) {
+    return 'Airports: $count';
+  }
+
+  @override
+  String databaseCrewLabel(int count) {
+    return 'Crew: $count';
+  }
+
+  @override
+  String databaseErrorsLabel(int count) {
+    return 'Errors: $count';
+  }
+
+  @override
+  String databaseFileLabel(String fileName) {
+    return 'File: $fileName';
+  }
+
+  @override
+  String databaseFlightsLabel(int count) {
+    return 'Flights: $count';
+  }
+
+  @override
+  String databaseImportProgressLabel(int processed, int total) {
+    return 'Importing $processed of $total';
+  }
+
+  @override
+  String databaseLineIssueLabel(int lineNumber, String reason) {
+    return 'Line $lineNumber: $reason';
+  }
+
+  @override
+  String databasePositioningsLabel(int count) {
+    return 'Positionings: $count';
+  }
+
+  @override
+  String databaseRowsLabel(int count) {
+    return 'Rows: $count';
+  }
+
+  @override
+  String databaseSimulatorsLabel(int count) {
+    return 'Simulators: $count';
+  }
+
+  @override
+  String databaseSkippedLabel(int count) {
+    return 'Skipped: $count';
+  }
+
+  @override
+  String logtenLineLabel(int lineNumber) {
+    return 'Line $lineNumber';
+  }
+
+  @override
+  String reportsBatchWarning(int count) {
+    return 'This action will update $count filtered flights.';
+  }
+
+  @override
+  String reportsCalculateDutyConfirmBody(int count) {
+    return 'Recalculate duty periods for $count flights?';
+  }
+
+  @override
+  String reportsDeleteTemplateBody(String templateName) {
+    return 'Delete template \"$templateName\"?';
+  }
+
+  @override
+  String reportsIssueCount(int count) {
+    return '$count issues';
+  }
+
+  @override
+  String get onboardingWelcomeTitle => 'Welcome';
+
+  @override
+  String get onboardingWelcomeBody =>
+      'Set up your profile and default rules to start logging faster.';
+
+  @override
+  String get onboardingSkipAction => 'Skip';
+
+  @override
+  String get onboardingNextAction => 'Next';
+
+  @override
+  String get onboardingBackAction => 'Back';
+
+  @override
+  String get onboardingFinishAction => 'Finish';
+
+  @override
+  String get onboardingPilotProfileTitle => 'Pilot Profile';
+
+  @override
+  String get onboardingPilotProfileBody =>
+      'Add your profile details and signature for reports.';
+
+  @override
+  String get onboardingRulesTitle => 'Calculation and Duty Rules';
+
+  @override
+  String get onboardingRulesBody =>
+      'Review calculation factors and duty rules before your first entries.';
+
+  @override
+  String get onboardingFieldsTitle => 'Fields';
+
+  @override
+  String get onboardingFieldsBody =>
+      'Choose which time fields are visible and rename custom fields.';
+
+  @override
+  String get newDutyTitle => 'New Duty';
+
+  @override
+  String get editDutyTitle => 'Edit Duty';
+
+  @override
+  String get newPositioningTitle => 'New Positioning';
+
+  @override
+  String get editPositioningTitle => 'Edit Positioning';
+
+  @override
+  String get newSimTrainingTitle => 'New Sim Training';
+
+  @override
+  String get editSimTrainingTitle => 'Edit Sim Training';
+
+  @override
+  String get aircraftRequiredError => 'Aircraft is required.';
+
+  @override
+  String get fromAirportRequiredError => 'From Airport is required.';
+
+  @override
+  String get toAirportRequiredError => 'To Airport is required.';
+
+  @override
+  String get reportsAllEntriesAlreadyLocked =>
+      'All filtered entries are already locked.';
+
+  @override
+  String get reportsAllEntriesAlreadyUnlocked =>
+      'All filtered entries are already unlocked.';
+
+  @override
+  String get reportsLockEntriesConfirmTitle => 'Lock entries?';
+
+  @override
+  String get reportsUnlockEntriesConfirmTitle => 'Unlock entries?';
+
+  @override
+  String reportsLockFilteredEntriesMessage(int count) {
+    return 'This will lock $count filtered entries.';
+  }
+
+  @override
+  String reportsUnlockFilteredEntriesMessage(int count) {
+    return 'This will unlock $count filtered entries.';
+  }
+
+  @override
+  String get previousExperienceValidationTitle => 'Validation warnings';
+
+  @override
+  String get previousExperienceSaveAnywayPrompt => 'Save anyway?';
+
+  @override
+  String get previousExperienceReviewAction => 'Review';
+
+  @override
+  String get previousExperienceSaveAnywayAction => 'Save anyway';
+
+  @override
+  String get previousExperienceSelectAircraftType => 'Select aircraft type.';
+
+  @override
+  String get previousExperienceFirstFlightRequired =>
+      'First Flight is required.';
+
+  @override
+  String get previousExperienceLastFlightRequired => 'Last Flight is required.';
 }

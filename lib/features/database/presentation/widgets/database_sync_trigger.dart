@@ -46,8 +46,6 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   static const _sourceDispatcher = ImportSourceDispatcher();
   static const _logTenProInspector = LogTenProTsvInspector();
   static const _qatarAirwaysInspector = QatarAirwaysWorkbookInspector();
-  static const _importExportSubtitle =
-      'Import supported files with automatic format detection, or export CSV.';
   static const _replaceDataWarningMessage =
       'Current logbook data will be replaced. This cannot be undone.';
 
@@ -92,12 +90,12 @@ class DatabaseSyncTrigger extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           children: [
             Text(
-              'Database Tools',
+              l10n.databaseToolsTitle,
               style: theme.textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
             _DatabaseSectionCard(
-              title: 'Sync',
+              title: l10n.databaseSyncTitle,
               subtitle: l10n.databaseSyncSubtitle,
               children: [
                 _DatabaseActionButton(
@@ -114,35 +112,35 @@ class DatabaseSyncTrigger extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             _buildTwoActionSection(
-              title: 'Import / Export',
-              subtitle: _importExportSubtitle,
+              title: l10n.databaseImportExportTitle,
+              subtitle: l10n.databaseImportExportSubtitle,
               firstIcon: Icons.upload_file,
-              firstLabel: 'Import File',
+              firstLabel: l10n.databaseImportFileAction,
               onFirstPressed: () => _importCsv(context, ref),
               secondIcon: Icons.download_outlined,
-              secondLabel: 'Export CSV',
+              secondLabel: l10n.databaseExportCsvAction,
               onSecondPressed: () => _exportCsv(context, ref),
             ),
             const SizedBox(height: 12),
             _buildTwoActionSection(
-              title: 'Backup / Restore',
-              subtitle: 'Create and restore SQLite backups.',
+              title: l10n.databaseBackupRestoreTitle,
+              subtitle: l10n.databaseBackupRestoreSubtitle,
               firstIcon: Icons.save_alt_outlined,
-              firstLabel: 'Backup Logbook',
+              firstLabel: l10n.databaseBackupLogbookAction,
               onFirstPressed: () => _backupDatabase(context, ref),
               secondIcon: Icons.restore_outlined,
-              secondLabel: 'Restore Logbook',
+              secondLabel: l10n.databaseRestoreLogbookAction,
               onSecondPressed: () => _restoreDatabase(context, ref),
             ),
             const SizedBox(height: 12),
             _DatabaseSectionCard(
-              title: 'Danger Zone',
-              subtitle: 'Permanent operations.',
+              title: l10n.databaseDangerZoneTitle,
+              subtitle: l10n.databaseDangerZoneSubtitle,
               accentColor: colorScheme.error,
               children: [
                 _DatabaseActionButton(
                   icon: Icons.delete_forever_outlined,
-                  label: 'Database Dump (Temporary)',
+                  label: l10n.databaseDumpTemporaryAction,
                   onPressed: () => _clearDatabase(context, ref),
                   danger: true,
                 ),
@@ -562,7 +560,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          title: const Text('Importing'),
+          title: Text(AppLocalizations.of(context)!.databaseImportingTitle),
           content: ValueListenableBuilder<_ImportProgress>(
             valueListenable: progress,
             builder: (context, value, _) {
@@ -570,8 +568,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
               final processed = value.processed;
               final percent = total > 0 ? processed / total : null;
               final label = total > 0
-                  ? 'Processed $processed of $total'
-                  : 'Preparing...';
+                  ? AppLocalizations.of(
+                      context,
+                    )!.databaseImportProgressLabel(processed, total)
+                  : AppLocalizations.of(context)!.databasePreparingLabel;
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -591,20 +591,23 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     BuildContext context,
     SimpleLogImportResult stats,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     await showAppMessageDialog(
       context,
-      title: 'Import Summary',
+      title: l10n.databaseImportSummaryTitle,
       message:
-          'Rows: ${stats.totalRows}\n'
-          'Flights: ${stats.flights}\n'
-          'Positionings: ${stats.positionings}\n'
-          'Simulators: ${stats.simulators}\n'
-          'Airports: ${stats.airports}\n'
-          'Aircraft Types: ${stats.aircraftTypes}\n'
-          'Aircraft: ${stats.aircrafts}\n'
-          'Crew: ${stats.crew}\n'
-          'Skipped: ${stats.skipped}\n'
-          'Errors: ${stats.errors}',
+          '''
+${l10n.databaseRowsLabel(stats.totalRows)}
+${l10n.databaseFlightsLabel(stats.flights)}
+${l10n.databasePositioningsLabel(stats.positionings)}
+${l10n.databaseSimulatorsLabel(stats.simulators)}
+${l10n.databaseAirportsLabel(stats.airports)}
+${l10n.databaseAircraftTypesLabel(stats.aircraftTypes)}
+${l10n.databaseAircraftLabel(stats.aircrafts)}
+${l10n.databaseCrewLabel(stats.crew)}
+${l10n.databaseSkippedLabel(stats.skipped)}
+${l10n.databaseErrorsLabel(stats.errors)}
+''',
     );
   }
 
@@ -617,30 +620,35 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Import Summary'),
+        title: Text(AppLocalizations.of(context)!.databaseImportSummaryTitle),
         content: SizedBox(
           width: 720,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Rows: ${stats.totalRows}\n'
-                'Flights: ${stats.flights}\n'
-                'Positionings: ${stats.positionings}\n'
-                'Simulators: ${stats.simulators}\n'
-                'Airports: ${stats.airports}\n'
-                'Aircraft Types: ${stats.aircraftTypes}\n'
-                'Aircraft: ${stats.aircrafts}\n'
-                'Crew: ${stats.crew}\n'
-                'Skipped: ${stats.skipped}\n'
-                'Errors: ${stats.errors}',
+              Builder(
+                builder: (context) {
+                  final l10n = AppLocalizations.of(context)!;
+                  return Text('''
+${l10n.databaseRowsLabel(stats.totalRows)}
+${l10n.databaseFlightsLabel(stats.flights)}
+${l10n.databasePositioningsLabel(stats.positionings)}
+${l10n.databaseSimulatorsLabel(stats.simulators)}
+${l10n.databaseAirportsLabel(stats.airports)}
+${l10n.databaseAircraftTypesLabel(stats.aircraftTypes)}
+${l10n.databaseAircraftLabel(stats.aircrafts)}
+${l10n.databaseCrewLabel(stats.crew)}
+${l10n.databaseSkippedLabel(stats.skipped)}
+${l10n.databaseErrorsLabel(stats.errors)}
+''');
+                },
               ),
               if (issues.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text(
-                  'Skipped lines',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  AppLocalizations.of(context)!.databaseSkippedLinesTitle,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
@@ -652,7 +660,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
-                          'Line ${issue.lineNumber}: ${issue.reason}',
+                          AppLocalizations.of(context)!.databaseLineIssueLabel(
+                            issue.lineNumber,
+                            issue.reason,
+                          ),
                         ),
                       );
                     },
@@ -665,7 +676,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         actions: [
           FilledButton(
             onPressed: () => AppNavigator.pop(context),
-            child: const Text('OK'),
+            child: Text(AppLocalizations.of(context)!.okAction),
           ),
         ],
       ),

@@ -34,10 +34,10 @@ class CrewInfoDialog {
           child: Column(
             children: [
               ListTile(
-                title: const Text('Crew'),
+                title: Text(AppLocalizations.of(context)!.screenCrew),
                 trailing: TextButton(
                   onPressed: () => AppNavigator.pop(dialogContext),
-                  child: const Text('Done'),
+                  child: Text(AppLocalizations.of(context)!.reportsDone),
                 ),
               ),
               const Divider(height: 1),

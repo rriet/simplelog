@@ -6,8 +6,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
-import 'app_localizations_es.dart';
-import 'app_localizations_lv.dart';
 
 // ignore_for_file: type=lint
 
@@ -94,11 +92,7 @@ abstract class AppLocalizations {
       ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[
-    Locale('en'),
-    Locale('es'),
-    Locale('lv'),
-  ];
+  static const List<Locale> supportedLocales = <Locale>[Locale('en')];
 
   /// No description provided for @appTitle.
   ///
@@ -141,12 +135,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Spanish'**
   String get languageSpanish;
-
-  /// No description provided for @screenMenu.
-  ///
-  /// In en, this message translates to:
-  /// **'Screens'**
-  String get screenMenu;
 
   /// No description provided for @screenLogbook.
   ///
@@ -334,12 +322,6 @@ abstract class AppLocalizations {
   /// **'Crew'**
   String get screenCrew;
 
-  /// No description provided for @screenReports.
-  ///
-  /// In en, this message translates to:
-  /// **'Reports'**
-  String get screenReports;
-
   /// No description provided for @screenDatabase.
   ///
   /// In en, this message translates to:
@@ -442,12 +424,6 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get settingsAppearance;
 
-  /// No description provided for @settingsDeveloper.
-  ///
-  /// In en, this message translates to:
-  /// **'Developer'**
-  String get settingsDeveloper;
-
   /// No description provided for @themeSystem.
   ///
   /// In en, this message translates to:
@@ -489,6 +465,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add aircraft'**
   String get createAircraftTitle;
+
+  /// No description provided for @editSimulatorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit simulator'**
+  String get editSimulatorTitle;
+
+  /// No description provided for @createSimulatorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add simulator'**
+  String get createSimulatorTitle;
 
   /// No description provided for @editCrewTitle.
   ///
@@ -549,30 +537,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Name is required'**
   String get nameRequired;
-
-  /// No description provided for @codeDuplicateTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Duplicate code'**
-  String get codeDuplicateTitle;
-
-  /// No description provided for @codeDuplicateMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Code {code} already exists.'**
-  String codeDuplicateMessage(String code);
-
-  /// No description provided for @deleteBlockedTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete blocked'**
-  String get deleteBlockedTitle;
-
-  /// No description provided for @deleteBlockedAircraftType.
-  ///
-  /// In en, this message translates to:
-  /// **'This aircraft type is used by {count} aircraft and can\'t be deleted.'**
-  String deleteBlockedAircraftType(int count);
 
   /// No description provided for @fieldCode.
   ///
@@ -778,47 +742,11 @@ abstract class AppLocalizations {
   /// **'Select an aircraft type'**
   String get aircraftTypeRequired;
 
-  /// No description provided for @registrationDuplicateTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Duplicate registration'**
-  String get registrationDuplicateTitle;
-
-  /// No description provided for @registrationDuplicateMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Registration {registration} already exists.'**
-  String registrationDuplicateMessage(String registration);
-
-  /// No description provided for @nameDuplicateTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Duplicate name'**
-  String get nameDuplicateTitle;
-
-  /// No description provided for @nameDuplicateMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Name {name} already exists.'**
-  String nameDuplicateMessage(String name);
-
   /// No description provided for @icaoLengthError.
   ///
   /// In en, this message translates to:
   /// **'ICAO must be 4 characters'**
   String get icaoLengthError;
-
-  /// No description provided for @icaoDuplicateTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Duplicate ICAO'**
-  String get icaoDuplicateTitle;
-
-  /// No description provided for @icaoDuplicateMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'ICAO {icao} already exists.'**
-  String icaoDuplicateMessage(String icao);
 
   /// No description provided for @callNumber.
   ///
@@ -849,18 +777,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy email'**
   String get copyEmail;
-
-  /// No description provided for @seedTestData.
-  ///
-  /// In en, this message translates to:
-  /// **'Seed test data'**
-  String get seedTestData;
-
-  /// No description provided for @seedDataDone.
-  ///
-  /// In en, this message translates to:
-  /// **'Test data inserted'**
-  String get seedDataDone;
 
   /// No description provided for @databaseSyncTitle.
   ///
@@ -940,161 +856,17 @@ abstract class AppLocalizations {
   /// **'Cannot sync because the database versions differ. This device uses v{local} and the other device uses v{remote}. Update both apps and try again.'**
   String databaseSyncSchemaMismatchMessage(Object local, Object remote);
 
-  /// No description provided for @databaseSyncCopyDebug.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy debug info'**
-  String get databaseSyncCopyDebug;
-
-  /// No description provided for @databaseSyncCopied.
-  ///
-  /// In en, this message translates to:
-  /// **'Debug info copied'**
-  String get databaseSyncCopied;
-
-  /// No description provided for @databaseSyncLocalServer.
-  ///
-  /// In en, this message translates to:
-  /// **'Local server'**
-  String get databaseSyncLocalServer;
-
-  /// No description provided for @databaseSyncTestServer.
-  ///
-  /// In en, this message translates to:
-  /// **'Test local server'**
-  String get databaseSyncTestServer;
-
-  /// No description provided for @databaseSyncSessionInfo.
-  ///
-  /// In en, this message translates to:
-  /// **'Start a session on one device and join from another.'**
-  String get databaseSyncSessionInfo;
-
-  /// No description provided for @databaseSyncStartSession.
-  ///
-  /// In en, this message translates to:
-  /// **'Start session'**
-  String get databaseSyncStartSession;
-
-  /// No description provided for @databaseSyncStopSession.
-  ///
-  /// In en, this message translates to:
-  /// **'Stop session'**
-  String get databaseSyncStopSession;
-
-  /// No description provided for @databaseSyncJoinSession.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect device'**
-  String get databaseSyncJoinSession;
-
-  /// No description provided for @databaseSyncHosting.
-  ///
-  /// In en, this message translates to:
-  /// **'Hosting session'**
-  String get databaseSyncHosting;
-
-  /// No description provided for @databaseSyncEnterAddress.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter address'**
-  String get databaseSyncEnterAddress;
-
-  /// No description provided for @databaseSyncAddressHint.
-  ///
-  /// In en, this message translates to:
-  /// **'simplelog://sync?host=192.168.1.10&port=49200'**
-  String get databaseSyncAddressHint;
-
-  /// No description provided for @databaseSyncConnectedLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Connected to'**
-  String get databaseSyncConnectedLabel;
-
-  /// No description provided for @databaseSyncNotConnected.
-  ///
-  /// In en, this message translates to:
-  /// **'Not connected'**
-  String get databaseSyncNotConnected;
-
-  /// No description provided for @databaseSyncConnectHint.
-  ///
-  /// In en, this message translates to:
-  /// **'To send from this device, connect to the other device first.'**
-  String get databaseSyncConnectHint;
-
-  /// No description provided for @databaseSyncSend.
-  ///
-  /// In en, this message translates to:
-  /// **'Send database'**
-  String get databaseSyncSend;
-
-  /// No description provided for @databaseSyncEnterLastTwo.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter last two IP groups'**
-  String get databaseSyncEnterLastTwo;
-
-  /// No description provided for @databaseSyncOctet3.
-  ///
-  /// In en, this message translates to:
-  /// **'Third group'**
-  String get databaseSyncOctet3;
-
-  /// No description provided for @databaseSyncOctet4.
-  ///
-  /// In en, this message translates to:
-  /// **'Fourth group'**
-  String get databaseSyncOctet4;
-
-  /// No description provided for @databaseSyncInstruction.
-  ///
-  /// In en, this message translates to:
-  /// **'On the other device, enter only the last two numbers: {octet3}.{octet4} (prefix {prefix}, port 54742).'**
-  String databaseSyncInstruction(String prefix, String octet3, String octet4);
-
   /// No description provided for @databaseSyncSuccess.
   ///
   /// In en, this message translates to:
   /// **'Sync complete'**
   String get databaseSyncSuccess;
 
-  /// No description provided for @databaseSyncInvalidSession.
-  ///
-  /// In en, this message translates to:
-  /// **'Unable to connect to that session.'**
-  String get databaseSyncInvalidSession;
-
-  /// No description provided for @databaseSyncNoNetwork.
-  ///
-  /// In en, this message translates to:
-  /// **'No local network IP found.'**
-  String get databaseSyncNoNetwork;
-
-  /// No description provided for @databaseSyncScanQr.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan QR code'**
-  String get databaseSyncScanQr;
-
   /// No description provided for @databaseSyncDisconnected.
   ///
   /// In en, this message translates to:
   /// **'Disconnected from the other device.'**
   String get databaseSyncDisconnected;
-
-  /// No description provided for @databaseSyncStopWarning.
-  ///
-  /// In en, this message translates to:
-  /// **'Stopping will disconnect other devices. Continue?'**
-  String get databaseSyncStopWarning;
-
-  /// No description provided for @reportsTabOverview.
-  ///
-  /// In en, this message translates to:
-  /// **'Overview'**
-  String get reportsTabOverview;
 
   /// No description provided for @reportsTabFlights.
   ///
@@ -1198,12 +970,6 @@ abstract class AppLocalizations {
   /// **'Done.'**
   String get reportsPdfDone;
 
-  /// No description provided for @reportsPdfExported.
-  ///
-  /// In en, this message translates to:
-  /// **'PDF exported to: {path}'**
-  String reportsPdfExported(String path);
-
   /// No description provided for @reportsPdfFailed.
   ///
   /// In en, this message translates to:
@@ -1221,18 +987,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save PDF'**
   String get reportsSavePdfDialogTitle;
-
-  /// No description provided for @reportsChooseExportFolderTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose export folder'**
-  String get reportsChooseExportFolderTitle;
-
-  /// No description provided for @reportsCancelled.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancelled'**
-  String get reportsCancelled;
 
   /// No description provided for @reportsAnalyzeByLabel.
   ///
@@ -1276,12 +1030,6 @@ abstract class AppLocalizations {
   /// **'By Month'**
   String get reportsAnalyzeByMonth;
 
-  /// No description provided for @reportsOrderByGreater.
-  ///
-  /// In en, this message translates to:
-  /// **'Greater'**
-  String get reportsOrderByGreater;
-
   /// No description provided for @reportsOrderByNatural.
   ///
   /// In en, this message translates to:
@@ -1297,7 +1045,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportsShowPath.
   ///
   /// In en, this message translates to:
-  /// **'Show Path'**
+  /// **'Include Path'**
   String get reportsShowPath;
 
   /// No description provided for @reportsIncludeHoursBefore.
@@ -1305,12 +1053,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Include hours before'**
   String get reportsIncludeHoursBefore;
-
-  /// No description provided for @reportsPageSizeLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Page Size'**
-  String get reportsPageSizeLabel;
 
   /// No description provided for @reportsXmlTemplateLabel.
   ///
@@ -1354,35 +1096,11 @@ abstract class AppLocalizations {
   /// **'Unknown family'**
   String get reportsUnknownFamily;
 
-  /// No description provided for @reportsFiltersSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} filters • {from} UTC - {to} UTC'**
-  String reportsFiltersSummary(int count, String from, String to);
-
-  /// No description provided for @reportsEventSimShort.
-  ///
-  /// In en, this message translates to:
-  /// **'Sim'**
-  String get reportsEventSimShort;
-
   /// No description provided for @reportsPreviousExperienceLabel.
   ///
   /// In en, this message translates to:
   /// **'Previous experience'**
   String get reportsPreviousExperienceLabel;
-
-  /// No description provided for @reportsInclude.
-  ///
-  /// In en, this message translates to:
-  /// **'Include'**
-  String get reportsInclude;
-
-  /// No description provided for @reportsExclude.
-  ///
-  /// In en, this message translates to:
-  /// **'Exclude'**
-  String get reportsExclude;
 
   /// No description provided for @reportsMatchModeLabel.
   ///
@@ -1431,12 +1149,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete: {name}'**
   String reportsDeleteSavedQuery(String name);
-
-  /// No description provided for @reportsDeleteSavedLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete Saved'**
-  String get reportsDeleteSavedLabel;
 
   /// No description provided for @reportsMetricIfrApproaches.
   ///
@@ -1549,7 +1261,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportsFlightCount.
   ///
   /// In en, this message translates to:
-  /// **'Flight count: {count}'**
+  /// **'Flights: {count}'**
   String reportsFlightCount(String count);
 
   /// No description provided for @reportsNoDataForQuery.
@@ -1567,13 +1279,13 @@ abstract class AppLocalizations {
   /// No description provided for @reportsFirstFlightAt.
   ///
   /// In en, this message translates to:
-  /// **'First flight {date} UTC'**
+  /// **'First {date} UTC'**
   String reportsFirstFlightAt(String date);
 
   /// No description provided for @reportsLastFlightAt.
   ///
   /// In en, this message translates to:
-  /// **'Last flight {date} UTC'**
+  /// **'Last {date} UTC'**
   String reportsLastFlightAt(String date);
 
   /// No description provided for @reportsFieldNameLabel.
@@ -1731,36 +1443,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Aircraft Type Name'**
   String get reportsFilterFieldAircraftTypeName;
-
-  /// No description provided for @reportsFilterFieldPilotName.
-  ///
-  /// In en, this message translates to:
-  /// **'Pilot Name'**
-  String get reportsFilterFieldPilotName;
-
-  /// No description provided for @reportsFilterFieldPilotOnBoard.
-  ///
-  /// In en, this message translates to:
-  /// **'Pilot On Board'**
-  String get reportsFilterFieldPilotOnBoard;
-
-  /// No description provided for @reportsFilterFieldPilotPic.
-  ///
-  /// In en, this message translates to:
-  /// **'Pilot PIC'**
-  String get reportsFilterFieldPilotPic;
-
-  /// No description provided for @reportsFilterFieldPilotSic.
-  ///
-  /// In en, this message translates to:
-  /// **'Pilot SIC'**
-  String get reportsFilterFieldPilotSic;
-
-  /// No description provided for @reportsFilterFieldPilotTrainee.
-  ///
-  /// In en, this message translates to:
-  /// **'Pilot Trainee'**
-  String get reportsFilterFieldPilotTrainee;
 
   /// No description provided for @reportsFilterFieldApproachType.
   ///
@@ -2032,23 +1714,11 @@ abstract class AppLocalizations {
   /// **'By Airport'**
   String get reportsAnalyzeByAirport;
 
-  /// No description provided for @reportsAnalyzeByPilot.
-  ///
-  /// In en, this message translates to:
-  /// **'By Pilot'**
-  String get reportsAnalyzeByPilot;
-
   /// No description provided for @reportsUnknownAirport.
   ///
   /// In en, this message translates to:
   /// **'Unknown airport'**
   String get reportsUnknownAirport;
-
-  /// No description provided for @reportsUnknownPilot.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown pilot'**
-  String get reportsUnknownPilot;
 
   /// No description provided for @reportsOrderByHours.
   ///
@@ -2355,12 +2025,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search ICAO/IATA'**
   String get searchIcaoIata;
-
-  /// No description provided for @createSimulatorTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Add simulator'**
-  String get createSimulatorTitle;
 
   /// No description provided for @mapTitle.
   ///
@@ -3043,7 +2707,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportsMapSectionSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Preview the filtered routes and path overlay.'**
+  /// **'Display filtered flight on world map.'**
   String get reportsMapSectionSubtitle;
 
   /// No description provided for @reportsPdfSectionSubtitle.
@@ -3081,6 +2745,1410 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rename custom fields used across the app.'**
   String get timeFieldsCustomLabelsSubtitle;
+
+  /// No description provided for @autoUi001.
+  ///
+  /// In en, this message translates to:
+  /// **'25.325399/-80.274803'**
+  String get autoUi001;
+
+  /// No description provided for @autoUi002.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get autoUi002;
+
+  /// No description provided for @autoUi003.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Crew'**
+  String get autoUi003;
+
+  /// No description provided for @autoUi004.
+  ///
+  /// In en, this message translates to:
+  /// **'Aircraft Type'**
+  String get autoUi004;
+
+  /// No description provided for @autoUi005.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival'**
+  String get autoUi005;
+
+  /// No description provided for @autoUi006.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival Airport'**
+  String get autoUi006;
+
+  /// No description provided for @autoUi007.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival Time'**
+  String get autoUi007;
+
+  /// No description provided for @autoUi008.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculation Rules'**
+  String get autoUi008;
+
+  /// No description provided for @autoUi009.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate'**
+  String get autoUi009;
+
+  /// No description provided for @autoUi010.
+  ///
+  /// In en, this message translates to:
+  /// **'Chocks OFF'**
+  String get autoUi010;
+
+  /// No description provided for @autoUi011.
+  ///
+  /// In en, this message translates to:
+  /// **'Chocks ON'**
+  String get autoUi011;
+
+  /// No description provided for @autoUi012.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear signature'**
+  String get autoUi012;
+
+  /// No description provided for @autoUi013.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get autoUi013;
+
+  /// No description provided for @autoUi014.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open camera.'**
+  String get autoUi014;
+
+  /// No description provided for @autoUi015.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not select image file.'**
+  String get autoUi015;
+
+  /// No description provided for @autoUi016.
+  ///
+  /// In en, this message translates to:
+  /// **'Crew home base airport'**
+  String get autoUi016;
+
+  /// No description provided for @autoUi017.
+  ///
+  /// In en, this message translates to:
+  /// **'CrossCountry'**
+  String get autoUi017;
+
+  /// No description provided for @autoUi018.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Time Labels'**
+  String get autoUi018;
+
+  /// No description provided for @autoUi019.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure'**
+  String get autoUi019;
+
+  /// No description provided for @autoUi020.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure Airport'**
+  String get autoUi020;
+
+  /// No description provided for @autoUi021.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure Time'**
+  String get autoUi021;
+
+  /// No description provided for @autoUi022.
+  ///
+  /// In en, this message translates to:
+  /// **'Duty End'**
+  String get autoUi022;
+
+  /// No description provided for @autoUi023.
+  ///
+  /// In en, this message translates to:
+  /// **'Duty Rules'**
+  String get autoUi023;
+
+  /// No description provided for @autoUi024.
+  ///
+  /// In en, this message translates to:
+  /// **'Duty Start'**
+  String get autoUi024;
+
+  /// No description provided for @autoUi025.
+  ///
+  /// In en, this message translates to:
+  /// **'Duty end time allowance'**
+  String get autoUi025;
+
+  /// No description provided for @autoUi026.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get autoUi026;
+
+  /// No description provided for @autoUi027.
+  ///
+  /// In en, this message translates to:
+  /// **'End Time'**
+  String get autoUi027;
+
+  /// No description provided for @autoUi028.
+  ///
+  /// In en, this message translates to:
+  /// **'Endorsement'**
+  String get autoUi028;
+
+  /// No description provided for @autoUi029.
+  ///
+  /// In en, this message translates to:
+  /// **'Entries'**
+  String get autoUi029;
+
+  /// No description provided for @autoUi030.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry'**
+  String get autoUi030;
+
+  /// No description provided for @autoUi031.
+  ///
+  /// In en, this message translates to:
+  /// **'Factored Duty Time'**
+  String get autoUi031;
+
+  /// No description provided for @autoUi032.
+  ///
+  /// In en, this message translates to:
+  /// **'First Flight'**
+  String get autoUi032;
+
+  /// No description provided for @autoUi033.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get autoUi033;
+
+  /// No description provided for @autoUi034.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get autoUi034;
+
+  /// No description provided for @autoUi035.
+  ///
+  /// In en, this message translates to:
+  /// **'From Airport'**
+  String get autoUi035;
+
+  /// No description provided for @autoUi036.
+  ///
+  /// In en, this message translates to:
+  /// **'Landing'**
+  String get autoUi036;
+
+  /// No description provided for @autoUi037.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Flight'**
+  String get autoUi037;
+
+  /// No description provided for @autoUi038.
+  ///
+  /// In en, this message translates to:
+  /// **'Licenses'**
+  String get autoUi038;
+
+  /// No description provided for @autoUi039.
+  ///
+  /// In en, this message translates to:
+  /// **'Log takeoff and landing times'**
+  String get autoUi039;
+
+  /// No description provided for @autoUi040.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage prior totals by aircraft type.'**
+  String get autoUi040;
+
+  /// No description provided for @autoUi041.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum rest time'**
+  String get autoUi041;
+
+  /// No description provided for @autoUi042.
+  ///
+  /// In en, this message translates to:
+  /// **'N25°19.31/W080°16.29'**
+  String get autoUi042;
+
+  /// No description provided for @autoUi043.
+  ///
+  /// In en, this message translates to:
+  /// **'No previous experience entries yet.'**
+  String get autoUi043;
+
+  /// No description provided for @autoUi044.
+  ///
+  /// In en, this message translates to:
+  /// **'No signature'**
+  String get autoUi044;
+
+  /// No description provided for @autoUi046.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Experience'**
+  String get autoUi046;
+
+  /// No description provided for @autoUi047.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get autoUi047;
+
+  /// No description provided for @autoUi048.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove endorsement'**
+  String get autoUi048;
+
+  /// No description provided for @autoUi049.
+  ///
+  /// In en, this message translates to:
+  /// **'Reporting time offbase'**
+  String get autoUi049;
+
+  /// No description provided for @autoUi050.
+  ///
+  /// In en, this message translates to:
+  /// **'Reporting time on base'**
+  String get autoUi050;
+
+  /// No description provided for @autoUi051.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Labels'**
+  String get autoUi051;
+
+  /// No description provided for @autoUi052.
+  ///
+  /// In en, this message translates to:
+  /// **'Session Time'**
+  String get autoUi052;
+
+  /// No description provided for @autoUi053.
+  ///
+  /// In en, this message translates to:
+  /// **'Show endorsement'**
+  String get autoUi053;
+
+  /// No description provided for @autoUi054.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign'**
+  String get autoUi054;
+
+  /// No description provided for @autoUi055.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign on screen'**
+  String get autoUi055;
+
+  /// No description provided for @autoUi056.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature'**
+  String get autoUi056;
+
+  /// No description provided for @autoUi057.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature options'**
+  String get autoUi057;
+
+  /// No description provided for @autoUi058.
+  ///
+  /// In en, this message translates to:
+  /// **'Sim Instrument'**
+  String get autoUi058;
+
+  /// No description provided for @autoUi059.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Time'**
+  String get autoUi059;
+
+  /// No description provided for @autoUi060.
+  ///
+  /// In en, this message translates to:
+  /// **'Times'**
+  String get autoUi060;
+
+  /// No description provided for @autoUi061.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get autoUi061;
+
+  /// No description provided for @autoUi062.
+  ///
+  /// In en, this message translates to:
+  /// **'To Airport'**
+  String get autoUi062;
+
+  /// No description provided for @autoUi063.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load default position'**
+  String get autoUi063;
+
+  /// No description provided for @autoUi064.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load duty rules settings.'**
+  String get autoUi064;
+
+  /// No description provided for @autoUi065.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load option'**
+  String get autoUi065;
+
+  /// No description provided for @autoUi066.
+  ///
+  /// In en, this message translates to:
+  /// **'Use calculated time'**
+  String get autoUi066;
+
+  /// No description provided for @autoUi067.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible Time Fields'**
+  String get autoUi067;
+
+  /// No description provided for @autoUi068.
+  ///
+  /// In en, this message translates to:
+  /// **'→'**
+  String get autoUi068;
+
+  /// No description provided for @databaseBackupLogbookAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Backup Logbook Action'**
+  String get databaseBackupLogbookAction;
+
+  /// No description provided for @databaseBackupRestoreSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Backup Restore Subtitle'**
+  String get databaseBackupRestoreSubtitle;
+
+  /// No description provided for @databaseBackupRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Backup Restore Title'**
+  String get databaseBackupRestoreTitle;
+
+  /// No description provided for @databaseDangerZoneSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Danger Zone Subtitle'**
+  String get databaseDangerZoneSubtitle;
+
+  /// No description provided for @databaseDangerZoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Danger Zone Title'**
+  String get databaseDangerZoneTitle;
+
+  /// No description provided for @databaseDumpTemporaryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Dump Temporary Action'**
+  String get databaseDumpTemporaryAction;
+
+  /// No description provided for @databaseExportCsvAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Export Csv Action'**
+  String get databaseExportCsvAction;
+
+  /// No description provided for @databaseImportExportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Import Export Subtitle'**
+  String get databaseImportExportSubtitle;
+
+  /// No description provided for @databaseImportExportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Import Export Title'**
+  String get databaseImportExportTitle;
+
+  /// No description provided for @databaseImportFileAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Import File Action'**
+  String get databaseImportFileAction;
+
+  /// No description provided for @databaseImportSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Import Summary Title'**
+  String get databaseImportSummaryTitle;
+
+  /// No description provided for @databaseImportingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Importing Title'**
+  String get databaseImportingTitle;
+
+  /// No description provided for @databasePreparingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Preparing Label'**
+  String get databasePreparingLabel;
+
+  /// No description provided for @databaseRestoreLogbookAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Restore Logbook Action'**
+  String get databaseRestoreLogbookAction;
+
+  /// No description provided for @databaseSkippedLinesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Skipped Lines Title'**
+  String get databaseSkippedLinesTitle;
+
+  /// No description provided for @databaseToolsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Database Tools Title'**
+  String get databaseToolsTitle;
+
+  /// No description provided for @logtenAssociationHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Association Header'**
+  String get logtenAssociationHeader;
+
+  /// No description provided for @logtenContinueAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Continue Action'**
+  String get logtenContinueAction;
+
+  /// No description provided for @logtenCorrectedValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Corrected Value Label'**
+  String get logtenCorrectedValueLabel;
+
+  /// No description provided for @logtenCreateAirportTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Create Airport Tooltip'**
+  String get logtenCreateAirportTooltip;
+
+  /// No description provided for @logtenEntryTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Entry Type Label'**
+  String get logtenEntryTypeLabel;
+
+  /// No description provided for @logtenFlightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Flight Label'**
+  String get logtenFlightLabel;
+
+  /// No description provided for @logtenIgnoreAllAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Ignore All Action'**
+  String get logtenIgnoreAllAction;
+
+  /// No description provided for @logtenIgnoreLineAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Ignore Line Action'**
+  String get logtenIgnoreLineAction;
+
+  /// No description provided for @logtenImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Import Action'**
+  String get logtenImportAction;
+
+  /// No description provided for @logtenImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Import Short Title'**
+  String get logtenImportTitle;
+
+  /// No description provided for @logtenReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Review Short Title'**
+  String get logtenReviewTitle;
+
+  /// No description provided for @logtenSelectAirportTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Select Airport Tooltip'**
+  String get logtenSelectAirportTooltip;
+
+  /// No description provided for @logtenSelectArrivalAirport.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Select Arrival Airport'**
+  String get logtenSelectArrivalAirport;
+
+  /// No description provided for @logtenSelectDepartureAirport.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Select Departure Airport'**
+  String get logtenSelectDepartureAirport;
+
+  /// No description provided for @logtenSelectedAirport.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Selected Airport'**
+  String get logtenSelectedAirport;
+
+  /// No description provided for @logtenSimulatorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Simulator Label'**
+  String get logtenSimulatorLabel;
+
+  /// No description provided for @logtenSourceColumnHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Source Column Header'**
+  String get logtenSourceColumnHeader;
+
+  /// No description provided for @logtenTimezoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Logten Timezone Label'**
+  String get logtenTimezoneLabel;
+
+  /// No description provided for @qatarContinueAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Qatar Continue Action'**
+  String get qatarContinueAction;
+
+  /// No description provided for @qatarCreateAircraftAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Qatar Create Aircraft Action'**
+  String get qatarCreateAircraftAction;
+
+  /// No description provided for @qatarCreateAirportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Qatar Create Airport Action'**
+  String get qatarCreateAirportAction;
+
+  /// No description provided for @qatarDefaultPositionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Qatar Default Position Label'**
+  String get qatarDefaultPositionLabel;
+
+  /// No description provided for @qatarImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Qatar Import Action'**
+  String get qatarImportAction;
+
+  /// No description provided for @qatarImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Qatar Import Short Title'**
+  String get qatarImportTitle;
+
+  /// No description provided for @qatarMissingAircraftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Qatar Missing Aircraft Title'**
+  String get qatarMissingAircraftTitle;
+
+  /// No description provided for @qatarMissingAirportsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Qatar Missing Airports Title'**
+  String get qatarMissingAirportsTitle;
+
+  /// No description provided for @qatarPilotNameAsWrittenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Qatar Pilot Name As Written Label'**
+  String get qatarPilotNameAsWrittenLabel;
+
+  /// No description provided for @qatarPositionPic.
+  ///
+  /// In en, this message translates to:
+  /// **'Qatar Position Pic'**
+  String get qatarPositionPic;
+
+  /// No description provided for @qatarPositionSic.
+  ///
+  /// In en, this message translates to:
+  /// **'Qatar Position Sic'**
+  String get qatarPositionSic;
+
+  /// No description provided for @reportsBatchChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Batch Changes Title'**
+  String get reportsBatchChangesTitle;
+
+  /// No description provided for @reportsBatchSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit multile entries at once'**
+  String get reportsBatchSubtitle;
+
+  /// No description provided for @reportsBatchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch Edit'**
+  String get reportsBatchTitle;
+
+  /// No description provided for @reportsCalculateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate'**
+  String get reportsCalculateAction;
+
+  /// No description provided for @reportsCalculateAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate All'**
+  String get reportsCalculateAll;
+
+  /// No description provided for @reportsCalculateDuty.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate Duty'**
+  String get reportsCalculateDuty;
+
+  /// No description provided for @reportsCalculateDutyConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate Duty'**
+  String get reportsCalculateDutyConfirmTitle;
+
+  /// No description provided for @reportsCalculatingDutyPeriods.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Calculating Duty Periods'**
+  String get reportsCalculatingDutyPeriods;
+
+  /// No description provided for @reportsCalculatingDutyShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Calculating Duty Short'**
+  String get reportsCalculatingDutyShort;
+
+  /// No description provided for @reportsCheckFlights.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Flights'**
+  String get reportsCheckFlights;
+
+  /// No description provided for @reportsCheckingShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Checking Short'**
+  String get reportsCheckingShort;
+
+  /// No description provided for @reportsChecksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Checks Short Title'**
+  String get reportsChecksTitle;
+
+  /// No description provided for @reportsClearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Clear Action'**
+  String get reportsClearAction;
+
+  /// No description provided for @reportsDeleteTemplateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Delete Template Title'**
+  String get reportsDeleteTemplateTitle;
+
+  /// No description provided for @reportsDownloadAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get reportsDownloadAction;
+
+  /// No description provided for @reportsEditPilotProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Edit Pilot Profile'**
+  String get reportsEditPilotProfile;
+
+  /// No description provided for @reportsEditTemplates.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Templates'**
+  String get reportsEditTemplates;
+
+  /// No description provided for @reportsExportInteractiveMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Export Interactive Map'**
+  String get reportsExportInteractiveMap;
+
+  /// No description provided for @reportsLock.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Lock'**
+  String get reportsLock;
+
+  /// No description provided for @reportsNoChangesApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports No Changes Applied'**
+  String get reportsNoChangesApplied;
+
+  /// No description provided for @reportsNoFlightIssuesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports No Flight Issues Found'**
+  String get reportsNoFlightIssuesFound;
+
+  /// No description provided for @reportsOpenPdfAfterSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Open Pdf After Saving'**
+  String get reportsOpenPdfAfterSaving;
+
+  /// No description provided for @reportsPdfGenerationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Print Logbook'**
+  String get reportsPdfGenerationTitle;
+
+  /// No description provided for @reportsPdfTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF Options'**
+  String get reportsPdfTitle;
+
+  /// No description provided for @reportsPreparingBatchData.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Preparing Batch Data'**
+  String get reportsPreparingBatchData;
+
+  /// No description provided for @reportsRunAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Run Action'**
+  String get reportsRunAction;
+
+  /// No description provided for @reportsSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Select All'**
+  String get reportsSelectAll;
+
+  /// No description provided for @reportsSetCrew.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Set Crew'**
+  String get reportsSetCrew;
+
+  /// No description provided for @reportsTabBatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch'**
+  String get reportsTabBatch;
+
+  /// No description provided for @reportsTemplateNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Template Name'**
+  String get reportsTemplateNameLabel;
+
+  /// No description provided for @reportsUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Unlock'**
+  String get reportsUnlock;
+
+  /// No description provided for @reportsUploadJson.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get reportsUploadJson;
+
+  /// No description provided for @settingsAppearanceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearanceSubtitle;
+
+  /// No description provided for @settingsCalculationPilotProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculation Pilot Profile Title'**
+  String get settingsCalculationPilotProfileTitle;
+
+  /// No description provided for @settingsTabDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Database'**
+  String get settingsTabDatabase;
+
+  /// No description provided for @settingsTabExperience.
+  ///
+  /// In en, this message translates to:
+  /// **'Experience'**
+  String get settingsTabExperience;
+
+  /// No description provided for @settingsTabGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get settingsTabGeneral;
+
+  /// No description provided for @settingsTabTimeFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Fields'**
+  String get settingsTabTimeFields;
+
+  /// No description provided for @simplelogConflictResolutionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Conflict Resolution Title'**
+  String get simplelogConflictResolutionTitle;
+
+  /// No description provided for @simplelogCrossCountryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Cross Country Label'**
+  String get simplelogCrossCountryLabel;
+
+  /// No description provided for @simplelogCrossCountryNmLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Cross Country Nm Label'**
+  String get simplelogCrossCountryNmLabel;
+
+  /// No description provided for @simplelogIfrPercentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Ifr Percent Label'**
+  String get simplelogIfrPercentLabel;
+
+  /// No description provided for @simplelogIfrTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Ifr Time Label'**
+  String get simplelogIfrTimeLabel;
+
+  /// No description provided for @simplelogImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Import Action'**
+  String get simplelogImportAction;
+
+  /// No description provided for @simplelogImportOptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Import Options Short Title'**
+  String get simplelogImportOptionsTitle;
+
+  /// No description provided for @simplelogInstrumentPercentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Instrument Percent Label'**
+  String get simplelogInstrumentPercentLabel;
+
+  /// No description provided for @simplelogInstrumentTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Instrument Time Label'**
+  String get simplelogInstrumentTimeLabel;
+
+  /// No description provided for @simplelogIrp3PercentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Irp3 Percent Label'**
+  String get simplelogIrp3PercentLabel;
+
+  /// No description provided for @simplelogIrp3TimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Irp3 Time Label'**
+  String get simplelogIrp3TimeLabel;
+
+  /// No description provided for @simplelogIrp4PercentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Irp4 Percent Label'**
+  String get simplelogIrp4PercentLabel;
+
+  /// No description provided for @simplelogIrp4TimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Irp4 Time Label'**
+  String get simplelogIrp4TimeLabel;
+
+  /// No description provided for @simplelogNightTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Night Time Label'**
+  String get simplelogNightTimeLabel;
+
+  /// No description provided for @simplelogOverrideAircraftOnConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Override Aircraft On Conflict'**
+  String get simplelogOverrideAircraftOnConflict;
+
+  /// No description provided for @simplelogOverrideAircraftTypeOnConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Override Aircraft Type On Conflict'**
+  String get simplelogOverrideAircraftTypeOnConflict;
+
+  /// No description provided for @simplelogOverrideAirportOnConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Override Airport On Conflict'**
+  String get simplelogOverrideAirportOnConflict;
+
+  /// No description provided for @simplelogRecalcTotalTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Recalc Total Time Label'**
+  String get simplelogRecalcTotalTimeLabel;
+
+  /// No description provided for @simplelogRecalculationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Recalculations Title'**
+  String get simplelogRecalculationsTitle;
+
+  /// No description provided for @simplelogTakeoffLandingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplelog Takeoff Landings Label'**
+  String get simplelogTakeoffLandingsLabel;
+
+  /// No description provided for @southwestAddCopilotStaffNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Southwest Add Copilot Staff Number Label'**
+  String get southwestAddCopilotStaffNumberLabel;
+
+  /// No description provided for @southwestAddFlightNumberToNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Southwest Add Flight Number To Notes Label'**
+  String get southwestAddFlightNumberToNotesLabel;
+
+  /// No description provided for @southwestCalculateCrossCountryTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Southwest Calculate Cross Country Time Label'**
+  String get southwestCalculateCrossCountryTimeLabel;
+
+  /// No description provided for @southwestCalculateIfrTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Southwest Calculate Ifr Time Label'**
+  String get southwestCalculateIfrTimeLabel;
+
+  /// No description provided for @southwestCalculateInstrumentTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Southwest Calculate Instrument Time Label'**
+  String get southwestCalculateInstrumentTimeLabel;
+
+  /// No description provided for @southwestCalculateNightTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Southwest Calculate Night Time Label'**
+  String get southwestCalculateNightTimeLabel;
+
+  /// No description provided for @southwestCrossCountryThresholdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Southwest Cross Country Threshold Label'**
+  String get southwestCrossCountryThresholdLabel;
+
+  /// No description provided for @southwestDefaultSelfPositionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Southwest Default Self Position Label'**
+  String get southwestDefaultSelfPositionLabel;
+
+  /// No description provided for @southwestImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Southwest Import Action'**
+  String get southwestImportAction;
+
+  /// No description provided for @southwestImportOptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Southwest Import Options Short Title'**
+  String get southwestImportOptionsTitle;
+
+  /// No description provided for @southwestOverrideExistingDataLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Southwest Override Existing Data Label'**
+  String get southwestOverrideExistingDataLabel;
+
+  /// No description provided for @southwestRecalculateBlockTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Southwest Recalculate Block Time Label'**
+  String get southwestRecalculateBlockTimeLabel;
+
+  /// No description provided for @databaseAircraftLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Aircraft: {count}'**
+  String databaseAircraftLabel(int count);
+
+  /// No description provided for @databaseAircraftTypesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Aircraft types: {count}'**
+  String databaseAircraftTypesLabel(int count);
+
+  /// No description provided for @databaseAirportsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Airports: {count}'**
+  String databaseAirportsLabel(int count);
+
+  /// No description provided for @databaseCrewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Crew: {count}'**
+  String databaseCrewLabel(int count);
+
+  /// No description provided for @databaseErrorsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Errors: {count}'**
+  String databaseErrorsLabel(int count);
+
+  /// No description provided for @databaseFileLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'File: {fileName}'**
+  String databaseFileLabel(String fileName);
+
+  /// No description provided for @databaseFlightsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Flights: {count}'**
+  String databaseFlightsLabel(int count);
+
+  /// No description provided for @databaseImportProgressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing {processed} of {total}'**
+  String databaseImportProgressLabel(int processed, int total);
+
+  /// No description provided for @databaseLineIssueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {lineNumber}: {reason}'**
+  String databaseLineIssueLabel(int lineNumber, String reason);
+
+  /// No description provided for @databasePositioningsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Positionings: {count}'**
+  String databasePositioningsLabel(int count);
+
+  /// No description provided for @databaseRowsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows: {count}'**
+  String databaseRowsLabel(int count);
+
+  /// No description provided for @databaseSimulatorsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulators: {count}'**
+  String databaseSimulatorsLabel(int count);
+
+  /// No description provided for @databaseSkippedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped: {count}'**
+  String databaseSkippedLabel(int count);
+
+  /// No description provided for @logtenLineLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {lineNumber}'**
+  String logtenLineLabel(int lineNumber);
+
+  /// No description provided for @reportsBatchWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This action will update {count} filtered flights.'**
+  String reportsBatchWarning(int count);
+
+  /// No description provided for @reportsCalculateDutyConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Recalculate duty periods for {count} flights?'**
+  String reportsCalculateDutyConfirmBody(int count);
+
+  /// No description provided for @reportsDeleteTemplateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete template \"{templateName}\"?'**
+  String reportsDeleteTemplateBody(String templateName);
+
+  /// No description provided for @reportsIssueCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} issues'**
+  String reportsIssueCount(int count);
+
+  /// No description provided for @onboardingWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome'**
+  String get onboardingWelcomeTitle;
+
+  /// No description provided for @onboardingWelcomeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your profile and default rules to start logging faster.'**
+  String get onboardingWelcomeBody;
+
+  /// No description provided for @onboardingSkipAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardingSkipAction;
+
+  /// No description provided for @onboardingNextAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNextAction;
+
+  /// No description provided for @onboardingBackAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get onboardingBackAction;
+
+  /// No description provided for @onboardingFinishAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish'**
+  String get onboardingFinishAction;
+
+  /// No description provided for @onboardingPilotProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot Profile'**
+  String get onboardingPilotProfileTitle;
+
+  /// No description provided for @onboardingPilotProfileBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your profile details and signature for reports.'**
+  String get onboardingPilotProfileBody;
+
+  /// No description provided for @onboardingRulesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculation and Duty Rules'**
+  String get onboardingRulesTitle;
+
+  /// No description provided for @onboardingRulesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Review calculation factors and duty rules before your first entries.'**
+  String get onboardingRulesBody;
+
+  /// No description provided for @onboardingFieldsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fields'**
+  String get onboardingFieldsTitle;
+
+  /// No description provided for @onboardingFieldsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which time fields are visible and rename custom fields.'**
+  String get onboardingFieldsBody;
+
+  /// No description provided for @newDutyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Duty'**
+  String get newDutyTitle;
+
+  /// No description provided for @editDutyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Duty'**
+  String get editDutyTitle;
+
+  /// No description provided for @newPositioningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Positioning'**
+  String get newPositioningTitle;
+
+  /// No description provided for @editPositioningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Positioning'**
+  String get editPositioningTitle;
+
+  /// No description provided for @newSimTrainingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Sim Training'**
+  String get newSimTrainingTitle;
+
+  /// No description provided for @editSimTrainingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Sim Training'**
+  String get editSimTrainingTitle;
+
+  /// No description provided for @aircraftRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Aircraft is required.'**
+  String get aircraftRequiredError;
+
+  /// No description provided for @fromAirportRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'From Airport is required.'**
+  String get fromAirportRequiredError;
+
+  /// No description provided for @toAirportRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'To Airport is required.'**
+  String get toAirportRequiredError;
+
+  /// No description provided for @reportsAllEntriesAlreadyLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'All filtered entries are already locked.'**
+  String get reportsAllEntriesAlreadyLocked;
+
+  /// No description provided for @reportsAllEntriesAlreadyUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'All filtered entries are already unlocked.'**
+  String get reportsAllEntriesAlreadyUnlocked;
+
+  /// No description provided for @reportsLockEntriesConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock entries?'**
+  String get reportsLockEntriesConfirmTitle;
+
+  /// No description provided for @reportsUnlockEntriesConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock entries?'**
+  String get reportsUnlockEntriesConfirmTitle;
+
+  /// No description provided for @reportsLockFilteredEntriesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This will lock {count} filtered entries.'**
+  String reportsLockFilteredEntriesMessage(int count);
+
+  /// No description provided for @reportsUnlockFilteredEntriesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This will unlock {count} filtered entries.'**
+  String reportsUnlockFilteredEntriesMessage(int count);
+
+  /// No description provided for @previousExperienceValidationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Validation warnings'**
+  String get previousExperienceValidationTitle;
+
+  /// No description provided for @previousExperienceSaveAnywayPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Save anyway?'**
+  String get previousExperienceSaveAnywayPrompt;
+
+  /// No description provided for @previousExperienceReviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get previousExperienceReviewAction;
+
+  /// No description provided for @previousExperienceSaveAnywayAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save anyway'**
+  String get previousExperienceSaveAnywayAction;
+
+  /// No description provided for @previousExperienceSelectAircraftType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select aircraft type.'**
+  String get previousExperienceSelectAircraftType;
+
+  /// No description provided for @previousExperienceFirstFlightRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'First Flight is required.'**
+  String get previousExperienceFirstFlightRequired;
+
+  /// No description provided for @previousExperienceLastFlightRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Flight is required.'**
+  String get previousExperienceLastFlightRequired;
 }
 
 class _AppLocalizationsDelegate
@@ -3094,7 +4162,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'es', 'lv'].contains(locale.languageCode);
+      <String>['en'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -3105,10 +4173,6 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
-    case 'es':
-      return AppLocalizationsEs();
-    case 'lv':
-      return AppLocalizationsLv();
   }
 
   throw FlutterError(

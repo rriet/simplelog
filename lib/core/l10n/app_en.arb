@@ -7,7 +7,6 @@
   "languageSystem": "System",
   "languageEnglish": "English",
   "languageSpanish": "Spanish",
-  "screenMenu": "Screens",
   "screenLogbook": "Logbook",
   "logbookFilterAction": "Filters",
   "logbookFilterTitle": "Filters",
@@ -39,7 +38,6 @@
   "screenAircraftTypes": "Aircraft Types",
   "screenAirports": "Airports",
   "screenCrew": "Crew",
-  "screenReports": "Reports",
   "screenDatabase": "Database",
   "screenSettings": "Settings",
   "searchAircraft": "Search aircraft",
@@ -85,7 +83,6 @@
     }
   },
   "settingsAppearance": "Appearance",
-  "settingsDeveloper": "Developer",
   "themeSystem": "System",
   "themeLight": "Light",
   "themeDark": "Dark",
@@ -93,6 +90,8 @@
   "createAircraftTypeTitle": "Add aircraft type",
   "editAircraftTitle": "Edit aircraft",
   "createAircraftTitle": "Add aircraft",
+  "editSimulatorTitle": "Edit simulator",
+  "createSimulatorTitle": "Add simulator",
   "editCrewTitle": "Edit crew",
   "createCrewTitle": "Add crew",
   "editAirportTitle": "Edit airport",
@@ -103,24 +102,6 @@
   "validationErrorGeneric": "Please check the form and try again.",
   "codeRequired": "Code is required",
   "nameRequired": "Name is required",
-  "codeDuplicateTitle": "Duplicate code",
-  "codeDuplicateMessage": "Code {code} already exists.",
-  "deleteBlockedTitle": "Delete blocked",
-  "deleteBlockedAircraftType": "This aircraft type is used by {count} aircraft and can't be deleted.",
-  "@deleteBlockedAircraftType": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@codeDuplicateMessage": {
-    "placeholders": {
-      "code": {
-        "type": "String"
-      }
-    }
-  },
   "fieldCode": "Code",
   "fieldRegistration": "Registration",
   "fieldAircraftType": "Aircraft type",
@@ -155,41 +136,12 @@
   "fieldLatitude": "Latitude",
   "fieldLongitude": "Longitude",
   "aircraftTypeRequired": "Select an aircraft type",
-  "registrationDuplicateTitle": "Duplicate registration",
-  "registrationDuplicateMessage": "Registration {registration} already exists.",
-  "@registrationDuplicateMessage": {
-    "placeholders": {
-      "registration": {
-        "type": "String"
-      }
-    }
-  },
-  "nameDuplicateTitle": "Duplicate name",
-  "nameDuplicateMessage": "Name {name} already exists.",
-  "@nameDuplicateMessage": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "icaoLengthError": "ICAO must be 4 characters",
-  "icaoDuplicateTitle": "Duplicate ICAO",
-  "icaoDuplicateMessage": "ICAO {icao} already exists.",
-  "@icaoDuplicateMessage": {
-    "placeholders": {
-      "icao": {
-        "type": "String"
-      }
-    }
-  },
   "callNumber": "Call number",
   "textNumber": "Text message",
   "copyNumber": "Copy number",
   "sendEmail": "Send email",
   "copyEmail": "Copy email",
-  "seedTestData": "Seed test data",
-  "seedDataDone": "Test data inserted",
   "databaseSyncTitle": "Local sync",
   "databaseSyncStartLocal": "Start Local Sync",
   "databaseSyncFoundTitle": "Available devices",
@@ -216,10 +168,6 @@
       "remote": {}
     }
   },
-  "databaseSyncCopyDebug": "Copy debug info",
-  "databaseSyncCopied": "Debug info copied",
-  "databaseSyncLocalServer": "Local server",
-  "databaseSyncTestServer": "Test local server",
   "@databaseSyncConnected": {
     "placeholders": {
       "device": {
@@ -227,41 +175,8 @@
       }
     }
   },
-  "databaseSyncSessionInfo": "Start a session on one device and join from another.",
-  "databaseSyncStartSession": "Start session",
-  "databaseSyncStopSession": "Stop session",
-  "databaseSyncJoinSession": "Connect device",
-  "databaseSyncHosting": "Hosting session",
-  "databaseSyncEnterAddress": "Enter address",
-  "databaseSyncAddressHint": "simplelog://sync?host=192.168.1.10&port=49200",
-  "databaseSyncConnectedLabel": "Connected to",
-  "databaseSyncNotConnected": "Not connected",
-  "databaseSyncConnectHint": "To send from this device, connect to the other device first.",
-  "databaseSyncSend": "Send database",
-  "databaseSyncEnterLastTwo": "Enter last two IP groups",
-  "databaseSyncOctet3": "Third group",
-  "databaseSyncOctet4": "Fourth group",
-  "databaseSyncInstruction": "On the other device, enter only the last two numbers: {octet3}.{octet4} (prefix {prefix}, port 54742).",
-  "@databaseSyncInstruction": {
-    "placeholders": {
-      "prefix": {
-        "type": "String"
-      },
-      "octet3": {
-        "type": "String"
-      },
-      "octet4": {
-        "type": "String"
-      }
-    }
-  },
   "databaseSyncSuccess": "Sync complete",
-  "databaseSyncInvalidSession": "Unable to connect to that session.",
-  "databaseSyncNoNetwork": "No local network IP found.",
-  "databaseSyncScanQr": "Scan QR code",
   "databaseSyncDisconnected": "Disconnected from the other device.",
-  "databaseSyncStopWarning": "Stopping will disconnect other devices. Continue?",
-  "reportsTabOverview": "Overview",
   "reportsTabFlights": "Flights",
   "reportsTabTotals": "Totals",
   "reportsTabAnalyses": "Analyses",
@@ -279,12 +194,9 @@
   "reportsPdfGenerating": "Generating PDF...",
   "reportsPdfSaving": "Saving PDF...",
   "reportsPdfDone": "Done.",
-  "reportsPdfExported": "PDF exported to: {path}",
   "reportsPdfFailed": "Failed to generate PDF: {error}",
   "reportsNoTemplateAvailable": "No template available.",
   "reportsSavePdfDialogTitle": "Save PDF",
-  "reportsChooseExportFolderTitle": "Choose export folder",
-  "reportsCancelled": "Cancelled",
   "reportsAnalyzeByLabel": "Analyze by",
   "reportsOrderByLabel": "Order by",
   "reportsAnalyzeByAircraft": "By Aircraft",
@@ -292,12 +204,10 @@
   "reportsAnalyzeByFamily": "By Family",
   "reportsAnalyzeByYear": "By Year",
   "reportsAnalyzeByMonth": "By Month",
-  "reportsOrderByGreater": "Greater",
   "reportsOrderByNatural": "Natural",
   "reportsShowMap": "Show Map",
-  "reportsShowPath": "Show Path",
+  "reportsShowPath": "Include Path",
   "reportsIncludeHoursBefore": "Include hours before",
-  "reportsPageSizeLabel": "Page Size",
   "reportsXmlTemplateLabel": "XML Template",
   "reportsGeneratingShort": "Generating...",
   "reportsGeneratePdf": "Generate PDF",
@@ -305,11 +215,7 @@
   "reportsUnknown": "Unknown",
   "reportsUnknownType": "Unknown type",
   "reportsUnknownFamily": "Unknown family",
-  "reportsFiltersSummary": "{count} filters • {from} UTC - {to} UTC",
-  "reportsEventSimShort": "Sim",
   "reportsPreviousExperienceLabel": "Previous experience",
-  "reportsInclude": "Include",
-  "reportsExclude": "Exclude",
   "reportsMatchModeLabel": "Match mode",
   "reportsMatchAll": "All",
   "reportsMatchAny": "Any",
@@ -318,7 +224,6 @@
   "reportsSavedQueriesLabel": "Saved queries",
   "reportsSaveQuery": "Save Query",
   "reportsDeleteSavedQuery": "Delete: {name}",
-  "reportsDeleteSavedLabel": "Delete Saved",
   "reportsMetricIfrApproaches": "IFR Approaches",
   "reportsMetricTakeoffDay": "Takeoff Day",
   "reportsMetricTakeoffNight": "Takeoff Night",
@@ -337,11 +242,11 @@
   "reportsMetricSimulator": "Simulator",
   "reportsMetricDuty": "Duty",
   "reportsMetricDistanceNm": "Distance NM",
-  "reportsFlightCount": "Flight count: {count}",
+  "reportsFlightCount": "Flights: {count}",
   "reportsNoDataForQuery": "No data for selected query.",
   "reportsMetricLandings": "Landings",
-  "reportsFirstFlightAt": "First flight {date} UTC",
-  "reportsLastFlightAt": "Last flight {date} UTC",
+  "reportsFirstFlightAt": "First {date} UTC",
+  "reportsLastFlightAt": "Last {date} UTC",
   "reportsFieldNameLabel": "Field name",
   "reportsConditionLabel": "Condition",
   "reportsValueLabel": "Value",
@@ -368,11 +273,6 @@
   "reportsFilterFieldAircraftTypeCode": "Aircraft Type Code",
   "reportsFilterFieldAircraftTypeFamily": "Aircraft Type Family",
   "reportsFilterFieldAircraftTypeName": "Aircraft Type Name",
-  "reportsFilterFieldPilotName": "Pilot Name",
-  "reportsFilterFieldPilotOnBoard": "Pilot On Board",
-  "reportsFilterFieldPilotPic": "Pilot PIC",
-  "reportsFilterFieldPilotSic": "Pilot SIC",
-  "reportsFilterFieldPilotTrainee": "Pilot Trainee",
   "reportsFilterFieldApproachType": "Approach Type",
   "reportsFilterFieldRemarks": "Remarks",
   "reportsFilterFieldNotes": "Notes",
@@ -430,29 +330,9 @@
       }
     }
   },
-  "@reportsPdfExported": {
-    "placeholders": {
-      "path": {
-        "type": "String"
-      }
-    }
-  },
   "@reportsPdfFailed": {
     "placeholders": {
       "error": {
-        "type": "String"
-      }
-    }
-  },
-  "@reportsFiltersSummary": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "from": {
-        "type": "String"
-      },
-      "to": {
         "type": "String"
       }
     }
@@ -514,9 +394,7 @@
   },
   "languageLatvian": "Latvian",
   "reportsAnalyzeByAirport": "By Airport",
-  "reportsAnalyzeByPilot": "By Pilot",
   "reportsUnknownAirport": "Unknown airport",
-  "reportsUnknownPilot": "Unknown pilot",
   "reportsOrderByHours": "Hours",
   "reportsOrderByLandings": "Landings",
   "reportsOrderByTakeoff": "TakeOff",
@@ -568,7 +446,6 @@
   "searchIcao": "Search ICAO",
   "searchIata": "Search IATA",
   "searchIcaoIata": "Search ICAO/IATA",
-  "createSimulatorTitle": "Add simulator",
   "mapTitle": "Map",
   "aircraftEmptyResults": "No aircraft found",
   "crewEmptyResults": "No crew found",
@@ -682,11 +559,391 @@
   "logbookUnlockAction": "Unlock",
   "endorsementLockWarning": "Once saved with an endorsement signature, this entry is locked and cannot be edited unless the signature is removed.",
   "endorsementMismatchWarning": "Warning: flight information does not match the original endorsed flight record.",
-  "reportsMapSectionSubtitle": "Preview the filtered routes and path overlay.",
+  "reportsMapSectionSubtitle": "Display filtered flight on world map.",
   "reportsPdfSectionSubtitle": "Select template and export the report PDF.",
   "settingsCalculationPilotProfileSubtitle": "Pilot identity and signature preferences.",
   "previousExperienceEntriesSubtitle": "Edit, add, or remove previous experience records.",
   "timeFieldsIntro": "Control visible time columns and custom labels.",
   "timeFieldsVisibleSubtitle": "Choose which columns are shown in forms and lists.",
-  "timeFieldsCustomLabelsSubtitle": "Rename custom fields used across the app."
+  "timeFieldsCustomLabelsSubtitle": "Rename custom fields used across the app.",
+  "autoUi001": "25.325399/-80.274803",
+  "autoUi002": "About",
+  "autoUi003": "Add Crew",
+  "autoUi004": "Aircraft Type",
+  "autoUi005": "Arrival",
+  "autoUi006": "Arrival Airport",
+  "autoUi007": "Arrival Time",
+  "autoUi008": "Calculation Rules",
+  "autoUi009": "Certificate",
+  "autoUi010": "Chocks OFF",
+  "autoUi011": "Chocks ON",
+  "autoUi012": "Clear signature",
+  "autoUi013": "Close",
+  "autoUi014": "Could not open camera.",
+  "autoUi015": "Could not select image file.",
+  "autoUi016": "Crew home base airport",
+  "autoUi017": "CrossCountry",
+  "autoUi018": "Custom Time Labels",
+  "autoUi019": "Departure",
+  "autoUi020": "Departure Airport",
+  "autoUi021": "Departure Time",
+  "autoUi022": "Duty End",
+  "autoUi023": "Duty Rules",
+  "autoUi024": "Duty Start",
+  "autoUi025": "Duty end time allowance",
+  "autoUi026": "Edit profile",
+  "autoUi027": "End Time",
+  "autoUi028": "Endorsement",
+  "autoUi029": "Entries",
+  "autoUi030": "Expiry",
+  "autoUi031": "Factored Duty Time",
+  "autoUi032": "First Flight",
+  "autoUi033": "Format",
+  "autoUi034": "From",
+  "autoUi035": "From Airport",
+  "autoUi036": "Landing",
+  "autoUi037": "Last Flight",
+  "autoUi038": "Licenses",
+  "autoUi039": "Log takeoff and landing times",
+  "autoUi040": "Manage prior totals by aircraft type.",
+  "autoUi041": "Minimum rest time",
+  "autoUi042": "N25°19.31/W080°16.29",
+  "autoUi043": "No previous experience entries yet.",
+  "autoUi044": "No signature",
+  "autoUi046": "Previous Experience",
+  "autoUi047": "Profile",
+  "autoUi048": "Remove endorsement",
+  "autoUi049": "Reporting time offbase",
+  "autoUi050": "Reporting time on base",
+  "autoUi051": "Save Labels",
+  "autoUi052": "Session Time",
+  "autoUi053": "Show endorsement",
+  "autoUi054": "Sign",
+  "autoUi055": "Sign on screen",
+  "autoUi056": "Signature",
+  "autoUi057": "Signature options",
+  "autoUi058": "Sim Instrument",
+  "autoUi059": "Start Time",
+  "autoUi060": "Times",
+  "autoUi061": "To",
+  "autoUi062": "To Airport",
+  "autoUi063": "Unable to load default position",
+  "autoUi064": "Unable to load duty rules settings.",
+  "autoUi065": "Unable to load option",
+  "autoUi066": "Use calculated time",
+  "autoUi067": "Visible Time Fields",
+  "autoUi068": "→",
+  "databaseBackupLogbookAction": "Database Backup Logbook Action",
+  "databaseBackupRestoreSubtitle": "Database Backup Restore Subtitle",
+  "databaseBackupRestoreTitle": "Database Backup Restore Title",
+  "databaseDangerZoneSubtitle": "Database Danger Zone Subtitle",
+  "databaseDangerZoneTitle": "Database Danger Zone Title",
+  "databaseDumpTemporaryAction": "Database Dump Temporary Action",
+  "databaseExportCsvAction": "Database Export Csv Action",
+  "databaseImportExportSubtitle": "Database Import Export Subtitle",
+  "databaseImportExportTitle": "Database Import Export Title",
+  "databaseImportFileAction": "Database Import File Action",
+  "databaseImportSummaryTitle": "Database Import Summary Title",
+  "databaseImportingTitle": "Database Importing Title",
+  "databasePreparingLabel": "Database Preparing Label",
+  "databaseRestoreLogbookAction": "Database Restore Logbook Action",
+  "databaseSkippedLinesTitle": "Database Skipped Lines Title",
+  "databaseToolsTitle": "Database Tools Title",
+  "logtenAssociationHeader": "Logten Association Header",
+  "logtenContinueAction": "Logten Continue Action",
+  "logtenCorrectedValueLabel": "Logten Corrected Value Label",
+  "logtenCreateAirportTooltip": "Logten Create Airport Tooltip",
+  "logtenEntryTypeLabel": "Logten Entry Type Label",
+  "logtenFlightLabel": "Logten Flight Label",
+  "logtenIgnoreAllAction": "Logten Ignore All Action",
+  "logtenIgnoreLineAction": "Logten Ignore Line Action",
+  "logtenImportAction": "Logten Import Action",
+  "logtenImportTitle": "Logten Import Short Title",
+  "logtenReviewTitle": "Logten Review Short Title",
+  "logtenSelectAirportTooltip": "Logten Select Airport Tooltip",
+  "logtenSelectArrivalAirport": "Logten Select Arrival Airport",
+  "logtenSelectDepartureAirport": "Logten Select Departure Airport",
+  "logtenSelectedAirport": "Logten Selected Airport",
+  "logtenSimulatorLabel": "Logten Simulator Label",
+  "logtenSourceColumnHeader": "Logten Source Column Header",
+  "logtenTimezoneLabel": "Logten Timezone Label",
+  "qatarContinueAction": "Qatar Continue Action",
+  "qatarCreateAircraftAction": "Qatar Create Aircraft Action",
+  "qatarCreateAirportAction": "Qatar Create Airport Action",
+  "qatarDefaultPositionLabel": "Qatar Default Position Label",
+  "qatarImportAction": "Qatar Import Action",
+  "qatarImportTitle": "Qatar Import Short Title",
+  "qatarMissingAircraftTitle": "Qatar Missing Aircraft Title",
+  "qatarMissingAirportsTitle": "Qatar Missing Airports Title",
+  "qatarPilotNameAsWrittenLabel": "Qatar Pilot Name As Written Label",
+  "qatarPositionPic": "Qatar Position Pic",
+  "qatarPositionSic": "Qatar Position Sic",
+  "reportsBatchChangesTitle": "Reports Batch Changes Title",
+  "reportsBatchSubtitle": "Edit multile entries at once",
+  "reportsBatchTitle": "Batch Edit",
+  "reportsCalculateAction": "Calculate",
+  "reportsCalculateAll": "Calculate All",
+  "reportsCalculateDuty": "Calculate Duty",
+  "reportsCalculateDutyConfirmTitle": "Calculate Duty",
+  "reportsCalculatingDutyPeriods": "Reports Calculating Duty Periods",
+  "reportsCalculatingDutyShort": "Reports Calculating Duty Short",
+  "reportsCheckFlights": "Check Flights",
+  "reportsCheckingShort": "Reports Checking Short",
+  "reportsChecksTitle": "Reports Checks Short Title",
+  "reportsClearAction": "Reports Clear Action",
+  "reportsDeleteTemplateTitle": "Reports Delete Template Title",
+  "reportsDownloadAction": "Download",
+  "reportsEditPilotProfile": "Reports Edit Pilot Profile",
+  "reportsEditTemplates": "Edit Templates",
+  "reportsExportInteractiveMap": "Reports Export Interactive Map",
+  "reportsLock": "Reports Lock",
+  "reportsNoChangesApplied": "Reports No Changes Applied",
+  "reportsNoFlightIssuesFound": "Reports No Flight Issues Found",
+  "reportsOpenPdfAfterSaving": "Reports Open Pdf After Saving",
+  "reportsPdfGenerationTitle": "Print Logbook",
+  "reportsPdfTitle": "PDF Options",
+  "reportsPreparingBatchData": "Reports Preparing Batch Data",
+  "reportsRunAction": "Reports Run Action",
+  "reportsSelectAll": "Reports Select All",
+  "reportsSetCrew": "Reports Set Crew",
+  "reportsTabBatch": "Batch",
+  "reportsTemplateNameLabel": "Template Name",
+  "reportsUnlock": "Reports Unlock",
+  "reportsUploadJson": "Upload",
+  "settingsAppearanceSubtitle": "Appearance",
+  "settingsCalculationPilotProfileTitle": "Calculation Pilot Profile Title",
+  "settingsTabDatabase": "Database",
+  "settingsTabExperience": "Experience",
+  "settingsTabGeneral": "General",
+  "settingsTabTimeFields": "Time Fields",
+  "simplelogConflictResolutionTitle": "Simplelog Conflict Resolution Title",
+  "simplelogCrossCountryLabel": "Simplelog Cross Country Label",
+  "simplelogCrossCountryNmLabel": "Simplelog Cross Country Nm Label",
+  "simplelogIfrPercentLabel": "Simplelog Ifr Percent Label",
+  "simplelogIfrTimeLabel": "Simplelog Ifr Time Label",
+  "simplelogImportAction": "Simplelog Import Action",
+  "simplelogImportOptionsTitle": "Simplelog Import Options Short Title",
+  "simplelogInstrumentPercentLabel": "Simplelog Instrument Percent Label",
+  "simplelogInstrumentTimeLabel": "Simplelog Instrument Time Label",
+  "simplelogIrp3PercentLabel": "Simplelog Irp3 Percent Label",
+  "simplelogIrp3TimeLabel": "Simplelog Irp3 Time Label",
+  "simplelogIrp4PercentLabel": "Simplelog Irp4 Percent Label",
+  "simplelogIrp4TimeLabel": "Simplelog Irp4 Time Label",
+  "simplelogNightTimeLabel": "Simplelog Night Time Label",
+  "simplelogOverrideAircraftOnConflict": "Simplelog Override Aircraft On Conflict",
+  "simplelogOverrideAircraftTypeOnConflict": "Simplelog Override Aircraft Type On Conflict",
+  "simplelogOverrideAirportOnConflict": "Simplelog Override Airport On Conflict",
+  "simplelogRecalcTotalTimeLabel": "Simplelog Recalc Total Time Label",
+  "simplelogRecalculationsTitle": "Simplelog Recalculations Title",
+  "simplelogTakeoffLandingsLabel": "Simplelog Takeoff Landings Label",
+  "southwestAddCopilotStaffNumberLabel": "Southwest Add Copilot Staff Number Label",
+  "southwestAddFlightNumberToNotesLabel": "Southwest Add Flight Number To Notes Label",
+  "southwestCalculateCrossCountryTimeLabel": "Southwest Calculate Cross Country Time Label",
+  "southwestCalculateIfrTimeLabel": "Southwest Calculate Ifr Time Label",
+  "southwestCalculateInstrumentTimeLabel": "Southwest Calculate Instrument Time Label",
+  "southwestCalculateNightTimeLabel": "Southwest Calculate Night Time Label",
+  "southwestCrossCountryThresholdLabel": "Southwest Cross Country Threshold Label",
+  "southwestDefaultSelfPositionLabel": "Southwest Default Self Position Label",
+  "southwestImportAction": "Southwest Import Action",
+  "southwestImportOptionsTitle": "Southwest Import Options Short Title",
+  "southwestOverrideExistingDataLabel": "Southwest Override Existing Data Label",
+  "southwestRecalculateBlockTimeLabel": "Southwest Recalculate Block Time Label",
+  "databaseAircraftLabel": "Aircraft: {count}",
+  "databaseAircraftTypesLabel": "Aircraft types: {count}",
+  "databaseAirportsLabel": "Airports: {count}",
+  "databaseCrewLabel": "Crew: {count}",
+  "databaseErrorsLabel": "Errors: {count}",
+  "databaseFileLabel": "File: {fileName}",
+  "databaseFlightsLabel": "Flights: {count}",
+  "databaseImportProgressLabel": "Importing {processed} of {total}",
+  "databaseLineIssueLabel": "Line {lineNumber}: {reason}",
+  "databasePositioningsLabel": "Positionings: {count}",
+  "databaseRowsLabel": "Rows: {count}",
+  "databaseSimulatorsLabel": "Simulators: {count}",
+  "databaseSkippedLabel": "Skipped: {count}",
+  "logtenLineLabel": "Line {lineNumber}",
+  "reportsBatchWarning": "This action will update {count} filtered flights.",
+  "reportsCalculateDutyConfirmBody": "Recalculate duty periods for {count} flights?",
+  "reportsDeleteTemplateBody": "Delete template \"{templateName}\"?",
+  "reportsIssueCount": "{count} issues",
+  "@databaseAircraftLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@databaseAircraftTypesLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@databaseAirportsLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@databaseCrewLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@databaseErrorsLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@databaseFileLabel": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "@databaseFlightsLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@databaseImportProgressLabel": {
+    "placeholders": {
+      "processed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@databaseLineIssueLabel": {
+    "placeholders": {
+      "lineNumber": {
+        "type": "int"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "@databasePositioningsLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@databaseRowsLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@databaseSimulatorsLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@databaseSkippedLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@logtenLineLabel": {
+    "placeholders": {
+      "lineNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "@reportsBatchWarning": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@reportsCalculateDutyConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@reportsDeleteTemplateBody": {
+    "placeholders": {
+      "templateName": {
+        "type": "String"
+      }
+    }
+  },
+  "@reportsIssueCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingWelcomeTitle": "Welcome",
+  "onboardingWelcomeBody": "Set up your profile and default rules to start logging faster.",
+  "onboardingSkipAction": "Skip",
+  "onboardingNextAction": "Next",
+  "onboardingBackAction": "Back",
+  "onboardingFinishAction": "Finish",
+  "onboardingPilotProfileTitle": "Pilot Profile",
+  "onboardingPilotProfileBody": "Add your profile details and signature for reports.",
+  "onboardingRulesTitle": "Calculation and Duty Rules",
+  "onboardingRulesBody": "Review calculation factors and duty rules before your first entries.",
+  "onboardingFieldsTitle": "Fields",
+  "onboardingFieldsBody": "Choose which time fields are visible and rename custom fields.",
+  "newDutyTitle": "New Duty",
+  "editDutyTitle": "Edit Duty",
+  "newPositioningTitle": "New Positioning",
+  "editPositioningTitle": "Edit Positioning",
+  "newSimTrainingTitle": "New Sim Training",
+  "editSimTrainingTitle": "Edit Sim Training",
+  "aircraftRequiredError": "Aircraft is required.",
+  "fromAirportRequiredError": "From Airport is required.",
+  "toAirportRequiredError": "To Airport is required.",
+  "reportsAllEntriesAlreadyLocked": "All filtered entries are already locked.",
+  "reportsAllEntriesAlreadyUnlocked": "All filtered entries are already unlocked.",
+  "reportsLockEntriesConfirmTitle": "Lock entries?",
+  "reportsUnlockEntriesConfirmTitle": "Unlock entries?",
+  "reportsLockFilteredEntriesMessage": "This will lock {count} filtered entries.",
+  "@reportsLockFilteredEntriesMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportsUnlockFilteredEntriesMessage": "This will unlock {count} filtered entries.",
+  "@reportsUnlockFilteredEntriesMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previousExperienceValidationTitle": "Validation warnings",
+  "previousExperienceSaveAnywayPrompt": "Save anyway?",
+  "previousExperienceReviewAction": "Review",
+  "previousExperienceSaveAnywayAction": "Save anyway",
+  "previousExperienceSelectAircraftType": "Select aircraft type.",
+  "previousExperienceFirstFlightRequired": "First Flight is required.",
+  "previousExperienceLastFlightRequired": "Last Flight is required."
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/data/import/logten_pro_import_models.dart';
@@ -56,9 +57,6 @@ class LogTenProImportOptionsDialog extends StatefulWidget {
 
 class _LogTenProImportOptionsDialogState
     extends State<LogTenProImportOptionsDialog> {
-  static const _sourceColumnHeaderLabel = 'Source Column';
-  static const _associationHeaderLabel = 'Association';
-
   late final Map<String, LogTenFieldAssociation> _assignments;
   late int _timezoneOffsetMinutes;
 
@@ -120,6 +118,7 @@ class _LogTenProImportOptionsDialogState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final timezoneOptions = _buildTimezoneOptions();
     final isCompact = MediaQuery.sizeOf(context).width < 760;
     final body = Column(
@@ -128,7 +127,7 @@ class _LogTenProImportOptionsDialogState
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Text('File: ${widget.fileName}'),
+            child: Text(l10n.databaseFileLabel(widget.fileName)),
           ),
         ),
         Expanded(
@@ -156,11 +155,11 @@ class _LogTenProImportOptionsDialogState
                           ),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          _HeaderCell(label: _sourceColumnHeaderLabel),
-                          SizedBox(width: 16),
-                          _HeaderCell(label: _associationHeaderLabel),
+                          _HeaderCell(label: l10n.logtenSourceColumnHeader),
+                          const SizedBox(width: 16),
+                          _HeaderCell(label: l10n.logtenAssociationHeader),
                         ],
                       ),
                     ),
@@ -239,7 +238,7 @@ class _LogTenProImportOptionsDialogState
             runSpacing: 12,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Text('Timezone'),
+              Text(l10n.logtenTimezoneLabel),
               SizedBox(
                 width: isCompact ? double.infinity : 220,
                 child: DropdownButtonFormField<int>(
@@ -270,10 +269,9 @@ class _LogTenProImportOptionsDialogState
 
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: 'Import LogTen Pro',
-      shortTitle: 'Import LogTen',
+      title: l10n.logtenImportTitle,
       actions: [
-        TextButton(onPressed: _submit, child: const Text('Import')),
+        TextButton(onPressed: _submit, child: Text(l10n.logtenImportAction)),
       ],
       contentView: body,
     );

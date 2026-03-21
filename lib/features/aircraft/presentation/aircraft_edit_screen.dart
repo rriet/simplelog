@@ -374,12 +374,13 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
     );
 
     final title = widget.isCreate
-        ? (_isSimulatorMode ? 'Add Simulator' : 'Add Aircraft')
-        : (_isSimulatorMode ? 'Edit Simulator' : l10n.editAircraftTitle);
+        ? (_isSimulatorMode
+              ? l10n.createSimulatorTitle
+              : l10n.createAircraftTitle)
+        : (_isSimulatorMode ? l10n.editSimulatorTitle : l10n.editAircraftTitle);
     return AdaptiveFormShell(
       onClose: () => AppNavigator.maybePop(context),
-      longTitle: title,
-      shortTitle: title,
+      title: title,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
       contentView: form,
     );

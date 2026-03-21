@@ -134,7 +134,7 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
           padding: const EdgeInsets.all(16),
           children: [
             Text(
-              'Time Fields',
+              AppLocalizations.of(context)!.settingsTabTimeFields,
               style: theme.textTheme.headlineSmall,
             ),
             const SizedBox(height: 6),
@@ -152,7 +152,7 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
             ),
             const SizedBox(height: 12),
             _SettingsSectionCard(
-              title: 'Visible Time Fields',
+              title: AppLocalizations.of(context)!.autoUi067,
               subtitle: l10n.timeFieldsVisibleSubtitle,
               children: [
                 SwitchListTile(
@@ -172,12 +172,14 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
                 ),
                 SwitchListTile(
                   value: visibility.dual,
-                  title: const Text('Dual'),
+                  title: Text(AppLocalizations.of(context)!.reportsMetricDual),
                   onChanged: (v) => _updateVisibility(visibility, dual: v),
                 ),
                 SwitchListTile(
                   value: visibility.instructor,
-                  title: const Text('Instructor'),
+                  title: Text(
+                    AppLocalizations.of(context)!.reportsMetricInstructor,
+                  ),
                   onChanged: (v) =>
                       _updateVisibility(visibility, instructor: v),
                 ),
@@ -188,24 +190,26 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
                 ),
                 SwitchListTile(
                   value: visibility.instrument,
-                  title: const Text('Instrument'),
+                  title: Text(
+                    AppLocalizations.of(context)!.reportsMetricInstrument,
+                  ),
                   onChanged: (v) =>
                       _updateVisibility(visibility, instrument: v),
                 ),
                 SwitchListTile(
                   value: visibility.simInstrument,
-                  title: const Text('Sim Instrument'),
+                  title: Text(AppLocalizations.of(context)!.autoUi058),
                   onChanged: (v) =>
                       _updateVisibility(visibility, simInstrument: v),
                 ),
                 SwitchListTile(
                   value: visibility.night,
-                  title: const Text('Night'),
+                  title: Text(AppLocalizations.of(context)!.reportsMetricNight),
                   onChanged: (v) => _updateVisibility(visibility, night: v),
                 ),
                 SwitchListTile(
                   value: visibility.crossCountry,
-                  title: const Text('CrossCountry'),
+                  title: Text(AppLocalizations.of(context)!.autoUi017),
                   onChanged: (v) =>
                       _updateVisibility(visibility, crossCountry: v),
                 ),
@@ -233,7 +237,7 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
             ),
             const SizedBox(height: 12),
             _SettingsSectionCard(
-              title: 'Custom Time Labels',
+              title: AppLocalizations.of(context)!.autoUi018,
               subtitle: l10n.timeFieldsCustomLabelsSubtitle,
               children: [
                 TextFormField(

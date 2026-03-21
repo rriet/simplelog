@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
@@ -146,12 +147,13 @@ class _SimpleLogImportOptionsDialogState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final body = SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('File: ${widget.fileName}'),
+          Text(l10n.databaseFileLabel(widget.fileName)),
           const SizedBox(height: 12),
           const SizedBox(height: 8),
           Card(
@@ -160,7 +162,7 @@ class _SimpleLogImportOptionsDialogState
               initiallyExpanded: _showRecalculations,
               onExpansionChanged: (expanded) =>
                   setState(() => _showRecalculations = expanded),
-              title: const Text('Recalculations'),
+              title: Text(l10n.simplelogRecalculationsTitle),
               childrenPadding: const EdgeInsets.fromLTRB(
                 16,
                 0,
@@ -170,37 +172,37 @@ class _SimpleLogImportOptionsDialogState
               children: [
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Total time (updates PIC/SIC/etc)'),
+                  title: Text(l10n.simplelogRecalcTotalTimeLabel),
                   value: _recalcTotal,
                   onChanged: (value) => setState(() => _recalcTotal = value),
                 ),
                 if (_recalcTotal) ...[
                   _buildPercentTimePairRow(
-                    percentLabel: 'IRP3 %',
+                    percentLabel: l10n.simplelogIrp3PercentLabel,
                     percentController: _irp3PercentController,
-                    timeLabel: 'IRP3 Time',
+                    timeLabel: l10n.simplelogIrp3TimeLabel,
                     timeController: _irp3SubtractController,
                   ),
                   _buildPercentTimePairRow(
-                    percentLabel: 'IRP4 %',
+                    percentLabel: l10n.simplelogIrp4PercentLabel,
                     percentController: _irp4PercentController,
-                    timeLabel: 'IRP4 Time',
+                    timeLabel: l10n.simplelogIrp4TimeLabel,
                     timeController: _irp4SubtractController,
                   ),
                 ],
                 _buildRecalculationToggle(
-                  title: 'Night time',
+                  title: l10n.simplelogNightTimeLabel,
                   value: _recalcNight,
                   onChanged: (value) => setState(() => _recalcNight = value),
                 ),
                 _buildRecalculationToggle(
-                  title: 'Takeoff & Landings (day/night)',
+                  title: l10n.simplelogTakeoffLandingsLabel,
                   value: _recalcTakeoffLanding,
                   onChanged: (value) =>
                       setState(() => _recalcTakeoffLanding = value),
                 ),
                 _buildRecalculationToggle(
-                  title: 'Cross-country',
+                  title: l10n.simplelogCrossCountryLabel,
                   value: _recalcCrossCountry,
                   onChanged: (value) =>
                       setState(() => _recalcCrossCountry = value),
@@ -209,33 +211,33 @@ class _SimpleLogImportOptionsDialogState
                   _CompactFieldRow(
                     fields: [
                       _CompactFieldSpec.number(
-                        label: 'Cross-Country NM',
+                        label: l10n.simplelogCrossCountryNmLabel,
                         controller: _crossCountryThresholdController,
                       ),
                     ],
                   ),
                 _buildRecalculationToggle(
-                  title: 'Instrument time',
+                  title: l10n.simplelogInstrumentTimeLabel,
                   value: _recalcInstrument,
                   onChanged: (value) =>
                       setState(() => _recalcInstrument = value),
                 ),
                 if (_recalcInstrument) ...[
                   _buildPercentTimeMinimumRow(
-                    percentLabel: 'Instrument %',
+                    percentLabel: l10n.simplelogInstrumentPercentLabel,
                     percentController: _instrumentPercentController,
                     subtractController: _instrumentSubtractController,
                     minimumController: _instrumentMinController,
                   ),
                 ],
                 _buildRecalculationToggle(
-                  title: 'IFR time',
+                  title: l10n.simplelogIfrTimeLabel,
                   value: _recalcIfr,
                   onChanged: (value) => setState(() => _recalcIfr = value),
                 ),
                 if (_recalcIfr) ...[
                   _buildPercentTimeMinimumRow(
-                    percentLabel: 'IFR %',
+                    percentLabel: l10n.simplelogIfrPercentLabel,
                     percentController: _ifrPercentController,
                     subtractController: _ifrSubtractController,
                     minimumController: _ifrMinController,
@@ -252,22 +254,22 @@ class _SimpleLogImportOptionsDialogState
               onExpansionChanged: (expanded) => setState(
                 () => _showConflictResolution = expanded,
               ),
-              title: const Text('Conflict Resolution'),
+              title: Text(l10n.simplelogConflictResolutionTitle),
               children: [
                 _buildConflictToggle(
-                  title: 'Override Airport on Conflict',
+                  title: l10n.simplelogOverrideAirportOnConflict,
                   value: _overrideAirports,
                   onChanged: (value) =>
                       setState(() => _overrideAirports = value),
                 ),
                 _buildConflictToggle(
-                  title: 'Override Aircraft on Conflict',
+                  title: l10n.simplelogOverrideAircraftOnConflict,
                   value: _overrideAircraft,
                   onChanged: (value) =>
                       setState(() => _overrideAircraft = value),
                 ),
                 _buildConflictToggle(
-                  title: 'Override Aircraft Type on Conflict',
+                  title: l10n.simplelogOverrideAircraftTypeOnConflict,
                   value: _overrideAircraftTypes,
                   onChanged: (value) =>
                       setState(() => _overrideAircraftTypes = value),
@@ -281,13 +283,12 @@ class _SimpleLogImportOptionsDialogState
 
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: 'Import Options',
-      shortTitle: 'Import',
+      title: l10n.simplelogImportOptionsTitle,
       popupMaxWidth: 560,
       actions: [
         TextButton(
           onPressed: () => AppNavigator.pop(context, _buildOptions()),
-          child: const Text('Import'),
+          child: Text(l10n.simplelogImportAction),
         ),
       ],
       contentView: ConstrainedBox(

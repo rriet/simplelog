@@ -414,7 +414,9 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
                         Tab(text: l10n.reportsTabTotals),
                         Tab(text: l10n.reportsTabAnalyses),
                         Tab(text: l10n.reportsTabReports),
-                        const Tab(text: 'Batch'),
+                        Tab(
+                          text: AppLocalizations.of(context)!.reportsTabBatch,
+                        ),
                       ],
                     ),
                     if (_isLoading) ...[
@@ -556,8 +558,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     _filtersDialogOpen = true;
     final shell = AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: l10n.reportsTabFilters,
-      shortTitle: l10n.reportsTabFilters,
+      title: l10n.reportsTabFilters,
       popupMaxWidth: 900,
       actions: [
         TextButton(

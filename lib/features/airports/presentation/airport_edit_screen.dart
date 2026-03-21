@@ -315,8 +315,7 @@ class _AirportEditScreenState extends ConsumerState<AirportEditScreen> {
     );
     return AdaptiveFormShell(
       onClose: () => AppNavigator.maybePop(context),
-      longTitle: title,
-      shortTitle: title,
+      title: title,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
       contentView: form,
     );
@@ -419,16 +418,16 @@ class _CoordinateEditDialogState extends State<_CoordinateEditDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownInputField<_CoordinateInputFormat>(
-              label: 'Format',
+              label: AppLocalizations.of(context)!.autoUi033,
               value: _selectedFormat,
-              items: const [
+              items: [
                 DropdownMenuItem(
                   value: _CoordinateInputFormat.decimal,
-                  child: Text('25.325399/-80.274803'),
+                  child: Text(AppLocalizations.of(context)!.autoUi001),
                 ),
                 DropdownMenuItem(
                   value: _CoordinateInputFormat.degMin,
-                  child: Text('N25°19.31/W080°16.29'),
+                  child: Text(AppLocalizations.of(context)!.autoUi042),
                 ),
               ],
               onChanged: (value) {

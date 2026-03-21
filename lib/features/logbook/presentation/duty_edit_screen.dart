@@ -330,7 +330,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final title = widget.isCreate ? 'New Duty' : 'Edit Duty';
+    final title = widget.isCreate ? l10n.newDutyTitle : l10n.editDutyTitle;
     final form = Form(
       key: _formKey,
       child: SingleChildScrollView(
@@ -340,7 +340,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             DateSelectorInputField(
-              label: 'Date',
+              label: AppLocalizations.of(context)!.fieldDate,
               valueText: _dateLabel(_start),
               onTap: _pickDate,
             ),
@@ -350,7 +350,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
                 Expanded(
                   child: ClockTimeInputField(
                     controller: _startTimeController,
-                    label: 'Duty Start',
+                    label: AppLocalizations.of(context)!.autoUi024,
                     onChangedMinutes: _onStartTimeChanged,
                   ),
                 ),
@@ -358,7 +358,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
                 Expanded(
                   child: ClockTimeInputField(
                     controller: _endTimeController,
-                    label: 'Duty End',
+                    label: AppLocalizations.of(context)!.autoUi022,
                     onChangedMinutes: _onEndTimeChanged,
                     errorText: _dutyEndErrorText,
                   ),
@@ -384,7 +384,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
                 Expanded(
                   child: HourInputField(
                     controller: _factoredController,
-                    label: 'Factored Duty Time',
+                    label: AppLocalizations.of(context)!.autoUi031,
                     fallbackMinutes: _dutyMinutes,
                     onChangedMinutes: (_) {
                       _factoredEdited = true;
@@ -413,8 +413,7 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
     );
     return AdaptiveFormShell(
       onClose: () => unawaited(AppNavigator.maybePop(context)),
-      longTitle: title,
-      shortTitle: title,
+      title: title,
       actions: [TextButton(onPressed: _save, child: Text(l10n.saveAction))],
       contentView: form,
     );

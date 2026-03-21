@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
-/// Dropdown for selecting the default crew position 
+/// Dropdown for selecting the default crew position
 /// when importing simulator data.
 class SimulatorDefaultPositionSelector extends ConsumerWidget {
   /// Creates the simulator default position selector.
@@ -35,7 +36,7 @@ class SimulatorDefaultPositionSelector extends ConsumerWidget {
         },
       ),
       loading: () => const LinearProgressIndicator(),
-      error: (_, _) => const Text('Unable to load default position'),
+      error: (_, _) => Text(AppLocalizations.of(context)!.autoUi063),
     );
   }
 

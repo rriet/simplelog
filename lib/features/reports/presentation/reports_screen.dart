@@ -207,8 +207,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   List<LogbookEntry> _entries = const [];
   DateTime? _firstFlightDate;
   DateTime? _lastFlightDate;
-  static const _mapSectionTitle = 'Map';
-  static const _pdfSectionTitle = 'PDF Generation';
 
   @override
   void initState() {
@@ -2265,7 +2263,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                     Tab(text: l10n.reportsTabTotals),
                     Tab(text: l10n.reportsTabAnalyses),
                     Tab(text: l10n.reportsTabReports),
-                    const Tab(text: 'Batch'),
+                    Tab(text: l10n.reportsTabBatch),
                   ],
                 ),
               if (_loading) ...[
@@ -2583,8 +2581,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
               width: 460,
               child: AdaptiveFormShell(
                 onClose: () => AppNavigator.pop(context, false),
-                longTitle: 'PDF options',
-                shortTitle: 'PDF',
+                title: l10n.reportsPdfTitle,
                 fullScreen: false,
                 actions: [
                   TextButton(
@@ -2599,7 +2596,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                     children: [
                       SwitchListTile.adaptive(
                         value: openPdfAfterSaving,
-                        title: const Text('Open PDF after saving'),
+                        title: Text(l10n.reportsOpenPdfAfterSaving),
                         contentPadding: EdgeInsets.zero,
                         onChanged: (value) {
                           setDialogState(() => openPdfAfterSaving = value);
@@ -2630,7 +2627,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                           onPressed: () =>
                               showPilotProfileEditorDialog(context),
                           icon: const Icon(Icons.person_outline),
-                          label: const Text('Edit Pilot Profile'),
+                          label: Text(l10n.reportsEditPilotProfile),
                         ),
                       ),
                     ],
@@ -2678,7 +2675,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _ReportsSectionCard(
-          title: _mapSectionTitle,
+          title: l10n.mapTitle,
           subtitle: l10n.reportsMapSectionSubtitle,
           children: [
             Row(
@@ -2708,7 +2705,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         ),
         const SizedBox(height: 12),
         _ReportsSectionCard(
-          title: _pdfSectionTitle,
+          title: l10n.reportsPdfGenerationTitle,
           subtitle: l10n.reportsPdfSectionSubtitle,
           children: [
             Row(
@@ -2756,7 +2753,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 ),
                 const SizedBox(width: 8),
                 Tooltip(
-                  message: 'Edit templates',
+                  message: l10n.reportsEditTemplates,
                   child: InkWell(
                     onTap: _isGeneratingPdf ? null : _openTemplateEditorDialog,
                     borderRadius: BorderRadius.circular(addBorderRadius),
@@ -2812,6 +2809,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   }
 
   Widget _buildBatchSection({required bool compact}) {
+    final l10n = AppLocalizations.of(context)!;
     final filteredCount = _batchFlightCount;
     final actionsDisabled =
         filteredCount == 0 ||
@@ -2827,12 +2825,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _ReportsSectionCard(
-                title: 'Batch',
-                subtitle: 'Bulk processing for filtered flights.',
+                title: l10n.reportsBatchTitle,
+                subtitle: l10n.reportsBatchSubtitle,
                 children: [
                   Text(
-                    'Warning: this will modify all $filteredCount flights.\n'
-                    'Adjust filters to target specific flights',
+                    l10n.reportsBatchWarning(filteredCount),
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
                       fontWeight: FontWeight.w600,
@@ -2846,13 +2843,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                     const SizedBox(height: 8),
                     const LinearProgressIndicator(minHeight: 3),
                     const SizedBox(height: 6),
-                    const Text('Preparing batch data...'),
+                    Text(l10n.reportsPreparingBatchData),
                   ],
                   if (_isCalculatingBatchDuty) ...[
                     const SizedBox(height: 8),
                     const LinearProgressIndicator(minHeight: 3),
                     const SizedBox(height: 6),
-                    const Text('Calculating duty periods...'),
+                    Text(l10n.reportsCalculatingDutyPeriods),
                   ],
                   const SizedBox(height: 8),
                   _ReportsActionButton(
@@ -2860,8 +2857,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                         ? Icons.hourglass_top
                         : Icons.rule_folder_outlined,
                     label: _isCheckingBatchFlights
-                        ? 'Checking...'
-                        : 'Check Flights',
+                        ? l10n.reportsCheckingShort
+                        : l10n.reportsCheckFlights,
                     onPressed: actionsDisabled ? null : _checkBatchFlights,
                   ),
                   const SizedBox(height: 12),
@@ -2872,33 +2869,33 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                   const SizedBox(height: 12),
                   _ReportsActionButton(
                     icon: Icons.groups_outlined,
-                    label: 'Set Crew',
+                    label: l10n.reportsSetCrew,
                     onPressed: actionsDisabled ? null : _batchSetCrewSelf,
                   ),
                   const SizedBox(height: 8),
                   _ReportsActionButton(
                     icon: Icons.lock_outline,
-                    label: 'Lock',
+                    label: l10n.reportsLock,
                     onPressed: actionsDisabled ? null : _batchSetLockStateTrue,
                   ),
                   const SizedBox(height: 8),
                   _ReportsActionButton(
                     icon: Icons.lock_open_outlined,
-                    label: 'Unlock',
+                    label: l10n.reportsUnlock,
                     onPressed: actionsDisabled ? null : _batchSetLockStateFalse,
                   ),
                   const SizedBox(height: 8),
                   _ReportsActionButton(
                     icon: Icons.calculate_outlined,
-                    label: 'Calculate All',
+                    label: l10n.reportsCalculateAll,
                     onPressed: actionsDisabled ? null : _batchCalculateAll,
                   ),
                   const SizedBox(height: 8),
                   _ReportsActionButton(
                     icon: Icons.timelapse_outlined,
                     label: _isCalculatingBatchDuty
-                        ? 'Calculating Duty...'
-                        : 'Calculate Duty',
+                        ? l10n.reportsCalculatingDutyShort
+                        : l10n.reportsCalculateDuty,
                     onPressed: actionsDisabled
                         ? null
                         : _confirmAndBatchCalculateDuty,
@@ -3115,27 +3112,26 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           width: 420,
           child: AdaptiveFormShell(
             onClose: () => AppNavigator.pop(context),
-            longTitle: 'Set Crew',
-            shortTitle: 'Set Crew',
+            title: AppLocalizations.of(context)!.reportsSetCrew,
             fullScreen: false,
             actions: [
               TextButton(
                 onPressed: () => AppNavigator.pop(context, selectedPosition),
-                child: const Text('Apply'),
+                child: Text(AppLocalizations.of(context)!.applyAction),
               ),
             ],
             contentView: Padding(
               padding: const EdgeInsets.all(16),
               child: DropdownButtonFormField<CrewPosition>(
                 initialValue: selectedPosition,
-                items: const [
+                items: [
                   DropdownMenuItem(
                     value: CrewPosition.pic,
-                    child: Text('PIC'),
+                    child: Text(AppLocalizations.of(context)!.crewPositionPic),
                   ),
                   DropdownMenuItem(
                     value: CrewPosition.sic,
-                    child: Text('SIC'),
+                    child: Text(AppLocalizations.of(context)!.crewPositionSic),
                   ),
                 ],
                 onChanged: (value) {
@@ -3435,12 +3431,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => ReportsConfirmActionDialog(
-        title: 'Calculate Duty?',
-        actionLabel: 'Calculate',
-        message:
-            'This will create or update duty periods for up to '
-            '$count filtered flights.\n\n'
-            'Existing locked duty periods will be skipped.',
+        title: AppLocalizations.of(context)!.reportsCalculateDutyConfirmTitle,
+        actionLabel: AppLocalizations.of(context)!.reportsCalculateAction,
+        message: AppLocalizations.of(context)!.reportsCalculateDutyConfirmBody(
+          count,
+        ),
       ),
     );
     if (confirmed != true) return;
@@ -3594,6 +3589,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   Future<void> _batchSetLockState({required bool lockState}) async {
     final targets = await _loadBatchLockTargets(lockState: lockState);
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     final targetCount = targets.totalCount;
     if (targetCount == 0) return;
     if (targets.flightIds.isEmpty &&
@@ -3602,20 +3599,27 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         targets.dutyIds.isEmpty) {
       await _showInfoDialog(
         lockState
-            ? 'All filtered entries are already locked.'
-            : 'All filtered entries are already unlocked.',
+            ? l10n.reportsAllEntriesAlreadyLocked
+            : l10n.reportsAllEntriesAlreadyUnlocked,
       );
       return;
     }
-    if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => ReportsConfirmActionDialog(
-        title: lockState ? 'Lock entries?' : 'Unlock entries?',
-        actionLabel: lockState ? 'Lock' : 'Unlock',
-        message:
-            'This will ${lockState ? 'lock' : 'unlock'} '
-            '${targets.changeCount} filtered entries.',
+        title: lockState
+            ? AppLocalizations.of(context)!.reportsLockEntriesConfirmTitle
+            : AppLocalizations.of(context)!.reportsUnlockEntriesConfirmTitle,
+        actionLabel: lockState
+            ? AppLocalizations.of(context)!.reportsLock
+            : AppLocalizations.of(context)!.reportsUnlock,
+        message: lockState
+            ? AppLocalizations.of(context)!.reportsLockFilteredEntriesMessage(
+                targets.changeCount,
+              )
+            : AppLocalizations.of(context)!.reportsUnlockFilteredEntriesMessage(
+                targets.changeCount,
+              ),
       ),
     );
     if (confirmed != true) return;
@@ -4051,7 +4055,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final issueScreen = StatefulBuilder(
       builder: (context, setStateDialog) {
         final content = groupedIssues.isEmpty
-            ? const Text('No flight issues found.')
+            ? Text(AppLocalizations.of(context)!.reportsNoFlightIssuesFound)
             : ListView.builder(
                 shrinkWrap: true,
                 itemCount: groupedIssues.length,
@@ -4063,7 +4067,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                       : entriesByFlight[flightId];
                   final issueSummary = issue.messages.length == 1
                       ? issue.messages.first
-                      : '${issue.messages.length} issues found';
+                      : AppLocalizations.of(
+                          context,
+                        )!.reportsIssueCount(issue.messages.length);
                   final issueTitle = entry == null
                       ? issueSummary
                       : '${DateFormat('yyyy-MM-dd').format(
@@ -4169,14 +4175,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           width: dialogWidth,
           child: AdaptiveFormShell(
             onClose: () => AppNavigator.pop(context),
-            longTitle: 'Flight checks',
-            shortTitle: 'Checks',
+            title: AppLocalizations.of(context)!.reportsChecksTitle,
             leading: const SizedBox.shrink(),
             popupMaxWidth: dialogWidth,
             actions: [
               TextButton(
                 onPressed: () => AppNavigator.pop(context),
-                child: const Text('OK'),
+                child: Text(AppLocalizations.of(context)!.okAction),
               ),
             ],
             contentView: Padding(
@@ -4266,11 +4271,11 @@ WHERE id IN ($placeholders)
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Batch changes'),
+        title: Text(AppLocalizations.of(context)!.reportsBatchChangesTitle),
         content: SizedBox(
           width: 760,
           child: changes.isEmpty
-              ? const Text('No changes were applied.')
+              ? Text(AppLocalizations.of(context)!.reportsNoChangesApplied)
               : ListView.builder(
                   shrinkWrap: true,
                   itemCount: changes.length,
@@ -4493,13 +4498,12 @@ class _BatchFlightChecksDialogState extends State<_BatchFlightChecksDialog> {
     final borderColor = theme.colorScheme.outline.withValues(alpha: 0.35);
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: 'Check Flights',
-      shortTitle: 'Checks',
+      title: AppLocalizations.of(context)!.reportsChecksTitle,
       popupMaxWidth: 680,
       actions: [
         TextButton(
           onPressed: () => AppNavigator.pop(context, _selected),
-          child: const Text('Run'),
+          child: Text(AppLocalizations.of(context)!.reportsRunAction),
         ),
       ],
       contentView: Padding(
@@ -4547,14 +4551,14 @@ class _BatchFlightChecksDialogState extends State<_BatchFlightChecksDialog> {
                         ..addAll(_BatchFlightCheck.values);
                     });
                   },
-                  child: const Text('Select all'),
+                  child: Text(AppLocalizations.of(context)!.reportsSelectAll),
                 ),
                 const SizedBox(width: 8),
                 OutlinedButton(
                   onPressed: () {
                     setState(_selected.clear);
                   },
-                  child: const Text('Clear'),
+                  child: Text(AppLocalizations.of(context)!.reportsClearAction),
                 ),
               ],
             ),
@@ -4804,13 +4808,12 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
 
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: 'Calculate All',
-      shortTitle: 'Calculate',
+      title: AppLocalizations.of(context)!.reportsCalculateAction,
       popupMaxWidth: 620,
       actions: [
         TextButton(
           onPressed: () => AppNavigator.pop(context, _preferences),
-          child: const Text('Apply'),
+          child: Text(AppLocalizations.of(context)!.applyAction),
         ),
       ],
       contentView: SizedBox(
@@ -4818,7 +4821,7 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            const Text('Crew position'),
+            Text(AppLocalizations.of(context)!.crewPositionLabel),
             const SizedBox(height: 8),
             if (isNarrow) ...[
               modeDropdown(
@@ -6137,7 +6140,7 @@ class _TotalsCard extends StatelessWidget {
       (l10n.reportsMetricSimulator, _formatMinutes(totals.simulatorMinutes)),
       (l10n.reportsMetricDuty, _formatMinutes(totals.dutyMinutes)),
     ];
-    final dateFormatter = DateFormat('yyyy-MM-dd');
+    final dateFormatter = DateFormat('dd/MMM/yyyy');
     final firstDateLabel = firstFlightDate == null
         ? '-'
         : dateFormatter.format(firstFlightDate!.toUtc());
@@ -6145,7 +6148,7 @@ class _TotalsCard extends StatelessWidget {
         ? '-'
         : dateFormatter.format(lastFlightDate!.toUtc());
     final dateRangeLabel =
-        'First Flight: $firstDateLabel | Last Flight: $lastDateLabel';
+        'First: $firstDateLabel | Last: $lastDateLabel';
 
     return Card(
       margin: compact ? EdgeInsets.zero : const EdgeInsets.all(4),
@@ -7127,7 +7130,7 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
         icon: Icon(_showLines ? Icons.route : Icons.scatter_plot),
       ),
       IconButton(
-        tooltip: 'Export interactive map',
+        tooltip: l10n.reportsExportInteractiveMap,
         onPressed: _exportInteractiveHtmlMap,
         icon: const Icon(Icons.ios_share_outlined),
       ),
@@ -7135,8 +7138,7 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
 
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: l10n.reportsFlightMapTitle,
-      shortTitle: l10n.reportsFlightMapTitle,
+      title: l10n.reportsFlightMapTitle,
       popupMaxWidth: 1100,
       actions: actions,
       contentView: mapBody,
@@ -7343,9 +7345,11 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete template?'),
+          title: Text(AppLocalizations.of(context)!.reportsDeleteTemplateTitle),
           content: Text(
-            'This will permanently delete "${item.templateName}".',
+            AppLocalizations.of(
+              context,
+            )!.reportsDeleteTemplateBody(item.templateName),
           ),
           actions: [
             TextButton(
@@ -7354,7 +7358,7 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
             ),
             TextButton(
               onPressed: () => AppNavigator.pop(dialogContext, true),
-              child: const Text('Delete'),
+              child: Text(AppLocalizations.of(context)!.deleteAction),
             ),
           ],
         );
@@ -7505,9 +7509,11 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
               Expanded(
                 child: TextFormField(
                   controller: _templateNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Template name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(
+                      context,
+                    )!.reportsTemplateNameLabel,
+                    border: const OutlineInputBorder(),
                     isDense: true,
                   ),
                 ),
@@ -7516,7 +7522,7 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
               SquareOutlineButton(
                 onPressed: _uploadAsNewTemplate,
                 icon: Icons.upload_file,
-                label: 'Upload JSON',
+                label: AppLocalizations.of(context)!.reportsUploadJson,
               ),
             ],
           ),
@@ -7586,18 +7592,24 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
                             SquareOutlineButton(
                               onPressed: () => unawaited(_editTemplate(item)),
                               icon: Icons.edit_note,
-                              label: 'Edit',
+                              label: AppLocalizations.of(
+                                context,
+                              )!.editAction,
                             ),
                             SquareOutlineButton(
                               onPressed: () =>
                                   unawaited(_downloadTemplate(item)),
                               icon: Icons.download,
-                              label: 'Download',
+                              label: AppLocalizations.of(
+                                context,
+                              )!.reportsDownloadAction,
                             ),
                             SquareOutlineButton(
                               onPressed: () => unawaited(_deleteTemplate(item)),
                               icon: Icons.delete_outline,
-                              label: 'Delete',
+                              label: AppLocalizations.of(
+                                context,
+                              )!.deleteAction,
                             ),
                           ],
                         ),
@@ -7611,8 +7623,7 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
 
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context, _changed),
-      longTitle: 'Edit Templates',
-      shortTitle: 'Edit Templates',
+      title: AppLocalizations.of(context)!.reportsEditTemplates,
       popupMaxWidth: 980,
       contentView: body,
     );
@@ -7694,7 +7705,7 @@ class _TemplateJsonEditorDialogState extends State<_TemplateJsonEditorDialog> {
               const SizedBox(width: 8),
               FilledButton(
                 onPressed: () => AppNavigator.pop(context, _controller.text),
-                child: const Text('Save'),
+                child: Text(AppLocalizations.of(context)!.saveAction),
               ),
             ],
           ),
@@ -7702,11 +7713,10 @@ class _TemplateJsonEditorDialogState extends State<_TemplateJsonEditorDialog> {
       ),
     );
 
-    final title = 'Edit Template: ${widget.templateName}';
+    final title = AppLocalizations.of(context)!.reportsEditTemplates;
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: title,
-      shortTitle: 'Edit Template',
+      title: title,
       popupMaxWidth: 980,
       contentView: body,
     );

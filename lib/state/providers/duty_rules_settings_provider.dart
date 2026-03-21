@@ -12,10 +12,10 @@ class DutyRulesSettings {
   /// Creates duty rules settings with defaults.
   const DutyRulesSettings({
     this.crewHomeBaseAirportId,
-    this.reportingTimeOnBaseMinutes = 0,
-    this.reportingTimeOffBaseMinutes = 0,
-    this.dutyEndTimeAllowanceMinutes = 0,
-    this.minimumRestTimeMinutes = 0,
+    this.reportingTimeOnBaseMinutes = 60,
+    this.reportingTimeOffBaseMinutes = 30,
+    this.dutyEndTimeAllowanceMinutes = 30,
+    this.minimumRestTimeMinutes = 600,
   });
 
   /// Builds settings from persisted JSON.
@@ -44,10 +44,10 @@ class DutyRulesSettings {
 
     return DutyRulesSettings(
       crewHomeBaseAirportId: readNullableInt('crewHomeBaseAirportId'),
-      reportingTimeOnBaseMinutes: readInt('reportingTimeOnBaseMinutes', 0),
-      reportingTimeOffBaseMinutes: readInt('reportingTimeOffBaseMinutes', 0),
-      dutyEndTimeAllowanceMinutes: readInt('dutyEndTimeAllowanceMinutes', 0),
-      minimumRestTimeMinutes: readInt('minimumRestTimeMinutes', 0),
+      reportingTimeOnBaseMinutes: readInt('reportingTimeOnBaseMinutes', 60),
+      reportingTimeOffBaseMinutes: readInt('reportingTimeOffBaseMinutes', 30),
+      dutyEndTimeAllowanceMinutes: readInt('dutyEndTimeAllowanceMinutes', 30),
+      minimumRestTimeMinutes: readInt('minimumRestTimeMinutes', 600),
     );
   }
 

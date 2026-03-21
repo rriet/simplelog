@@ -18,10 +18,10 @@ class AboutScreen extends StatelessWidget {
       length: 2,
       child: Column(
         children: [
-          const TabBar(
+          TabBar(
             tabs: [
-              Tab(text: 'About'),
-              Tab(text: 'Licenses'),
+              Tab(text: AppLocalizations.of(context)!.autoUi002),
+              Tab(text: AppLocalizations.of(context)!.autoUi038),
             ],
           ),
           Expanded(

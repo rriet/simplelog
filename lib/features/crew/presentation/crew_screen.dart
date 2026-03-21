@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
@@ -196,7 +197,7 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
           label: _searchLabel(l10n),
           onChanged: (value) => setState(() => _query = value),
           trailing: IconButton(
-            tooltip: 'Filters',
+            tooltip: AppLocalizations.of(context)!.logbookFilterAction,
             onPressed: _openFilters,
             icon: const Icon(Icons.filter_list),
           ),

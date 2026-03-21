@@ -2,7 +2,7 @@
 
 part of 'app_database.dart';
 
-// ignore_for_file: type=lint
+
 class $AircraftTypesTable extends AircraftTypes
     with TableInfo<$AircraftTypesTable, AircraftType> {
   @override

@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
@@ -26,7 +27,7 @@ class PilotProfileSettingsCard extends ConsumerWidget {
     return SizedBox(
       width: double.infinity,
       child: SquareOutlineButton(
-        label: 'Edit profile',
+        label: AppLocalizations.of(context)!.autoUi026,
         icon: Icons.edit_outlined,
         onPressed: () => showPilotProfileEditorDialog(context),
       ),
@@ -137,7 +138,7 @@ class _PilotProfileEditorDialogState
           ),
           const SizedBox(height: 12),
           Text(
-            'Signature',
+            AppLocalizations.of(context)!.autoUi056,
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 6),
@@ -146,7 +147,7 @@ class _PilotProfileEditorDialogState
             height: 150,
             decoration: _outlinedPanelDecoration(context),
             child: _signatureImage == null
-                ? const Center(child: Text('No signature'))
+                ? Center(child: Text(AppLocalizations.of(context)!.autoUi044))
                 : Padding(
                     padding: const EdgeInsets.all(6),
                     child: Image.memory(
@@ -157,7 +158,7 @@ class _PilotProfileEditorDialogState
           ),
           const SizedBox(height: 8),
           SquareOutlineButton(
-            label: 'Signature options',
+            label: AppLocalizations.of(context)!.autoUi057,
             icon: Icons.draw_outlined,
             onPressed: _showSignatureOptions,
           ),
@@ -167,8 +168,7 @@ class _PilotProfileEditorDialogState
 
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: 'Pilot profile',
-      shortTitle: 'Profile',
+      title: AppLocalizations.of(context)!.autoUi047,
       fullScreen: false,
       popupMaxWidth: 720,
       actions: [
@@ -199,7 +199,7 @@ class _PilotProfileEditorDialogState
   }
 
   Widget _buildSaveAction() {
-    return _buildDialogSaveAction(onPressed: _save);
+    return _buildDialogSaveAction(context: context, onPressed: _save);
   }
 
   Future<void> _save() async {
@@ -317,7 +317,7 @@ class _PilotProfileEditorDialogState
     } on Object {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open camera.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.autoUi014)),
       );
     }
   }
@@ -349,7 +349,7 @@ class _PilotProfileEditorDialogState
     } on Object {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not select image file.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.autoUi015)),
       );
     }
   }
@@ -481,11 +481,10 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
       width: 760,
       child: AdaptiveFormShell(
         onClose: () => AppNavigator.pop(context),
-        longTitle: 'Sign on screen',
-        shortTitle: 'Sign',
+        title: AppLocalizations.of(context)!.autoUi054,
         fullScreen: false,
         actions: [
-          _buildDialogSaveAction(onPressed: _save),
+          _buildDialogSaveAction(context: context, onPressed: _save),
         ],
         contentView: SizedBox(
           height: 420,
@@ -532,7 +531,7 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: SquareOutlineButton(
-                    label: 'Clear',
+                    label: AppLocalizations.of(context)!.reportsClearAction,
                     icon: Icons.delete_outline,
                     onPressed: () => setState(_strokes.clear),
                   ),
@@ -593,8 +592,14 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
   }
 }
 
-Widget _buildDialogSaveAction({required VoidCallback onPressed}) {
-  return TextButton(onPressed: onPressed, child: const Text('Save'));
+Widget _buildDialogSaveAction({
+  required BuildContext context,
+  required VoidCallback onPressed,
+}) {
+  return TextButton(
+    onPressed: onPressed,
+    child: Text(AppLocalizations.of(context)!.saveAction),
+  );
 }
 
 BoxDecoration _outlinedPanelDecoration(BuildContext context) {

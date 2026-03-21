@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/state/providers/flight_form_settings_provider.dart';
 
 /// Displays and persists the "log takeoff and landing times" preference.
@@ -26,7 +27,7 @@ class FlightTakeoffLandingSwitch extends ConsumerWidget {
     return enabled.when(
       data: (value) => SwitchListTile(
         contentPadding: contentPadding ?? EdgeInsets.zero,
-        title: const Text('Log takeoff and landing times'),
+        title: Text(AppLocalizations.of(context)!.autoUi039),
         value: value,
         onChanged: (next) {
           unawaited(
@@ -39,7 +40,7 @@ class FlightTakeoffLandingSwitch extends ConsumerWidget {
         },
       ),
       loading: () => const LinearProgressIndicator(),
-      error: (_, _) => const Text('Unable to load option'),
+      error: (_, _) => Text(AppLocalizations.of(context)!.autoUi065),
     );
   }
 }

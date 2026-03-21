@@ -90,7 +90,7 @@ class _QatarAirwaysMissingAirportsDialogState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: const Text('Missing Airports'),
+      title: Text(l10n.qatarMissingAirportsTitle),
       content: SizedBox(
         width: 560,
         child: Column(
@@ -116,13 +116,13 @@ class _QatarAirwaysMissingAirportsDialogState
       actions: [
         TextButton(
           onPressed: _busy ? null : () => AppNavigator.pop(context, false),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancelAction),
         ),
         FilledButton(
           onPressed: _busy || _pendingCodes.isNotEmpty
               ? null
               : () => AppNavigator.pop(context, true),
-          child: const Text('Continue'),
+          child: Text(l10n.qatarContinueAction),
         ),
       ],
     );
@@ -133,7 +133,7 @@ class _QatarAirwaysMissingAirportsDialogState
       padding: const EdgeInsets.only(bottom: 8),
       child: _PendingResolveRow(
         label: code,
-        actionLabel: 'Create airport',
+        actionLabel: AppLocalizations.of(context)!.qatarCreateAirportAction,
         enabled: !_busy,
         onPressed: () => _createAirport(code),
       ),
@@ -259,14 +259,13 @@ class _QatarAirwaysMissingAircraftDialogState
 
     return AdaptiveFormShell(
       onClose: _busy ? () {} : () => AppNavigator.pop(context, false),
-      longTitle: 'Missing Aircraft',
-      shortTitle: 'Missing Aircraft',
+      title: l10n.qatarMissingAircraftTitle,
       actions: [
         TextButton(
           onPressed: _busy || _pendingAircraft.isNotEmpty
               ? null
               : () => AppNavigator.pop(context, true),
-          child: const Text('Continue'),
+          child: Text(l10n.qatarContinueAction),
         ),
       ],
       contentView: body,
@@ -276,7 +275,7 @@ class _QatarAirwaysMissingAircraftDialogState
   Widget _buildPendingResolveAircraftRow(QatarAirwaysMissingAircraft aircraft) {
     return _PendingResolveRow(
       label: '${aircraft.registration} (${aircraft.aircraftTypeCode})',
-      actionLabel: 'Create aircraft',
+      actionLabel: AppLocalizations.of(context)!.qatarCreateAircraftAction,
       enabled: !_busy,
       onPressed: () => _createAircraft(aircraft),
     );

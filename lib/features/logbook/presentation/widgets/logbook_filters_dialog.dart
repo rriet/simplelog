@@ -229,8 +229,7 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
 
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: l10n.logbookFilterTitle,
-      shortTitle: l10n.logbookFilterTitle,
+      title: l10n.logbookFilterTitle,
       popupMaxWidth: 520,
       actions: [
         TextButton(

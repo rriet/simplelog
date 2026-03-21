@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
@@ -113,27 +114,28 @@ class _SouthwestImportOptionsDialogState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final body = SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('File: ${widget.fileName}'),
+          Text(l10n.databaseFileLabel(widget.fileName)),
           const SizedBox(height: 12),
           DropdownButtonFormField<CrewPosition>(
             initialValue: _defaultSelfPosition,
-            decoration: const InputDecoration(
-              labelText: 'Default self position',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.southwestDefaultSelfPositionLabel,
+              border: const OutlineInputBorder(),
             ),
-            items: const [
+            items: [
               DropdownMenuItem(
                 value: CrewPosition.pic,
-                child: Text('PIC'),
+                child: Text(l10n.qatarPositionPic),
               ),
               DropdownMenuItem(
                 value: CrewPosition.sic,
-                child: Text('SIC'),
+                child: Text(l10n.qatarPositionSic),
               ),
             ],
             onChanged: (value) {
@@ -145,61 +147,59 @@ class _SouthwestImportOptionsDialogState
           const SizedBox(height: 12),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Re-calculate Block time'),
+            title: Text(l10n.southwestRecalculateBlockTimeLabel),
             value: _recalcBlock,
             onChanged: (value) => setState(() => _recalcBlock = value ?? true),
           ),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Calculate night time'),
+            title: Text(l10n.southwestCalculateNightTimeLabel),
             value: _recalcNight,
             onChanged: (value) => setState(() => _recalcNight = value ?? true),
           ),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Calculate IFR time'),
+            title: Text(l10n.southwestCalculateIfrTimeLabel),
             value: _recalcIfr,
             onChanged: (value) => setState(() => _recalcIfr = value ?? true),
           ),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Calculate Cross-country time'),
+            title: Text(l10n.southwestCalculateCrossCountryTimeLabel),
             value: _recalcCrossCountry,
             onChanged: (value) =>
                 setState(() => _recalcCrossCountry = value ?? true),
           ),
           NumberInputField(
             controller: _crossCountryController,
-            label: 'Cross-country threshold (NM)',
+            label: l10n.southwestCrossCountryThresholdLabel,
             enabled: _recalcCrossCountry,
           ),
           const SizedBox(height: 8),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Calculate Instrument time'),
+            title: Text(l10n.southwestCalculateInstrumentTimeLabel),
             value: _recalcInstrument,
             onChanged: (value) =>
                 setState(() => _recalcInstrument = value ?? false),
           ),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Override existing data'),
+            title: Text(l10n.southwestOverrideExistingDataLabel),
             value: _overrideExisting,
             onChanged: (value) =>
                 setState(() => _overrideExisting = value ?? false),
           ),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text(
-              'Add CoPilot staff number to crew notes',
-            ),
+            title: Text(l10n.southwestAddCopilotStaffNumberLabel),
             value: _addCopilotStaff,
             onChanged: (value) =>
                 setState(() => _addCopilotStaff = value ?? true),
           ),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Add flight number to notes'),
+            title: Text(l10n.southwestAddFlightNumberToNotesLabel),
             value: _addFlightNumber,
             onChanged: (value) =>
                 setState(() => _addFlightNumber = value ?? true),
@@ -209,10 +209,9 @@ class _SouthwestImportOptionsDialogState
     );
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      longTitle: 'Southwest Import Options',
-      shortTitle: 'SWA Import Options',
+      title: l10n.southwestImportOptionsTitle,
       actions: [
-        TextButton(onPressed: _submit, child: const Text('Import')),
+        TextButton(onPressed: _submit, child: Text(l10n.southwestImportAction)),
       ],
       contentView: body,
     );
