@@ -296,8 +296,18 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
           ),
         ]);
       }
-    } on Object catch (error, stackTrace) {
-      Zone.current.handleUncaughtError(error, stackTrace);
+    } on TimeoutException {
+      // Probe timeout is expected for non-responding hosts.
+      return;
+    } on SocketException {
+      // Socket errors are expected while scanning unavailable hosts.
+      return;
+    } on http.ClientException {
+      // Invalid/closed connections are expected during LAN probes.
+      return;
+    } on FormatException {
+      // Ignore invalid payloads from non-SimpleLog endpoints.
+      return;
     }
   }
 
