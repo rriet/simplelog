@@ -4143,6 +4143,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last Flight is required.'**
   String get previousExperienceLastFlightRequired;
+
+  /// No description provided for @databaseAutomaticBackupAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic backup'**
+  String get databaseAutomaticBackupAction;
+
+  /// No description provided for @databaseAutomaticBackupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic backup'**
+  String get databaseAutomaticBackupTitle;
+
+  /// No description provided for @databaseAutomaticBackupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save backups when the app closes after changes.'**
+  String get databaseAutomaticBackupSubtitle;
+
+  /// No description provided for @databaseAutomaticBackupEnableAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn ON'**
+  String get databaseAutomaticBackupEnableAction;
+
+  /// No description provided for @databaseAutomaticBackupDisableAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn OFF'**
+  String get databaseAutomaticBackupDisableAction;
+
+  /// No description provided for @databaseAutomaticBackupEnabledStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: ON'**
+  String get databaseAutomaticBackupEnabledStatus;
+
+  /// No description provided for @databaseAutomaticBackupDisabledStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: OFF'**
+  String get databaseAutomaticBackupDisabledStatus;
+
+  /// No description provided for @databaseAutomaticBackupDestinationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination folder'**
+  String get databaseAutomaticBackupDestinationLabel;
+
+  /// No description provided for @databaseAutomaticBackupChooseFolderAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose folder'**
+  String get databaseAutomaticBackupChooseFolderAction;
+
+  /// No description provided for @databaseAutomaticBackupVersionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Versions to keep'**
+  String get databaseAutomaticBackupVersionsLabel;
+
+  /// No description provided for @databaseAutomaticBackupFolderRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a destination folder before turning automatic backup ON.'**
+  String get databaseAutomaticBackupFolderRequired;
+
+  /// No description provided for @databaseAutomaticBackupVersionsInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid number of versions (1 or more).'**
+  String get databaseAutomaticBackupVersionsInvalid;
+
+  /// No description provided for @databaseAutomaticBackupSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic backup settings saved.'**
+  String get databaseAutomaticBackupSaved;
 }
 
 class _AppLocalizationsDelegate

@@ -50,7 +50,6 @@ SimpleLog focuses on a practical cockpit-to-logbook workflow:
 - Multi-platform support:
   - Windows
   - macOS
-  - Linux
   - iOS
   - Android
 

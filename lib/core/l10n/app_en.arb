@@ -944,5 +944,18 @@
   "previousExperienceSaveAnywayAction": "Save anyway",
   "previousExperienceSelectAircraftType": "Select aircraft type.",
   "previousExperienceFirstFlightRequired": "First Flight is required.",
-  "previousExperienceLastFlightRequired": "Last Flight is required."
+  "previousExperienceLastFlightRequired": "Last Flight is required.",
+  "databaseAutomaticBackupAction": "Automatic backup",
+  "databaseAutomaticBackupTitle": "Automatic backup",
+  "databaseAutomaticBackupSubtitle": "Save backups when the app closes after changes.",
+  "databaseAutomaticBackupEnableAction": "Turn ON",
+  "databaseAutomaticBackupDisableAction": "Turn OFF",
+  "databaseAutomaticBackupEnabledStatus": "Status: ON",
+  "databaseAutomaticBackupDisabledStatus": "Status: OFF",
+  "databaseAutomaticBackupDestinationLabel": "Destination folder",
+  "databaseAutomaticBackupChooseFolderAction": "Choose folder",
+  "databaseAutomaticBackupVersionsLabel": "Versions to keep",
+  "databaseAutomaticBackupFolderRequired": "Choose a destination folder before turning automatic backup ON.",
+  "databaseAutomaticBackupVersionsInvalid": "Enter a valid number of versions (1 or more).",
+  "databaseAutomaticBackupSaved": "Automatic backup settings saved."
 }

@@ -2142,4 +2142,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get previousExperienceLastFlightRequired => 'Last Flight is required.';
+
+  @override
+  String get databaseAutomaticBackupAction => 'Automatic backup';
+
+  @override
+  String get databaseAutomaticBackupTitle => 'Automatic backup';
+
+  @override
+  String get databaseAutomaticBackupSubtitle =>
+      'Save backups when the app closes after changes.';
+
+  @override
+  String get databaseAutomaticBackupEnableAction => 'Turn ON';
+
+  @override
+  String get databaseAutomaticBackupDisableAction => 'Turn OFF';
+
+  @override
+  String get databaseAutomaticBackupEnabledStatus => 'Status: ON';
+
+  @override
+  String get databaseAutomaticBackupDisabledStatus => 'Status: OFF';
+
+  @override
+  String get databaseAutomaticBackupDestinationLabel => 'Destination folder';
+
+  @override
+  String get databaseAutomaticBackupChooseFolderAction => 'Choose folder';
+
+  @override
+  String get databaseAutomaticBackupVersionsLabel => 'Versions to keep';
+
+  @override
+  String get databaseAutomaticBackupFolderRequired =>
+      'Choose a destination folder before turning automatic backup ON.';
+
+  @override
+  String get databaseAutomaticBackupVersionsInvalid =>
+      'Enter a valid number of versions (1 or more).';
+
+  @override
+  String get databaseAutomaticBackupSaved => 'Automatic backup settings saved.';
 }
