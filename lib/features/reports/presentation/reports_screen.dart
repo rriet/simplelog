@@ -49,6 +49,7 @@ import 'package:simplelog/features/reports/presentation/providers/reports_prefer
 import 'package:simplelog/features/reports/presentation/providers/reports_repository_provider.dart';
 import 'package:simplelog/features/reports/presentation/widgets/reports_form_components.dart';
 import 'package:simplelog/features/settings/presentation/widgets/pilot_profile_settings_card.dart';
+import 'package:simplelog/state/providers/batch_write_guard_provider.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/duty_rules_settings_provider.dart';
@@ -3146,35 +3147,37 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     );
     if (selected == null) return;
     final finalPosition = selected;
-    await _ensureBatchFlightsReadyForActions();
-    final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
-    final modifiable = _unlockedBatchSnapshots(snapshots);
-    final skippedLocked = snapshots.length - modifiable.length;
-    if (modifiable.isEmpty) {
-      await _showInfoDialog('All filtered flights are locked.');
-      return;
-    }
-    await db.transaction(() async {
-      for (final id in modifiable.keys) {
-        await (db.delete(db.flightCrewAssignments)..where(
-              (t) => t.flightId.equals(id) & t.crewId.equals(selfCrew.id),
-            ))
-            .go();
-        await db
-            .into(db.flightCrewAssignments)
-            .insert(
-              FlightCrewAssignmentsCompanion.insert(
-                flightId: id,
-                crewId: selfCrew.id,
-                position: finalPosition,
-              ),
-            );
+    await _runGuardedBatchWrite(() async {
+      await _ensureBatchFlightsReadyForActions();
+      final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
+      final modifiable = _unlockedBatchSnapshots(snapshots);
+      final skippedLocked = snapshots.length - modifiable.length;
+      if (modifiable.isEmpty) {
+        await _showInfoDialog('All filtered flights are locked.');
+        return;
       }
+      await db.transaction(() async {
+        for (final id in modifiable.keys) {
+          await (db.delete(db.flightCrewAssignments)..where(
+                (t) => t.flightId.equals(id) & t.crewId.equals(selfCrew.id),
+              ))
+              .go();
+          await db
+              .into(db.flightCrewAssignments)
+              .insert(
+                FlightCrewAssignmentsCompanion.insert(
+                  flightId: id,
+                  crewId: selfCrew.id,
+                  position: finalPosition,
+                ),
+              );
+        }
+      });
+      await _showInfoDialog(
+        'Set self crew as ${finalPosition.name.toUpperCase()} '
+        'for ${modifiable.length} flights.${_lockedSkipSuffix(skippedLocked)}',
+      );
     });
-    await _showInfoDialog(
-      'Set self crew as ${finalPosition.name.toUpperCase()} '
-      'for ${modifiable.length} flights.${_lockedSkipSuffix(skippedLocked)}',
-    );
   }
 
   Future<void> _batchCalculateAll() async {
@@ -3186,176 +3189,178 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       initialPreferences: initialPreferences,
     );
     if (selection == null) return;
-    await _saveBatchCalculateAllPreferences(selection);
-    await _ensureBatchFlightsReadyForActions();
-    final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
-    final modifiable = _unlockedBatchSnapshots(snapshots);
-    final skippedLocked = snapshots.length - modifiable.length;
-    if (modifiable.isEmpty) {
-      await _showInfoDialog('All filtered flights are locked.');
-      return;
-    }
-    final settings = await ref.read(flightFactoringSettingsProvider.future);
-    final changes = <_BatchFlightChange>[];
-    final db = ref.read(databaseProvider);
-    await db.transaction(() async {
-      for (final snapshot in modifiable.values) {
-        final next = snapshot.copy();
-        final blockMode = selection.modeFor(_BatchCalcField.block);
-        if (blockMode == _BatchFieldMode.recalculate) {
-          final calculatedBlock = _calculateBlockMinutesFromChocks(snapshot);
-          if (calculatedBlock != null) {
-            next
-              ..timeBlockMinutes = calculatedBlock
-              ..timeTotalBlockMinutes = calculatedBlock;
-          }
-        } else if (blockMode == _BatchFieldMode.setZero) {
-          next
-            ..timeBlockMinutes = 0
-            ..timeTotalBlockMinutes = 0;
-        }
-        final base = next.timeBlockMinutes;
-
-        _applyTimeMode(
-          mode: selection.modeFor(_BatchCalcField.instructor),
-          recalculateValue: base,
-          assign: (value) => next.timeInstructorMinutes = value,
-        );
-        _applyTimeMode(
-          mode: selection.modeFor(_BatchCalcField.ifr),
-          recalculateValue: base,
-          assign: (value) => next.timeIFRMinutes = value,
-        );
-        _applyTimeMode(
-          mode: selection.modeFor(_BatchCalcField.instrument),
-          recalculateValue: base,
-          assign: (value) => next.timeInstrumentMinutes = value,
-        );
-        _applyTimeMode(
-          mode: selection.modeFor(_BatchCalcField.simInstrument),
-          recalculateValue: base,
-          assign: (value) => next.timeSimulatedInstrumentMinutes = value,
-        );
-        _applyTimeMode(
-          mode: selection.modeFor(_BatchCalcField.flight),
-          recalculateValue: base,
-          assign: (value) => next.timeFlightMinutes = value,
-        );
-
-        final distanceMode = selection.modeFor(_BatchCalcField.distanceNm);
-        if (distanceMode == _BatchFieldMode.recalculate) {
-          final distance = _calculateDistanceForSnapshot(snapshot);
-          if (distance != null) {
-            next.distanceNm = distance;
-          }
-        } else if (distanceMode == _BatchFieldMode.setZero) {
-          next.distanceNm = 0;
-        }
-
-        final crossMode = selection.modeFor(_BatchCalcField.crossCountry);
-        if (crossMode == _BatchFieldMode.recalculate) {
-          next.timeCrossCountryMinutes =
-              next.distanceNm >= settings.crossCountryThresholdNm ? base : 0;
-        } else if (crossMode == _BatchFieldMode.setZero) {
-          next.timeCrossCountryMinutes = 0;
-        }
-
-        final applyNightDerivedValues =
-            selection.modeFor(_BatchCalcField.night) ==
-                _BatchFieldMode.recalculate ||
-            selection.modeFor(_BatchCalcField.takeoffDay) ==
-                _BatchFieldMode.recalculate ||
-            selection.modeFor(_BatchCalcField.takeoffNight) ==
-                _BatchFieldMode.recalculate ||
-            selection.modeFor(_BatchCalcField.landingDay) ==
-                _BatchFieldMode.recalculate ||
-            selection.modeFor(_BatchCalcField.landingNight) ==
-                _BatchFieldMode.recalculate;
-        if (applyNightDerivedValues) {
-          final calc = _calculateNightForSnapshot(snapshot);
-          if (calc != null) {
-            if (selection.modeFor(_BatchCalcField.night) ==
-                _BatchFieldMode.recalculate) {
-              next.timeNightMinutes = calc.nightMinutes;
-            }
-            if (selection.modeFor(_BatchCalcField.takeoffDay) ==
-                _BatchFieldMode.recalculate) {
-              next.takeOffsDays = calc.takeoffsDay;
-            }
-            if (selection.modeFor(_BatchCalcField.takeoffNight) ==
-                _BatchFieldMode.recalculate) {
-              next.takeOffsNight = calc.takeoffsNight;
-            }
-            if (selection.modeFor(_BatchCalcField.landingDay) ==
-                _BatchFieldMode.recalculate) {
-              next.landingsDay = calc.landingsDay;
-            }
-            if (selection.modeFor(_BatchCalcField.landingNight) ==
-                _BatchFieldMode.recalculate) {
-              next.landingsNight = calc.landingsNight;
-            }
-          }
-        }
-
-        if (selection.modeFor(_BatchCalcField.night) ==
-            _BatchFieldMode.setZero) {
-          next.timeNightMinutes = 0;
-        }
-        if (selection.modeFor(_BatchCalcField.takeoffDay) ==
-            _BatchFieldMode.setZero) {
-          next.takeOffsDays = 0;
-        }
-        if (selection.modeFor(_BatchCalcField.takeoffNight) ==
-            _BatchFieldMode.setZero) {
-          next.takeOffsNight = 0;
-        }
-        if (selection.modeFor(_BatchCalcField.landingDay) ==
-            _BatchFieldMode.setZero) {
-          next.landingsDay = 0;
-        }
-        if (selection.modeFor(_BatchCalcField.landingNight) ==
-            _BatchFieldMode.setZero) {
-          next.landingsNight = 0;
-        }
-
-        _applyTimeMode(
-          mode: selection.modeFor(_BatchCalcField.custom1),
-          recalculateValue: base,
-          assign: (value) => next.timeCustom1Minutes = value,
-        );
-        _applyTimeMode(
-          mode: selection.modeFor(_BatchCalcField.custom2),
-          recalculateValue: base,
-          assign: (value) => next.timeCustom2Minutes = value,
-        );
-        _applyTimeMode(
-          mode: selection.modeFor(_BatchCalcField.custom3),
-          recalculateValue: base,
-          assign: (value) => next.timeCustom3Minutes = value,
-        );
-        _applyTimeMode(
-          mode: selection.modeFor(_BatchCalcField.custom4),
-          recalculateValue: base,
-          assign: (value) => next.timeCustom4Minutes = value,
-        );
-        final fieldChanges = _buildBatchFieldChanges(snapshot, next);
-        if (fieldChanges.isEmpty) continue;
-        changes.add(
-          _BatchFlightChange(snapshot: snapshot, fields: fieldChanges),
-        );
-        await _updateFlightFromSnapshot(next);
+    await _runGuardedBatchWrite(() async {
+      await _saveBatchCalculateAllPreferences(selection);
+      await _ensureBatchFlightsReadyForActions();
+      final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
+      final modifiable = _unlockedBatchSnapshots(snapshots);
+      final skippedLocked = snapshots.length - modifiable.length;
+      if (modifiable.isEmpty) {
+        await _showInfoDialog('All filtered flights are locked.');
+        return;
       }
-    });
-    await _showBatchChanges(changes);
-    if (skippedLocked > 0) {
-      await _showInfoDialog(
-        'Skipped $skippedLocked locked flight'
-        '${skippedLocked == 1 ? '' : 's'}.',
+      final settings = await ref.read(flightFactoringSettingsProvider.future);
+      final changes = <_BatchFlightChange>[];
+      final db = ref.read(databaseProvider);
+      await db.transaction(() async {
+        for (final snapshot in modifiable.values) {
+          final next = snapshot.copy();
+          final blockMode = selection.modeFor(_BatchCalcField.block);
+          if (blockMode == _BatchFieldMode.recalculate) {
+            final calculatedBlock = _calculateBlockMinutesFromChocks(snapshot);
+            if (calculatedBlock != null) {
+              next
+                ..timeBlockMinutes = calculatedBlock
+                ..timeTotalBlockMinutes = calculatedBlock;
+            }
+          } else if (blockMode == _BatchFieldMode.setZero) {
+            next
+              ..timeBlockMinutes = 0
+              ..timeTotalBlockMinutes = 0;
+          }
+          final base = next.timeBlockMinutes;
+
+          _applyTimeMode(
+            mode: selection.modeFor(_BatchCalcField.instructor),
+            recalculateValue: base,
+            assign: (value) => next.timeInstructorMinutes = value,
+          );
+          _applyTimeMode(
+            mode: selection.modeFor(_BatchCalcField.ifr),
+            recalculateValue: base,
+            assign: (value) => next.timeIFRMinutes = value,
+          );
+          _applyTimeMode(
+            mode: selection.modeFor(_BatchCalcField.instrument),
+            recalculateValue: base,
+            assign: (value) => next.timeInstrumentMinutes = value,
+          );
+          _applyTimeMode(
+            mode: selection.modeFor(_BatchCalcField.simInstrument),
+            recalculateValue: base,
+            assign: (value) => next.timeSimulatedInstrumentMinutes = value,
+          );
+          _applyTimeMode(
+            mode: selection.modeFor(_BatchCalcField.flight),
+            recalculateValue: base,
+            assign: (value) => next.timeFlightMinutes = value,
+          );
+
+          final distanceMode = selection.modeFor(_BatchCalcField.distanceNm);
+          if (distanceMode == _BatchFieldMode.recalculate) {
+            final distance = _calculateDistanceForSnapshot(snapshot);
+            if (distance != null) {
+              next.distanceNm = distance;
+            }
+          } else if (distanceMode == _BatchFieldMode.setZero) {
+            next.distanceNm = 0;
+          }
+
+          final crossMode = selection.modeFor(_BatchCalcField.crossCountry);
+          if (crossMode == _BatchFieldMode.recalculate) {
+            next.timeCrossCountryMinutes =
+                next.distanceNm >= settings.crossCountryThresholdNm ? base : 0;
+          } else if (crossMode == _BatchFieldMode.setZero) {
+            next.timeCrossCountryMinutes = 0;
+          }
+
+          final applyNightDerivedValues =
+              selection.modeFor(_BatchCalcField.night) ==
+                  _BatchFieldMode.recalculate ||
+              selection.modeFor(_BatchCalcField.takeoffDay) ==
+                  _BatchFieldMode.recalculate ||
+              selection.modeFor(_BatchCalcField.takeoffNight) ==
+                  _BatchFieldMode.recalculate ||
+              selection.modeFor(_BatchCalcField.landingDay) ==
+                  _BatchFieldMode.recalculate ||
+              selection.modeFor(_BatchCalcField.landingNight) ==
+                  _BatchFieldMode.recalculate;
+          if (applyNightDerivedValues) {
+            final calc = _calculateNightForSnapshot(snapshot);
+            if (calc != null) {
+              if (selection.modeFor(_BatchCalcField.night) ==
+                  _BatchFieldMode.recalculate) {
+                next.timeNightMinutes = calc.nightMinutes;
+              }
+              if (selection.modeFor(_BatchCalcField.takeoffDay) ==
+                  _BatchFieldMode.recalculate) {
+                next.takeOffsDays = calc.takeoffsDay;
+              }
+              if (selection.modeFor(_BatchCalcField.takeoffNight) ==
+                  _BatchFieldMode.recalculate) {
+                next.takeOffsNight = calc.takeoffsNight;
+              }
+              if (selection.modeFor(_BatchCalcField.landingDay) ==
+                  _BatchFieldMode.recalculate) {
+                next.landingsDay = calc.landingsDay;
+              }
+              if (selection.modeFor(_BatchCalcField.landingNight) ==
+                  _BatchFieldMode.recalculate) {
+                next.landingsNight = calc.landingsNight;
+              }
+            }
+          }
+
+          if (selection.modeFor(_BatchCalcField.night) ==
+              _BatchFieldMode.setZero) {
+            next.timeNightMinutes = 0;
+          }
+          if (selection.modeFor(_BatchCalcField.takeoffDay) ==
+              _BatchFieldMode.setZero) {
+            next.takeOffsDays = 0;
+          }
+          if (selection.modeFor(_BatchCalcField.takeoffNight) ==
+              _BatchFieldMode.setZero) {
+            next.takeOffsNight = 0;
+          }
+          if (selection.modeFor(_BatchCalcField.landingDay) ==
+              _BatchFieldMode.setZero) {
+            next.landingsDay = 0;
+          }
+          if (selection.modeFor(_BatchCalcField.landingNight) ==
+              _BatchFieldMode.setZero) {
+            next.landingsNight = 0;
+          }
+
+          _applyTimeMode(
+            mode: selection.modeFor(_BatchCalcField.custom1),
+            recalculateValue: base,
+            assign: (value) => next.timeCustom1Minutes = value,
+          );
+          _applyTimeMode(
+            mode: selection.modeFor(_BatchCalcField.custom2),
+            recalculateValue: base,
+            assign: (value) => next.timeCustom2Minutes = value,
+          );
+          _applyTimeMode(
+            mode: selection.modeFor(_BatchCalcField.custom3),
+            recalculateValue: base,
+            assign: (value) => next.timeCustom3Minutes = value,
+          );
+          _applyTimeMode(
+            mode: selection.modeFor(_BatchCalcField.custom4),
+            recalculateValue: base,
+            assign: (value) => next.timeCustom4Minutes = value,
+          );
+          final fieldChanges = _buildBatchFieldChanges(snapshot, next);
+          if (fieldChanges.isEmpty) continue;
+          changes.add(
+            _BatchFlightChange(snapshot: snapshot, fields: fieldChanges),
+          );
+          await _updateFlightFromSnapshot(next);
+        }
+      });
+      await _showBatchChanges(changes);
+      if (skippedLocked > 0) {
+        await _showInfoDialog(
+          'Skipped $skippedLocked locked flight'
+          '${skippedLocked == 1 ? '' : 's'}.',
+        );
+      }
+      await _ensureDetailsLoaded(
+        includeEntries: false,
       );
-    }
-    await _ensureDetailsLoaded(
-      includeEntries: false,
-    );
+    });
   }
 
   Future<void> _batchCalculateDuty() async {
@@ -3363,46 +3368,52 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (!mounted) return;
     setState(() => _isCalculatingBatchDuty = true);
     try {
-      await _ensureBatchFlightsReadyForActions();
-      final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
-      if (snapshots.isEmpty) {
-        await _showInfoDialog('No filtered flights found.');
-        return;
-      }
-      final settings = await ref.read(dutyRulesSettingsProvider.future);
-      final result = await ref
-          .read(logbookUseCasesProvider)
-          .calculateDutyForFlights(
-            flightIds: snapshots.keys.toSet(),
-            rules: DutyCalculationRules(
-              crewHomeBaseAirportId: settings.crewHomeBaseAirportId,
-              reportingTimeOnBaseMinutes: settings.reportingTimeOnBaseMinutes,
-              reportingTimeOffBaseMinutes: settings.reportingTimeOffBaseMinutes,
-              dutyEndTimeAllowanceMinutes: settings.dutyEndTimeAllowanceMinutes,
-              minimumRestTimeMinutes: settings.minimumRestTimeMinutes,
-            ),
+      await _runGuardedBatchWrite(() async {
+        await _ensureBatchFlightsReadyForActions();
+        final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
+        if (snapshots.isEmpty) {
+          await _showInfoDialog('No filtered flights found.');
+          return;
+        }
+        final settings = await ref.read(dutyRulesSettingsProvider.future);
+        final result = await ref
+            .read(logbookUseCasesProvider)
+            .calculateDutyForFlights(
+              flightIds: snapshots.keys.toSet(),
+              rules: DutyCalculationRules(
+                crewHomeBaseAirportId: settings.crewHomeBaseAirportId,
+                reportingTimeOnBaseMinutes: settings.reportingTimeOnBaseMinutes,
+                reportingTimeOffBaseMinutes:
+                    settings.reportingTimeOffBaseMinutes,
+                dutyEndTimeAllowanceMinutes:
+                    settings.dutyEndTimeAllowanceMinutes,
+                minimumRestTimeMinutes: settings.minimumRestTimeMinutes,
+              ),
+            );
+        if (!mounted) return;
+        final message = StringBuffer()
+          ..write(
+            'Duty calculation completed.\n'
+            'Created: ${result.created}, '
+            'Updated: ${result.updated}, '
+            'Unchanged: ${result.unchanged}.',
           );
-      if (!mounted) return;
-      final message = StringBuffer()
-        ..write(
-          'Duty calculation completed.\n'
-          'Created: ${result.created}, '
-          'Updated: ${result.updated}, '
-          'Unchanged: ${result.unchanged}.',
+        if (result.skippedLockedDuty > 0) {
+          message.write(
+            '\nSkipped locked duties: ${result.skippedLockedDuty}.',
+          );
+        }
+        if (result.skippedMissingFlightEvent > 0) {
+          message.write(
+            '\nSkipped flights without a resolved event: '
+            '${result.skippedMissingFlightEvent}.',
+          );
+        }
+        await _showInfoDialog(message.toString());
+        await _ensureDetailsLoaded(
+          includeEntries: false,
         );
-      if (result.skippedLockedDuty > 0) {
-        message.write('\nSkipped locked duties: ${result.skippedLockedDuty}.');
-      }
-      if (result.skippedMissingFlightEvent > 0) {
-        message.write(
-          '\nSkipped flights without a resolved event: '
-          '${result.skippedMissingFlightEvent}.',
-        );
-      }
-      await _showInfoDialog(message.toString());
-      await _ensureDetailsLoaded(
-        includeEntries: false,
-      );
+      });
     } finally {
       if (mounted) {
         setState(() => _isCalculatingBatchDuty = false);
@@ -3596,49 +3607,63 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       ),
     );
     if (confirmed != true) return;
-    final db = ref.read(databaseProvider);
-    var updatedFlights = 0;
-    var updatedSimulators = 0;
-    var updatedPositionings = 0;
-    var updatedDuty = 0;
-    await db.transaction(() async {
-      if (targets.flightIds.isNotEmpty) {
-        updatedFlights =
-            await (db.update(db.flights)
-                  ..where((t) => t.id.isIn(targets.flightIds)))
-                .write(FlightsCompanion(isLocked: d.Value(lockState)));
-      }
-      if (targets.simulatorIds.isNotEmpty) {
-        updatedSimulators =
-            await (db.update(
-              db.simulatorTrainings,
-            )..where((t) => t.id.isIn(targets.simulatorIds))).write(
-              SimulatorTrainingsCompanion(isLocked: d.Value(lockState)),
-            );
-      }
-      if (targets.positioningIds.isNotEmpty) {
-        updatedPositionings =
-            await (db.update(db.positionings)
-                  ..where((t) => t.id.isIn(targets.positioningIds)))
-                .write(PositioningsCompanion(isLocked: d.Value(lockState)));
-      }
-      if (targets.dutyIds.isNotEmpty) {
-        updatedDuty =
-            await (db.update(db.dutyPeriods)
-                  ..where((t) => t.id.isIn(targets.dutyIds)))
-                .write(DutyPeriodsCompanion(isLocked: d.Value(lockState)));
-      }
+    await _runGuardedBatchWrite(() async {
+      final db = ref.read(databaseProvider);
+      var updatedFlights = 0;
+      var updatedSimulators = 0;
+      var updatedPositionings = 0;
+      var updatedDuty = 0;
+      await db.transaction(() async {
+        if (targets.flightIds.isNotEmpty) {
+          updatedFlights =
+              await (db.update(db.flights)
+                    ..where((t) => t.id.isIn(targets.flightIds)))
+                  .write(FlightsCompanion(isLocked: d.Value(lockState)));
+        }
+        if (targets.simulatorIds.isNotEmpty) {
+          updatedSimulators =
+              await (db.update(
+                db.simulatorTrainings,
+              )..where((t) => t.id.isIn(targets.simulatorIds))).write(
+                SimulatorTrainingsCompanion(isLocked: d.Value(lockState)),
+              );
+        }
+        if (targets.positioningIds.isNotEmpty) {
+          updatedPositionings =
+              await (db.update(db.positionings)
+                    ..where((t) => t.id.isIn(targets.positioningIds)))
+                  .write(PositioningsCompanion(isLocked: d.Value(lockState)));
+        }
+        if (targets.dutyIds.isNotEmpty) {
+          updatedDuty =
+              await (db.update(db.dutyPeriods)
+                    ..where((t) => t.id.isIn(targets.dutyIds)))
+                  .write(DutyPeriodsCompanion(isLocked: d.Value(lockState)));
+        }
+      });
+      final updatedTotal =
+          updatedFlights +
+          updatedSimulators +
+          updatedPositionings +
+          updatedDuty;
+      await _showInfoDialog(
+        '${lockState ? 'Locked' : 'Unlocked'} $updatedTotal entries '
+        '(Flights: $updatedFlights, Sim: $updatedSimulators, '
+        'Positioning: $updatedPositionings, Duty: $updatedDuty).',
+      );
+      await _ensureDetailsLoaded(
+        includeEntries: false,
+      );
     });
-    final updatedTotal =
-        updatedFlights + updatedSimulators + updatedPositionings + updatedDuty;
-    await _showInfoDialog(
-      '${lockState ? 'Locked' : 'Unlocked'} $updatedTotal entries '
-      '(Flights: $updatedFlights, Sim: $updatedSimulators, '
-      'Positioning: $updatedPositionings, Duty: $updatedDuty).',
-    );
-    await _ensureDetailsLoaded(
-      includeEntries: false,
-    );
+  }
+
+  Future<T> _runGuardedBatchWrite<T>(Future<T> Function() action) async {
+    final guard = ref.read(batchWriteGuardControllerProvider.notifier)..enter();
+    try {
+      return await action();
+    } finally {
+      guard.exit();
+    }
   }
 
   Set<int> _filteredFlightIds() {
@@ -6004,8 +6029,7 @@ class _TotalsCard extends StatelessWidget {
     final lastDateLabel = lastFlightDate == null
         ? '-'
         : dateFormatter.format(lastFlightDate!.toUtc());
-    final dateRangeLabel =
-        'First: $firstDateLabel | Last: $lastDateLabel';
+    final dateRangeLabel = 'First: $firstDateLabel | Last: $lastDateLabel';
 
     return Card(
       margin: compact ? EdgeInsets.zero : const EdgeInsets.all(4),
@@ -7405,8 +7429,9 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
                         final actions = <Widget>[
                           SlidableAction(
                             onPressed: (_) => unawaited(_editTemplate(item)),
-                            backgroundColor:
-                                Theme.of(context).colorScheme.primary,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
                             foregroundColor: Theme.of(
                               context,
                             ).colorScheme.onPrimary,
@@ -7429,8 +7454,9 @@ class _EditTemplatesDialogState extends State<_EditTemplatesDialog> {
                             SlidableAction(
                               onPressed: (_) =>
                                   unawaited(_deleteTemplate(item)),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
                               foregroundColor: Theme.of(
                                 context,
                               ).colorScheme.onError,

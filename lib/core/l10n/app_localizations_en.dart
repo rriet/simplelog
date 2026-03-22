@@ -156,6 +156,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancelAction => 'Cancel';
 
   @override
+  String get batchWriteNavigationBlockedMessage =>
+      'Wait for batch update to finish.';
+
+  @override
   String get confirmDeleteTitle => 'Confirm delete';
 
   @override

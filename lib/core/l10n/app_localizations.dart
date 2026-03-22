@@ -388,6 +388,12 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancelAction;
 
+  /// No description provided for @batchWriteNavigationBlockedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Wait for batch update to finish.'**
+  String get batchWriteNavigationBlockedMessage;
+
   /// No description provided for @confirmDeleteTitle.
   ///
   /// In en, this message translates to:

@@ -49,6 +49,7 @@
   "editAction": "Edit",
   "deleteAction": "Delete",
   "cancelAction": "Cancel",
+  "batchWriteNavigationBlockedMessage": "Wait for batch update to finish.",
   "confirmDeleteTitle": "Confirm delete",
   "confirmDeleteAircraftType": "Delete aircraft type {code}?",
   "confirmDeleteAircraft": "Delete aircraft {registration}?",

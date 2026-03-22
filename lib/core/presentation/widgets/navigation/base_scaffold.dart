@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/state/providers/batch_write_guard_provider.dart';
 
 /// Shared scaffold for top‑level screens with a
 /// localized title.
@@ -24,23 +25,35 @@ class BaseScaffold extends ConsumerWidget {
     final theme = Theme.of(context);
     final drawerTitleStyle = theme.textTheme.titleLarge;
     final menuBackground = theme.colorScheme.surfaceContainerHighest;
+    final isBatchWriteInProgress = ref.watch(isBatchWriteInProgressProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: menuBackground,
-        surfaceTintColor: menuBackground,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(
-          l10n.homeTitle,
-          style: drawerTitleStyle?.copyWith(
-            fontSize: 18,
-            color: drawerTitleStyle.color,
+    return PopScope<void>(
+      canPop: !isBatchWriteInProgress,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || !isBatchWriteInProgress) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.batchWriteNavigationBlockedMessage),
+          ),
+        );
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: menuBackground,
+          surfaceTintColor: menuBackground,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          title: Text(
+            l10n.homeTitle,
+            style: drawerTitleStyle?.copyWith(
+              fontSize: 18,
+              color: drawerTitleStyle.color,
+            ),
           ),
         ),
+        drawer: drawer,
+        body: body,
       ),
-      drawer: drawer,
-      body: body,
     );
   }
 }
