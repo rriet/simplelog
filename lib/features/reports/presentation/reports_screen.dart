@@ -4707,6 +4707,7 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.of(context).size.width < 400;
+    final isCompact = isCompactDialogScreen(context);
 
     String label(_BatchCalcField field) {
       return switch (field) {
@@ -4781,43 +4782,23 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
           child: Text(AppLocalizations.of(context)!.applyAction),
         ),
       ],
-      contentView: SizedBox(
-        width: 560,
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            for (final field in _fields)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: isNarrow
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(label(field)),
-                          const SizedBox(height: 6),
-                          modeDropdown(
-                            value: _preferences.modeFor(field),
-                            onChanged: (value) {
-                              if (value == null) return;
-                              final nextModes =
-                                  Map<_BatchCalcField, _BatchFieldMode>.from(
-                                    _preferences.fieldModes,
-                                  )..[field] = value;
-                              setState(() {
-                                _preferences = _preferences.copyWith(
-                                  fieldModes: nextModes,
-                                );
-                              });
-                            },
-                          ),
-                        ],
-                      )
-                    : Row(
-                        children: [
-                          Expanded(child: Text(label(field))),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: modeDropdown(
+      contentView: Padding(
+        padding: EdgeInsets.symmetric(horizontal: isCompact ? 16 : 0),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (final field in _fields)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: isNarrow
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(label(field)),
+                            const SizedBox(height: 6),
+                            modeDropdown(
                               value: _preferences.modeFor(field),
                               onChanged: (value) {
                                 if (value == null) return;
@@ -4832,11 +4813,38 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
                                 });
                               },
                             ),
-                          ),
-                        ],
-                      ),
-              ),
-          ],
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(child: Text(label(field))),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: modeDropdown(
+                                value: _preferences.modeFor(field),
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  final nextModes =
+                                      Map<
+                                          _BatchCalcField,
+                                          _BatchFieldMode
+                                        >.from(
+                                          _preferences.fieldModes,
+                                        )
+                                        ..[field] = value;
+                                  setState(() {
+                                    _preferences = _preferences.copyWith(
+                                      fieldModes: nextModes,
+                                    );
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+            ],
+          ),
         ),
       ),
     );

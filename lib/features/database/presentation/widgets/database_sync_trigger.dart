@@ -524,9 +524,12 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   }
 
   Future<void> _restoreDatabase(BuildContext context, WidgetRef ref) async {
+    final isAppleMobile = Platform.isIOS;
     final picked = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['sqlite', 'db', 'backup'],
+      type: isAppleMobile ? FileType.any : FileType.custom,
+      allowedExtensions: isAppleMobile
+          ? null
+          : const ['sqlite', 'db', 'backup'],
     );
     if (picked == null || picked.files.isEmpty || !context.mounted) return;
     final file = picked.files.single;

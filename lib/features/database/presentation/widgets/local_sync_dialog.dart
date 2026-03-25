@@ -15,9 +15,12 @@ import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/sync/local_sync_discovery.dart';
 import 'package:simplelog/data/sync/local_sync_server.dart';
 import 'package:simplelog/features/reports/presentation/providers/reports_preferences_provider.dart';
+import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/database_sync_controller_provider.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
+import 'package:simplelog/state/providers/flight_form_settings_provider.dart';
+import 'package:simplelog/state/providers/flight_time_fields_visibility_provider.dart';
 
 /// TCP port used for local peer‑to‑peer sync.
 const int syncPort = 54742;
@@ -411,8 +414,11 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'host': selfHost, 'port': syncPort}),
       );
-    } on Object catch (error, stackTrace) {
-      Zone.current.handleUncaughtError(error, stackTrace);
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _status = _friendlySyncError(error);
+      });
     }
   }
 
@@ -664,8 +670,8 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   Future<void> _notifyTransferComplete(DiscoveredDevice device) async {
     try {
       await _postToDevice(device, '/complete');
-    } on Object catch (error, stackTrace) {
-      Zone.current.handleUncaughtError(error, stackTrace);
+    } on Object catch (_) {
+      // Best-effort notification only; transfer is already complete.
     }
   }
 
@@ -726,7 +732,9 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     final text = error.toString();
     if (text.contains('Connection refused')) {
       return 'Connection refused by the other device. '
-          'Keep Local Sync open on both devices and try reconnecting.';
+          'The computer could not be reached. Public Wi-Fi may block '
+          'device-to-device traffic. Keep Local Sync open on both devices '
+          'and try again on a personal hotspot or private network.';
     }
     if (text.contains('timed out') || text.contains('TimeoutException')) {
       return 'Connection timed out. Verify both devices are on the same Wi-Fi.';
@@ -758,7 +766,10 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     ref
       ..invalidate(databaseProvider)
       ..invalidate(flightFactoringSettingsProvider)
-      ..invalidate(reportPilotInfoProvider);
+      ..invalidate(reportPilotInfoProvider)
+      ..invalidate(flightFormTimeChecksProvider)
+      ..invalidate(flightTimeFieldsVisibilityProvider)
+      ..invalidate(customTimeLabelsProvider);
   }
 
   Future<String> _databasePath() async {

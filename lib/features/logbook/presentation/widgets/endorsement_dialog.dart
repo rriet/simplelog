@@ -243,8 +243,10 @@ class _SignaturePadDialog extends StatefulWidget {
 
 class _SignaturePadDialogState extends State<_SignaturePadDialog> {
   final List<List<Offset>> _strokes = <List<Offset>>[];
-  Size _canvasSize = const Size(520, 240);
+  Size _canvasSize = const Size(600, 200);
   static const _strokeWidth = 3.5;
+  static const _outputWidth = 1200;
+  static const _outputHeight = 400;
 
   @override
   Widget build(BuildContext context) {
@@ -279,22 +281,31 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
                 padding: const EdgeInsets.all(16),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    _canvasSize = Size(
-                      constraints.maxWidth,
-                      constraints.maxHeight,
-                    );
-                    return _SignaturePreviewPanel(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onPanStart: (details) => _startStroke(
-                          details.localPosition,
-                        ),
-                        onPanUpdate: (details) => _appendStroke(
-                          details.localPosition,
-                        ),
-                        child: CustomPaint(
-                          size: Size.infinite,
-                          painter: _SignaturePainter(strokes: _strokes),
+                    var width = constraints.maxWidth;
+                    var height = width / 3;
+                    if (height > constraints.maxHeight) {
+                      height = constraints.maxHeight;
+                      width = height * 3;
+                    }
+                    _canvasSize = Size(width, height);
+                    return Center(
+                      child: SizedBox(
+                        width: width,
+                        height: height,
+                        child: _SignaturePreviewPanel(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onPanStart: (details) => _startStroke(
+                              details.localPosition,
+                            ),
+                            onPanUpdate: (details) => _appendStroke(
+                              details.localPosition,
+                            ),
+                            child: CustomPaint(
+                              size: Size.infinite,
+                              painter: _SignaturePainter(strokes: _strokes),
+                            ),
+                          ),
                         ),
                       ),
                     );
@@ -346,33 +357,39 @@ class _SignaturePadDialogState extends State<_SignaturePadDialog> {
     if (_strokes.isEmpty) return null;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
+    final scaleX = _outputWidth / _canvasSize.width;
+    final scaleY = _outputHeight / _canvasSize.height;
+    final strokeScale = (scaleX + scaleY) / 2;
     final paint = Paint()
       ..color = Colors.black
-      ..strokeWidth = _strokeWidth
+      ..strokeWidth = _strokeWidth * strokeScale
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
     for (final stroke in _strokes) {
       if (stroke.length < 2) {
         if (stroke.isNotEmpty) {
+          final point = Offset(
+            stroke.first.dx * scaleX,
+            stroke.first.dy * scaleY,
+          );
           canvas.drawCircle(
-            stroke.first,
-            _strokeWidth * 0.75,
+            point,
+            (_strokeWidth * strokeScale) * 0.75,
             Paint()..color = Colors.black,
           );
         }
         continue;
       }
-      final path = Path()..moveTo(stroke.first.dx, stroke.first.dy);
+      final first = stroke.first;
+      final path = Path()..moveTo(first.dx * scaleX, first.dy * scaleY);
       for (var i = 1; i < stroke.length; i++) {
-        path.lineTo(stroke[i].dx, stroke[i].dy);
+        final point = stroke[i];
+        path.lineTo(point.dx * scaleX, point.dy * scaleY);
       }
       canvas.drawPath(path, paint);
     }
     final picture = recorder.endRecording();
-    final image = await picture.toImage(
-      _canvasSize.width.round().clamp(1, 4096),
-      _canvasSize.height.round().clamp(1, 4096),
-    );
+    final image = await picture.toImage(_outputWidth, _outputHeight);
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
     image.dispose();
     return data?.buffer.asUint8List();
