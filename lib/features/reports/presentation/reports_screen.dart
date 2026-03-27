@@ -2232,15 +2232,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             constraints.maxWidth < 900 || constraints.maxHeight < 700;
         final section = widget.section;
         final showTabbedLayout = section == null;
-        final totalsActive = showTabbedLayout
-            ? _tabController.index == 1
-            : section == ReportsPanelSection.totals;
-        final analysesActive = showTabbedLayout
-            ? _tabController.index == 2
-            : section == ReportsPanelSection.analizes;
-        final horizontalPadding = compact && (analysesActive || totalsActive)
-            ? 0.0
-            : (compact ? 8.0 : 16.0);
+        const horizontalPadding = 0.0;
         final verticalPadding = compact ? 8.0 : 16.0;
 
         return Padding(
@@ -2258,6 +2250,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                   controller: _tabController,
                   isScrollable: AppTabBarStyles.isScrollable,
                   tabAlignment: AppTabBarStyles.tabAlignment,
+                  padding: EdgeInsets.zero,
                   labelPadding: AppTabBarStyles.labelPadding,
                   tabs: [
                     Tab(text: l10n.reportsTabFlights),
@@ -2290,17 +2283,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                             customTimeLabels: customTimeLabels,
                             firstFlightDate: _firstFlightDate,
                             lastFlightDate: _lastFlightDate,
-                            includePreviousExperience:
-                                includePreviousExperience,
-                            onToggleIncludePreviousExperience: () =>
-                                _setIncludePreviousExperience(
-                                  !includePreviousExperience,
-                                ),
                           ),
                           _buildAnalizesSection(
                             compact: compact,
-                            includePreviousExperience:
-                                includePreviousExperience,
                           ),
                           _buildReportsSection(compact: compact),
                           _buildBatchSection(compact: compact),
@@ -2337,6 +2322,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         return _buildFiltersSection(
           eventTypes: eventTypes,
           savedQueries: savedQueries,
+          includePreviousExperience: includePreviousExperience,
         );
       case ReportsPanelSection.totals:
         return _TotalsCard(
@@ -2344,14 +2330,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           customTimeLabels: customTimeLabels,
           firstFlightDate: _firstFlightDate,
           lastFlightDate: _lastFlightDate,
-          includePreviousExperience: includePreviousExperience,
-          onToggleIncludePreviousExperience: () =>
-              _setIncludePreviousExperience(!includePreviousExperience),
         );
       case ReportsPanelSection.analizes:
         return _buildAnalizesSection(
           compact: compact,
-          includePreviousExperience: includePreviousExperience,
         );
       case ReportsPanelSection.reports:
         return _buildReportsSection(compact: compact);
@@ -2383,6 +2365,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         _buildFiltersSection(
           eventTypes: eventTypes,
           savedQueries: savedQueries,
+          includePreviousExperience: includePreviousExperience,
         ),
         const SizedBox(height: 10),
         Expanded(
@@ -2391,9 +2374,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             customTimeLabels: customTimeLabels,
             firstFlightDate: _firstFlightDate,
             lastFlightDate: _lastFlightDate,
-            includePreviousExperience: includePreviousExperience,
-            onToggleIncludePreviousExperience: () =>
-                _setIncludePreviousExperience(!includePreviousExperience),
           ),
         ),
         const SizedBox(height: 10),
@@ -2405,6 +2385,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   Widget _buildFiltersSection({
     required ReportsEventTypesSelection eventTypes,
     required List<SavedReportsQuery> savedQueries,
+    required bool includePreviousExperience,
   }) {
     return _FiltersCard(
       from: _from,
@@ -2416,6 +2397,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       savedQueries: savedQueries,
       filters: _filters,
       matchMode: _filterMatchMode,
+      includePreviousExperience: includePreviousExperience,
       onPresetChanged: _applyPreset,
       onPickStart: () => _pickDate(isStart: true),
       onPickEnd: () => _pickDate(isStart: false),
@@ -2427,6 +2409,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       onMatchModeChanged: _setMatchMode,
       onAddFilter: _addFilter,
       onRemoveFilter: _removeFilter,
+      onToggleIncludePreviousExperience: () {
+        unawaited(
+          _setIncludePreviousExperience(!includePreviousExperience),
+        );
+      },
       onSaveQuery: _saveCurrentQuery,
       onApplySavedQuery: _applySavedQuery,
       onDeleteSavedQuery: _deleteSavedQuery,
@@ -2450,14 +2437,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   Widget _buildAnalizesSection({
     required bool compact,
-    required bool includePreviousExperience,
   }) {
     final l10n = AppLocalizations.of(context)!;
-    final inlinePreviousExperienceButton =
-        MediaQuery.sizeOf(context).width >= 760;
-    final showPreviousExperienceToggle =
-        _analysisGroupBy == _AnalysisGroupBy.type ||
-        _analysisGroupBy == _AnalysisGroupBy.family;
     return Column(
       children: [
         Row(
@@ -2495,37 +2476,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 },
               ),
             ),
-            if (inlinePreviousExperienceButton &&
-                showPreviousExperienceToggle) ...[
-              const SizedBox(width: 8),
-              _previousExperienceToggle(
-                includePreviousExperience: includePreviousExperience,
-                onToggle: () {
-                  if (_loading) return;
-                  unawaited(
-                    _setIncludePreviousExperience(!includePreviousExperience),
-                  );
-                },
-              ),
-            ],
           ],
         ),
-        if (!inlinePreviousExperienceButton &&
-            showPreviousExperienceToggle) ...[
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _previousExperienceToggle(
-              includePreviousExperience: includePreviousExperience,
-              onToggle: () {
-                if (_loading) return;
-                unawaited(
-                  _setIncludePreviousExperience(!includePreviousExperience),
-                );
-              },
-            ),
-          ),
-        ],
         const SizedBox(height: 10),
         if (_analysisLoading) ...[
           const LinearProgressIndicator(),
@@ -2546,22 +2498,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         child: SingleChildScrollView(
           child: _buildReportsControls(compact: compact),
         ),
-      ),
-    );
-  }
-
-  Widget _previousExperienceToggle({
-    required bool includePreviousExperience,
-    required VoidCallback onToggle,
-    double width = 190,
-  }) {
-    final l10n = AppLocalizations.of(context)!;
-    return SizedBox(
-      width: width,
-      child: EventTypeToggleButton(
-        label: l10n.reportsPreviousExperienceLabel,
-        selected: includePreviousExperience,
-        onTap: onToggle,
       ),
     );
   }
@@ -5593,6 +5529,7 @@ class _FiltersCard extends StatelessWidget {
     required this.savedQueries,
     required this.filters,
     required this.matchMode,
+    required this.includePreviousExperience,
     required this.onPresetChanged,
     required this.onPickStart,
     required this.onPickEnd,
@@ -5602,6 +5539,7 @@ class _FiltersCard extends StatelessWidget {
     required this.onMatchModeChanged,
     required this.onAddFilter,
     required this.onRemoveFilter,
+    required this.onToggleIncludePreviousExperience,
     required this.onSaveQuery,
     required this.onApplySavedQuery,
     required this.onDeleteSavedQuery,
@@ -5616,6 +5554,7 @@ class _FiltersCard extends StatelessWidget {
   final List<SavedReportsQuery> savedQueries;
   final List<ReportsFilterCondition> filters;
   final ReportsFilterMatchMode matchMode;
+  final bool includePreviousExperience;
   final Future<void> Function(_ReportDateRangePreset preset) onPresetChanged;
   final VoidCallback onPickStart;
   final VoidCallback onPickEnd;
@@ -5625,6 +5564,7 @@ class _FiltersCard extends StatelessWidget {
   final Future<void> Function(ReportsFilterMatchMode mode) onMatchModeChanged;
   final Future<void> Function() onAddFilter;
   final Future<void> Function(int index) onRemoveFilter;
+  final VoidCallback onToggleIncludePreviousExperience;
   final Future<void> Function() onSaveQuery;
   final Future<void> Function(SavedReportsQuery query) onApplySavedQuery;
   final Future<void> Function(String id) onDeleteSavedQuery;
@@ -5748,6 +5688,18 @@ class _FiltersCard extends StatelessWidget {
                               ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                      width: compact ? 168 : 190,
+                      child: EventTypeToggleButton(
+                        label: l10n.reportsPreviousExperienceLabel,
+                        selected: includePreviousExperience,
+                        onTap: onToggleIncludePreviousExperience,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 10),
                   const Divider(height: 1),
@@ -5976,16 +5928,12 @@ class _TotalsCard extends StatelessWidget {
   const _TotalsCard({
     required this.totals,
     required this.customTimeLabels,
-    required this.includePreviousExperience,
-    required this.onToggleIncludePreviousExperience,
     this.firstFlightDate,
     this.lastFlightDate,
   });
 
   final ReportsTotals totals;
   final CustomTimeLabels customTimeLabels;
-  final bool includePreviousExperience;
-  final VoidCallback onToggleIncludePreviousExperience;
   final DateTime? firstFlightDate;
   final DateTime? lastFlightDate;
 
@@ -6063,15 +6011,6 @@ class _TotalsCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            SizedBox(
-                              width: 168,
-                              child: EventTypeToggleButton(
-                                label: l10n.reportsPreviousExperienceLabel,
-                                selected: includePreviousExperience,
-                                onTap: onToggleIncludePreviousExperience,
-                              ),
-                            ),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -6105,15 +6044,6 @@ class _TotalsCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodySmall,
                             textAlign: TextAlign.end,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 180,
-                          child: EventTypeToggleButton(
-                            label: l10n.reportsPreviousExperienceLabel,
-                            selected: includePreviousExperience,
-                            onTap: onToggleIncludePreviousExperience,
                           ),
                         ),
                       ],

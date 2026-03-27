@@ -86,7 +86,7 @@ class LegacySimpleLogDbImporter {
     try {
       return _importFromSource(source);
     } finally {
-      source.dispose();
+      source.close();
     }
   }
 

@@ -325,7 +325,6 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     final l10n = AppLocalizations.of(context)!;
     final runtimeQuery = ref.watch(reportsRuntimeQueryProvider);
     final eventTypes = ref.watch(reportsEventTypesProvider);
-    final isCompact = MediaQuery.sizeOf(context).width < 600;
     ref
       ..listen<ReportsRuntimeQueryState>(reportsRuntimeQueryProvider, (
         prev,
@@ -355,6 +354,13 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
         }
         unawaited(_loadNextPage(reset: true));
       })
+      ..listen<bool>(includePreviousExperienceProvider, (prev, next) {
+        if (prev == next) return;
+        if (_selectedTabIndex == 0 || !mounted) {
+          return;
+        }
+        setState(() => _reportsPanelVersion++);
+      })
       ..listen<LogbookFilters>(logbookFiltersProvider, (prev, next) {
         if (prev == next) return;
         if (_filtersDialogOpen) {
@@ -365,9 +371,6 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
           _reload(next),
         ); // keeps compatibility with existing providers/listeners
       });
-
-    final fullBleedReportsTabs =
-        isCompact && (_selectedTabIndex == 1 || _selectedTabIndex == 2);
 
     return Stack(
       children: [
@@ -395,10 +398,10 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
             ),
             Expanded(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  fullBleedReportsTabs ? 0 : 16,
+                padding: const EdgeInsets.fromLTRB(
+                  0,
                   8,
-                  fullBleedReportsTabs ? 0 : 16,
+                  0,
                   16,
                 ),
                 child: Column(
@@ -408,6 +411,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
                       controller: _tabController,
                       isScrollable: AppTabBarStyles.isScrollable,
                       tabAlignment: AppTabBarStyles.tabAlignment,
+                      padding: EdgeInsets.zero,
                       labelPadding: AppTabBarStyles.labelPadding,
                       tabs: [
                         Tab(text: l10n.reportsTabFlights),

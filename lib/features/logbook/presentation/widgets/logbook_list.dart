@@ -306,9 +306,9 @@ class _LogbookListState extends State<LogbookList> {
                     ).colorScheme.outlineVariant.withValues(alpha: 0.6),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(
-                      left: 12,
-                      right: 12,
+                    padding: EdgeInsets.only(
+                      left: item is LogbookDutyGroupItem ? 0 : 12,
+                      right: item is LogbookDutyGroupItem ? 0 : 12,
                       top: 6,
                       bottom: 6,
                     ),
@@ -494,6 +494,9 @@ class _LogbookDutyGroupCard extends StatelessWidget {
     final isLocked = group.isLocked;
 
     return Card(
+      margin: EdgeInsets.zero,
+      shape: const RoundedRectangleBorder(),
+      clipBehavior: Clip.antiAlias,
       elevation: 0.6,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
