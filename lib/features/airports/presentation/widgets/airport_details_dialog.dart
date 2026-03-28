@@ -4,6 +4,9 @@ import 'package:latlong2/latlong.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/maps/map_tile_caching.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart'
+    show isCompactDialogScreen;
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/airport_extensions.dart';
 import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
@@ -17,68 +20,70 @@ Future<void> showAirportDetailsDialog(
   required LogbookUseCases logbookUseCases,
 }) async {
   final l10n = AppLocalizations.of(context)!;
-  await showDialog<void>(
-    context: context,
-    builder: (context) => Dialog(
-      child: SizedBox(
-        width: 480,
-        height: MediaQuery.of(context).size.height * 0.75,
+  final navigator = Navigator.of(context, rootNavigator: true);
+  Future<void> present(WidgetBuilder builder) async {
+    if (isCompactDialogScreen(context)) {
+      await navigator.push(MaterialPageRoute<void>(builder: builder));
+      return;
+    }
+    await showDialog<void>(context: context, builder: builder);
+  }
+
+  await present(
+    (dialogContext) {
+      final content = Padding(
+        padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            _buildDialogHeaderTile(
-              title: l10n.screenAirports,
-              buttonLabel: l10n.okAction,
-              onPressed: () => AppNavigator.pop(context),
+            _AirportHeader(
+              airport: airport,
+              onOpenMap: () => _showAirportExpandedMapDialog(
+                dialogContext,
+                LatLng(airport.latitude, airport.longitude),
+              ),
             ),
-            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                l10n.screenLogbook,
+                style: Theme.of(dialogContext).textTheme.titleSmall,
+              ),
+            ),
+            const SizedBox(height: 8),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    _AirportHeader(
-                      airport: airport,
-                      onOpenMap: () => _showAirportExpandedMapDialog(
-                        context,
-                        LatLng(airport.latitude, airport.longitude),
-                      ),
+              child: LogbookEntriesLazyPanel(
+                pageLoader: (limit, offset) =>
+                    logbookUseCases.fetchEntriesForAirportPage(
+                      airport.id,
+                      limit: limit,
+                      offset: offset,
                     ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        l10n.screenLogbook,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: LogbookEntriesLazyPanel(
-                        pageLoader: (limit, offset) =>
-                            logbookUseCases.fetchEntriesForAirportPage(
-                              airport.id,
-                              limit: limit,
-                              offset: offset,
-                            ),
-                        summaryLoader: () =>
-                            logbookUseCases.fetchFlightSummaryForAirport(
-                              airport.id,
-                            ),
-                        onEntryTap: (entry) => LogbookEntryDialogs.show(
-                          context,
-                          entry: entry,
-                          useCases: logbookUseCases,
-                        ),
-                      ),
-                    ),
-                  ],
+                summaryLoader: () =>
+                    logbookUseCases.fetchFlightSummaryForAirport(airport.id),
+                onEntryTap: (entry) => LogbookEntryDialogs.show(
+                  context,
+                  entry: entry,
+                  useCases: logbookUseCases,
                 ),
               ),
             ),
           ],
         ),
-      ),
-    ),
+      );
+      final contentView = isCompactDialogScreen(dialogContext)
+          ? content
+          : SizedBox(
+              height: MediaQuery.of(dialogContext).size.height * 0.75,
+              child: content,
+            );
+      return AdaptiveFormShell(
+        onClose: () => AppNavigator.pop(dialogContext),
+        title: l10n.screenAirports,
+        popupMaxWidth: 480,
+        contentView: contentView,
+      );
+    },
   );
 }
 

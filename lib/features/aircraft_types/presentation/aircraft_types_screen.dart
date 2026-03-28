@@ -3,13 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart'
+    show isCompactDialogScreen;
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/features/aircraft_types/application/providers/aircraft_types_feature_providers.dart';
 import 'package:simplelog/features/aircraft_types/presentation/aircraft_type_edit_screen.dart';
+import 'package:simplelog/features/aircraft_types/presentation/widgets/aircraft_type_details_dialog.dart';
 import 'package:simplelog/features/aircraft_types/presentation/widgets/aircraft_type_search_bar.dart';
 import 'package:simplelog/features/aircraft_types/presentation/widgets/aircraft_types_list.dart';
 import 'package:simplelog/features/aircraft_types/presentation/widgets/family_group.dart';
@@ -143,62 +147,15 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
   }
 
   Future<void> _showAircraftTypeDetails(AircraftTypeRow row) async {
-    final l10n = AppLocalizations.of(context)!;
     final logbookUseCases = ref.read(logbookUseCasesProvider);
-
-    await showDialog<void>(
-      context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 500,
-          height: MediaQuery.of(context).size.height * 0.8,
-          child: Column(
-            children: [
-              _buildDetailsHeaderTile(
-                title: row.code,
-                subtitle: row.type.longName.trim().isEmpty
-                    ? 'Aircraft Type'
-                    : row.type.longName.trim(),
-                onDone: () => AppNavigator.pop(context),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.screenLogbook,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: LogbookEntriesLazyPanel(
-                          pageLoader: (limit, offset) =>
-                              logbookUseCases.fetchEntriesForAircraftTypePage(
-                                row.type.id,
-                                limit: limit,
-                                offset: offset,
-                              ),
-                          summaryLoader: () =>
-                              logbookUseCases.fetchFlightSummaryForAircraftType(
-                                row.type.id,
-                              ),
-                          onEntryTap: (entry) => LogbookEntryDialogs.show(
-                            context,
-                            entry: entry,
-                            useCases: logbookUseCases,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+    await showAircraftTypeDetailsDialog(
+      context,
+      row: row,
+      logbookUseCases: logbookUseCases,
+      onEntryTap: (entry) => LogbookEntryDialogs.show(
+        context,
+        entry: entry,
+        useCases: logbookUseCases,
       ),
     );
   }
@@ -209,45 +166,50 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
         .map((row) => row.type.id)
         .toSet()
         .toList(growable: false);
+    final navigator = Navigator.of(context, rootNavigator: true);
+    Future<void> present(WidgetBuilder builder) async {
+      if (isCompactDialogScreen(context)) {
+        await navigator.push(MaterialPageRoute<void>(builder: builder));
+        return;
+      }
+      await showDialog<void>(context: context, builder: builder);
+    }
 
-    await showDialog<void>(
-      context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 500,
-          height: MediaQuery.of(context).size.height * 0.8,
-          child: Column(
-            children: [
-              _buildDetailsHeaderTile(
-                title: 'Family: ${group.family}',
-                subtitle: 'Flights',
-                onDone: () => AppNavigator.pop(context),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: LogbookEntriesLazyPanel(
-                    pageLoader: (limit, offset) =>
-                        logbookUseCases.fetchEntriesForAircraftTypeFamilyPage(
-                          typeIds,
-                          limit: limit,
-                          offset: offset,
-                        ),
-                    summaryLoader: () => logbookUseCases
-                        .fetchFlightSummaryForAircraftTypeFamily(typeIds),
-                    onEntryTap: (entry) => LogbookEntryDialogs.show(
-                      context,
-                      entry: entry,
-                      useCases: logbookUseCases,
-                    ),
-                  ),
+    await present(
+      (dialogContext) {
+        final content = Padding(
+          padding: const EdgeInsets.all(12),
+          child: LogbookEntriesLazyPanel(
+            pageLoader: (limit, offset) =>
+                logbookUseCases.fetchEntriesForAircraftTypeFamilyPage(
+                  typeIds,
+                  limit: limit,
+                  offset: offset,
                 ),
-              ),
-            ],
+            summaryLoader: () =>
+                logbookUseCases.fetchFlightSummaryForAircraftTypeFamily(
+                  typeIds,
+                ),
+            onEntryTap: (entry) => LogbookEntryDialogs.show(
+              context,
+              entry: entry,
+              useCases: logbookUseCases,
+            ),
           ),
-        ),
-      ),
+        );
+        final contentView = isCompactDialogScreen(dialogContext)
+            ? content
+            : SizedBox(
+                height: MediaQuery.of(dialogContext).size.height * 0.8,
+                child: content,
+              );
+        return AdaptiveFormShell(
+          onClose: () => AppNavigator.pop(dialogContext),
+          title: 'Family: ${group.family}',
+          popupMaxWidth: 500,
+          contentView: contentView,
+        );
+      },
     );
   }
 
@@ -279,21 +241,6 @@ class _AircraftTypesScreenState extends ConsumerState<AircraftTypesScreen> {
     flush();
 
     return groups;
-  }
-
-  Widget _buildDetailsHeaderTile({
-    required String title,
-    required String subtitle,
-    required VoidCallback onDone,
-  }) {
-    return ListTile(
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: TextButton(
-        onPressed: onDone,
-        child: Text(AppLocalizations.of(context)!.reportsDone),
-      ),
-    );
   }
 
   @override

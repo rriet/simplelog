@@ -28,7 +28,7 @@ import 'package:simplelog/data/database/tables/user_profiles_table.dart';
 part 'app_database.g.dart';
 
 /// Drift database base file name.
-const appDatabaseFileName = 'simplelog_v1';
+const appDatabaseFileName = 'simplelog_v0';
 
 @DriftDatabase(
   tables: [
@@ -56,29 +56,10 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: appDatabaseFileName));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 1;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onUpgrade: (migrator, from, to) async {
-      await customStatement('PRAGMA foreign_keys = ON');
-      if (from < 2) {
-        await migrator.addColumn(flights, flights.endorsementData);
-        await migrator.addColumn(flights, flights.endorsementHash);
-        await migrator.addColumn(
-          simulatorTrainings,
-          simulatorTrainings.endorsementData,
-        );
-        await migrator.addColumn(
-          simulatorTrainings,
-          simulatorTrainings.endorsementHash,
-        );
-      }
-      if (from < 3) {
-        await _createLockWriteBypassTableIfNeeded();
-        await _installLockProtectionTriggers();
-      }
-    },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
       await _createLockWriteBypassTableIfNeeded();

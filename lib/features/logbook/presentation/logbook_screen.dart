@@ -428,7 +428,52 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
                       const LinearProgressIndicator(),
                     ],
                     const SizedBox(height: 8),
-                    Expanded(child: _buildSelectedTab()),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          LogbookList(
+                            controller: _scrollController,
+                            items: _buildDisplayItems(_entries),
+                            onOpenEntry: _openEntry,
+                            onEditEntry: _editEntry,
+                            onDeleteEntry: _deleteEntry,
+                            onToggleLockEntry: _toggleEntryLock,
+                            onEditDuty: _editDuty,
+                            onDeleteDuty: _deleteDuty,
+                            onToggleLockDuty: _toggleDutyLock,
+                            onYearChange: (year) {
+                              if (!mounted || _currentYear == year) return;
+                              setState(() => _currentYear = year);
+                            },
+                          ),
+                          ReportsScreen(
+                            key: ValueKey(
+                              'logbook_reports_totals_$_reportsPanelVersion',
+                            ),
+                            section: ReportsPanelSection.totals,
+                          ),
+                          ReportsScreen(
+                            key: ValueKey(
+                              'logbook_reports_analyses_$_reportsPanelVersion',
+                            ),
+                            section: ReportsPanelSection.analizes,
+                          ),
+                          ReportsScreen(
+                            key: ValueKey(
+                              'logbook_reports_reports_$_reportsPanelVersion',
+                            ),
+                            section: ReportsPanelSection.reports,
+                          ),
+                          ReportsScreen(
+                            key: ValueKey(
+                              'logbook_reports_batch_$_reportsPanelVersion',
+                            ),
+                            section: ReportsPanelSection.batch,
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -456,39 +501,6 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
             ),
           ),
       ],
-    );
-  }
-
-  Widget _buildSelectedTab() {
-    if (_selectedTabIndex == 0) {
-      return LogbookList(
-        controller: _scrollController,
-        items: _buildDisplayItems(_entries),
-        onOpenEntry: _openEntry,
-        onEditEntry: _editEntry,
-        onDeleteEntry: _deleteEntry,
-        onToggleLockEntry: _toggleEntryLock,
-        onEditDuty: _editDuty,
-        onDeleteDuty: _deleteDuty,
-        onToggleLockDuty: _toggleDutyLock,
-        onYearChange: (year) {
-          if (!mounted || _currentYear == year) return;
-          setState(() => _currentYear = year);
-        },
-      );
-    }
-
-    final section = switch (_selectedTabIndex) {
-      1 => ReportsPanelSection.totals,
-      2 => ReportsPanelSection.analizes,
-      3 => ReportsPanelSection.reports,
-      4 => ReportsPanelSection.batch,
-      _ => ReportsPanelSection.overview,
-    };
-
-    return ReportsScreen(
-      key: ValueKey('logbook_reports_panel_$_reportsPanelVersion'),
-      section: section,
     );
   }
 

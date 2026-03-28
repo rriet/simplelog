@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart'
+    show isCompactDialogScreen;
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
@@ -14,6 +17,20 @@ import 'package:simplelog/features/dashboard/domain/dashboard_models.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_repository_provider.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_year_list.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
+
+Future<T?> _showAdaptiveDashboardDialog<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+}) async {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  if (isCompactDialogScreen(context)) {
+    return navigator.push<T>(MaterialPageRoute(builder: builder));
+  }
+  return showDialog<T>(
+    context: context,
+    builder: builder,
+  );
+}
 
 /// High-level overview with recent flight and duty limits visualized in cards.
 class DashboardScreen extends ConsumerWidget {
@@ -32,7 +49,7 @@ class DashboardScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () => unawaited(
-              showDialog<void>(
+              _showAdaptiveDashboardDialog<void>(
                 context: context,
                 builder: (_) => const _DashboardSetupDialog(),
               ),
@@ -118,7 +135,7 @@ class _RuleCard extends ConsumerWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => unawaited(
-          showDialog<void>(
+          _showAdaptiveDashboardDialog<void>(
             context: context,
             builder: (_) => _RuleDetailsDialog(
               ruleName: card.rule.ruleName,
@@ -248,109 +265,86 @@ class _RuleDetailsDialog extends ConsumerWidget {
       offset: 0,
     );
 
-    final compact = MediaQuery.of(context).size.width < 700;
-
-    final Widget content = Column(
-      children: [
-        ListTile(
-          title: Text(ruleName),
-          subtitle: Text(l10n.dashboardRuleTotals),
-          trailing: IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => AppNavigator.pop(context),
-          ),
-        ),
-        const Divider(height: 1),
-        Expanded(
-          child: FutureBuilder<DashboardRuleDetails>(
-            future: dataFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text('${l10n.errorLabel}: ${snapshot.error}'),
-                );
-              }
-              final details = snapshot.data;
-              if (details == null) {
-                return Center(child: Text(l10n.dashboardNoData));
-              }
-              final dateFormat = DateFormat("dd MMM yyyy HH:mm 'UTC'");
-              return Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${dateFormat.format(details.windowStart.toUtc())} - '
-                      '${dateFormat.format(details.windowEnd.toUtc())}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 12),
-                    _TotalsSection(totals: details.totals),
-                    const SizedBox(height: 14),
-                    Text(
-                      l10n.dashboardEventsInCalculation,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: FutureBuilder<List<LogbookEntry>>(
-                        future: entriesFuture,
-                        builder: (context, entriesSnapshot) {
-                          if (entriesSnapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                          final entries =
-                              entriesSnapshot.data ?? const <LogbookEntry>[];
-                          final filtered = _filterEntriesForRuleType(
-                            entries,
-                            ruleMetric: ruleMetric,
-                          );
-                          if (filtered.isEmpty) {
-                            return Center(
-                              child: Text(l10n.dashboardNoEventsInWindow),
-                            );
-                          }
-                          return LogbookEntriesYearList(
-                            entries: filtered,
-                            onEntryTap: (entry) => LogbookEntryDialogs.show(
-                              context,
-                              entry: entry,
-                              useCases: logbookUseCases,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+    final contentView = SizedBox(
+      height: MediaQuery.of(context).size.height * 0.86,
+      child: FutureBuilder<DashboardRuleDetails>(
+        future: dataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('${l10n.errorLabel}: ${snapshot.error}'),
+            );
+          }
+          final details = snapshot.data;
+          if (details == null) {
+            return Center(child: Text(l10n.dashboardNoData));
+          }
+          final dateFormat = DateFormat("dd MMM yyyy HH:mm 'UTC'");
+          return Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${dateFormat.format(details.windowStart.toUtc())} - '
+                  '${dateFormat.format(details.windowEnd.toUtc())}',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-              );
-            },
-          ),
-        ),
-      ],
+                const SizedBox(height: 12),
+                _TotalsSection(totals: details.totals),
+                const SizedBox(height: 14),
+                Text(
+                  l10n.dashboardEventsInCalculation,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: FutureBuilder<List<LogbookEntry>>(
+                    future: entriesFuture,
+                    builder: (context, entriesSnapshot) {
+                      if (entriesSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                      final entries =
+                          entriesSnapshot.data ?? const <LogbookEntry>[];
+                      final filtered = _filterEntriesForRuleType(
+                        entries,
+                        ruleMetric: ruleMetric,
+                      );
+                      if (filtered.isEmpty) {
+                        return Center(
+                          child: Text(l10n.dashboardNoEventsInWindow),
+                        );
+                      }
+                      return LogbookEntriesYearList(
+                        entries: filtered,
+                        onEntryTap: (entry) => LogbookEntryDialogs.show(
+                          context,
+                          entry: entry,
+                          useCases: logbookUseCases,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
 
-    if (compact) {
-      return Scaffold(body: SafeArea(child: content));
-    }
-
-    return Dialog(
-      child: SizedBox(
-        width: 900,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.86,
-          ),
-          child: content,
-        ),
-      ),
+    return AdaptiveFormShell(
+      onClose: () => AppNavigator.pop(context),
+      title: ruleName,
+      popupMaxWidth: 900,
+      contentView: contentView,
     );
   }
 
@@ -581,88 +575,72 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final rulesAsync = ref.watch(dashboardRulesProvider);
-    return Dialog(
-      child: SizedBox(
-        width: 700,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          child: Column(
-            children: [
-              ListTile(
-                title: Text(l10n.dashboardSetupTitle),
-                trailing: IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => AppNavigator.pop(context),
-                ),
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    FilledButton.icon(
-                      onPressed: () => _showRuleDialog(context),
-                      icon: const Icon(Icons.add_chart_outlined),
-                      label: Text(l10n.dashboardAddRule),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: rulesAsync.when(
-                  data: (rules) {
-                    if (rules.isEmpty) {
-                      return Center(
-                        child: Text(l10n.dashboardNoRulesConfigured),
-                      );
-                    }
-                    return ListView.separated(
-                      itemCount: rules.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final rule = rules[index];
-                        final windowLabel = _windowLabel(
-                          rule.windowType,
-                          rule.windowValue,
-                        );
-                        return ListTile(
-                          title: Text(rule.ruleName),
-                          subtitle: Text(
-                            '${rule.ruleType} • ${rule.metric} • '
-                            '$windowLabel',
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined),
-                                onPressed: () => _showRuleDialog(
-                                  context,
-                                  existing: rule,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                onPressed: () => ref
-                                    .read(dashboardRepositoryProvider)
-                                    .deleteRule(rule.ruleId),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+    return AdaptiveFormShell(
+      onClose: () => AppNavigator.pop(context),
+      title: l10n.dashboardSetupTitle,
+      popupMaxWidth: 700,
+      actions: [
+        TextButton.icon(
+          onPressed: () => _showRuleDialog(context),
+          icon: const Icon(Icons.add_chart_outlined),
+          label: Text(l10n.dashboardAddRule),
+        ),
+      ],
+      contentView: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.85,
+        child: Column(
+          children: [
+            Expanded(
+              child: rulesAsync.when(
+                data: (rules) {
+                  if (rules.isEmpty) {
+                    return Center(
+                      child: Text(l10n.dashboardNoRulesConfigured),
                     );
-                  },
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (error, _) =>
-                      Center(child: Text('${l10n.errorLabel}: $error')),
-                ),
+                  }
+                  return ListView.separated(
+                    itemCount: rules.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final rule = rules[index];
+                      final windowLabel = _windowLabel(
+                        rule.windowType,
+                        rule.windowValue,
+                      );
+                      return ListTile(
+                        title: Text(rule.ruleName),
+                        subtitle: Text(
+                          '${rule.ruleType} • ${rule.metric} • '
+                          '$windowLabel',
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined),
+                              onPressed: () => _showRuleDialog(
+                                context,
+                                existing: rule,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () => ref
+                                  .read(dashboardRepositoryProvider)
+                                  .deleteRule(rule.ruleId),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) =>
+                    Center(child: Text('${l10n.errorLabel}: $error')),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -701,17 +679,26 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
     if (!context.mounted) return;
 
     try {
-      final created = await showDialog<bool>(
+      final created = await _showAdaptiveDashboardDialog<bool>(
         context: context,
         builder: (context) {
           return StatefulBuilder(
-            builder: (context, setState) => AlertDialog(
-              title: Text(
-                isEditing
-                    ? l10n.dashboardEditRuleTitle
-                    : l10n.dashboardCreateRuleTitle,
-              ),
-              content: SingleChildScrollView(
+            builder: (context, setState) => AdaptiveFormShell(
+              onClose: () => AppNavigator.pop(context, false),
+              title: isEditing
+                  ? l10n.dashboardEditRuleTitle
+                  : l10n.dashboardCreateRuleTitle,
+              popupMaxWidth: 560,
+              actions: [
+                TextButton(
+                  onPressed: () => AppNavigator.pop(context, true),
+                  child: Text(
+                    isEditing ? l10n.saveAction : l10n.dashboardCreateAction,
+                  ),
+                ),
+              ],
+              contentView: SingleChildScrollView(
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -946,18 +933,6 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => AppNavigator.pop(context, false),
-                  child: Text(l10n.cancelAction),
-                ),
-                FilledButton(
-                  onPressed: () => AppNavigator.pop(context, true),
-                  child: Text(
-                    isEditing ? l10n.saveAction : l10n.dashboardCreateAction,
-                  ),
-                ),
-              ],
             ),
           );
         },

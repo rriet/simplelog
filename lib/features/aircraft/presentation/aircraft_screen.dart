@@ -10,10 +10,10 @@ import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/features/aircraft/application/providers/aircraft_feature_providers.dart';
 import 'package:simplelog/features/aircraft/presentation/aircraft_edit_screen.dart';
+import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_details_dialog.dart';
 import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_list.dart';
 import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_search_bar.dart';
 import 'package:simplelog/features/logbook/application/providers/logbook_feature_providers.dart';
-import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_lazy_panel.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:simplelog/state/controllers/validation_result.dart';
 
@@ -106,66 +106,15 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
   }
 
   Future<void> _showAircraftDetails(AircraftRow row) async {
-    final l10n = AppLocalizations.of(context)!;
     final logbookUseCases = ref.read(logbookUseCasesProvider);
-
-    await showDialog<void>(
-      context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 480,
-          height: MediaQuery.of(context).size.height * 0.75,
-          child: Column(
-            children: [
-              ListTile(
-                title: Text(l10n.screenAircraft),
-                trailing: TextButton(
-                  onPressed: () => AppNavigator.pop(context),
-                  child: Text(l10n.okAction),
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      _AircraftHeader(row: row),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          l10n.screenLogbook,
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: LogbookEntriesLazyPanel(
-                          pageLoader: (limit, offset) =>
-                              logbookUseCases.fetchEntriesForAircraftPage(
-                                row.aircraft.id,
-                                limit: limit,
-                                offset: offset,
-                              ),
-                          summaryLoader: () =>
-                              logbookUseCases.fetchFlightSummaryForAircraft(
-                                row.aircraft.id,
-                              ),
-                          onEntryTap: (entry) => LogbookEntryDialogs.show(
-                            context,
-                            entry: entry,
-                            useCases: logbookUseCases,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+    await showAircraftDetailsDialog(
+      context,
+      row: row,
+      logbookUseCases: logbookUseCases,
+      onEntryTap: (entry) => LogbookEntryDialogs.show(
+        context,
+        entry: entry,
+        useCases: logbookUseCases,
       ),
     );
   }
@@ -369,63 +318,6 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
     }
 
     return source.where(matches).toList(growable: false);
-  }
-}
-
-class _AircraftHeader extends StatelessWidget {
-  const _AircraftHeader({required this.row});
-
-  final AircraftRow row;
-
-  @override
-  Widget build(BuildContext context) {
-    final typeLabel = [
-      if (row.type?.code != null && row.type!.code.trim().isNotEmpty)
-        row.type!.code,
-      if (row.type?.longName != null && row.type!.longName.trim().isNotEmpty)
-        row.type!.longName,
-    ].join(' • ');
-    final subtitle = [
-      if (typeLabel.isNotEmpty) typeLabel,
-      if (row.aircraft.isSimulator)
-        AppLocalizations.of(context)!.fieldIsSimulator,
-    ].join(' • ');
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              row.aircraft.isSimulator
-                  ? Icons.videogame_asset_outlined
-                  : Icons.airplanemode_active_outlined,
-              size: 18,
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                row.registration,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
-          ],
-        ),
-        if (subtitle.isNotEmpty)
-          Text(
-            subtitle,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        if (row.aircraft.notes != null && row.aircraft.notes!.trim().isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              row.aircraft.notes!,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-      ],
-    );
   }
 }
 

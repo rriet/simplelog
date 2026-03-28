@@ -1078,7 +1078,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardLandingsLabel => 'Landings';
 
   @override
-  String get dashboardSetupTitle => 'Dashboard setup';
+  String get dashboardSetupTitle => 'Setup';
 
   @override
   String get dashboardAddRule => 'Add rule';

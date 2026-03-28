@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart'
+    show isCompactDialogScreen;
 import 'package:simplelog/data/models/crew_extensions.dart';
 import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
@@ -12,6 +15,21 @@ import 'package:url_launcher/url_launcher.dart';
 /// Displays crew details with quick contact actions and related logbook items.
 class CrewInfoDialog {
   const CrewInfoDialog._();
+
+  static Future<void> _showAdaptiveInfoShell(
+    BuildContext context, {
+    required WidgetBuilder builder,
+  }) async {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    if (isCompactDialogScreen(context)) {
+      await navigator.push(MaterialPageRoute<void>(builder: builder));
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: builder,
+    );
+  }
 
   /// Opens the crew information dialog for the selected [row].
   static Future<void> show(
@@ -25,99 +43,93 @@ class CrewInfoDialog {
     final email = (row.crew.email ?? '').trim();
     final notes = (row.crew.notes ?? '').trim();
 
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => Dialog(
-        child: SizedBox(
-          width: 420,
-          height: MediaQuery.of(context).size.height * 0.75,
+    await _showAdaptiveInfoShell(
+      context,
+      builder: (dialogContext) {
+        final content = Padding(
+          padding: const EdgeInsets.all(12),
           child: Column(
             children: [
-              ListTile(
-                title: Text(AppLocalizations.of(context)!.screenCrew),
-                trailing: TextButton(
-                  onPressed: () => AppNavigator.pop(dialogContext),
-                  child: Text(AppLocalizations.of(context)!.reportsDone),
+              _CrewDetailHeader(
+                row: row,
+                phoneDisplay: phoneDisplay,
+                email: email,
+                onPhoneTap: phone.isEmpty
+                    ? null
+                    : () => _showContactMenu(
+                        dialogContext,
+                        phone: phone,
+                        email: '',
+                      ),
+                onEmailTap: email.isEmpty
+                    ? null
+                    : () => _showContactMenu(
+                        dialogContext,
+                        phone: '',
+                        email: email,
+                      ),
+                onPhotoTap: () => _showLargePhoto(dialogContext, row),
+              ),
+              const SizedBox(height: 12),
+              if (notes.isNotEmpty) ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l10n.fieldNotes,
+                    style: Theme.of(dialogContext).textTheme.titleSmall,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    notes,
+                    style: Theme.of(dialogContext).textTheme.bodyMedium,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  l10n.screenLogbook,
+                  style: Theme.of(dialogContext).textTheme.titleSmall,
                 ),
               ),
-              const Divider(height: 1),
+              const SizedBox(height: 8),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      _CrewDetailHeader(
-                        row: row,
-                        phoneDisplay: phoneDisplay,
-                        email: email,
-                        onPhoneTap: phone.isEmpty
-                            ? null
-                            : () => _showContactMenu(
-                                dialogContext,
-                                phone: phone,
-                                email: '',
-                              ),
-                        onEmailTap: email.isEmpty
-                            ? null
-                            : () => _showContactMenu(
-                                dialogContext,
-                                phone: '',
-                                email: email,
-                              ),
-                        onPhotoTap: () => _showLargePhoto(dialogContext, row),
+                child: LogbookEntriesLazyPanel(
+                  pageLoader: (limit, offset) =>
+                      useCases.fetchEntriesForCrewPage(
+                        row.crew.id,
+                        limit: limit,
+                        offset: offset,
                       ),
-                      const SizedBox(height: 12),
-                      if (notes.isNotEmpty) ...[
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            l10n.fieldNotes,
-                            style: Theme.of(dialogContext).textTheme.titleSmall,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            notes,
-                            style: Theme.of(dialogContext).textTheme.bodyMedium,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          l10n.screenLogbook,
-                          style: Theme.of(dialogContext).textTheme.titleSmall,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: LogbookEntriesLazyPanel(
-                          pageLoader: (limit, offset) =>
-                              useCases.fetchEntriesForCrewPage(
-                                row.crew.id,
-                                limit: limit,
-                                offset: offset,
-                              ),
-                          summaryLoader: () =>
-                              useCases.fetchFlightSummaryForCrew(row.crew.id),
-                          onEntryTap: (entry) => LogbookEntryDialogs.show(
-                            context,
-                            entry: entry,
-                            useCases: useCases,
-                          ),
-                        ),
-                      ),
-                    ],
+                  summaryLoader: () =>
+                      useCases.fetchFlightSummaryForCrew(row.crew.id),
+                  onEntryTap: (entry) => LogbookEntryDialogs.show(
+                    context,
+                    entry: entry,
+                    useCases: useCases,
                   ),
                 ),
               ),
             ],
           ),
-        ),
-      ),
+        );
+        final contentView = isCompactDialogScreen(dialogContext)
+            ? content
+            : SizedBox(
+                height: MediaQuery.of(dialogContext).size.height * 0.75,
+                child: content,
+              );
+        return AdaptiveFormShell(
+          onClose: () => AppNavigator.pop(dialogContext),
+          title: l10n.screenCrew,
+          popupMaxWidth: 420,
+          contentView: contentView,
+        );
+      },
     );
   }
 

@@ -468,7 +468,7 @@
   "dashboardInstrumentLabel": "Instrument",
   "dashboardDutyLabel": "Duty",
   "dashboardLandingsLabel": "Landings",
-  "dashboardSetupTitle": "Dashboard setup",
+  "dashboardSetupTitle": "Setup",
   "dashboardAddRule": "Add rule",
   "dashboardNoRulesConfigured": "No rules configured.",
   "dashboardEditRuleTitle": "Edit rule",

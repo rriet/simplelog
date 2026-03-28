@@ -2161,7 +2161,7 @@ abstract class AppLocalizations {
   /// No description provided for @dashboardSetupTitle.
   ///
   /// In en, this message translates to:
-  /// **'Dashboard setup'**
+  /// **'Setup'**
   String get dashboardSetupTitle;
 
   /// No description provided for @dashboardAddRule.

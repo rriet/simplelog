@@ -2,18 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart'
+    show isCompactDialogScreen;
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/models/aircraft_row.dart';
+import 'package:simplelog/data/models/aircraft_type_row.dart';
 import 'package:simplelog/data/models/crew_info_item.dart';
 import 'package:simplelog/data/models/crew_row.dart';
 import 'package:simplelog/data/models/endorsement_data.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/domain/usecases/logbook_use_cases.dart';
+import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_details_dialog.dart';
+import 'package:simplelog/features/aircraft_types/presentation/widgets/aircraft_type_details_dialog.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_details_dialog.dart';
 import 'package:simplelog/features/crew/presentation/widgets/crew_info_dialog.dart';
 
 /// Helper entry-point for displaying event detail dialogs from the logbook.
 class LogbookEntryDialogs {
   const LogbookEntryDialogs._();
+
+  static Future<void> _showEntryInfoShell(
+    BuildContext context, {
+    required WidgetBuilder builder,
+  }) async {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    if (isCompactDialogScreen(context)) {
+      await navigator.push(MaterialPageRoute<void>(builder: builder));
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: builder,
+    );
+  }
 
   /// Opens the appropriate info dialog for the provided [entry].
   static Future<void> show(
@@ -103,22 +125,16 @@ class LogbookEntryDialogs {
       _asUtc(depDateTime),
     );
 
-    await showDialog<void>(
-      context: context,
+    await _showEntryInfoShell(
+      context,
       builder: (dialogContext) {
         return _EntryInfoDialogShell(
+          title: l10n.logbookEventPositioning,
           maxWidth: 520,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _EntryDialogHeader(
-                icon: Icons.airplane_ticket_outlined,
-                title: l10n.logbookEventPositioning,
-                okLabel: l10n.okAction,
-                onClose: () => AppNavigator.pop(dialogContext),
-              ),
-              const SizedBox(height: 16),
               _PositioningInfoCard(
                 child: _LabeledTwoColumnInfoCard(
                   leftLabel: 'Date',
@@ -213,147 +229,159 @@ class LogbookEntryDialogs {
     ].where((item) => item.$2 > 0).toList();
 
     if (!context.mounted) return;
-    await showDialog<void>(
-      context: context,
+    await _showEntryInfoShell(
+      context,
       builder: (dialogContext) {
         final theme = Theme.of(dialogContext);
         final colorScheme = theme.colorScheme;
         return _EntryInfoDialogShell(
+          title: l10n.logbookEventFlight,
           maxWidth: 620,
           maxHeight: 760,
           scrollable: true,
+          actions: hasEndorsement
+              ? [
+                  IconButton(
+                    tooltip: AppLocalizations.of(context)!.autoUi053,
+                    onPressed: () => _showEndorsementInfo(
+                      context,
+                      endorsement!,
+                      isHashValid: isHashValid,
+                    ),
+                    icon: _EndorsementStatusIcon(
+                      isValid: isHashValid,
+                      colorScheme: colorScheme,
+                    ),
+                  ),
+                ]
+              : const <Widget>[],
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _endorsementHeader(
-                context: dialogContext,
-                icon: Icons.flight_takeoff,
-                title: l10n.logbookEventFlight,
-                okLabel: l10n.okAction,
-                colorScheme: colorScheme,
-                hasEndorsement: hasEndorsement,
-                endorsement: endorsement,
-                isHashValid: isHashValid,
+              _LabeledTwoColumnInfoCard(
+                leftLabel: 'Date',
+                leftValue: dateLabel,
+                rightLabel: AppLocalizations.of(context)!.searchFieldType,
+                rightValue: typeName,
+                rightOnTap: entry.aircraftType == null
+                    ? null
+                    : () => _showAircraftTypeInfo(
+                        dialogContext,
+                        entry.aircraftType!,
+                        useCases,
+                      ),
               ),
-              const SizedBox(height: 16),
-              _PositioningInfoCard(
-                child: Column(
-                  children: [
-                    _LabeledTwoColumnInfoCard(
-                      leftLabel: 'Date',
-                      leftValue: dateLabel,
-                      rightLabel: 'Aircraft',
-                      rightValue: typeName,
-                    ),
-                    const SizedBox(height: 10),
-                    _LabeledTwoColumnInfoCard(
-                      leftLabel: 'Function',
-                      leftValue: pfpm ?? '-',
-                      rightLabel: 'Tail',
-                      rightValue: tail,
-                    ),
-                    const SizedBox(height: 10),
-                    _FromToInfoRow(
-                      leftValue: dep,
-                      rightValue: arr,
-                      leftOnTap: depAirport == null
-                          ? null
-                          : () => _showAirportInfo(
-                              dialogContext,
-                              depAirport,
-                              useCases,
-                            ),
-                      rightOnTap: arrAirport == null
-                          ? null
-                          : () => _showAirportInfo(
-                              dialogContext,
-                              arrAirport,
-                              useCases,
-                            ),
-                    ),
-                    const SizedBox(height: 10),
-                    _DepartureBlockArrivalRow(
-                      departure: depTime,
-                      block: blockTime,
-                      arrival: arrTime,
-                    ),
-
-                    if (timeMetrics.isNotEmpty) ...[
-                      Divider(
-                        color: colorScheme.outlineVariant,
-                        height: 21,
-                        thickness: 1,
+              const SizedBox(height: 10),
+              _LabeledTwoColumnInfoCard(
+                leftLabel: 'Function',
+                leftValue: pfpm ?? '-',
+                rightLabel: 'Tail',
+                rightValue: tail,
+                rightOnTap: entry.aircraft == null
+                    ? null
+                    : () => _showAircraftInfo(
+                        dialogContext,
+                        entry.aircraft!,
+                        entry.aircraftType,
+                        useCases,
                       ),
-                      Wrap(
-                        spacing: 14,
-                        runSpacing: 8,
-                        children: timeMetrics
-                            .map(
-                              (item) => _MetricPill(
-                                label: item.$1,
-                                value: '${_formatMinutes(item.$2)}h',
-                              ),
-                            )
-                            .toList(),
+              ),
+              const SizedBox(height: 10),
+              _FromToInfoRow(
+                leftValue: dep,
+                rightValue: arr,
+                leftOnTap: depAirport == null
+                    ? null
+                    : () => _showAirportInfo(
+                        dialogContext,
+                        depAirport,
+                        useCases,
                       ),
-                    ],
-                    if (hasCrew) ...[
-                      Divider(
-                        color: colorScheme.outlineVariant,
-                        height: 21,
-                        thickness: 1,
+                rightOnTap: arrAirport == null
+                    ? null
+                    : () => _showAirportInfo(
+                        dialogContext,
+                        arrAirport,
+                        useCases,
                       ),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          AppLocalizations.of(context)!.screenCrew,
-                          textAlign: TextAlign.left,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      ...crewList.map(
-                        (crew) => Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: InkWell(
-                              onTap: () =>
-                                  _showCrewInfo(context, crew, useCases),
-                              child: Text(
-                                '${crew.positionLabel}: ${crew.name}',
-                                textAlign: TextAlign.left,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                    if (remarks.isNotEmpty) ...[
-                      _SectionDivider(color: colorScheme.outlineVariant),
-                      _SectionLabelAndText(
-                        label: AppLocalizations.of(
-                          context,
-                        )!.reportsFilterFieldRemarks,
-                        value: remarks,
-                      ),
-                    ],
-                    if (notes.isNotEmpty) ...[
-                      _SectionDivider(color: colorScheme.outlineVariant),
-                      _SectionLabelAndText(
-                        label: AppLocalizations.of(context)!.fieldNotes,
-                        value: notes,
-                      ),
-                    ],
-                  ],
+              ),
+              const SizedBox(height: 10),
+              _DepartureBlockArrivalRow(
+                departure: depTime,
+                block: blockTime,
+                arrival: arrTime,
+              ),
+              if (timeMetrics.isNotEmpty) ...[
+                Divider(
+                  color: colorScheme.outlineVariant,
+                  height: 21,
+                  thickness: 1,
                 ),
-              ),
+                Wrap(
+                  spacing: 14,
+                  runSpacing: 8,
+                  children: timeMetrics
+                      .map(
+                        (item) => _MetricPill(
+                          label: item.$1,
+                          value: '${_formatMinutes(item.$2)}h',
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
+              if (hasCrew) ...[
+                Divider(
+                  color: colorScheme.outlineVariant,
+                  height: 21,
+                  thickness: 1,
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    AppLocalizations.of(context)!.screenCrew,
+                    textAlign: TextAlign.left,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                ...crewList.map(
+                  (crew) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: InkWell(
+                        onTap: () => _showCrewInfo(context, crew, useCases),
+                        child: Text(
+                          '${crew.positionLabel}: ${crew.name}',
+                          textAlign: TextAlign.left,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              if (remarks.isNotEmpty) ...[
+                _SectionDivider(color: colorScheme.outlineVariant),
+                _SectionLabelAndText(
+                  label:
+                      AppLocalizations.of(context)!.reportsFilterFieldRemarks,
+                  value: remarks,
+                ),
+              ],
+              if (notes.isNotEmpty) ...[
+                _SectionDivider(color: colorScheme.outlineVariant),
+                _SectionLabelAndText(
+                  label: AppLocalizations.of(context)!.fieldNotes,
+                  value: notes,
+                ),
+              ],
             ],
           ),
         );
@@ -390,30 +418,36 @@ class LogbookEntryDialogs {
     final hasCrew = crewList.isNotEmpty;
 
     if (!context.mounted) return;
-    await showDialog<void>(
-      context: context,
+    await _showEntryInfoShell(
+      context,
       builder: (dialogContext) {
         final theme = Theme.of(dialogContext);
         final colorScheme = theme.colorScheme;
         return _EntryInfoDialogShell(
+          title: l10n.logbookEventSimulator,
           maxWidth: 560,
           maxHeight: 720,
           scrollable: true,
+          actions: hasEndorsement
+              ? [
+                  IconButton(
+                    tooltip: AppLocalizations.of(context)!.autoUi053,
+                    onPressed: () => _showEndorsementInfo(
+                      context,
+                      endorsement!,
+                      isHashValid: isHashValid,
+                    ),
+                    icon: _EndorsementStatusIcon(
+                      isValid: isHashValid,
+                      colorScheme: colorScheme,
+                    ),
+                  ),
+                ]
+              : const <Widget>[],
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _endorsementHeader(
-                context: dialogContext,
-                icon: Icons.monitor,
-                title: l10n.logbookEventSimulator,
-                okLabel: l10n.okAction,
-                colorScheme: colorScheme,
-                hasEndorsement: hasEndorsement,
-                endorsement: endorsement,
-                isHashValid: isHashValid,
-              ),
-              const SizedBox(height: 16),
               _PositioningInfoCard(
                 child: _LabeledTwoColumnInfoCard(
                   leftLabel: 'Date',
@@ -508,41 +542,36 @@ class LogbookEntryDialogs {
     );
   }
 
+  static Future<void> _showAircraftInfo(
+    BuildContext context,
+    Aircraft aircraft,
+    AircraftType? type,
+    LogbookUseCases useCases,
+  ) async {
+    await showAircraftDetailsDialog(
+      context,
+      row: AircraftRow(aircraft, type),
+      logbookUseCases: useCases,
+      onEntryTap: (entry) => show(context, entry: entry, useCases: useCases),
+    );
+  }
+
+  static Future<void> _showAircraftTypeInfo(
+    BuildContext context,
+    AircraftType type,
+    LogbookUseCases useCases,
+  ) async {
+    await showAircraftTypeDetailsDialog(
+      context,
+      row: AircraftTypeRow(type),
+      logbookUseCases: useCases,
+      onEntryTap: (entry) => show(context, entry: entry, useCases: useCases),
+    );
+  }
+
   static bool _hasEndorsement(EndorsementData? endorsement) {
     if (endorsement == null) return false;
     return !endorsement.isEmpty;
-  }
-
-  static Widget _endorsementHeader({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String okLabel,
-    required ColorScheme colorScheme,
-    required bool hasEndorsement,
-    required EndorsementData? endorsement,
-    required bool isHashValid,
-  }) {
-    return _EntryDialogHeader(
-      icon: icon,
-      title: title,
-      okLabel: okLabel,
-      onClose: () => AppNavigator.pop(context),
-      trailing: hasEndorsement
-          ? IconButton(
-              tooltip: AppLocalizations.of(context)!.autoUi053,
-              onPressed: () => _showEndorsementInfo(
-                context,
-                endorsement!,
-                isHashValid: isHashValid,
-              ),
-              icon: _EndorsementStatusIcon(
-                isValid: isHashValid,
-                colorScheme: colorScheme,
-              ),
-            )
-          : null,
-    );
   }
 
   static Future<void> _showEndorsementInfo(
@@ -722,79 +751,38 @@ class _PositioningInfoCard extends StatelessWidget {
 
 class _EntryInfoDialogShell extends StatelessWidget {
   const _EntryInfoDialogShell({
+    required this.title,
     required this.maxWidth,
     required this.child,
     this.maxHeight,
     this.scrollable = false,
+    this.actions = const <Widget>[],
   });
 
+  final String title;
   final double maxWidth;
   final double? maxHeight;
   final bool scrollable;
+  final List<Widget> actions;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final content = scrollable
-        ? SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: child,
-          )
-        : Padding(
-            padding: const EdgeInsets.all(20),
-            child: child,
-          );
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: maxWidth,
-          maxHeight: maxHeight ?? double.infinity,
-        ),
-        child: content,
-      ),
+    final content = Padding(
+      padding: const EdgeInsets.all(20),
+      child: scrollable ? SingleChildScrollView(child: child) : child,
     );
-  }
-}
-
-class _EntryDialogHeader extends StatelessWidget {
-  const _EntryDialogHeader({
-    required this.icon,
-    required this.title,
-    required this.okLabel,
-    required this.onClose,
-    this.trailing,
-  });
-
-  final IconData icon;
-  final String title;
-  final String okLabel;
-  final VoidCallback onClose;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, size: 12, color: colorScheme.onPrimaryContainer),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            title,
-            style: theme.textTheme.titleSmall,
-          ),
-        ),
-        ?trailing,
-        TextButton(onPressed: onClose, child: Text(okLabel)),
-      ],
+    return AdaptiveFormShell(
+      onClose: () => AppNavigator.pop(context),
+      title: title,
+      popupMaxWidth: maxWidth,
+      actions: actions,
+      contentView: maxHeight == null
+          ? content
+          : ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxHeight!),
+              child: content,
+            ),
     );
   }
 }
@@ -943,12 +931,14 @@ class _LabeledTwoColumnInfoCard extends StatelessWidget {
     required this.leftValue,
     required this.rightLabel,
     required this.rightValue,
+    this.rightOnTap,
   });
 
   final String leftLabel;
   final String leftValue;
   final String rightLabel;
   final String rightValue;
+  final VoidCallback? rightOnTap;
 
   @override
   Widget build(BuildContext context) {
@@ -962,6 +952,7 @@ class _LabeledTwoColumnInfoCard extends StatelessWidget {
             label: rightLabel,
             value: rightValue,
             alignEnd: true,
+            onTap: rightOnTap,
           ),
         ),
       ],
