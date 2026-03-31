@@ -25,7 +25,6 @@ import 'package:simplelog/data/import/qatar_airways_workbook_inspector.dart';
 import 'package:simplelog/data/import/simplelog_csv_importer.dart';
 import 'package:simplelog/features/aircraft/presentation/aircraft_edit_screen.dart';
 import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
-import 'package:simplelog/features/database/presentation/widgets/automatic_backup_settings_dialog.dart';
 import 'package:simplelog/features/database/presentation/widgets/import_options_preferences.dart';
 import 'package:simplelog/features/database/presentation/widgets/local_sync_dialog.dart';
 import 'package:simplelog/features/database/presentation/widgets/logten_pro_import_options_dialog.dart';
@@ -131,12 +130,6 @@ class DatabaseSyncTrigger extends ConsumerWidget {
                   icon: Icons.save_alt_outlined,
                   label: l10n.databaseBackupLogbookAction,
                   onPressed: () => _backupDatabase(context, ref),
-                ),
-                const SizedBox(height: 8),
-                _DatabaseActionButton(
-                  icon: Icons.settings_backup_restore,
-                  label: l10n.databaseAutomaticBackupAction,
-                  onPressed: () => AutomaticBackupSettingsDialog.show(context),
                 ),
                 const SizedBox(height: 8),
                 _DatabaseActionButton(

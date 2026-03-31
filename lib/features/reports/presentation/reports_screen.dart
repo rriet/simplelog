@@ -2323,6 +2323,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           eventTypes: eventTypes,
           savedQueries: savedQueries,
           includePreviousExperience: includePreviousExperience,
+          useOuterCardFrame: false,
         );
       case ReportsPanelSection.totals:
         return _TotalsCard(
@@ -2386,6 +2387,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     required ReportsEventTypesSelection eventTypes,
     required List<SavedReportsQuery> savedQueries,
     required bool includePreviousExperience,
+    bool useOuterCardFrame = true,
   }) {
     return _FiltersCard(
       from: _from,
@@ -2417,6 +2419,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       onSaveQuery: _saveCurrentQuery,
       onApplySavedQuery: _applySavedQuery,
       onDeleteSavedQuery: _deleteSavedQuery,
+      useOuterCardFrame: useOuterCardFrame,
     );
   }
 
@@ -3305,17 +3308,43 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     setState(() => _isCalculatingBatchDuty = true);
     try {
       await _runGuardedBatchWrite(() async {
-        await _ensureBatchFlightsReadyForActions();
-        final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
-        if (snapshots.isEmpty) {
-          await _showInfoDialog('No filtered flights found.');
+        final eventTypes = ref.read(reportsEventTypesProvider).copyWith(
+          duty: false,
+        );
+        final includedFlightIds = _filters.isEmpty
+            ? null
+            : _filteredFlightIds();
+        final entries = await _fetchEntriesForRange(
+          includedFlightIds: includedFlightIds,
+          eventTypes: eventTypes,
+          from: _from,
+          to: _to,
+        );
+
+        final flightIds = <int>{};
+        final nonFlightTimelineIds = <int>{};
+        for (final entry in entries) {
+          if (entry.flight case final flight?) {
+            flightIds.add(flight.id);
+            continue;
+          }
+          if (entry.positioning != null || entry.simulatorTraining != null) {
+            nonFlightTimelineIds.add(entry.timeLine.id);
+          }
+        }
+
+        if (flightIds.isEmpty && nonFlightTimelineIds.isEmpty) {
+          await _showInfoDialog(
+            'No filtered flight, positioning, or simulator entries found.',
+          );
           return;
         }
         final settings = await ref.read(dutyRulesSettingsProvider.future);
         final result = await ref
             .read(logbookUseCasesProvider)
             .calculateDutyForFlights(
-              flightIds: snapshots.keys.toSet(),
+              flightIds: flightIds,
+              nonFlightTimelineIds: nonFlightTimelineIds,
               rules: DutyCalculationRules(
                 crewHomeBaseAirportId: settings.crewHomeBaseAirportId,
                 reportingTimeOnBaseMinutes: settings.reportingTimeOnBaseMinutes,
@@ -3339,10 +3368,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             '\nSkipped locked duties: ${result.skippedLockedDuty}.',
           );
         }
-        if (result.skippedMissingFlightEvent > 0) {
+        if (result.skippedMissingTargetEvent > 0) {
           message.write(
-            '\nSkipped flights without a resolved event: '
-            '${result.skippedMissingFlightEvent}.',
+            '\nSkipped filtered entries without a resolved operational event: '
+            '${result.skippedMissingTargetEvent}.',
           );
         }
         await _showInfoDialog(message.toString());
@@ -5543,6 +5572,7 @@ class _FiltersCard extends StatelessWidget {
     required this.onSaveQuery,
     required this.onApplySavedQuery,
     required this.onDeleteSavedQuery,
+    this.useOuterCardFrame = true,
   });
 
   final DateTime from;
@@ -5568,6 +5598,7 @@ class _FiltersCard extends StatelessWidget {
   final Future<void> Function() onSaveQuery;
   final Future<void> Function(SavedReportsQuery query) onApplySavedQuery;
   final Future<void> Function(String id) onDeleteSavedQuery;
+  final bool useOuterCardFrame;
 
   @override
   Widget build(BuildContext context) {
@@ -5589,13 +5620,12 @@ class _FiltersCard extends StatelessWidget {
                   .toDouble()
             : (compact ? 460.0 : 520.0);
         final locale = Localizations.localeOf(context).toString();
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+        final content = Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                   Row(
                     children: [
                       Expanded(
@@ -5914,11 +5944,14 @@ class _FiltersCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
           ),
         );
+        if (!useOuterCardFrame) {
+          return content;
+        }
+        return Card(child: content);
       },
     );
   }

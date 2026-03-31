@@ -18,13 +18,13 @@ class InitialDataBootstrapper {
   /// Inputs: open [AppDatabase] instance.
   /// Output: side effects in DB (airports, templates, self-crew, rules).
   Future<void> bootstrapIfDatabaseEmpty(AppDatabase db) async {
+    const airportImporter = AirportSeedImporter();
+    await airportImporter.importIfEmpty(db);
+
     final hasAnyData = await _hasAnyData(db);
     if (hasAnyData) {
       return;
     }
-
-    const airportImporter = AirportSeedImporter();
-    await airportImporter.importIfEmpty(db);
 
     const templatesImporter = ReportTemplatesSeedImporter();
     await templatesImporter.importIfEmpty(db);

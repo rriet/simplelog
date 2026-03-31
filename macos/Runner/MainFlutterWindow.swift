@@ -9,6 +9,9 @@ class MainFlutterWindow: NSWindow {
     self.setFrame(windowFrame, display: true)
     // Keep desktop layouts within a safe rendering size.
     self.minSize = NSSize(width: 980, height: 700)
+    // Start maximized on desktop launch.
+    self.makeKeyAndOrderFront(nil)
+    self.zoom(nil)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 

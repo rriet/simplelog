@@ -404,21 +404,25 @@ class LogbookUseCases {
     return _buildDutySuggestion(segment: latest, rules: rules);
   }
 
-  /// Calculates duty periods for filtered [flightIds] and persists the result.
+  /// Calculates duty periods for filtered operational events and persists the
+  /// result.
   ///
-  /// For each filtered flight, it computes the contiguous duty segment and then
-  /// creates or updates one duty period per unique segment.
+  /// For each filtered target event (flight/positioning/simulator), it
+  /// computes the contiguous duty segment and then creates or updates one
+  /// duty period per unique segment.
   Future<DutyBatchCalculationResult> calculateDutyForFlights({
     required Set<int> flightIds,
+    required Set<int> nonFlightTimelineIds,
     required DutyCalculationRules rules,
   }) async {
-    if (flightIds.isEmpty) {
+    final targetCount = flightIds.length + nonFlightTimelineIds.length;
+    if (targetCount == 0) {
       return const DutyBatchCalculationResult(
         created: 0,
         updated: 0,
         unchanged: 0,
         skippedLockedDuty: 0,
-        skippedMissingFlightEvent: 0,
+        skippedMissingTargetEvent: 0,
       );
     }
 
@@ -429,14 +433,16 @@ class LogbookUseCases {
         updated: 0,
         unchanged: 0,
         skippedLockedDuty: 0,
-        skippedMissingFlightEvent: flightIds.length,
+        skippedMissingTargetEvent: targetCount,
       );
     }
 
     final segments = _buildDutySegments(events: events, rules: rules);
     final segmentByFlightId = <int, _DutySegment>{};
+    final segmentByTimelineId = <int, _DutySegment>{};
     for (final segment in segments) {
       for (final event in segment.events) {
+        segmentByTimelineId[event.timelineId] = segment;
         final flightId = event.flightId;
         if (flightId != null && flightIds.contains(flightId)) {
           segmentByFlightId[flightId] = segment;
@@ -445,21 +451,33 @@ class LogbookUseCases {
     }
 
     final uniqueSegments = <String, _DutySegment>{};
-    for (final flightId in flightIds) {
-      final segment = segmentByFlightId[flightId];
-      if (segment == null) continue;
-      uniqueSegments[_segmentKey(segment)] = segment;
+    for (final targetId in flightIds) {
+      final segment = segmentByFlightId[targetId];
+      if (segment != null) {
+        uniqueSegments[_segmentKey(segment)] = segment;
+      }
+    }
+    for (final targetId in nonFlightTimelineIds) {
+      final segment = segmentByTimelineId[targetId];
+      if (segment != null) {
+        uniqueSegments[_segmentKey(segment)] = segment;
+      }
     }
 
     var created = 0;
     var updated = 0;
     var unchanged = 0;
     var skippedLockedDuty = 0;
-    var skippedMissingFlightEvent = 0;
+    var skippedMissingTargetEvent = 0;
 
-    for (final flightId in flightIds) {
-      if (!segmentByFlightId.containsKey(flightId)) {
-        skippedMissingFlightEvent++;
+    for (final targetId in flightIds) {
+      if (!segmentByFlightId.containsKey(targetId)) {
+        skippedMissingTargetEvent++;
+      }
+    }
+    for (final targetId in nonFlightTimelineIds) {
+      if (!segmentByTimelineId.containsKey(targetId)) {
+        skippedMissingTargetEvent++;
       }
     }
 
@@ -507,7 +525,7 @@ class LogbookUseCases {
       updated: updated,
       unchanged: unchanged,
       skippedLockedDuty: skippedLockedDuty,
-      skippedMissingFlightEvent: skippedMissingFlightEvent,
+      skippedMissingTargetEvent: skippedMissingTargetEvent,
     );
   }
 
@@ -763,7 +781,7 @@ class DutyBatchCalculationResult {
     required this.updated,
     required this.unchanged,
     required this.skippedLockedDuty,
-    required this.skippedMissingFlightEvent,
+    required this.skippedMissingTargetEvent,
   });
 
   /// Number of duty periods created.
@@ -778,8 +796,8 @@ class DutyBatchCalculationResult {
   /// Number of locked duty rows skipped.
   final int skippedLockedDuty;
 
-  /// Number of flights skipped because no operational event was resolved.
-  final int skippedMissingFlightEvent;
+  /// Number of targets skipped because no operational event was resolved.
+  final int skippedMissingTargetEvent;
 }
 
 enum _OperationalEventKind { flight, positioning, simulator }

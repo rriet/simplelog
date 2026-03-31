@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/presentation/widgets/navigation/collapsible_scaffold.dart';
 import 'package:simplelog/core/presentation/widgets/navigation/large_scaffold.dart';
 import 'package:simplelog/features/onboarding/presentation/onboarding_wizard_screen.dart';
+import 'package:simplelog/state/providers/initial_data_provider.dart';
 import 'package:simplelog/state/providers/onboarding_provider.dart';
 
 /// Chooses between compact and large layouts for the main home screen.
@@ -13,6 +14,24 @@ class MyHomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final initialData = ref.watch(initialDataProvider);
+    if (initialData.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (initialData.hasError) {
+      return Scaffold(
+        body: Center(
+          child: Text(
+            initialData.error.toString(),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     final onboarding = ref.watch(onboardingCompletedProvider);
     if (onboarding.isLoading) {
       return const Scaffold(
