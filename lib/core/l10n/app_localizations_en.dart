@@ -15,6 +15,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTitle => 'SimpleLog';
 
   @override
+  String menuVersionLabel(String value) {
+    return 'Version $value';
+  }
+
+  @override
   String get addAction => 'Add';
 
   @override

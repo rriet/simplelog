@@ -2,6 +2,14 @@
   "@@locale": "en",
   "appTitle": "SimpleLog",
   "homeTitle": "SimpleLog",
+  "menuVersionLabel": "Version {value}",
+  "@menuVersionLabel": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "addAction": "Add",
   "languageLabel": "Language",
   "languageSystem": "System",

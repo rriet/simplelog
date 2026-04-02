@@ -106,6 +106,12 @@ abstract class AppLocalizations {
   /// **'SimpleLog'**
   String get homeTitle;
 
+  /// No description provided for @menuVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {value}'**
+  String menuVersionLabel(String value);
+
   /// No description provided for @addAction.
   ///
   /// In en, this message translates to:

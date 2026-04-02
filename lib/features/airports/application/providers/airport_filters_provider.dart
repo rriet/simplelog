@@ -47,7 +47,6 @@ class AirportFiltersNotifier extends Notifier<AirportFilters> {
               fallback: AirportSearchField.all.index,
               max: AirportSearchField.values.length - 1,
             )],
-        showOnlyVisited: data['showOnlyVisited'] == true,
       );
       state = loaded;
     } on Object catch (error, stackTrace) {
@@ -61,7 +60,6 @@ class AirportFiltersNotifier extends Notifier<AirportFilters> {
       final payload = {
         'orderBy': filters.orderBy.index,
         'searchField': filters.searchField.index,
-        'showOnlyVisited': filters.showOnlyVisited,
       };
       await file.writeAsString(jsonEncode(payload), flush: true);
     } on Object catch (error, stackTrace) {
