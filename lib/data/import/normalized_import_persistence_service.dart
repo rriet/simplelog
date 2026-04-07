@@ -315,7 +315,7 @@ class NormalizedImportPersistenceService {
     required ImportedEntityOptions entityOptions,
     required _ImportCounters counters,
     required Map<String, Airport> airportCache,
-    required Set<String> existingPositioningKeys,
+    required Map<String, _ExistingPositioningData> existingPositioningKeys,
   }) async {
     final positioningKey = _positioningDateKey(
       record.departureAirport.icao,
@@ -323,7 +323,14 @@ class NormalizedImportPersistenceService {
       record.departureDateTime,
       record.arrivalDateTime,
     );
-    if (existingPositioningKeys.contains(positioningKey)) {
+    final existing = record.matchExistingByPositioningDateKey
+        ? existingPositioningKeys[positioningKey]
+        : null;
+    if (existing != null && !record.overrideMatchedPositioning) {
+      counters.skipped += 1;
+      return;
+    }
+    if (existing != null && existing.isLocked) {
       counters.skipped += 1;
       return;
     }
@@ -342,25 +349,48 @@ class NormalizedImportPersistenceService {
     );
     if (arrAirportId.created) counters.airports += 1;
 
-    final timelineId = await db
-        .into(db.timeLines)
-        .insert(
-          TimeLinesCompanion.insert(eventDateTime: record.departureDateTime),
-        );
-    await db
-        .into(db.positionings)
-        .insert(
-          PositioningsCompanion.insert(
-            departurePlaceId: depAirportId.id,
-            arrivalPlaceId: arrAirportId.id,
-            departureDateTimeId: timelineId,
-            arrivalDateTime: Value(record.arrivalDateTime),
-            timeTotalMinutes: max(0, record.timeTotalMinutes),
-            notes: Value(record.notes),
-            isLocked: false,
-          ),
-        );
-    existingPositioningKeys.add(positioningKey);
+    if (existing != null) {
+      await (db.update(
+        db.timeLines,
+      )..where((t) => t.id.equals(existing.departureTimelineId))).write(
+        TimeLinesCompanion(eventDateTime: Value(record.departureDateTime)),
+      );
+      await (db.update(
+        db.positionings,
+      )..where((t) => t.id.equals(existing.positioningId))).write(
+        PositioningsCompanion(
+          departurePlaceId: Value(depAirportId.id),
+          arrivalPlaceId: Value(arrAirportId.id),
+          arrivalDateTime: Value(record.arrivalDateTime),
+          timeTotalMinutes: Value(max(0, record.timeTotalMinutes)),
+          notes: Value(record.notes),
+        ),
+      );
+    } else {
+      final timelineId = await db
+          .into(db.timeLines)
+          .insert(
+            TimeLinesCompanion.insert(eventDateTime: record.departureDateTime),
+          );
+      final positioningId = await db
+          .into(db.positionings)
+          .insert(
+            PositioningsCompanion.insert(
+              departurePlaceId: depAirportId.id,
+              arrivalPlaceId: arrAirportId.id,
+              departureDateTimeId: timelineId,
+              arrivalDateTime: Value(record.arrivalDateTime),
+              timeTotalMinutes: max(0, record.timeTotalMinutes),
+              notes: Value(record.notes),
+              isLocked: false,
+            ),
+          );
+      existingPositioningKeys[positioningKey] = _ExistingPositioningData(
+        positioningId: positioningId,
+        departureTimelineId: timelineId,
+        isLocked: false,
+      );
+    }
     counters.positionings += 1;
   }
 
@@ -554,11 +584,15 @@ INNER JOIN airports arr ON arr.id = f.arrival_airport_id
     return result;
   }
 
-  Future<Set<String>> _loadExistingPositioningDateKeys() async {
-    final result = <String>{};
+  Future<Map<String, _ExistingPositioningData>>
+  _loadExistingPositioningDateKeys() async {
+    final result = <String, _ExistingPositioningData>{};
     final query = db.customSelect(
       '''
-SELECT p.arrival_date_time AS arrival_date_time,
+SELECT p.id AS positioning_id,
+       p.is_locked AS is_locked,
+       p.arrival_date_time AS arrival_date_time,
+       p.departure_date_time_id AS departure_timeline_id,
        tl.event_date_time AS departure_date_time,
        dep.icao AS departure_airport_icao,
        arr.icao AS arrival_airport_icao
@@ -571,17 +605,22 @@ INNER JOIN airports arr ON arr.id = p.arrival_place_id
     );
     final rows = await query.get();
     for (final row in rows) {
+      final positioningId = row.read<int>('positioning_id');
+      final isLocked = row.read<bool>('is_locked');
+      final departureTimelineId = row.read<int>('departure_timeline_id');
       final departureAirportIcao = row.read<String>('departure_airport_icao');
       final arrivalAirportIcao = row.read<String>('arrival_airport_icao');
       final departure = row.read<DateTime>('departure_date_time');
       final arrival = row.readNullable<DateTime>('arrival_date_time');
-      result.add(
-        _positioningDateKey(
-          departureAirportIcao,
-          arrivalAirportIcao,
-          departure,
-          arrival,
-        ),
+      result[_positioningDateKey(
+        departureAirportIcao,
+        arrivalAirportIcao,
+        departure,
+        arrival,
+      )] = _ExistingPositioningData(
+        positioningId: positioningId,
+        departureTimelineId: departureTimelineId,
+        isLocked: isLocked,
       );
     }
     return result;
@@ -1064,6 +1103,18 @@ class _ExistingFlightData {
   });
 
   final int flightId;
+  final int departureTimelineId;
+  final bool isLocked;
+}
+
+class _ExistingPositioningData {
+  const _ExistingPositioningData({
+    required this.positioningId,
+    required this.departureTimelineId,
+    required this.isLocked,
+  });
+
+  final int positioningId;
   final int departureTimelineId;
   final bool isLocked;
 }

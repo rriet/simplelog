@@ -9,10 +9,185 @@ import 'package:simplelog/data/import/normalized_import_models.dart';
 import 'package:simplelog/data/import/simplelog_csv_support.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
 
+/// Missing required value detected in a Southwest source row.
+enum SouthwestMissingRequiredField {
+  /// Missing DATE.
+  date,
+
+  /// Missing departure airport.
+  departureAirport,
+
+  /// Missing arrival airport.
+  arrivalAirport,
+
+  /// Missing departure time.
+  departureTime,
+
+  /// Missing arrival time.
+  arrivalTime,
+}
+
+/// One source line with missing required values.
+class SouthwestMissingRequiredIssue {
+  /// Creates a missing-required-fields issue.
+  const SouthwestMissingRequiredIssue({
+    required this.sourceLineNumber,
+    required this.missingFields,
+  });
+
+  /// 1-based source line number in the CSV file.
+  final int sourceLineNumber;
+
+  /// Missing required fields for this line.
+  final Set<SouthwestMissingRequiredField> missingFields;
+}
+
+/// One source line with missing aircraft type.
+class SouthwestMissingAircraftTypeIssue {
+  /// Creates a missing-aircraft-type issue.
+  const SouthwestMissingAircraftTypeIssue({required this.sourceLineNumber});
+
+  /// 1-based source line number in the CSV file.
+  final int sourceLineNumber;
+}
+
+/// One source line with missing aircraft tail.
+class SouthwestMissingAircraftTailIssue {
+  /// Creates a missing-aircraft-tail issue.
+  const SouthwestMissingAircraftTailIssue({
+    required this.sourceLineNumber,
+    required this.date,
+    required this.fromCode,
+    required this.toCode,
+    required this.aircraftTypeCode,
+  });
+
+  /// 1-based source line number in the CSV file.
+  final int sourceLineNumber;
+
+  /// Flight date text from source row.
+  final String date;
+
+  /// Departure airport code from source row.
+  final String fromCode;
+
+  /// Arrival airport code from source row.
+  final String toCode;
+
+  /// Raw aircraft type code from this line.
+  final String aircraftTypeCode;
+}
+
+/// Preflight validation output for a Southwest CSV file.
+class SouthwestCsvPreflightReport {
+  /// Creates a preflight report.
+  const SouthwestCsvPreflightReport({
+    required this.missingRequiredIssues,
+    required this.missingAircraftTypeIssues,
+    required this.missingAircraftTailIssues,
+  });
+
+  /// Rows with missing required fields.
+  final List<SouthwestMissingRequiredIssue> missingRequiredIssues;
+
+  /// Non-positioning rows with missing aircraft type.
+  final List<SouthwestMissingAircraftTypeIssue> missingAircraftTypeIssues;
+
+  /// Non-positioning rows with missing aircraft tail.
+  final List<SouthwestMissingAircraftTailIssue> missingAircraftTailIssues;
+
+  /// Whether this file has at least one blocking row issue.
+  bool get hasIssues =>
+      missingRequiredIssues.isNotEmpty ||
+      missingAircraftTypeIssues.isNotEmpty ||
+      missingAircraftTailIssues.isNotEmpty;
+}
+
 /// Parses Southwest CSV exports into normalized import records.
 class SouthwestCsvSourceParser {
   /// Creates a parser.
   const SouthwestCsvSourceParser();
+
+  /// Inspects Southwest CSV rows and reports missing required values.
+  SouthwestCsvPreflightReport inspect(String content) {
+    final rows = SimpleLogCsvSupport.parseCsv(content);
+    final headerRowIndex = _findHeaderRowIndex(rows);
+    if (headerRowIndex < 0) {
+      throw const FormatException('Southwest CSV header not found.');
+    }
+
+    final indices = _SouthwestHeaderIndices(
+      rows[headerRowIndex],
+    );
+    final missingRequiredIssues = <SouthwestMissingRequiredIssue>[];
+    final missingAircraftTypeIssues = <SouthwestMissingAircraftTypeIssue>[];
+    final missingAircraftTailIssues = <SouthwestMissingAircraftTailIssue>[];
+
+    for (
+      var rowIndex = headerRowIndex + 1;
+      rowIndex < rows.length;
+      rowIndex += 1
+    ) {
+      final row = rows[rowIndex];
+      if (row.isEmpty) continue;
+      String get(int idx) =>
+          idx >= 0 && idx < row.length ? row[idx].trim() : '';
+
+      final sourceLineNumber = rowIndex + 1;
+      final missing = <SouthwestMissingRequiredField>{};
+      if (get(indices.date).isEmpty) {
+        missing.add(SouthwestMissingRequiredField.date);
+      }
+      if (get(indices.from).isEmpty) {
+        missing.add(SouthwestMissingRequiredField.departureAirport);
+      }
+      if (get(indices.to).isEmpty) {
+        missing.add(SouthwestMissingRequiredField.arrivalAirport);
+      }
+      if (get(indices.depart).isEmpty) {
+        missing.add(SouthwestMissingRequiredField.departureTime);
+      }
+      if (get(indices.arrive).isEmpty) {
+        missing.add(SouthwestMissingRequiredField.arrivalTime);
+      }
+      if (missing.isNotEmpty) {
+        missingRequiredIssues.add(
+          SouthwestMissingRequiredIssue(
+            sourceLineNumber: sourceLineNumber,
+            missingFields: missing,
+          ),
+        );
+        continue;
+      }
+
+      final isDeadhead = get(indices.dhd).toUpperCase() == 'DH';
+      if (isDeadhead) continue;
+
+      final typeCode = get(indices.type).toUpperCase();
+      if (typeCode.isEmpty) {
+        missingAircraftTypeIssues.add(
+          SouthwestMissingAircraftTypeIssue(sourceLineNumber: sourceLineNumber),
+        );
+      }
+      if (get(indices.tail).toUpperCase().isEmpty) {
+        missingAircraftTailIssues.add(
+          SouthwestMissingAircraftTailIssue(
+            sourceLineNumber: sourceLineNumber,
+            date: get(indices.date),
+            fromCode: get(indices.from).toUpperCase(),
+            toCode: get(indices.to).toUpperCase(),
+            aircraftTypeCode: typeCode,
+          ),
+        );
+      }
+    }
+
+    return SouthwestCsvPreflightReport(
+      missingRequiredIssues: missingRequiredIssues,
+      missingAircraftTypeIssues: missingAircraftTypeIssues,
+      missingAircraftTailIssues: missingAircraftTailIssues,
+    );
+  }
 
   /// Parses Southwest CSV content into a normalized batch.
   NormalizedImportBatch parse(
@@ -22,36 +197,12 @@ class SouthwestCsvSourceParser {
     bool hasSelfCrew = false,
   }) {
     final rows = SimpleLogCsvSupport.parseCsv(content);
-    final headerRowIndex = rows.indexWhere(
-      (row) =>
-          row.isNotEmpty &&
-          SimpleLogCsvSupport.clean(row.first).toUpperCase() == 'DATE',
-    );
+    final headerRowIndex = _findHeaderRowIndex(rows);
     if (headerRowIndex < 0) {
       throw const FormatException('Southwest CSV header not found.');
     }
 
-    final header = rows[headerRowIndex];
-    final index = <String, int>{};
-    for (var i = 0; i < header.length; i += 1) {
-      index[SimpleLogCsvSupport.clean(header[i]).toUpperCase()] = i;
-    }
-
-    int readIndex(String name) => index[name.toUpperCase()] ?? -1;
-
-    final idxDate = readIndex('DATE');
-    final idxFlight = readIndex('Flight');
-    final idxDhd = readIndex('dhd');
-    final idxFrom = readIndex('From');
-    final idxDepart = readIndex('Depart');
-    final idxTo = readIndex('To');
-    final idxArrive = readIndex('Arrive');
-    final idxBlock = readIndex('Block');
-    final idxTail = readIndex('Tail_Number');
-    final idxType = readIndex('A_C_Type');
-    final idxTakeoff = readIndex('TakeOff');
-    final idxLanding = readIndex('Landing');
-    final idxCopilot = readIndex('CoPilot');
+    final indices = _SouthwestHeaderIndices(rows[headerRowIndex]);
 
     final records = <NormalizedImportRecord>[];
     var skipped = 0;
@@ -66,16 +217,21 @@ class SouthwestCsvSourceParser {
       progressOrdinal += 1;
       final row = rows[rowIndex];
       if (row.isEmpty) continue;
+      final sourceLineNumber = rowIndex + 1;
+      if (options.skippedSourceLineNumbers.contains(sourceLineNumber)) {
+        skipped += 1;
+        continue;
+      }
 
       try {
         String get(int idx) =>
             idx >= 0 && idx < row.length ? row[idx].trim() : '';
 
-        final dateText = get(idxDate);
-        final fromCode = get(idxFrom).toUpperCase();
-        final toCode = get(idxTo).toUpperCase();
-        final departText = get(idxDepart);
-        final arriveText = get(idxArrive);
+        final dateText = get(indices.date);
+        final fromCode = get(indices.from).toUpperCase();
+        final toCode = get(indices.to).toUpperCase();
+        final departText = get(indices.depart);
+        final arriveText = get(indices.arrive);
         if (dateText.isEmpty ||
             fromCode.isEmpty ||
             toCode.isEmpty ||
@@ -108,12 +264,12 @@ class SouthwestCsvSourceParser {
         final calculatedBlock = resolvedArrival
             .difference(departureDateTime)
             .inMinutes;
-        final blockFromFile = _parseBlockHhMmToMinutes(get(idxBlock));
+        final blockFromFile = _parseBlockHhMmToMinutes(get(indices.block));
         final blockMinutes = options.recalculateBlockTime
             ? calculatedBlock
             : (blockFromFile > 0 ? blockFromFile : calculatedBlock);
 
-        if (get(idxDhd).toUpperCase() == 'DH') {
+        if (get(indices.dhd).toUpperCase() == 'DH') {
           records.add(
             NormalizedPositioningRecord(
               progressOrdinal: progressOrdinal,
@@ -123,16 +279,25 @@ class SouthwestCsvSourceParser {
               arrivalDateTime: resolvedArrival,
               timeTotalMinutes: blockMinutes,
               notes: '',
+              matchExistingByPositioningDateKey: true,
+              overrideMatchedPositioning: options.overrideExistingData,
             ),
           );
           continue;
         }
 
-        final typeCode = get(idxType).toUpperCase();
+        final rawTypeCode = get(indices.type).toUpperCase();
+        if (rawTypeCode.isEmpty &&
+            options.missingAircraftTypePolicy ==
+                SouthwestMissingAircraftTypePolicy.skipLines) {
+          skipped += 1;
+          continue;
+        }
+        final typeCode = rawTypeCode.isEmpty ? 'UNKNOWN' : rawTypeCode;
         final aircraftType = ImportedAircraftTypeDraft(
-          code: typeCode.isEmpty ? 'UNKNOWN' : typeCode,
+          code: typeCode,
           family: _southwestFamily(typeCode),
-          longName: typeCode.isEmpty ? 'UNKNOWN' : typeCode,
+          longName: typeCode,
           manufacturer: '',
           category: AircraftCategory.landplane,
           engineType: EngineType.jet,
@@ -143,8 +308,15 @@ class SouthwestCsvSourceParser {
           efis: true,
           highPerformance: true,
         );
+        final rawTail = get(indices.tail).toUpperCase();
+        if (rawTail.isEmpty &&
+            options.missingAircraftTailPolicy ==
+                SouthwestMissingAircraftTailPolicy.skipLines) {
+          skipped += 1;
+          continue;
+        }
         final aircraft = ImportedAircraftDraft(
-          registration: get(idxTail).toUpperCase(),
+          registration: rawTail.isEmpty ? typeCode : rawTail,
           mtow: null,
           isSimulator: false,
         );
@@ -176,8 +348,8 @@ class SouthwestCsvSourceParser {
           distanceNm = calculations.flightDistanceNm.round();
         }
 
-        final takeoffCount = _parseInt(get(idxTakeoff));
-        final landingCount = _parseInt(get(idxLanding));
+        final takeoffCount = _parseInt(get(indices.takeoff));
+        final landingCount = _parseInt(get(indices.landing));
         var takeoffsDay = takeoffCount;
         var takeoffsNight = 0;
         var landingsDay = landingCount;
@@ -197,13 +369,13 @@ class SouthwestCsvSourceParser {
           options.defaultSelfPosition,
         );
         final selfIsPic = selfPosition == CrewPosition.pic;
-        final coPilot = _parseSouthwestCoPilot(get(idxCopilot));
         final crewAssignments = <ImportedCrewAssignmentDraft>[
           ImportedCrewAssignmentDraft.self(
             position: selfPosition,
             createSelfIfMissing: false,
           ),
         ];
+        final coPilot = _parseSouthwestCoPilot(get(indices.copilot));
         if (coPilot.name.isNotEmpty) {
           crewAssignments.add(
             ImportedCrewAssignmentDraft.crew(
@@ -271,7 +443,7 @@ class SouthwestCsvSourceParser {
             approachType: '',
             remarks: '',
             notes: _buildSouthwestNotes(
-              flightNumber: get(idxFlight),
+              flightNumber: get(indices.flight),
               includeFlightNumber: options.addFlightNumberToNotes,
             ),
             crewAssignments: crewAssignments,
@@ -297,6 +469,40 @@ class SouthwestCsvSourceParser {
       errorRows: errors,
     );
   }
+}
+
+int _findHeaderRowIndex(List<List<String>> rows) {
+  return rows.indexWhere(
+    (row) =>
+        row.isNotEmpty &&
+        SimpleLogCsvSupport.clean(row.first).toUpperCase() == 'DATE',
+  );
+}
+
+class _SouthwestHeaderIndices {
+  _SouthwestHeaderIndices(List<String> header)
+    : _index = <String, int>{
+        for (var i = 0; i < header.length; i += 1)
+          SimpleLogCsvSupport.clean(header[i]).toUpperCase(): i,
+      };
+
+  final Map<String, int> _index;
+
+  int _read(String name) => _index[name.toUpperCase()] ?? -1;
+
+  int get date => _read('DATE');
+  int get flight => _read('Flight');
+  int get dhd => _read('dhd');
+  int get from => _read('From');
+  int get depart => _read('Depart');
+  int get to => _read('To');
+  int get arrive => _read('Arrive');
+  int get block => _read('Block');
+  int get tail => _read('Tail_Number');
+  int get type => _read('A_C_Type');
+  int get takeoff => _read('TakeOff');
+  int get landing => _read('Landing');
+  int get copilot => _read('CoPilot');
 }
 
 ImportedAirportDraft _airportDraftForCode(

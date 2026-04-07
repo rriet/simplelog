@@ -1,14 +1,18 @@
 // ignore_for_file: public_member_api_docs, document_ignores
 // This widget is a small import-specific dialog with simple data holders.
 
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/picker_with_add_input_field.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/import/logten_pro_import_models.dart';
+import 'package:simplelog/features/aircraft/presentation/aircraft_edit_screen.dart';
+import 'package:simplelog/features/aircraft/presentation/widgets/aircraft_picker_dialog.dart';
 import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_picker_dialog.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
@@ -69,7 +73,7 @@ class _LogTenProImportReviewDialogState
   late final Set<int> _ignoredLines;
   late final Set<int> _simulatorLines;
 
-  void _setAirportResolution({
+  void _setFieldResolution({
     required LogTenImportIssue issue,
     required String replacement,
   }) {
@@ -202,7 +206,7 @@ class _LogTenProImportReviewDialogState
     if (selected == null) return;
     if (!mounted) return;
     final replacement = _airportReplacementCode(selected, issue.currentValue);
-    _setAirportResolution(issue: issue, replacement: replacement);
+    _setFieldResolution(issue: issue, replacement: replacement);
   }
 
   Future<void> _createAirport(LogTenImportIssue issue) async {
@@ -233,7 +237,64 @@ class _LogTenProImportReviewDialogState
     if (!mounted || created == null) return;
     if (!mounted) return;
     final replacement = _airportReplacementCode(created, issue.currentValue);
-    _setAirportResolution(issue: issue, replacement: replacement);
+    _setFieldResolution(issue: issue, replacement: replacement);
+  }
+
+  bool _isAircraftIssue(LogTenImportIssue issue) {
+    return issue.association == LogTenFieldAssociation.registration;
+  }
+
+  Future<void> _pickAircraft(
+    LogTenImportIssue issue, {
+    required bool onlySimulators,
+  }) async {
+    final selected = await AircraftPickerDialog.show(
+      context,
+      title: AppLocalizations.of(context)!.logtenSelectAircraft,
+      onlySimulators: onlySimulators,
+    );
+    if (selected == null || !mounted) return;
+    _setFieldResolution(
+      issue: issue,
+      replacement: selected.registration.trim().toUpperCase(),
+    );
+  }
+
+  Future<void> _createAircraft(
+    LogTenImportIssue issue, {
+    required bool isSimulator,
+  }) async {
+    final raw = issue.currentValue.trim().toUpperCase();
+    const placeholder = Aircraft(
+      id: kPlaceholderId,
+      aircraftTypeId: 0,
+      registration: '',
+      isSimulator: false,
+      isFavorite: false,
+      isLocked: false,
+    );
+    final created = await showDialog<dynamic>(
+      context: context,
+      builder: (_) => AircraftEditScreen(
+        item: placeholder,
+        isCreate: true,
+        initialIsSimulator: isSimulator,
+        initialRegistration: raw,
+      ),
+    );
+    if (!mounted || created != true) return;
+    final db = ref.read(databaseProvider);
+    final row =
+        await (db.select(db.aircrafts)
+              ..where((t) => t.isSimulator.equals(isSimulator))
+              ..orderBy([(t) => OrderingTerm.desc(t.id)])
+              ..limit(1))
+            .getSingleOrNull();
+    if (row == null || !mounted) return;
+    _setFieldResolution(
+      issue: issue,
+      replacement: row.registration.trim().toUpperCase(),
+    );
   }
 
   String _airportReplacementCode(Airport airport, String originalValue) {
@@ -372,38 +433,59 @@ class _LogTenProImportReviewDialogState
                             Text(issue.reason),
                             const SizedBox(height: 12),
                             if (_isAirportIssue(issue))
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller:
-                                          _controllers[lineNumber]![issue
-                                              .association],
-                                      readOnly: true,
-                                      enabled: !ignored,
-                                      decoration: InputDecoration(
-                                        labelText: l10n.logtenSelectedAirport,
-                                        border: const OutlineInputBorder(),
-                                      ),
+                              Opacity(
+                                opacity: ignored ? 0.6 : 1,
+                                child: IgnorePointer(
+                                  ignoring: ignored,
+                                  child: PickerWithAddInputField(
+                                    label: issue.association.label,
+                                    valueText:
+                                        _controllers[lineNumber]![issue
+                                                .association]!
+                                            .text
+                                            .trim()
+                                            .isEmpty
+                                        ? l10n.logtenNotSelected
+                                        : _controllers[lineNumber]![issue
+                                                  .association]!
+                                              .text
+                                              .trim(),
+                                    onTap: () => _pickAirport(issue),
+                                    onAdd: () => _createAirport(issue),
+                                    addTooltip: l10n.logtenCreateAirportTooltip,
+                                  ),
+                                ),
+                              )
+                            else if (_isAircraftIssue(issue))
+                              Opacity(
+                                opacity: ignored ? 0.6 : 1,
+                                child: IgnorePointer(
+                                  ignoring: ignored,
+                                  child: PickerWithAddInputField(
+                                    label: l10n.screenAircraft,
+                                    valueText:
+                                        _controllers[lineNumber]![issue
+                                                .association]!
+                                            .text
+                                            .trim()
+                                            .isEmpty
+                                        ? l10n.logtenNotSelected
+                                        : _controllers[lineNumber]![issue
+                                                  .association]!
+                                              .text
+                                              .trim(),
+                                    onTap: () => _pickAircraft(
+                                      issue,
+                                      onlySimulators: simulatorSelected,
                                     ),
+                                    onAdd: () => _createAircraft(
+                                      issue,
+                                      isSimulator: simulatorSelected,
+                                    ),
+                                    addTooltip:
+                                        l10n.logtenCreateAircraftTooltip,
                                   ),
-                                  const SizedBox(width: 8),
-                                  IconButton.filledTonal(
-                                    onPressed: ignored
-                                        ? null
-                                        : () => _pickAirport(issue),
-                                    icon: const Icon(Icons.search),
-                                    tooltip: l10n.logtenSelectAirportTooltip,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  IconButton.filledTonal(
-                                    onPressed: ignored
-                                        ? null
-                                        : () => _createAirport(issue),
-                                    icon: const Icon(Icons.add),
-                                    tooltip: l10n.logtenCreateAirportTooltip,
-                                  ),
-                                ],
+                                ),
                               )
                             else
                               TextField(

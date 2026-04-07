@@ -151,7 +151,7 @@
   "copyNumber": "Copy number",
   "sendEmail": "Send email",
   "copyEmail": "Copy email",
-  "databaseSyncTitle": "Local sync",
+  "databaseSyncTitle": "Local Transfer",
   "databaseSyncStartLocal": "Start local sync",
   "databaseSyncFoundTitle": "Available devices",
   "databaseSyncSearching": "Searching for devices on Wi‑Fi...",
@@ -559,6 +559,8 @@
   "aboutTechStack": "Flutter • Riverpod • Drift",
   "aboutLicenseText": "GNU GPLv3 License",
   "databaseSyncSubtitle": "Connect two devices on the same network.",
+  "databaseLocalTransferInfoTitle": "How Local Transfer works",
+  "databaseLocalTransferInfoMessage": "Local Transfer copies the entire database from the sending device to the receiving device.\nIt is not a two-way sync. All data on the receiving device will be completely overwritten with the data from the sending device.\n\nImportant note:\nLocal Transfer may not work on hotel, airport, or public Wi-Fi networks. These networks often isolate devices from each other for security reasons, which prevents direct communication between your devices.",
   "logtenReviewHelpText": "Fix the value for each invalid field, or ignore the full source line.",
   "logtenReviewSimulatorSelectedHelp": "Simulator selected: airport fields are not required.",
   "qatarMissingAirportsMessage": "Create the missing airports before continuing the Qatar Airways import.",
@@ -668,6 +670,9 @@
   "logtenIgnoreLineAction": "Ignore line",
   "logtenImportAction": "Import",
   "logtenImportTitle": "Import LogTen",
+  "logtenSelectAircraft": "Select aircraft",
+  "logtenCreateAircraftTooltip": "Create aircraft",
+  "logtenNotSelected": "Not selected",
   "logtenReviewTitle": "Review LogTen",
   "logtenSelectAirportTooltip": "Select airport",
   "logtenSelectArrivalAirport": "Select arrival airport",
@@ -756,6 +761,30 @@
   "southwestImportOptionsTitle": "Import Southwest",
   "southwestOverrideExistingDataLabel": "Overwrite existing data",
   "southwestRecalculateBlockTimeLabel": "Recalculate block time",
+  "southwestPreflightMissingRequiredTitle": "Missing required fields",
+  "southwestPreflightMissingRequiredMessage": "Missing required data:",
+  "southwestPreflightMissingTypeTitle": "Missing aircraft type",
+  "southwestPreflightMissingTypeMessage": "Choose how to handle lines with missing aircraft type.",
+  "southwestPreflightMissingTypeInfoTitle": "Missing aircraft type",
+  "southwestPreflightMissingTypeInfoMessage": "Skip Lines will not import the listed lines.\n\nImport Anyway will import those lines and set aircraft type to UNKNOWN.",
+  "southwestPreflightMissingTailTitle": "Missing Tail Number",
+  "southwestPreflightMissingTailMessage": "The following lines are missing Tail Number:",
+  "southwestPreflightMissingTailInfoTitle": "Missing tail number",
+  "southwestPreflightMissingTailInfoMessage": "Skip Lines will not import the listed lines.\n\nImport Anyway will import those lines and create aircraft with tail number equal to the aircraft type.",
+  "southwestPreflightSkipLinesAction": "Skip Lines",
+  "southwestPreflightImportAnywayAction": "Import Anyway",
+  "southwestPreflightHowProceedLabel": "How would you like to proceed?",
+  "southwestPreflightImportUnknownTypeAction": "Import with type UNKNOWN",
+  "southwestPreflightImportTailFromTypeAction": "Import anyway (tail = type)",
+  "southwestPreflightFieldDate": "Date",
+  "southwestPreflightFieldDepartureAirport": "Departure airport",
+  "southwestPreflightFieldArrivalAirport": "Arrival airport",
+  "southwestPreflightFieldDepartureTime": "Departure time",
+  "southwestPreflightFieldArrivalTime": "Arrival time",
+  "southwestPreflightMissingFieldsReason": "Missing: {fields}",
+  "southwestPreflightMissingTypeReason": "Missing aircraft type.",
+  "southwestPreflightMissingTailReason": "Missing aircraft tail. Aircraft type: {typeCode}.",
+  "southwestPreflightUnknownTypeLabel": "UNKNOWN",
   "databaseAircraftLabel": "Aircraft: {count}",
   "databaseAircraftTypesLabel": "Aircraft types: {count}",
   "databaseAirportsLabel": "Airports: {count}",
@@ -778,6 +807,20 @@
     "placeholders": {
       "count": {
         "type": "int"
+      }
+    }
+  },
+  "@southwestPreflightMissingFieldsReason": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "@southwestPreflightMissingTailReason": {
+    "placeholders": {
+      "typeCode": {
+        "type": "String"
       }
     }
   },

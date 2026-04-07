@@ -11,10 +11,10 @@ import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/export/simplelog_csv_exporter.dart';
-import 'package:simplelog/data/import/dashboard_rules_seed_importer.dart';
 import 'package:simplelog/data/import/import_operation_result.dart';
 import 'package:simplelog/data/import/import_source_dispatcher.dart';
 import 'package:simplelog/data/import/legacy_simplelog_db_importer.dart';
@@ -23,6 +23,8 @@ import 'package:simplelog/data/import/logten_pro_tsv_inspector.dart';
 import 'package:simplelog/data/import/qatar_airways_import_options.dart';
 import 'package:simplelog/data/import/qatar_airways_workbook_inspector.dart';
 import 'package:simplelog/data/import/simplelog_csv_importer.dart';
+import 'package:simplelog/data/import/source_parsers/southwest_csv_source_parser.dart';
+import 'package:simplelog/data/import/southwest_import_options.dart';
 import 'package:simplelog/features/aircraft/presentation/aircraft_edit_screen.dart';
 import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
 import 'package:simplelog/features/database/presentation/widgets/import_options_preferences.dart';
@@ -33,6 +35,7 @@ import 'package:simplelog/features/database/presentation/widgets/qatar_airways_i
 import 'package:simplelog/features/database/presentation/widgets/qatar_airways_preflight_dialogs.dart';
 import 'package:simplelog/features/database/presentation/widgets/simplelog_import_options_dialog.dart';
 import 'package:simplelog/features/database/presentation/widgets/southwest_import_options_dialog.dart';
+import 'package:simplelog/features/database/presentation/widgets/southwest_import_preflight_dialog.dart';
 import 'package:simplelog/features/reports/presentation/providers/reports_preferences_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
@@ -82,7 +85,6 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760),
@@ -97,6 +99,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
             _DatabaseSectionCard(
               title: l10n.databaseSyncTitle,
               subtitle: l10n.databaseSyncSubtitle,
+              headerTrailing: InfoHelpButton(
+                title: l10n.databaseLocalTransferInfoTitle,
+                message: l10n.databaseLocalTransferInfoMessage,
+              ),
               children: [
                 _DatabaseActionButton(
                   icon: Icons.sync,
@@ -136,20 +142,6 @@ class DatabaseSyncTrigger extends ConsumerWidget {
                   icon: Icons.restore_outlined,
                   label: l10n.databaseRestoreLogbookAction,
                   onPressed: () => _restoreDatabase(context, ref),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _DatabaseSectionCard(
-              title: l10n.databaseDangerZoneTitle,
-              subtitle: l10n.databaseDangerZoneSubtitle,
-              accentColor: colorScheme.error,
-              children: [
-                _DatabaseActionButton(
-                  icon: Icons.delete_forever_outlined,
-                  label: l10n.databaseDumpTemporaryAction,
-                  onPressed: () => _clearDatabase(context, ref),
-                  danger: true,
                 ),
               ],
             ),
@@ -343,9 +335,16 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         initial: initialOptions,
       );
       if (options == null || !context.mounted) return;
+      final importer = SimpleLogCsvImporter(db);
+      final preflightOptions = await _resolveSouthwestPreflight(
+        context,
+        importer: importer,
+        content: content,
+        initialOptions: options,
+      );
+      if (preflightOptions == null || !context.mounted) return;
       await ImportOptionsPreferences.saveSouthwest(db, options);
       if (!context.mounted) return;
-      final importer = SimpleLogCsvImporter(db);
       final progress = ValueNotifier<_ImportProgress>(
         const _ImportProgress(processed: 0, total: 0),
       );
@@ -354,7 +353,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       try {
         outcome = await importer.importSouthwestCsvSafely(
           content,
-          options: options,
+          options: preflightOptions,
           onProgress: (processed, total) => progress.value = _ImportProgress(
             processed: processed,
             total: total,
@@ -737,21 +736,195 @@ ${l10n.databaseErrorsLabel(stats.errors)}
     }
   }
 
-  Future<void> _clearDatabase(BuildContext context, WidgetRef ref) async {
+  Future<SouthwestImportOptions?> _resolveSouthwestPreflight(
+    BuildContext context, {
+    required SimpleLogCsvImporter importer,
+    required String content,
+    required SouthwestImportOptions initialOptions,
+  }) async {
     final l10n = AppLocalizations.of(context)!;
-    final confirmed = await _showConfirmationDialog(
-      context: context,
-      title: l10n.clearDatabaseTitle,
-      message: l10n.clearDatabaseMessage,
-      confirmLabel: l10n.clearAction,
-      cancelLabel: l10n.cancelAction,
+    final report = importer.inspectSouthwestCsv(content);
+    if (!report.hasIssues) {
+      return initialOptions.copyWith(
+        missingAircraftTypePolicy:
+            SouthwestMissingAircraftTypePolicy.useUnknown,
+        missingAircraftTailPolicy:
+            SouthwestMissingAircraftTailPolicy.useTypeAsTail,
+        skippedSourceLineNumbers: const <int>{},
+      );
+    }
+
+    final skippedLines = <int>{};
+    var typePolicy = SouthwestMissingAircraftTypePolicy.useUnknown;
+    var tailPolicy = SouthwestMissingAircraftTailPolicy.useTypeAsTail;
+
+    if (report.missingRequiredIssues.isNotEmpty) {
+      final decision = await SouthwestImportPreflightDialog.show(
+        context,
+        title: l10n.southwestPreflightMissingRequiredTitle,
+        message: l10n.southwestPreflightMissingRequiredMessage,
+        issues: _buildSouthwestRequiredIssueLines(
+          l10n,
+          report.missingRequiredIssues,
+        ),
+        primaryActionLabel: l10n.southwestPreflightSkipLinesAction,
+      );
+      if (decision != SouthwestPreflightDialogDecision.primary) {
+        return null;
+      }
+      skippedLines.addAll(
+        report.missingRequiredIssues.map((issue) => issue.sourceLineNumber),
+      );
+      if (!context.mounted) return null;
+    }
+
+    final unresolvedTypeIssues = report.missingAircraftTypeIssues
+        .where((issue) => !skippedLines.contains(issue.sourceLineNumber))
+        .toList(growable: false);
+    if (unresolvedTypeIssues.isNotEmpty) {
+      final decision = await SouthwestImportPreflightDialog.show(
+        context,
+        title: l10n.southwestPreflightMissingTypeTitle,
+        message: l10n.southwestPreflightMissingTypeMessage,
+        issues: _buildSouthwestMissingTypeIssueLines(
+          l10n,
+          unresolvedTypeIssues,
+        ),
+        primaryActionLabel: l10n.southwestPreflightImportAnywayAction,
+        secondaryActionLabel: l10n.southwestPreflightSkipLinesAction,
+        infoTitle: l10n.southwestPreflightMissingTypeInfoTitle,
+        infoMessage: l10n.southwestPreflightMissingTypeInfoMessage,
+        showInfoNextToProceedLabel: true,
+      );
+      if (decision == SouthwestPreflightDialogDecision.cancel) {
+        return null;
+      }
+      if (decision == SouthwestPreflightDialogDecision.secondary) {
+        skippedLines.addAll(
+          unresolvedTypeIssues.map((issue) => issue.sourceLineNumber),
+        );
+        typePolicy = SouthwestMissingAircraftTypePolicy.skipLines;
+      }
+      if (!context.mounted) return null;
+    }
+
+    final unresolvedTailIssues = report.missingAircraftTailIssues
+        .where((issue) => !skippedLines.contains(issue.sourceLineNumber))
+        .toList(growable: false);
+    if (unresolvedTailIssues.isNotEmpty) {
+      final decision = await SouthwestImportPreflightDialog.show(
+        context,
+        title: l10n.southwestPreflightMissingTailTitle,
+        message: l10n.southwestPreflightMissingTailMessage,
+        issues: _buildSouthwestMissingTailIssueLines(
+          l10n,
+          unresolvedTailIssues,
+        ),
+        primaryActionLabel: l10n.southwestPreflightImportAnywayAction,
+        secondaryActionLabel: l10n.southwestPreflightSkipLinesAction,
+        infoTitle: l10n.southwestPreflightMissingTailInfoTitle,
+        infoMessage: l10n.southwestPreflightMissingTailInfoMessage,
+        showInfoNextToProceedLabel: true,
+      );
+      if (decision == SouthwestPreflightDialogDecision.cancel) {
+        return null;
+      }
+      if (decision == SouthwestPreflightDialogDecision.secondary) {
+        skippedLines.addAll(
+          unresolvedTailIssues.map((issue) => issue.sourceLineNumber),
+        );
+        tailPolicy = SouthwestMissingAircraftTailPolicy.skipLines;
+      }
+    }
+
+    return initialOptions.copyWith(
+      missingAircraftTypePolicy: typePolicy,
+      missingAircraftTailPolicy: tailPolicy,
+      skippedSourceLineNumbers: skippedLines,
     );
-    if (confirmed != true || !context.mounted) return;
-    final db = ref.read(databaseProvider);
-    await db.clearAllData();
-    await DashboardRulesSeedImporter.clearSeedFlag(db);
-    if (!context.mounted) return;
-    await _showInfoDialog(context, 'Database cleared.');
+  }
+
+  List<String> _buildSouthwestRequiredIssueLines(
+    AppLocalizations l10n,
+    List<SouthwestMissingRequiredIssue> issues,
+  ) {
+    final ordered = issues.toList()
+      ..sort(
+        (left, right) =>
+            left.sourceLineNumber.compareTo(right.sourceLineNumber),
+      );
+    return ordered
+        .map((issue) {
+          final missingFields = issue.missingFields.toList()
+            ..sort((left, right) => left.index.compareTo(right.index));
+          final fields = missingFields
+              .map((field) {
+                return switch (field) {
+                  SouthwestMissingRequiredField.date =>
+                    l10n.southwestPreflightFieldDate,
+                  SouthwestMissingRequiredField.departureAirport =>
+                    l10n.southwestPreflightFieldDepartureAirport,
+                  SouthwestMissingRequiredField.arrivalAirport =>
+                    l10n.southwestPreflightFieldArrivalAirport,
+                  SouthwestMissingRequiredField.departureTime =>
+                    l10n.southwestPreflightFieldDepartureTime,
+                  SouthwestMissingRequiredField.arrivalTime =>
+                    l10n.southwestPreflightFieldArrivalTime,
+                };
+              })
+              .join(', ');
+          return l10n.databaseLineIssueLabel(
+            issue.sourceLineNumber,
+            l10n.southwestPreflightMissingFieldsReason(fields),
+          );
+        })
+        .toList(growable: false);
+  }
+
+  List<String> _buildSouthwestMissingTypeIssueLines(
+    AppLocalizations l10n,
+    List<SouthwestMissingAircraftTypeIssue> issues,
+  ) {
+    final ordered = issues.toList()
+      ..sort(
+        (left, right) =>
+            left.sourceLineNumber.compareTo(right.sourceLineNumber),
+      );
+    return ordered
+        .map(
+          (issue) => l10n.databaseLineIssueLabel(
+            issue.sourceLineNumber,
+            l10n.southwestPreflightMissingTypeReason,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  List<String> _buildSouthwestMissingTailIssueLines(
+    AppLocalizations l10n,
+    List<SouthwestMissingAircraftTailIssue> issues,
+  ) {
+    final ordered = issues.toList()
+      ..sort(
+        (left, right) =>
+            left.sourceLineNumber.compareTo(right.sourceLineNumber),
+      );
+    String typeLabel(SouthwestMissingAircraftTailIssue issue) {
+      return issue.aircraftTypeCode.isEmpty
+          ? l10n.southwestPreflightUnknownTypeLabel
+          : issue.aircraftTypeCode;
+    }
+
+    return ordered
+        .map(
+          (issue) =>
+              'Line ${issue.sourceLineNumber}: '
+              '${issue.date}, '
+              '${issue.fromCode}, '
+              '${issue.toCode}, '
+              '${typeLabel(issue)}',
+        )
+        .toList(growable: false);
   }
 
   Future<void> _showInfoDialog(BuildContext context, String message) async {
@@ -1166,19 +1339,18 @@ class _DatabaseSectionCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.children,
-    this.accentColor,
+    this.headerTrailing,
   });
 
   final String title;
   final String subtitle;
   final List<Widget> children;
-  final Color? accentColor;
+  final Widget? headerTrailing;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final titleColor = accentColor ?? colorScheme.onSurface;
 
     return Card(
       elevation: 0,
@@ -1188,12 +1360,19 @@ class _DatabaseSectionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: titleColor,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                if (headerTrailing != null) ...<Widget>[headerTrailing!],
+              ],
             ),
             const SizedBox(height: 2),
             Text(
@@ -1217,21 +1396,15 @@ class _DatabaseActionButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.filled = false,
-    this.danger = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
   final bool filled;
-  final bool danger;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final iconColor = danger ? colorScheme.error : null;
-    final textColor = danger ? colorScheme.error : null;
-
     if (filled) {
       return SizedBox(
         width: double.infinity,
@@ -1246,11 +1419,8 @@ class _DatabaseActionButton extends StatelessWidget {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: onPressed,
-        icon: Icon(icon, color: iconColor),
-        label: Text(
-          label,
-          style: textColor == null ? null : TextStyle(color: textColor),
-        ),
+        icon: Icon(icon),
+        label: Text(label),
       ),
     );
   }

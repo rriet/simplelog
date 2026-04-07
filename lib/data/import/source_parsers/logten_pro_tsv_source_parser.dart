@@ -811,7 +811,12 @@ class LogTenProTsvSourceParser {
     if (code.length == 4) {
       final existing = existingAirportsByIcao[code.toLowerCase()];
       if (existing == null) {
-        return ImportedAirportDraft(icao: code);
+        throw _LogTenRowIssue(
+          lineNumber: lineNumber,
+          association: association,
+          currentValue: rawCode,
+          reason: 'ICAO airport "$code" does not exist in the database.',
+        );
       }
       return _airportDraftFromAirport(existing);
     }

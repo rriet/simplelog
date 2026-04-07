@@ -1,5 +1,23 @@
 import 'package:simplelog/data/database/enums/crew_position.dart';
 
+/// Strategy for rows that are missing aircraft type.
+enum SouthwestMissingAircraftTypePolicy {
+  /// Import and force aircraft type to `UNKNOWN`.
+  useUnknown,
+
+  /// Skip rows with missing aircraft type.
+  skipLines,
+}
+
+/// Strategy for rows that are missing aircraft tail.
+enum SouthwestMissingAircraftTailPolicy {
+  /// Import and set tail number to the row aircraft type.
+  useTypeAsTail,
+
+  /// Skip rows with missing aircraft tail.
+  skipLines,
+}
+
 /// Tuning options used when importing Southwest CSV exports.
 class SouthwestImportOptions {
   /// Creates a new set of import options.
@@ -14,6 +32,11 @@ class SouthwestImportOptions {
     this.overrideExistingData = false,
     this.addCopilotStaffNumberToNotes = true,
     this.addFlightNumberToNotes = true,
+    this.missingAircraftTypePolicy =
+        SouthwestMissingAircraftTypePolicy.useUnknown,
+    this.missingAircraftTailPolicy =
+        SouthwestMissingAircraftTailPolicy.useTypeAsTail,
+    this.skippedSourceLineNumbers = const <int>{},
   });
 
   /// Default crew position used when deriving "self" crew.
@@ -46,6 +69,15 @@ class SouthwestImportOptions {
   /// Whether flight number should be appended to notes.
   final bool addFlightNumberToNotes;
 
+  /// Policy used when a non-positioning row has missing aircraft type.
+  final SouthwestMissingAircraftTypePolicy missingAircraftTypePolicy;
+
+  /// Policy used when a non-positioning row has missing aircraft tail.
+  final SouthwestMissingAircraftTailPolicy missingAircraftTailPolicy;
+
+  /// Source line numbers that must be skipped for this import run.
+  final Set<int> skippedSourceLineNumbers;
+
   /// Returns a copy of this options object with some values changed.
   SouthwestImportOptions copyWith({
     CrewPosition? defaultSelfPosition,
@@ -58,6 +90,9 @@ class SouthwestImportOptions {
     bool? overrideExistingData,
     bool? addCopilotStaffNumberToNotes,
     bool? addFlightNumberToNotes,
+    SouthwestMissingAircraftTypePolicy? missingAircraftTypePolicy,
+    SouthwestMissingAircraftTailPolicy? missingAircraftTailPolicy,
+    Set<int>? skippedSourceLineNumbers,
   }) {
     return SouthwestImportOptions(
       defaultSelfPosition: defaultSelfPosition ?? this.defaultSelfPosition,
@@ -75,6 +110,12 @@ class SouthwestImportOptions {
           addCopilotStaffNumberToNotes ?? this.addCopilotStaffNumberToNotes,
       addFlightNumberToNotes:
           addFlightNumberToNotes ?? this.addFlightNumberToNotes,
+      missingAircraftTypePolicy:
+          missingAircraftTypePolicy ?? this.missingAircraftTypePolicy,
+      missingAircraftTailPolicy:
+          missingAircraftTailPolicy ?? this.missingAircraftTailPolicy,
+      skippedSourceLineNumbers:
+          skippedSourceLineNumbers ?? this.skippedSourceLineNumbers,
     );
   }
 }

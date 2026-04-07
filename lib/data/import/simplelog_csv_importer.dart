@@ -33,6 +33,11 @@ class SimpleLogCsvImporter {
   final SouthwestCsvSourceParser _southwestParser;
   final NormalizedImportPersistenceService _persistence;
 
+  /// Inspects Southwest CSV rows and reports preflight issues.
+  SouthwestCsvPreflightReport inspectSouthwestCsv(String content) {
+    return _southwestParser.inspect(content);
+  }
+
   /// Imports a legacy SimpleLog CSV string into the database.
   Future<SimpleLogImportResult> importCsv(
     String content, {

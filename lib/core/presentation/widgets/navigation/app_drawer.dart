@@ -36,7 +36,7 @@ class AppDrawer extends ConsumerWidget {
     final menuBackground = Theme.of(
       context,
     ).colorScheme.surfaceContainerHighest;
-    final versionAsync = ref.watch(appVersionLabelProvider);
+    final versionLabel = ref.watch(appVersionLabelProvider);
 
     return Drawer(
       backgroundColor: menuBackground,
@@ -60,19 +60,12 @@ class AppDrawer extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: versionAsync.when(
-                data: (value) {
-                  if (value.trim().isEmpty) {
-                    return const SizedBox.shrink();
-                  }
-                  return Text(
-                    l10n.menuVersionLabel(value),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  );
-                },
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
+              child: versionLabel.trim().isEmpty
+                  ? const SizedBox.shrink()
+                  : Text(
+                      l10n.menuVersionLabel(versionLabel),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
             ),
           ],
         ),

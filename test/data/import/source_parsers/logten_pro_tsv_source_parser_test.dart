@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/import/logten_pro_import_models.dart';
 import 'package:simplelog/data/import/normalized_import_models.dart';
 import 'package:simplelog/data/import/source_parsers/logten_pro_tsv_source_parser.dart';
@@ -24,11 +25,30 @@ void main() {
     return rows.map((row) => row.join('\t')).join('\n');
   }
 
+  const existingAirportsByIcao = <String, Airport>{
+    'kmia': Airport(
+      id: 1,
+      icao: 'KMIA',
+      latitude: 0,
+      longitude: 0,
+      isFavorite: false,
+      isLocked: false,
+    ),
+    'kfll': Airport(
+      id: 2,
+      icao: 'KFLL',
+      latitude: 0,
+      longitude: 0,
+      isFavorite: false,
+      isLocked: false,
+    ),
+  };
+
   NormalizedFlightRecord firstFlightRecord(String content) {
     final result = parser.parse(
       content,
       options: optionsForHeader(header),
-      existingAirportsByIcao: const {},
+      existingAirportsByIcao: existingAirportsByIcao,
       existingAirportsByIata: const {},
     );
     expect(result.issues, isEmpty);
@@ -72,7 +92,7 @@ void main() {
     final result = parser.parse(
       content,
       options: optionsForHeader(header),
-      existingAirportsByIcao: const {},
+      existingAirportsByIcao: existingAirportsByIcao,
       existingAirportsByIata: const {},
     );
 
@@ -85,6 +105,31 @@ void main() {
     expect(
       (result.batch.records[1] as NormalizedFlightRecord).timeBlockMinutes,
       90,
+    );
+  });
+
+  test('reports issue when ICAO airport does not exist in database', () {
+    final content = tsv([
+      header,
+      ['2026-03-01', 'KZZZ', 'KFLL', '1:30', 'N123AB', 'B738'],
+    ]);
+
+    final result = parser.parse(
+      content,
+      options: optionsForHeader(header),
+      existingAirportsByIcao: const {},
+      existingAirportsByIata: const {},
+    );
+
+    expect(result.batch.records, isEmpty);
+    expect(result.issues, isNotEmpty);
+    expect(
+      result.issues.any(
+        (issue) =>
+            issue.association == LogTenFieldAssociation.fromAirport &&
+            issue.reason.contains('does not exist in the database'),
+      ),
+      isTrue,
     );
   });
 }

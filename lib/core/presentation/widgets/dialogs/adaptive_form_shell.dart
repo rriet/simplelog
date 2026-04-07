@@ -79,16 +79,34 @@ class AdaptiveFormShell extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
-                    child: Row(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        leadingWidget,
-                        Expanded(
-                          child: Text(
-                            resolvedTitle,
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
+                        Row(
+                          children: [
+                            leadingWidget,
+                            Expanded(
+                              child: Text(
+                                resolvedTitle,
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                            ),
+                          ],
                         ),
-                        ...actions,
+                        if (actions.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: actions,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

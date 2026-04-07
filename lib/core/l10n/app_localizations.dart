@@ -793,7 +793,7 @@ abstract class AppLocalizations {
   /// No description provided for @databaseSyncTitle.
   ///
   /// In en, this message translates to:
-  /// **'Local sync'**
+  /// **'Local Transfer'**
   String get databaseSyncTitle;
 
   /// No description provided for @databaseSyncStartLocal.
@@ -2662,6 +2662,18 @@ abstract class AppLocalizations {
   /// **'Connect two devices on the same network.'**
   String get databaseSyncSubtitle;
 
+  /// No description provided for @databaseLocalTransferInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How Local Transfer works'**
+  String get databaseLocalTransferInfoTitle;
+
+  /// No description provided for @databaseLocalTransferInfoMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Transfer copies the entire database from the sending device to the receiving device.\nIt is not a two-way sync. All data on the receiving device will be completely overwritten with the data from the sending device.\n\nImportant note:\nLocal Transfer may not work on hotel, airport, or public Wi-Fi networks. These networks often isolate devices from each other for security reasons, which prevents direct communication between your devices.'**
+  String get databaseLocalTransferInfoMessage;
+
   /// No description provided for @logtenReviewHelpText.
   ///
   /// In en, this message translates to:
@@ -3316,6 +3328,24 @@ abstract class AppLocalizations {
   /// **'Import LogTen'**
   String get logtenImportTitle;
 
+  /// No description provided for @logtenSelectAircraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Select aircraft'**
+  String get logtenSelectAircraft;
+
+  /// No description provided for @logtenCreateAircraftTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Create aircraft'**
+  String get logtenCreateAircraftTooltip;
+
+  /// No description provided for @logtenNotSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not selected'**
+  String get logtenNotSelected;
+
   /// No description provided for @logtenReviewTitle.
   ///
   /// In en, this message translates to:
@@ -3843,6 +3873,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recalculate block time'**
   String get southwestRecalculateBlockTimeLabel;
+
+  /// No description provided for @southwestPreflightMissingRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing required fields'**
+  String get southwestPreflightMissingRequiredTitle;
+
+  /// No description provided for @southwestPreflightMissingRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing required data:'**
+  String get southwestPreflightMissingRequiredMessage;
+
+  /// No description provided for @southwestPreflightMissingTypeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing aircraft type'**
+  String get southwestPreflightMissingTypeTitle;
+
+  /// No description provided for @southwestPreflightMissingTypeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how to handle lines with missing aircraft type.'**
+  String get southwestPreflightMissingTypeMessage;
+
+  /// No description provided for @southwestPreflightMissingTypeInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing aircraft type'**
+  String get southwestPreflightMissingTypeInfoTitle;
+
+  /// No description provided for @southwestPreflightMissingTypeInfoMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip Lines will not import the listed lines.\n\nImport Anyway will import those lines and set aircraft type to UNKNOWN.'**
+  String get southwestPreflightMissingTypeInfoMessage;
+
+  /// No description provided for @southwestPreflightMissingTailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing Tail Number'**
+  String get southwestPreflightMissingTailTitle;
+
+  /// No description provided for @southwestPreflightMissingTailMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The following lines are missing Tail Number:'**
+  String get southwestPreflightMissingTailMessage;
+
+  /// No description provided for @southwestPreflightMissingTailInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing tail number'**
+  String get southwestPreflightMissingTailInfoTitle;
+
+  /// No description provided for @southwestPreflightMissingTailInfoMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip Lines will not import the listed lines.\n\nImport Anyway will import those lines and create aircraft with tail number equal to the aircraft type.'**
+  String get southwestPreflightMissingTailInfoMessage;
+
+  /// No description provided for @southwestPreflightSkipLinesAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip Lines'**
+  String get southwestPreflightSkipLinesAction;
+
+  /// No description provided for @southwestPreflightImportAnywayAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Anyway'**
+  String get southwestPreflightImportAnywayAction;
+
+  /// No description provided for @southwestPreflightHowProceedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How would you like to proceed?'**
+  String get southwestPreflightHowProceedLabel;
+
+  /// No description provided for @southwestPreflightImportUnknownTypeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import with type UNKNOWN'**
+  String get southwestPreflightImportUnknownTypeAction;
+
+  /// No description provided for @southwestPreflightImportTailFromTypeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import anyway (tail = type)'**
+  String get southwestPreflightImportTailFromTypeAction;
+
+  /// No description provided for @southwestPreflightFieldDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get southwestPreflightFieldDate;
+
+  /// No description provided for @southwestPreflightFieldDepartureAirport.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure airport'**
+  String get southwestPreflightFieldDepartureAirport;
+
+  /// No description provided for @southwestPreflightFieldArrivalAirport.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival airport'**
+  String get southwestPreflightFieldArrivalAirport;
+
+  /// No description provided for @southwestPreflightFieldDepartureTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure time'**
+  String get southwestPreflightFieldDepartureTime;
+
+  /// No description provided for @southwestPreflightFieldArrivalTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival time'**
+  String get southwestPreflightFieldArrivalTime;
+
+  /// No description provided for @southwestPreflightMissingFieldsReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing: {fields}'**
+  String southwestPreflightMissingFieldsReason(String fields);
+
+  /// No description provided for @southwestPreflightMissingTypeReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing aircraft type.'**
+  String get southwestPreflightMissingTypeReason;
+
+  /// No description provided for @southwestPreflightMissingTailReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing aircraft tail. Aircraft type: {typeCode}.'**
+  String southwestPreflightMissingTailReason(String typeCode);
+
+  /// No description provided for @southwestPreflightUnknownTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'UNKNOWN'**
+  String get southwestPreflightUnknownTypeLabel;
 
   /// No description provided for @databaseAircraftLabel.
   ///

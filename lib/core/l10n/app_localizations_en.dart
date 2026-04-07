@@ -368,7 +368,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copyEmail => 'Copy email';
 
   @override
-  String get databaseSyncTitle => 'Local sync';
+  String get databaseSyncTitle => 'Local Transfer';
 
   @override
   String get databaseSyncStartLocal => 'Start local sync';
@@ -1339,6 +1339,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get databaseSyncSubtitle => 'Connect two devices on the same network.';
 
   @override
+  String get databaseLocalTransferInfoTitle => 'How Local Transfer works';
+
+  @override
+  String get databaseLocalTransferInfoMessage =>
+      'Local Transfer copies the entire database from the sending device to the receiving device.\nIt is not a two-way sync. All data on the receiving device will be completely overwritten with the data from the sending device.\n\nImportant note:\nLocal Transfer may not work on hotel, airport, or public Wi-Fi networks. These networks often isolate devices from each other for security reasons, which prevents direct communication between your devices.';
+
+  @override
   String get logtenReviewHelpText =>
       'Fix the value for each invalid field, or ignore the full source line.';
 
@@ -1679,6 +1686,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logtenImportTitle => 'Import LogTen';
 
   @override
+  String get logtenSelectAircraft => 'Select aircraft';
+
+  @override
+  String get logtenCreateAircraftTooltip => 'Create aircraft';
+
+  @override
+  String get logtenNotSelected => 'Not selected';
+
+  @override
   String get logtenReviewTitle => 'Review LogTen';
 
   @override
@@ -1948,6 +1964,91 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get southwestRecalculateBlockTimeLabel => 'Recalculate block time';
+
+  @override
+  String get southwestPreflightMissingRequiredTitle =>
+      'Missing required fields';
+
+  @override
+  String get southwestPreflightMissingRequiredMessage =>
+      'Missing required data:';
+
+  @override
+  String get southwestPreflightMissingTypeTitle => 'Missing aircraft type';
+
+  @override
+  String get southwestPreflightMissingTypeMessage =>
+      'Choose how to handle lines with missing aircraft type.';
+
+  @override
+  String get southwestPreflightMissingTypeInfoTitle => 'Missing aircraft type';
+
+  @override
+  String get southwestPreflightMissingTypeInfoMessage =>
+      'Skip Lines will not import the listed lines.\n\nImport Anyway will import those lines and set aircraft type to UNKNOWN.';
+
+  @override
+  String get southwestPreflightMissingTailTitle => 'Missing Tail Number';
+
+  @override
+  String get southwestPreflightMissingTailMessage =>
+      'The following lines are missing Tail Number:';
+
+  @override
+  String get southwestPreflightMissingTailInfoTitle => 'Missing tail number';
+
+  @override
+  String get southwestPreflightMissingTailInfoMessage =>
+      'Skip Lines will not import the listed lines.\n\nImport Anyway will import those lines and create aircraft with tail number equal to the aircraft type.';
+
+  @override
+  String get southwestPreflightSkipLinesAction => 'Skip Lines';
+
+  @override
+  String get southwestPreflightImportAnywayAction => 'Import Anyway';
+
+  @override
+  String get southwestPreflightHowProceedLabel =>
+      'How would you like to proceed?';
+
+  @override
+  String get southwestPreflightImportUnknownTypeAction =>
+      'Import with type UNKNOWN';
+
+  @override
+  String get southwestPreflightImportTailFromTypeAction =>
+      'Import anyway (tail = type)';
+
+  @override
+  String get southwestPreflightFieldDate => 'Date';
+
+  @override
+  String get southwestPreflightFieldDepartureAirport => 'Departure airport';
+
+  @override
+  String get southwestPreflightFieldArrivalAirport => 'Arrival airport';
+
+  @override
+  String get southwestPreflightFieldDepartureTime => 'Departure time';
+
+  @override
+  String get southwestPreflightFieldArrivalTime => 'Arrival time';
+
+  @override
+  String southwestPreflightMissingFieldsReason(String fields) {
+    return 'Missing: $fields';
+  }
+
+  @override
+  String get southwestPreflightMissingTypeReason => 'Missing aircraft type.';
+
+  @override
+  String southwestPreflightMissingTailReason(String typeCode) {
+    return 'Missing aircraft tail. Aircraft type: $typeCode.';
+  }
+
+  @override
+  String get southwestPreflightUnknownTypeLabel => 'UNKNOWN';
 
   @override
   String databaseAircraftLabel(int count) {

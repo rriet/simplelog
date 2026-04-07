@@ -341,6 +341,8 @@ class NormalizedPositioningRecord extends NormalizedImportRecord {
     required this.arrivalDateTime,
     required this.timeTotalMinutes,
     required this.notes,
+    this.matchExistingByPositioningDateKey = false,
+    this.overrideMatchedPositioning = false,
   }) : super(progressOrdinal);
 
   final ImportedAirportDraft departureAirport;
@@ -349,6 +351,8 @@ class NormalizedPositioningRecord extends NormalizedImportRecord {
   final DateTime? arrivalDateTime;
   final int timeTotalMinutes;
   final String notes;
+  final bool matchExistingByPositioningDateKey;
+  final bool overrideMatchedPositioning;
 }
 
 /// Shared normalized simulator row.

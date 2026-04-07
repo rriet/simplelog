@@ -1,11 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
-/// Returns formatted app version and build from package metadata.
-final appVersionLabelProvider = FutureProvider<String>((ref) async {
-  final info = await PackageInfo.fromPlatform();
-  final version = info.version.trim();
-  final build = info.buildNumber.trim();
+/// Returns formatted app version and build from Flutter build env values.
+///
+/// These values are derived from `pubspec.yaml` (`version:`) by Flutter:
+/// `FLUTTER_BUILD_NAME` and `FLUTTER_BUILD_NUMBER`.
+final appVersionLabelProvider = Provider<String>((ref) {
+  final version = const String.fromEnvironment('FLUTTER_BUILD_NAME').trim();
+  final build = const String.fromEnvironment('FLUTTER_BUILD_NUMBER').trim();
   if (version.isEmpty && build.isEmpty) {
     return '';
   }
