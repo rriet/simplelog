@@ -36,7 +36,12 @@ class AppDrawer extends ConsumerWidget {
     final menuBackground = Theme.of(
       context,
     ).colorScheme.surfaceContainerHighest;
-    final versionLabel = ref.watch(appVersionLabelProvider);
+    final versionLabelAsync = ref.watch(appVersionLabelProvider);
+    final versionLabel = versionLabelAsync.when(
+      data: (value) => value.trim(),
+      error: (error, stackTrace) => '',
+      loading: () => '',
+    );
 
     return Drawer(
       backgroundColor: menuBackground,
@@ -60,7 +65,7 @@ class AppDrawer extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: versionLabel.trim().isEmpty
+              child: versionLabel.isEmpty
                   ? const SizedBox.shrink()
                   : Text(
                       l10n.menuVersionLabel(versionLabel),
