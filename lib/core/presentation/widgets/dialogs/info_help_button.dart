@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/navigation/app_navigator.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
 
 /// Reusable info action that shows explanatory text in popup/sheet style.
@@ -23,57 +25,41 @@ class InfoHelpButton extends StatelessWidget {
     return IconButton(
       tooltip: l10n.eventInfoTitle,
       icon: const Icon(Icons.info_outline),
-      onPressed: () => showLargeDialogScreen<void>(
+      onPressed: () => showSmallDialogScreen<void>(
         context: context,
-        maxWidth: 520,
-        maxHeightFactor: 0.6,
         builder: (context) {
           final resolvedTitle = (title ?? '').trim().isEmpty
               ? l10n.eventInfoTitle
               : title!.trim();
-          return _InfoHelpSheet(title: resolvedTitle, message: message);
+          return _InfoHelpDialog(title: resolvedTitle, message: message);
         },
       ),
     );
   }
 }
 
-class _InfoHelpSheet extends StatelessWidget {
-  const _InfoHelpSheet({required this.title, required this.message});
+class _InfoHelpDialog extends StatelessWidget {
+  const _InfoHelpDialog({required this.title, required this.message});
 
   final String title;
   final String message;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium,
+    final theme = Theme.of(context);
+    return AdaptiveFormShell(
+      title: title,
+      onClose: () => AppNavigator.pop(context),
+      fullScreen: false,
+      popupMaxWidth: 520,
+      contentView: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        child: SingleChildScrollView(
+          child: Text(
+            message,
+            style: theme.textTheme.bodyMedium,
           ),
-          const SizedBox(height: 12),
-          Flexible(
-            child: SingleChildScrollView(
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Text(message),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(AppLocalizations.of(context)!.okAction),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
