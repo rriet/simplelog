@@ -1565,8 +1565,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       dayMinutes: dayMinutes,
       nightMinutes: nightMinutes,
       ifrMinutes: totals.ifrMinutes,
-      simInstMinutes:
-          totals.instrumentMinutes + totals.simulatedInstrumentMinutes,
       fstdMinutes: totals.simulatorMinutes,
       dualMinutes: totals.dualMinutes,
       picMinutes: totals.picMinutes,
@@ -2106,10 +2104,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       flightMinutes: selection.flights ? totals.flightMinutes : 0,
       nightMinutes: selection.flights ? totals.nightMinutes : 0,
       ifrMinutes: selection.flights ? totals.ifrMinutes : 0,
-      instrumentMinutes: selection.flights ? totals.instrumentMinutes : 0,
-      simulatedInstrumentMinutes: selection.flights
-          ? totals.simulatedInstrumentMinutes
-          : 0,
       picMinutes: selection.flights ? totals.picMinutes : 0,
       picusMinutes: selection.flights ? totals.picusMinutes : 0,
       sicMinutes: selection.flights ? totals.sicMinutes : 0,
@@ -2945,8 +2939,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         if (selectedChecks.contains(_BatchFlightCheck.cappedTimesWithinBlock)) {
           final cappedFields = <(String, int)>[
             ('Night', snapshot.timeNightMinutes),
-            ('Instrument', snapshot.timeInstrumentMinutes),
-            ('Simulated Instrument', snapshot.timeSimulatedInstrumentMinutes),
+            ('IFR', snapshot.timeIFRMinutes),
             ('IFR', snapshot.timeIFRMinutes),
             ('CrossCountry', snapshot.timeCrossCountryMinutes),
             ('Flight', snapshot.timeFlightMinutes),
@@ -3170,14 +3163,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             assign: (value) => next.timeIFRMinutes = value,
           );
           _applyTimeMode(
-            mode: selection.modeFor(_BatchCalcField.instrument),
+            mode: selection.modeFor(_BatchCalcField.ifr),
             recalculateValue: base,
-            assign: (value) => next.timeInstrumentMinutes = value,
-          );
-          _applyTimeMode(
-            mode: selection.modeFor(_BatchCalcField.simInstrument),
-            recalculateValue: base,
-            assign: (value) => next.timeSimulatedInstrumentMinutes = value,
+            assign: (value) => next.timeIFRMinutes = value,
           );
           _applyTimeMode(
             mode: selection.modeFor(_BatchCalcField.flight),
@@ -3308,9 +3296,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     setState(() => _isCalculatingBatchDuty = true);
     try {
       await _runGuardedBatchWrite(() async {
-        final eventTypes = ref.read(reportsEventTypesProvider).copyWith(
-          duty: false,
-        );
+        final eventTypes = ref
+            .read(reportsEventTypesProvider)
+            .copyWith(
+              duty: false,
+            );
         final includedFlightIds = _filters.isEmpty
             ? null
             : _filteredFlightIds();
@@ -3406,8 +3396,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   List<_BatchCalcField> get _batchCalcFieldOrder => const [
     _BatchCalcField.block,
     _BatchCalcField.ifr,
-    _BatchCalcField.instrument,
-    _BatchCalcField.simInstrument,
     _BatchCalcField.crossCountry,
     _BatchCalcField.distanceNm,
     _BatchCalcField.flight,
@@ -3457,12 +3445,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         field: _BatchFieldMode.dontChange,
     };
     if (checks.ifr) modes[_BatchCalcField.ifr] = _BatchFieldMode.recalculate;
-    if (checks.instrument) {
-      modes[_BatchCalcField.instrument] = _BatchFieldMode.recalculate;
-    }
-    if (checks.simInstrument) {
-      modes[_BatchCalcField.simInstrument] = _BatchFieldMode.recalculate;
-    }
     if (checks.crossCountry) {
       modes[_BatchCalcField.crossCountry] = _BatchFieldMode.recalculate;
     }
@@ -3798,8 +3780,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         timeDualMinutes: flight.timeDualMinutes,
         timeInstructorMinutes: flight.timeInstructorMinutes,
         timeIFRMinutes: flight.timeIFRMinutes,
-        timeInstrumentMinutes: flight.timeInstrumentMinutes,
-        timeSimulatedInstrumentMinutes: flight.timeSimulatedInstrumentMinutes,
         timeNightMinutes: flight.timeNightMinutes,
         timeCrossCountryMinutes: flight.timeCrossCountryMinutes,
         timeCustom1Minutes: flight.timeCustom1Minutes,
@@ -3829,10 +3809,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         timeDualMinutes: d.Value(snapshot.timeDualMinutes),
         timeInstructorMinutes: d.Value(snapshot.timeInstructorMinutes),
         timeIFRMinutes: d.Value(snapshot.timeIFRMinutes),
-        timeInstrumentMinutes: d.Value(snapshot.timeInstrumentMinutes),
-        timeSimulatedInstrumentMinutes: d.Value(
-          snapshot.timeSimulatedInstrumentMinutes,
-        ),
         timeFlightMinutes: d.Value(snapshot.timeFlightMinutes),
         timeNightMinutes: d.Value(snapshot.timeNightMinutes),
         timeCrossCountryMinutes: d.Value(snapshot.timeCrossCountryMinutes),
@@ -3953,16 +3929,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       after.timeInstructorMinutes,
     );
     addTime('IFR time', before.timeIFRMinutes, after.timeIFRMinutes);
-    addTime(
-      'Instrument time',
-      before.timeInstrumentMinutes,
-      after.timeInstrumentMinutes,
-    );
-    addTime(
-      'Sim Instrument time',
-      before.timeSimulatedInstrumentMinutes,
-      after.timeSimulatedInstrumentMinutes,
-    );
     addTime('Flight time', before.timeFlightMinutes, after.timeFlightMinutes);
     addTime('Night time', before.timeNightMinutes, after.timeNightMinutes);
     addTime(
@@ -4368,7 +4334,7 @@ class _BatchFlightChecksDialogState extends State<_BatchFlightChecksDialog> {
       ),
       _BatchFlightCheck.cappedTimesWithinBlock => (
         'Time caps within Block',
-        'Night, Instrument, IFR, CrossCountry and Flight cannot exceed Block',
+        'Night, IFR, CrossCountry and Flight cannot exceed Block',
       ),
       _BatchFlightCheck.customTimesWithinTotalBlock => (
         'Custom1-4 within Total Block',
@@ -4550,8 +4516,6 @@ enum _BatchCalcField {
   landingNight,
   distanceNm,
   ifr,
-  instrument,
-  simInstrument,
   crossCountry,
   flight,
   custom1,
@@ -4652,8 +4616,6 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
   static const _fields = <_BatchCalcField>[
     _BatchCalcField.block,
     _BatchCalcField.ifr,
-    _BatchCalcField.instrument,
-    _BatchCalcField.simInstrument,
     _BatchCalcField.crossCountry,
     _BatchCalcField.distanceNm,
     _BatchCalcField.flight,
@@ -4685,8 +4647,6 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
         _BatchCalcField.landingNight => 'Landing Night',
         _BatchCalcField.distanceNm => 'Distance NM',
         _BatchCalcField.ifr => 'IFR',
-        _BatchCalcField.instrument => 'Instrument',
-        _BatchCalcField.simInstrument => 'Sim Instrument',
         _BatchCalcField.crossCountry => 'Cross-country',
         _BatchCalcField.flight => 'Flight',
         _BatchCalcField.custom1 => 'Custom 1',
@@ -4877,8 +4837,6 @@ class _BatchFlightSnapshot {
     required this.timeDualMinutes,
     required this.timeInstructorMinutes,
     required this.timeIFRMinutes,
-    required this.timeInstrumentMinutes,
-    required this.timeSimulatedInstrumentMinutes,
     required this.timeNightMinutes,
     required this.timeCrossCountryMinutes,
     required this.timeCustom1Minutes,
@@ -4914,8 +4872,6 @@ class _BatchFlightSnapshot {
   int timeDualMinutes;
   int timeInstructorMinutes;
   int timeIFRMinutes;
-  int timeInstrumentMinutes;
-  int timeSimulatedInstrumentMinutes;
   int timeNightMinutes;
   int timeCrossCountryMinutes;
   int timeCustom1Minutes;
@@ -4952,8 +4908,6 @@ class _BatchFlightSnapshot {
       timeDualMinutes: timeDualMinutes,
       timeInstructorMinutes: timeInstructorMinutes,
       timeIFRMinutes: timeIFRMinutes,
-      timeInstrumentMinutes: timeInstrumentMinutes,
-      timeSimulatedInstrumentMinutes: timeSimulatedInstrumentMinutes,
       timeNightMinutes: timeNightMinutes,
       timeCrossCountryMinutes: timeCrossCountryMinutes,
       timeCustom1Minutes: timeCustom1Minutes,
@@ -5257,10 +5211,6 @@ String _reportFilterFieldLabel(
       return l10n.reportsFilterFieldNightTime;
     case ReportsFilterField.ifrTime:
       return l10n.reportsFilterFieldIfrTime;
-    case ReportsFilterField.instrumentTime:
-      return l10n.reportsFilterFieldInstrumentTime;
-    case ReportsFilterField.simulatedInstrumentTime:
-      return l10n.reportsFilterFieldSimInstrumentTime;
     case ReportsFilterField.picTime:
       return l10n.reportsFilterFieldPicTime;
     case ReportsFilterField.picusTime:
@@ -5403,7 +5353,6 @@ class _AnalysisGroupAccumulator {
       ..sicMinutes = row.sicMinutes
       ..dualMinutes = row.dualMinutes
       ..ifrMinutes = row.ifrMinutes
-      ..instrumentMinutes = row.instrumentMinutes
       ..nightMinutes = row.nightMinutes
       ..takeoffs = row.takeoffs
       ..landings = row.landings
@@ -5418,7 +5367,6 @@ class _AnalysisGroupAccumulator {
   int sicMinutes = 0;
   int dualMinutes = 0;
   int ifrMinutes = 0;
-  int instrumentMinutes = 0;
   int nightMinutes = 0;
   int takeoffs = 0;
   int landings = 0;
@@ -5434,7 +5382,6 @@ class _AnalysisGroupAccumulator {
       ..sicMinutes = sicMinutes
       ..dualMinutes = dualMinutes
       ..ifrMinutes = ifrMinutes
-      ..instrumentMinutes = instrumentMinutes
       ..nightMinutes = nightMinutes
       ..takeoffs = takeoffs
       ..landings = landings
@@ -5450,7 +5397,6 @@ class _AnalysisGroupAccumulator {
     sicMinutes += other.sicMinutes;
     dualMinutes += other.dualMinutes;
     ifrMinutes += other.ifrMinutes;
-    instrumentMinutes += other.instrumentMinutes;
     nightMinutes += other.nightMinutes;
     takeoffs += other.takeoffs;
     landings += other.landings;
@@ -5503,7 +5449,6 @@ class _AnalysisGroupAccumulator {
     sicMinutes += row.sicMinutes;
     dualMinutes += row.dualMinutes;
     ifrMinutes += row.ifrMinutes;
-    instrumentMinutes += row.instrumentMinutes;
     nightMinutes += row.nightMinutes;
     if (firstFlightUtc == null ||
         row.departureDateTime.isBefore(firstFlightUtc!)) {
@@ -5522,7 +5467,6 @@ class _AnalysisGroupAccumulator {
     sicMinutes += row.sicMinutes;
     dualMinutes += row.dualMinutes;
     ifrMinutes += row.ifrMinutes;
-    instrumentMinutes += row.instrumentMinutes;
     nightMinutes += row.nightMinutes;
     takeoffs += row.takeoffs;
     landings += row.landings;
@@ -5626,324 +5570,323 @@ class _FiltersCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          decoration: InputDecoration(
-                            labelText: l10n.reportsSavedQueriesLabel,
-                            border: const OutlineInputBorder(),
-                            isDense: true,
-                          ),
-                          items: savedQueries
-                              .map(
-                                (query) => DropdownMenuItem(
-                                  value: query.id,
-                                  child: _overflowText(query.name),
-                                ),
-                              )
-                              .toList(growable: false),
-                          selectedItemBuilder: (context) => savedQueries
-                              .map((query) => _dropdownSelectedItem(query.name))
-                              .toList(growable: false),
-                          onChanged: (value) {
-                            if (value == null) return;
-                            final query = savedQueries.firstWhere(
-                              (item) => item.id == value,
-                            );
-                            unawaited(onApplySavedQuery(query));
-                          },
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          labelText: l10n.reportsSavedQueriesLabel,
+                          border: const OutlineInputBorder(),
+                          isDense: true,
                         ),
+                        items: savedQueries
+                            .map(
+                              (query) => DropdownMenuItem(
+                                value: query.id,
+                                child: _overflowText(query.name),
+                              ),
+                            )
+                            .toList(growable: false),
+                        selectedItemBuilder: (context) => savedQueries
+                            .map((query) => _dropdownSelectedItem(query.name))
+                            .toList(growable: false),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          final query = savedQueries.firstWhere(
+                            (item) => item.id == value,
+                          );
+                          unawaited(onApplySavedQuery(query));
+                        },
                       ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        height: compact ? 36 : 40,
-                        child: FilledButton(
-                          onPressed: onSaveQuery,
-                          style: FilledButton.styleFrom(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: compact ? 8 : 10,
-                            ),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: compact ? 36 : 40,
+                      child: FilledButton(
+                        onPressed: onSaveQuery,
+                        style: FilledButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: compact ? 8 : 10,
                           ),
-                          child: Text(l10n.saveAction),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
                         ),
+                        child: Text(l10n.saveAction),
                       ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        height: compact ? 36 : 40,
-                        child: savedQueries.isNotEmpty
-                            ? PopupMenuButton<String>(
-                                onSelected: onDeleteSavedQuery,
-                                itemBuilder: (context) => savedQueries
-                                    .map(
-                                      (query) => PopupMenuItem(
-                                        value: query.id,
-                                        child: Text(
-                                          l10n.reportsDeleteSavedQuery(
-                                            query.name,
-                                          ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: compact ? 36 : 40,
+                      child: savedQueries.isNotEmpty
+                          ? PopupMenuButton<String>(
+                              onSelected: onDeleteSavedQuery,
+                              itemBuilder: (context) => savedQueries
+                                  .map(
+                                    (query) => PopupMenuItem(
+                                      value: query.id,
+                                      child: Text(
+                                        l10n.reportsDeleteSavedQuery(
+                                          query.name,
                                         ),
                                       ),
-                                    )
-                                    .toList(growable: false),
-                                child: Container(
-                                  height: compact ? 36 : 40,
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: compact ? 8 : 12,
+                                    ),
+                                  )
+                                  .toList(growable: false),
+                              child: Container(
+                                height: compact ? 36 : 40,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: compact ? 8 : 12,
+                                ),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Theme.of(context).dividerColor,
                                   ),
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Theme.of(context).dividerColor,
+                                ),
+                                child: Text(l10n.deleteAction),
+                              ),
+                            )
+                          : OutlinedButton(
+                              onPressed: null,
+                              style: OutlinedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: compact ? 8 : 10,
+                                ),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              child: Text(l10n.deleteAction),
+                            ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: compact ? 168 : 190,
+                    child: EventTypeToggleButton(
+                      label: l10n.reportsPreviousExperienceLabel,
+                      selected: includePreviousExperience,
+                      onTap: onToggleIncludePreviousExperience,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Divider(height: 1),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: math.min(
+                    availableScrollableHeight,
+                    compact ? 460 : 520,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: EventTypeToggleButton(
+                                    label: l10n.logbookEventFlight,
+                                    selected: eventTypes.flights,
+                                    onTap: () => onEventTypesChanged(
+                                      eventTypes.copyWith(
+                                        flights: !eventTypes.flights,
+                                      ),
                                     ),
                                   ),
-                                  child: Text(l10n.deleteAction),
                                 ),
-                              )
-                            : OutlinedButton(
-                                onPressed: null,
-                                style: OutlinedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: compact ? 8 : 10,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: EventTypeToggleButton(
+                                    label: l10n.fieldIsSimulator,
+                                    selected: eventTypes.simulator,
+                                    onTap: () => onEventTypesChanged(
+                                      eventTypes.copyWith(
+                                        simulator: !eventTypes.simulator,
+                                      ),
+                                    ),
                                   ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: EventTypeToggleButton(
+                                    label: l10n.reportsMetricDuty,
+                                    selected: eventTypes.duty,
+                                    onTap: () => onEventTypesChanged(
+                                      eventTypes.copyWith(
+                                        duty: !eventTypes.duty,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: EventTypeToggleButton(
+                                    label: l10n.logbookEventPositioning,
+                                    selected: eventTypes.positioning,
+                                    onTap: () => onEventTypesChanged(
+                                      eventTypes.copyWith(
+                                        positioning: !eventTypes.positioning,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            SizedBox(
+                              width: maxFieldWidth,
+                              child:
+                                  ReportsEnumDropdownField<
+                                    _ReportDateRangePreset
+                                  >(
+                                    value: preset,
+                                    label: l10n.logbookFilterRange,
+                                    options: _ReportDateRangePreset.values
+                                        .toList(growable: false),
+                                    optionLabel: (value) =>
+                                        _reportDateRangePresetLabel(
+                                          l10n,
+                                          value,
+                                        ),
+                                    onChanged: (value) =>
+                                        unawaited(onPresetChanged(value)),
+                                  ),
+                            ),
+                            SizedBox(
+                              width: maxFieldWidth * 2 + 8,
+                              child: DateAndHourRow(
+                                dateLabel: l10n.logbookFilterFromDate,
+                                dateValueText: DateFormat(
+                                  'dd/MMM yyyy',
+                                  locale,
+                                ).format(from),
+                                onPickDate: onPickStart,
+                                timeController: fromTimeController,
+                                onTimeChanged: onFromTimeChanged,
+                              ),
+                            ),
+                            SizedBox(
+                              width: maxFieldWidth * 2 + 8,
+                              child: DateAndHourRow(
+                                dateLabel: l10n.logbookFilterToDate,
+                                dateValueText: DateFormat(
+                                  'dd/MMM yyyy',
+                                  locale,
+                                ).format(to),
+                                onPickDate: onPickEnd,
+                                timeController: toTimeController,
+                                onTimeChanged: onToTimeChanged,
+                              ),
+                            ),
+                            SizedBox(
+                              width: compact ? maxFieldWidth : 150,
+                              child:
+                                  DropdownButtonFormField<
+                                    ReportsFilterMatchMode
+                                  >(
+                                    initialValue: matchMode,
+                                    isExpanded: true,
+                                    decoration: InputDecoration(
+                                      labelText: l10n.reportsMatchModeLabel,
+                                      border: const OutlineInputBorder(),
+                                      isDense: true,
+                                    ),
+                                    items: [
+                                      DropdownMenuItem(
+                                        value: ReportsFilterMatchMode.all,
+                                        child: _overflowText(
+                                          l10n.reportsMatchAll,
+                                        ),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: ReportsFilterMatchMode.any,
+                                        child: _overflowText(
+                                          l10n.reportsMatchAny,
+                                        ),
+                                      ),
+                                    ],
+                                    selectedItemBuilder: (context) => [
+                                      _dropdownSelectedItem(
+                                        l10n.reportsMatchAll,
+                                      ),
+                                      _dropdownSelectedItem(
+                                        l10n.reportsMatchAny,
+                                      ),
+                                    ],
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        unawaited(onMatchModeChanged(value));
+                                      }
+                                    },
+                                  ),
+                            ),
+                            SizedBox(
+                              height: compact ? 36 : 40,
+                              child: FilledButton.icon(
+                                onPressed: onAddFilter,
+                                icon: const Icon(Icons.add),
+                                label: Text(
+                                  compact
+                                      ? l10n.addAction
+                                      : l10n.reportsAddFilter,
+                                ),
+                                style: FilledButton.styleFrom(
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                   visualDensity: VisualDensity.compact,
                                 ),
-                                child: Text(l10n.deleteAction),
                               ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: SizedBox(
-                      width: compact ? 168 : 190,
-                      child: EventTypeToggleButton(
-                        label: l10n.reportsPreviousExperienceLabel,
-                        selected: includePreviousExperience,
-                        onTap: onToggleIncludePreviousExperience,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Divider(height: 1),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: math.min(
-                      availableScrollableHeight,
-                      compact ? 460 : 520,
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: EventTypeToggleButton(
-                                      label: l10n.logbookEventFlight,
-                                      selected: eventTypes.flights,
-                                      onTap: () => onEventTypesChanged(
-                                        eventTypes.copyWith(
-                                          flights: !eventTypes.flights,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: EventTypeToggleButton(
-                                      label: l10n.fieldIsSimulator,
-                                      selected: eventTypes.simulator,
-                                      onTap: () => onEventTypesChanged(
-                                        eventTypes.copyWith(
-                                          simulator: !eventTypes.simulator,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: EventTypeToggleButton(
-                                      label: l10n.reportsMetricDuty,
-                                      selected: eventTypes.duty,
-                                      onTap: () => onEventTypesChanged(
-                                        eventTypes.copyWith(
-                                          duty: !eventTypes.duty,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: EventTypeToggleButton(
-                                      label: l10n.logbookEventPositioning,
-                                      selected: eventTypes.positioning,
-                                      onTap: () => onEventTypesChanged(
-                                        eventTypes.copyWith(
-                                          positioning: !eventTypes.positioning,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              SizedBox(
-                                width: maxFieldWidth,
-                                child:
-                                    ReportsEnumDropdownField<
-                                      _ReportDateRangePreset
-                                    >(
-                                      value: preset,
-                                      label: l10n.logbookFilterRange,
-                                      options: _ReportDateRangePreset.values
-                                          .toList(growable: false),
-                                      optionLabel: (value) =>
-                                          _reportDateRangePresetLabel(
-                                            l10n,
-                                            value,
-                                          ),
-                                      onChanged: (value) =>
-                                          unawaited(onPresetChanged(value)),
-                                    ),
-                              ),
-                              SizedBox(
-                                width: maxFieldWidth * 2 + 8,
-                                child: DateAndHourRow(
-                                  dateLabel: l10n.logbookFilterFromDate,
-                                  dateValueText: DateFormat(
-                                    'dd/MMM yyyy',
-                                    locale,
-                                  ).format(from),
-                                  onPickDate: onPickStart,
-                                  timeController: fromTimeController,
-                                  onTimeChanged: onFromTimeChanged,
-                                ),
-                              ),
-                              SizedBox(
-                                width: maxFieldWidth * 2 + 8,
-                                child: DateAndHourRow(
-                                  dateLabel: l10n.logbookFilterToDate,
-                                  dateValueText: DateFormat(
-                                    'dd/MMM yyyy',
-                                    locale,
-                                  ).format(to),
-                                  onPickDate: onPickEnd,
-                                  timeController: toTimeController,
-                                  onTimeChanged: onToTimeChanged,
-                                ),
-                              ),
-                              SizedBox(
-                                width: compact ? maxFieldWidth : 150,
-                                child:
-                                    DropdownButtonFormField<
-                                      ReportsFilterMatchMode
-                                    >(
-                                      initialValue: matchMode,
-                                      isExpanded: true,
-                                      decoration: InputDecoration(
-                                        labelText: l10n.reportsMatchModeLabel,
-                                        border: const OutlineInputBorder(),
-                                        isDense: true,
-                                      ),
-                                      items: [
-                                        DropdownMenuItem(
-                                          value: ReportsFilterMatchMode.all,
-                                          child: _overflowText(
-                                            l10n.reportsMatchAll,
-                                          ),
-                                        ),
-                                        DropdownMenuItem(
-                                          value: ReportsFilterMatchMode.any,
-                                          child: _overflowText(
-                                            l10n.reportsMatchAny,
-                                          ),
-                                        ),
-                                      ],
-                                      selectedItemBuilder: (context) => [
-                                        _dropdownSelectedItem(
-                                          l10n.reportsMatchAll,
-                                        ),
-                                        _dropdownSelectedItem(
-                                          l10n.reportsMatchAny,
-                                        ),
-                                      ],
-                                      onChanged: (value) {
-                                        if (value != null) {
-                                          unawaited(onMatchModeChanged(value));
-                                        }
-                                      },
-                                    ),
-                              ),
-                              SizedBox(
-                                height: compact ? 36 : 40,
-                                child: FilledButton.icon(
-                                  onPressed: onAddFilter,
-                                  icon: const Icon(Icons.add),
-                                  label: Text(
-                                    compact
-                                        ? l10n.addAction
-                                        : l10n.reportsAddFilter,
-                                  ),
-                                  style: FilledButton.styleFrom(
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (filters.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: [
-                                for (
-                                  var index = 0;
-                                  index < filters.length;
-                                  index++
-                                )
-                                  InputChip(
-                                    visualDensity: VisualDensity.compact,
-                                    label: Text(
-                                      l10n.reportsFilterChipLabel(
-                                        _reportFilterFieldLabel(
-                                          l10n,
-                                          filters[index].field,
-                                        ),
-                                        _reportFilterOperatorLabel(
-                                          l10n,
-                                          filters[index].operator,
-                                        ),
-                                        filters[index].displayValue,
-                                      ),
-                                    ),
-                                    onDeleted: () => onRemoveFilter(index),
-                                  ),
-                              ],
                             ),
                           ],
+                        ),
+                        if (filters.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              for (
+                                var index = 0;
+                                index < filters.length;
+                                index++
+                              )
+                                InputChip(
+                                  visualDensity: VisualDensity.compact,
+                                  label: Text(
+                                    l10n.reportsFilterChipLabel(
+                                      _reportFilterFieldLabel(
+                                        l10n,
+                                        filters[index].field,
+                                      ),
+                                      _reportFilterOperatorLabel(
+                                        l10n,
+                                        filters[index].operator,
+                                      ),
+                                      filters[index].displayValue,
+                                    ),
+                                  ),
+                                  onDeleted: () => onRemoveFilter(index),
+                                ),
+                            ],
+                          ),
                         ],
-                      ),
+                      ],
                     ),
                   ),
+                ),
               ],
             ),
           ),
@@ -5989,11 +5932,6 @@ class _TotalsCard extends StatelessWidget {
       (l10n.reportsMetricDual, _formatMinutes(totals.dualMinutes)),
       (l10n.reportsMetricInstructor, _formatMinutes(totals.instructorMinutes)),
       (l10n.reportsMetricIfr, _formatMinutes(totals.ifrMinutes)),
-      (l10n.reportsMetricInstrument, _formatMinutes(totals.instrumentMinutes)),
-      (
-        l10n.reportsFilterFieldSimInstrumentTime,
-        _formatMinutes(totals.simulatedInstrumentMinutes),
-      ),
       (l10n.reportsMetricNight, _formatMinutes(totals.nightMinutes)),
       (
         l10n.reportsMetricCrossCountry,
@@ -6257,13 +6195,6 @@ class _AnalysisList extends StatelessWidget {
                 valueText: _formatMinutes(group.totals.ifrMinutes),
                 ratio: group.totals.totalMinutes > 0
                     ? group.totals.ifrMinutes / group.totals.totalMinutes
-                    : 0,
-              ),
-              _AnalysisBarRow(
-                label: l10n.reportsMetricInstrument,
-                valueText: _formatMinutes(group.totals.instrumentMinutes),
-                ratio: group.totals.totalMinutes > 0
-                    ? group.totals.instrumentMinutes / group.totals.totalMinutes
                     : 0,
               ),
               _AnalysisBarRow(

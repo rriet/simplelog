@@ -28,7 +28,6 @@ class SouthwestImportOptions {
     this.recalculateIfrTime = true,
     this.recalculateCrossCountry = true,
     this.crossCountryThresholdNm = 50,
-    this.recalculateInstrumentTime = false,
     this.overrideExistingData = false,
     this.addCopilotStaffNumberToNotes = true,
     this.addFlightNumberToNotes = true,
@@ -57,9 +56,6 @@ class SouthwestImportOptions {
   /// Minimum NM distance to consider a flight cross‑country.
   final int crossCountryThresholdNm;
 
-  /// Whether to recompute instrument time from block time.
-  final bool recalculateInstrumentTime;
-
   /// Whether to overwrite existing imported entities with new values.
   final bool overrideExistingData;
 
@@ -86,7 +82,6 @@ class SouthwestImportOptions {
     bool? recalculateIfrTime,
     bool? recalculateCrossCountry,
     int? crossCountryThresholdNm,
-    bool? recalculateInstrumentTime,
     bool? overrideExistingData,
     bool? addCopilotStaffNumberToNotes,
     bool? addFlightNumberToNotes,
@@ -103,8 +98,6 @@ class SouthwestImportOptions {
           recalculateCrossCountry ?? this.recalculateCrossCountry,
       crossCountryThresholdNm:
           crossCountryThresholdNm ?? this.crossCountryThresholdNm,
-      recalculateInstrumentTime:
-          recalculateInstrumentTime ?? this.recalculateInstrumentTime,
       overrideExistingData: overrideExistingData ?? this.overrideExistingData,
       addCopilotStaffNumberToNotes:
           addCopilotStaffNumberToNotes ?? this.addCopilotStaffNumberToNotes,

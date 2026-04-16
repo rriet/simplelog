@@ -57,7 +57,6 @@ SELECT
   COALESCE(SUM(f.time_flight_minutes), 0) AS flight_minutes,
   COALESCE(SUM(f.time_night_minutes), 0) AS night_minutes,
   COALESCE(SUM(f.$ifrColumn), 0) AS ifr_minutes,
-  COALESCE(SUM(f.time_instrument_minutes + f.time_simulated_instrument_minutes), 0) AS instrument_minutes,
   COALESCE(SUM(f.landings_day + f.landings_night), 0) AS landings
 FROM flights f
 INNER JOIN time_lines tl ON tl.id = f.departure_date_time_id
@@ -90,8 +89,6 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
         flightMinutes: _readInteger(flightsTotalsRow, 'flight_minutes'),
         nightMinutes: _readInteger(flightsTotalsRow, 'night_minutes'),
         ifrMinutes: _readInteger(flightsTotalsRow, 'ifr_minutes'),
-
-        instrumentMinutes: _readInteger(flightsTotalsRow, 'instrument_minutes'),
         dutyMinutes: _readInteger(dutyTotalsRow, 'duty_minutes'),
         landings: _readInteger(flightsTotalsRow, 'landings'),
       ),
@@ -251,8 +248,6 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
       'block' || 'block_time' => 'f.time_block_minutes',
       'flight' || 'flight_time' => 'f.time_flight_minutes',
       'night' || 'night_time' => 'f.time_night_minutes',
-      'instrument' || 'time_instrument' =>
-        '(f.time_instrument_minutes + f.time_simulated_instrument_minutes)',
       'pic' || 'pic_time' => 'f.time_pic_minutes',
       'picus' || 'picus_time' => 'f.time_picus_minutes',
       'sic' || 'sic_time' => 'f.time_sic_minutes',
@@ -265,7 +260,7 @@ WHERE tl.event_date_time >= ? AND tl.event_date_time <= ?
       'landing' || 'landings' => '(f.landings_day + f.landings_night)',
       'landing_day' || 'landings_day' => 'f.landings_day',
       'landing_night' || 'landings_night' => 'f.landings_night',
-      'instrument_approaches' || 'ifr_approaches' => 'f.ifr_approaches',
+      'ifr_approaches' => 'f.ifr_approaches',
       _ => null,
     };
   }

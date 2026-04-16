@@ -59,7 +59,6 @@ class _SimpleLogImportOptionsDialogState
   late bool _recalcTotal;
   late bool _recalcTakeoffLanding;
   late bool _recalcCrossCountry;
-  late bool _recalcInstrument;
   late bool _recalcIfr;
   late bool _overrideAirports;
   late bool _overrideAircraft;
@@ -69,9 +68,6 @@ class _SimpleLogImportOptionsDialogState
   bool _showRecalculations = false;
 
   late final TextEditingController _crossCountryThresholdController;
-  late final TextEditingController _instrumentPercentController;
-  late final TextEditingController _instrumentMinController;
-  late final TextEditingController _instrumentSubtractController;
   late final TextEditingController _ifrPercentController;
   late final TextEditingController _ifrMinController;
   late final TextEditingController _ifrSubtractController;
@@ -88,7 +84,6 @@ class _SimpleLogImportOptionsDialogState
     _recalcTotal = initial.recalculateTotalTime;
     _recalcTakeoffLanding = initial.recalculateTakeoffLanding;
     _recalcCrossCountry = initial.recalculateCrossCountry;
-    _recalcInstrument = initial.recalculateInstrument;
     _recalcIfr = initial.recalculateIfrTime;
     _overrideAirports = initial.overrideAirportValues;
     _overrideAircraft = initial.overrideAircraftValues;
@@ -96,15 +91,6 @@ class _SimpleLogImportOptionsDialogState
 
     _crossCountryThresholdController = TextEditingController(
       text: initial.crossCountryThresholdNm.toString(),
-    );
-    _instrumentPercentController = TextEditingController(
-      text: initial.instrumentPercent.toString(),
-    );
-    _instrumentMinController = TextEditingController(
-      text: HourInputField.formatHours(initial.instrumentMinimumMinutes),
-    );
-    _instrumentSubtractController = TextEditingController(
-      text: HourInputField.formatHours(initial.instrumentSubtractMinutes),
     );
     _ifrPercentController = TextEditingController(
       text: initial.ifrPercent.toString(),
@@ -132,9 +118,6 @@ class _SimpleLogImportOptionsDialogState
   @override
   void dispose() {
     _crossCountryThresholdController.dispose();
-    _instrumentPercentController.dispose();
-    _instrumentMinController.dispose();
-    _instrumentSubtractController.dispose();
     _ifrPercentController.dispose();
     _ifrMinController.dispose();
     _ifrSubtractController.dispose();
@@ -216,20 +199,6 @@ class _SimpleLogImportOptionsDialogState
                       ),
                     ],
                   ),
-                _buildRecalculationToggle(
-                  title: l10n.simplelogInstrumentTimeLabel,
-                  value: _recalcInstrument,
-                  onChanged: (value) =>
-                      setState(() => _recalcInstrument = value),
-                ),
-                if (_recalcInstrument) ...[
-                  _buildPercentTimeMinimumRow(
-                    percentLabel: l10n.simplelogInstrumentPercentLabel,
-                    percentController: _instrumentPercentController,
-                    subtractController: _instrumentSubtractController,
-                    minimumController: _instrumentMinController,
-                  ),
-                ],
                 _buildRecalculationToggle(
                   title: l10n.simplelogIfrTimeLabel,
                   value: _recalcIfr,
@@ -317,10 +286,6 @@ class _SimpleLogImportOptionsDialogState
       recalculateCrossCountry: _recalcCrossCountry,
       crossCountryThresholdNm:
           int.tryParse(_crossCountryThresholdController.text.trim()) ?? 50,
-      recalculateInstrument: _recalcInstrument,
-      instrumentPercent: _parsePercent(_instrumentPercentController),
-      instrumentMinimumMinutes: _parseTime(_instrumentMinController),
-      instrumentSubtractMinutes: _parseTime(_instrumentSubtractController),
       recalculateIfrTime: _recalcIfr,
       ifrPercent: _parsePercent(_ifrPercentController),
       ifrMinimumMinutes: _parseTime(_ifrMinController),

@@ -39,12 +39,6 @@ class PreviousExperiences extends Table {
   /// IFR minutes.
   IntColumn get timeIFRMinutes => integer()();
 
-  /// Instrument minutes.
-  IntColumn get timeInstrumentMinutes => integer()();
-
-  /// Simulated instrument minutes.
-  IntColumn get timeSimulatedInstrumentMinutes => integer()();
-
   /// Night minutes.
   IntColumn get timeNightMinutes => integer()();
 

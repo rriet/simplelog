@@ -2,7 +2,7 @@
 
 part of 'app_database.dart';
 
-
+// ignore_for_file: type=lint
 class $AircraftTypesTable extends AircraftTypes
     with TableInfo<$AircraftTypesTable, AircraftType> {
   @override
@@ -2388,27 +2388,6 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _timeInstrumentMinutesMeta =
-      const VerificationMeta('timeInstrumentMinutes');
-  @override
-  late final GeneratedColumn<int> timeInstrumentMinutes = GeneratedColumn<int>(
-    'time_instrument_minutes',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _timeSimulatedInstrumentMinutesMeta =
-      const VerificationMeta('timeSimulatedInstrumentMinutes');
-  @override
-  late final GeneratedColumn<int> timeSimulatedInstrumentMinutes =
-      GeneratedColumn<int>(
-        'time_simulated_instrument_minutes',
-        aliasedName,
-        false,
-        type: DriftSqlType.int,
-        requiredDuringInsert: true,
-      );
   static const VerificationMeta _timeNightMinutesMeta = const VerificationMeta(
     'timeNightMinutes',
   );
@@ -2675,8 +2654,6 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
     timeDualMinutes,
     timeInstructorMinutes,
     timeIFRMinutes,
-    timeInstrumentMinutes,
-    timeSimulatedInstrumentMinutes,
     timeNightMinutes,
     timeCrossCountryMinutes,
     timeCustom1Minutes,
@@ -2849,28 +2826,6 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
       );
     } else if (isInserting) {
       context.missing(_timeIFRMinutesMeta);
-    }
-    if (data.containsKey('time_instrument_minutes')) {
-      context.handle(
-        _timeInstrumentMinutesMeta,
-        timeInstrumentMinutes.isAcceptableOrUnknown(
-          data['time_instrument_minutes']!,
-          _timeInstrumentMinutesMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_timeInstrumentMinutesMeta);
-    }
-    if (data.containsKey('time_simulated_instrument_minutes')) {
-      context.handle(
-        _timeSimulatedInstrumentMinutesMeta,
-        timeSimulatedInstrumentMinutes.isAcceptableOrUnknown(
-          data['time_simulated_instrument_minutes']!,
-          _timeSimulatedInstrumentMinutesMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_timeSimulatedInstrumentMinutesMeta);
     }
     if (data.containsKey('time_night_minutes')) {
       context.handle(
@@ -3162,14 +3117,6 @@ class $FlightsTable extends Flights with TableInfo<$FlightsTable, Flight> {
         DriftSqlType.int,
         data['${effectivePrefix}time_i_f_r_minutes'],
       )!,
-      timeInstrumentMinutes: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}time_instrument_minutes'],
-      )!,
-      timeSimulatedInstrumentMinutes: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}time_simulated_instrument_minutes'],
-      )!,
       timeNightMinutes: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}time_night_minutes'],
@@ -3319,12 +3266,6 @@ class Flight extends DataClass implements Insertable<Flight> {
   /// IFR time in minutes.
   final int timeIFRMinutes;
 
-  /// Instrument time in minutes.
-  final int timeInstrumentMinutes;
-
-  /// Simulated instrument time in minutes.
-  final int timeSimulatedInstrumentMinutes;
-
   /// Night time in minutes.
   final int timeNightMinutes;
 
@@ -3408,8 +3349,6 @@ class Flight extends DataClass implements Insertable<Flight> {
     required this.timeDualMinutes,
     required this.timeInstructorMinutes,
     required this.timeIFRMinutes,
-    required this.timeInstrumentMinutes,
-    required this.timeSimulatedInstrumentMinutes,
     required this.timeNightMinutes,
     required this.timeCrossCountryMinutes,
     required this.timeCustom1Minutes,
@@ -3457,10 +3396,6 @@ class Flight extends DataClass implements Insertable<Flight> {
     map['time_dual_minutes'] = Variable<int>(timeDualMinutes);
     map['time_instructor_minutes'] = Variable<int>(timeInstructorMinutes);
     map['time_i_f_r_minutes'] = Variable<int>(timeIFRMinutes);
-    map['time_instrument_minutes'] = Variable<int>(timeInstrumentMinutes);
-    map['time_simulated_instrument_minutes'] = Variable<int>(
-      timeSimulatedInstrumentMinutes,
-    );
     map['time_night_minutes'] = Variable<int>(timeNightMinutes);
     map['time_cross_country_minutes'] = Variable<int>(timeCrossCountryMinutes);
     map['time_custom1_minutes'] = Variable<int>(timeCustom1Minutes);
@@ -3519,8 +3454,6 @@ class Flight extends DataClass implements Insertable<Flight> {
       timeDualMinutes: Value(timeDualMinutes),
       timeInstructorMinutes: Value(timeInstructorMinutes),
       timeIFRMinutes: Value(timeIFRMinutes),
-      timeInstrumentMinutes: Value(timeInstrumentMinutes),
-      timeSimulatedInstrumentMinutes: Value(timeSimulatedInstrumentMinutes),
       timeNightMinutes: Value(timeNightMinutes),
       timeCrossCountryMinutes: Value(timeCrossCountryMinutes),
       timeCustom1Minutes: Value(timeCustom1Minutes),
@@ -3577,12 +3510,6 @@ class Flight extends DataClass implements Insertable<Flight> {
         json['timeInstructorMinutes'],
       ),
       timeIFRMinutes: serializer.fromJson<int>(json['timeIFRMinutes']),
-      timeInstrumentMinutes: serializer.fromJson<int>(
-        json['timeInstrumentMinutes'],
-      ),
-      timeSimulatedInstrumentMinutes: serializer.fromJson<int>(
-        json['timeSimulatedInstrumentMinutes'],
-      ),
       timeNightMinutes: serializer.fromJson<int>(json['timeNightMinutes']),
       timeCrossCountryMinutes: serializer.fromJson<int>(
         json['timeCrossCountryMinutes'],
@@ -3630,10 +3557,6 @@ class Flight extends DataClass implements Insertable<Flight> {
       'timeDualMinutes': serializer.toJson<int>(timeDualMinutes),
       'timeInstructorMinutes': serializer.toJson<int>(timeInstructorMinutes),
       'timeIFRMinutes': serializer.toJson<int>(timeIFRMinutes),
-      'timeInstrumentMinutes': serializer.toJson<int>(timeInstrumentMinutes),
-      'timeSimulatedInstrumentMinutes': serializer.toJson<int>(
-        timeSimulatedInstrumentMinutes,
-      ),
       'timeNightMinutes': serializer.toJson<int>(timeNightMinutes),
       'timeCrossCountryMinutes': serializer.toJson<int>(
         timeCrossCountryMinutes,
@@ -3677,8 +3600,6 @@ class Flight extends DataClass implements Insertable<Flight> {
     int? timeDualMinutes,
     int? timeInstructorMinutes,
     int? timeIFRMinutes,
-    int? timeInstrumentMinutes,
-    int? timeSimulatedInstrumentMinutes,
     int? timeNightMinutes,
     int? timeCrossCountryMinutes,
     int? timeCustom1Minutes,
@@ -3723,9 +3644,6 @@ class Flight extends DataClass implements Insertable<Flight> {
     timeDualMinutes: timeDualMinutes ?? this.timeDualMinutes,
     timeInstructorMinutes: timeInstructorMinutes ?? this.timeInstructorMinutes,
     timeIFRMinutes: timeIFRMinutes ?? this.timeIFRMinutes,
-    timeInstrumentMinutes: timeInstrumentMinutes ?? this.timeInstrumentMinutes,
-    timeSimulatedInstrumentMinutes:
-        timeSimulatedInstrumentMinutes ?? this.timeSimulatedInstrumentMinutes,
     timeNightMinutes: timeNightMinutes ?? this.timeNightMinutes,
     timeCrossCountryMinutes:
         timeCrossCountryMinutes ?? this.timeCrossCountryMinutes,
@@ -3799,13 +3717,6 @@ class Flight extends DataClass implements Insertable<Flight> {
       timeIFRMinutes: data.timeIFRMinutes.present
           ? data.timeIFRMinutes.value
           : this.timeIFRMinutes,
-      timeInstrumentMinutes: data.timeInstrumentMinutes.present
-          ? data.timeInstrumentMinutes.value
-          : this.timeInstrumentMinutes,
-      timeSimulatedInstrumentMinutes:
-          data.timeSimulatedInstrumentMinutes.present
-          ? data.timeSimulatedInstrumentMinutes.value
-          : this.timeSimulatedInstrumentMinutes,
       timeNightMinutes: data.timeNightMinutes.present
           ? data.timeNightMinutes.value
           : this.timeNightMinutes,
@@ -3889,10 +3800,6 @@ class Flight extends DataClass implements Insertable<Flight> {
           ..write('timeDualMinutes: $timeDualMinutes, ')
           ..write('timeInstructorMinutes: $timeInstructorMinutes, ')
           ..write('timeIFRMinutes: $timeIFRMinutes, ')
-          ..write('timeInstrumentMinutes: $timeInstrumentMinutes, ')
-          ..write(
-            'timeSimulatedInstrumentMinutes: $timeSimulatedInstrumentMinutes, ',
-          )
           ..write('timeNightMinutes: $timeNightMinutes, ')
           ..write('timeCrossCountryMinutes: $timeCrossCountryMinutes, ')
           ..write('timeCustom1Minutes: $timeCustom1Minutes, ')
@@ -3936,8 +3843,6 @@ class Flight extends DataClass implements Insertable<Flight> {
     timeDualMinutes,
     timeInstructorMinutes,
     timeIFRMinutes,
-    timeInstrumentMinutes,
-    timeSimulatedInstrumentMinutes,
     timeNightMinutes,
     timeCrossCountryMinutes,
     timeCustom1Minutes,
@@ -3980,9 +3885,6 @@ class Flight extends DataClass implements Insertable<Flight> {
           other.timeDualMinutes == this.timeDualMinutes &&
           other.timeInstructorMinutes == this.timeInstructorMinutes &&
           other.timeIFRMinutes == this.timeIFRMinutes &&
-          other.timeInstrumentMinutes == this.timeInstrumentMinutes &&
-          other.timeSimulatedInstrumentMinutes ==
-              this.timeSimulatedInstrumentMinutes &&
           other.timeNightMinutes == this.timeNightMinutes &&
           other.timeCrossCountryMinutes == this.timeCrossCountryMinutes &&
           other.timeCustom1Minutes == this.timeCustom1Minutes &&
@@ -4026,8 +3928,6 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
   final Value<int> timeDualMinutes;
   final Value<int> timeInstructorMinutes;
   final Value<int> timeIFRMinutes;
-  final Value<int> timeInstrumentMinutes;
-  final Value<int> timeSimulatedInstrumentMinutes;
   final Value<int> timeNightMinutes;
   final Value<int> timeCrossCountryMinutes;
   final Value<int> timeCustom1Minutes;
@@ -4066,8 +3966,6 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     this.timeDualMinutes = const Value.absent(),
     this.timeInstructorMinutes = const Value.absent(),
     this.timeIFRMinutes = const Value.absent(),
-    this.timeInstrumentMinutes = const Value.absent(),
-    this.timeSimulatedInstrumentMinutes = const Value.absent(),
     this.timeNightMinutes = const Value.absent(),
     this.timeCrossCountryMinutes = const Value.absent(),
     this.timeCustom1Minutes = const Value.absent(),
@@ -4107,8 +4005,6 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     required int timeDualMinutes,
     required int timeInstructorMinutes,
     required int timeIFRMinutes,
-    required int timeInstrumentMinutes,
-    required int timeSimulatedInstrumentMinutes,
     required int timeNightMinutes,
     required int timeCrossCountryMinutes,
     required int timeCustom1Minutes,
@@ -4142,8 +4038,6 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
        timeDualMinutes = Value(timeDualMinutes),
        timeInstructorMinutes = Value(timeInstructorMinutes),
        timeIFRMinutes = Value(timeIFRMinutes),
-       timeInstrumentMinutes = Value(timeInstrumentMinutes),
-       timeSimulatedInstrumentMinutes = Value(timeSimulatedInstrumentMinutes),
        timeNightMinutes = Value(timeNightMinutes),
        timeCrossCountryMinutes = Value(timeCrossCountryMinutes),
        timeCustom1Minutes = Value(timeCustom1Minutes),
@@ -4177,8 +4071,6 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     Expression<int>? timeDualMinutes,
     Expression<int>? timeInstructorMinutes,
     Expression<int>? timeIFRMinutes,
-    Expression<int>? timeInstrumentMinutes,
-    Expression<int>? timeSimulatedInstrumentMinutes,
     Expression<int>? timeNightMinutes,
     Expression<int>? timeCrossCountryMinutes,
     Expression<int>? timeCustom1Minutes,
@@ -4221,10 +4113,6 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
       if (timeInstructorMinutes != null)
         'time_instructor_minutes': timeInstructorMinutes,
       if (timeIFRMinutes != null) 'time_i_f_r_minutes': timeIFRMinutes,
-      if (timeInstrumentMinutes != null)
-        'time_instrument_minutes': timeInstrumentMinutes,
-      if (timeSimulatedInstrumentMinutes != null)
-        'time_simulated_instrument_minutes': timeSimulatedInstrumentMinutes,
       if (timeNightMinutes != null) 'time_night_minutes': timeNightMinutes,
       if (timeCrossCountryMinutes != null)
         'time_cross_country_minutes': timeCrossCountryMinutes,
@@ -4272,8 +4160,6 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     Value<int>? timeDualMinutes,
     Value<int>? timeInstructorMinutes,
     Value<int>? timeIFRMinutes,
-    Value<int>? timeInstrumentMinutes,
-    Value<int>? timeSimulatedInstrumentMinutes,
     Value<int>? timeNightMinutes,
     Value<int>? timeCrossCountryMinutes,
     Value<int>? timeCustom1Minutes,
@@ -4314,10 +4200,6 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
       timeInstructorMinutes:
           timeInstructorMinutes ?? this.timeInstructorMinutes,
       timeIFRMinutes: timeIFRMinutes ?? this.timeIFRMinutes,
-      timeInstrumentMinutes:
-          timeInstrumentMinutes ?? this.timeInstrumentMinutes,
-      timeSimulatedInstrumentMinutes:
-          timeSimulatedInstrumentMinutes ?? this.timeSimulatedInstrumentMinutes,
       timeNightMinutes: timeNightMinutes ?? this.timeNightMinutes,
       timeCrossCountryMinutes:
           timeCrossCountryMinutes ?? this.timeCrossCountryMinutes,
@@ -4392,16 +4274,6 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
     }
     if (timeIFRMinutes.present) {
       map['time_i_f_r_minutes'] = Variable<int>(timeIFRMinutes.value);
-    }
-    if (timeInstrumentMinutes.present) {
-      map['time_instrument_minutes'] = Variable<int>(
-        timeInstrumentMinutes.value,
-      );
-    }
-    if (timeSimulatedInstrumentMinutes.present) {
-      map['time_simulated_instrument_minutes'] = Variable<int>(
-        timeSimulatedInstrumentMinutes.value,
-      );
     }
     if (timeNightMinutes.present) {
       map['time_night_minutes'] = Variable<int>(timeNightMinutes.value);
@@ -4498,10 +4370,6 @@ class FlightsCompanion extends UpdateCompanion<Flight> {
           ..write('timeDualMinutes: $timeDualMinutes, ')
           ..write('timeInstructorMinutes: $timeInstructorMinutes, ')
           ..write('timeIFRMinutes: $timeIFRMinutes, ')
-          ..write('timeInstrumentMinutes: $timeInstrumentMinutes, ')
-          ..write(
-            'timeSimulatedInstrumentMinutes: $timeSimulatedInstrumentMinutes, ',
-          )
           ..write('timeNightMinutes: $timeNightMinutes, ')
           ..write('timeCrossCountryMinutes: $timeCrossCountryMinutes, ')
           ..write('timeCustom1Minutes: $timeCustom1Minutes, ')
@@ -6416,27 +6284,6 @@ class $PreviousExperiencesTable extends PreviousExperiences
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _timeInstrumentMinutesMeta =
-      const VerificationMeta('timeInstrumentMinutes');
-  @override
-  late final GeneratedColumn<int> timeInstrumentMinutes = GeneratedColumn<int>(
-    'time_instrument_minutes',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _timeSimulatedInstrumentMinutesMeta =
-      const VerificationMeta('timeSimulatedInstrumentMinutes');
-  @override
-  late final GeneratedColumn<int> timeSimulatedInstrumentMinutes =
-      GeneratedColumn<int>(
-        'time_simulated_instrument_minutes',
-        aliasedName,
-        false,
-        type: DriftSqlType.int,
-        requiredDuringInsert: true,
-      );
   static const VerificationMeta _timeNightMinutesMeta = const VerificationMeta(
     'timeNightMinutes',
   );
@@ -6621,8 +6468,6 @@ class $PreviousExperiencesTable extends PreviousExperiences
     timeDualMinutes,
     timeInstructorMinutes,
     timeIFRMinutes,
-    timeInstrumentMinutes,
-    timeSimulatedInstrumentMinutes,
     timeNightMinutes,
     timeCrossCountryMinutes,
     timeCustom1Minutes,
@@ -6749,28 +6594,6 @@ class $PreviousExperiencesTable extends PreviousExperiences
       );
     } else if (isInserting) {
       context.missing(_timeIFRMinutesMeta);
-    }
-    if (data.containsKey('time_instrument_minutes')) {
-      context.handle(
-        _timeInstrumentMinutesMeta,
-        timeInstrumentMinutes.isAcceptableOrUnknown(
-          data['time_instrument_minutes']!,
-          _timeInstrumentMinutesMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_timeInstrumentMinutesMeta);
-    }
-    if (data.containsKey('time_simulated_instrument_minutes')) {
-      context.handle(
-        _timeSimulatedInstrumentMinutesMeta,
-        timeSimulatedInstrumentMinutes.isAcceptableOrUnknown(
-          data['time_simulated_instrument_minutes']!,
-          _timeSimulatedInstrumentMinutesMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_timeSimulatedInstrumentMinutesMeta);
     }
     if (data.containsKey('time_night_minutes')) {
       context.handle(
@@ -6995,14 +6818,6 @@ class $PreviousExperiencesTable extends PreviousExperiences
         DriftSqlType.int,
         data['${effectivePrefix}time_i_f_r_minutes'],
       )!,
-      timeInstrumentMinutes: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}time_instrument_minutes'],
-      )!,
-      timeSimulatedInstrumentMinutes: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}time_simulated_instrument_minutes'],
-      )!,
       timeNightMinutes: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}time_night_minutes'],
@@ -7108,12 +6923,6 @@ class PreviousExperience extends DataClass
   /// IFR minutes.
   final int timeIFRMinutes;
 
-  /// Instrument minutes.
-  final int timeInstrumentMinutes;
-
-  /// Simulated instrument minutes.
-  final int timeSimulatedInstrumentMinutes;
-
   /// Night minutes.
   final int timeNightMinutes;
 
@@ -7172,8 +6981,6 @@ class PreviousExperience extends DataClass
     required this.timeDualMinutes,
     required this.timeInstructorMinutes,
     required this.timeIFRMinutes,
-    required this.timeInstrumentMinutes,
-    required this.timeSimulatedInstrumentMinutes,
     required this.timeNightMinutes,
     required this.timeCrossCountryMinutes,
     required this.timeCustom1Minutes,
@@ -7208,10 +7015,6 @@ class PreviousExperience extends DataClass
     map['time_dual_minutes'] = Variable<int>(timeDualMinutes);
     map['time_instructor_minutes'] = Variable<int>(timeInstructorMinutes);
     map['time_i_f_r_minutes'] = Variable<int>(timeIFRMinutes);
-    map['time_instrument_minutes'] = Variable<int>(timeInstrumentMinutes);
-    map['time_simulated_instrument_minutes'] = Variable<int>(
-      timeSimulatedInstrumentMinutes,
-    );
     map['time_night_minutes'] = Variable<int>(timeNightMinutes);
     map['time_cross_country_minutes'] = Variable<int>(timeCrossCountryMinutes);
     map['time_custom1_minutes'] = Variable<int>(timeCustom1Minutes);
@@ -7247,8 +7050,6 @@ class PreviousExperience extends DataClass
       timeDualMinutes: Value(timeDualMinutes),
       timeInstructorMinutes: Value(timeInstructorMinutes),
       timeIFRMinutes: Value(timeIFRMinutes),
-      timeInstrumentMinutes: Value(timeInstrumentMinutes),
-      timeSimulatedInstrumentMinutes: Value(timeSimulatedInstrumentMinutes),
       timeNightMinutes: Value(timeNightMinutes),
       timeCrossCountryMinutes: Value(timeCrossCountryMinutes),
       timeCustom1Minutes: Value(timeCustom1Minutes),
@@ -7290,12 +7091,6 @@ class PreviousExperience extends DataClass
         json['timeInstructorMinutes'],
       ),
       timeIFRMinutes: serializer.fromJson<int>(json['timeIFRMinutes']),
-      timeInstrumentMinutes: serializer.fromJson<int>(
-        json['timeInstrumentMinutes'],
-      ),
-      timeSimulatedInstrumentMinutes: serializer.fromJson<int>(
-        json['timeSimulatedInstrumentMinutes'],
-      ),
       timeNightMinutes: serializer.fromJson<int>(json['timeNightMinutes']),
       timeCrossCountryMinutes: serializer.fromJson<int>(
         json['timeCrossCountryMinutes'],
@@ -7332,10 +7127,6 @@ class PreviousExperience extends DataClass
       'timeDualMinutes': serializer.toJson<int>(timeDualMinutes),
       'timeInstructorMinutes': serializer.toJson<int>(timeInstructorMinutes),
       'timeIFRMinutes': serializer.toJson<int>(timeIFRMinutes),
-      'timeInstrumentMinutes': serializer.toJson<int>(timeInstrumentMinutes),
-      'timeSimulatedInstrumentMinutes': serializer.toJson<int>(
-        timeSimulatedInstrumentMinutes,
-      ),
       'timeNightMinutes': serializer.toJson<int>(timeNightMinutes),
       'timeCrossCountryMinutes': serializer.toJson<int>(
         timeCrossCountryMinutes,
@@ -7368,8 +7159,6 @@ class PreviousExperience extends DataClass
     int? timeDualMinutes,
     int? timeInstructorMinutes,
     int? timeIFRMinutes,
-    int? timeInstrumentMinutes,
-    int? timeSimulatedInstrumentMinutes,
     int? timeNightMinutes,
     int? timeCrossCountryMinutes,
     int? timeCustom1Minutes,
@@ -7401,9 +7190,6 @@ class PreviousExperience extends DataClass
     timeDualMinutes: timeDualMinutes ?? this.timeDualMinutes,
     timeInstructorMinutes: timeInstructorMinutes ?? this.timeInstructorMinutes,
     timeIFRMinutes: timeIFRMinutes ?? this.timeIFRMinutes,
-    timeInstrumentMinutes: timeInstrumentMinutes ?? this.timeInstrumentMinutes,
-    timeSimulatedInstrumentMinutes:
-        timeSimulatedInstrumentMinutes ?? this.timeSimulatedInstrumentMinutes,
     timeNightMinutes: timeNightMinutes ?? this.timeNightMinutes,
     timeCrossCountryMinutes:
         timeCrossCountryMinutes ?? this.timeCrossCountryMinutes,
@@ -7452,13 +7238,6 @@ class PreviousExperience extends DataClass
       timeIFRMinutes: data.timeIFRMinutes.present
           ? data.timeIFRMinutes.value
           : this.timeIFRMinutes,
-      timeInstrumentMinutes: data.timeInstrumentMinutes.present
-          ? data.timeInstrumentMinutes.value
-          : this.timeInstrumentMinutes,
-      timeSimulatedInstrumentMinutes:
-          data.timeSimulatedInstrumentMinutes.present
-          ? data.timeSimulatedInstrumentMinutes.value
-          : this.timeSimulatedInstrumentMinutes,
       timeNightMinutes: data.timeNightMinutes.present
           ? data.timeNightMinutes.value
           : this.timeNightMinutes,
@@ -7523,10 +7302,6 @@ class PreviousExperience extends DataClass
           ..write('timeDualMinutes: $timeDualMinutes, ')
           ..write('timeInstructorMinutes: $timeInstructorMinutes, ')
           ..write('timeIFRMinutes: $timeIFRMinutes, ')
-          ..write('timeInstrumentMinutes: $timeInstrumentMinutes, ')
-          ..write(
-            'timeSimulatedInstrumentMinutes: $timeSimulatedInstrumentMinutes, ',
-          )
           ..write('timeNightMinutes: $timeNightMinutes, ')
           ..write('timeCrossCountryMinutes: $timeCrossCountryMinutes, ')
           ..write('timeCustom1Minutes: $timeCustom1Minutes, ')
@@ -7559,8 +7334,6 @@ class PreviousExperience extends DataClass
     timeDualMinutes,
     timeInstructorMinutes,
     timeIFRMinutes,
-    timeInstrumentMinutes,
-    timeSimulatedInstrumentMinutes,
     timeNightMinutes,
     timeCrossCountryMinutes,
     timeCustom1Minutes,
@@ -7592,9 +7365,6 @@ class PreviousExperience extends DataClass
           other.timeDualMinutes == this.timeDualMinutes &&
           other.timeInstructorMinutes == this.timeInstructorMinutes &&
           other.timeIFRMinutes == this.timeIFRMinutes &&
-          other.timeInstrumentMinutes == this.timeInstrumentMinutes &&
-          other.timeSimulatedInstrumentMinutes ==
-              this.timeSimulatedInstrumentMinutes &&
           other.timeNightMinutes == this.timeNightMinutes &&
           other.timeCrossCountryMinutes == this.timeCrossCountryMinutes &&
           other.timeCustom1Minutes == this.timeCustom1Minutes &&
@@ -7624,8 +7394,6 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
   final Value<int> timeDualMinutes;
   final Value<int> timeInstructorMinutes;
   final Value<int> timeIFRMinutes;
-  final Value<int> timeInstrumentMinutes;
-  final Value<int> timeSimulatedInstrumentMinutes;
   final Value<int> timeNightMinutes;
   final Value<int> timeCrossCountryMinutes;
   final Value<int> timeCustom1Minutes;
@@ -7653,8 +7421,6 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
     this.timeDualMinutes = const Value.absent(),
     this.timeInstructorMinutes = const Value.absent(),
     this.timeIFRMinutes = const Value.absent(),
-    this.timeInstrumentMinutes = const Value.absent(),
-    this.timeSimulatedInstrumentMinutes = const Value.absent(),
     this.timeNightMinutes = const Value.absent(),
     this.timeCrossCountryMinutes = const Value.absent(),
     this.timeCustom1Minutes = const Value.absent(),
@@ -7683,8 +7449,6 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
     required int timeDualMinutes,
     required int timeInstructorMinutes,
     required int timeIFRMinutes,
-    required int timeInstrumentMinutes,
-    required int timeSimulatedInstrumentMinutes,
     required int timeNightMinutes,
     required int timeCrossCountryMinutes,
     required int timeCustom1Minutes,
@@ -7708,8 +7472,6 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
        timeDualMinutes = Value(timeDualMinutes),
        timeInstructorMinutes = Value(timeInstructorMinutes),
        timeIFRMinutes = Value(timeIFRMinutes),
-       timeInstrumentMinutes = Value(timeInstrumentMinutes),
-       timeSimulatedInstrumentMinutes = Value(timeSimulatedInstrumentMinutes),
        timeNightMinutes = Value(timeNightMinutes),
        timeCrossCountryMinutes = Value(timeCrossCountryMinutes),
        timeCustom1Minutes = Value(timeCustom1Minutes),
@@ -7736,8 +7498,6 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
     Expression<int>? timeDualMinutes,
     Expression<int>? timeInstructorMinutes,
     Expression<int>? timeIFRMinutes,
-    Expression<int>? timeInstrumentMinutes,
-    Expression<int>? timeSimulatedInstrumentMinutes,
     Expression<int>? timeNightMinutes,
     Expression<int>? timeCrossCountryMinutes,
     Expression<int>? timeCustom1Minutes,
@@ -7769,10 +7529,6 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
       if (timeInstructorMinutes != null)
         'time_instructor_minutes': timeInstructorMinutes,
       if (timeIFRMinutes != null) 'time_i_f_r_minutes': timeIFRMinutes,
-      if (timeInstrumentMinutes != null)
-        'time_instrument_minutes': timeInstrumentMinutes,
-      if (timeSimulatedInstrumentMinutes != null)
-        'time_simulated_instrument_minutes': timeSimulatedInstrumentMinutes,
       if (timeNightMinutes != null) 'time_night_minutes': timeNightMinutes,
       if (timeCrossCountryMinutes != null)
         'time_cross_country_minutes': timeCrossCountryMinutes,
@@ -7809,8 +7565,6 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
     Value<int>? timeDualMinutes,
     Value<int>? timeInstructorMinutes,
     Value<int>? timeIFRMinutes,
-    Value<int>? timeInstrumentMinutes,
-    Value<int>? timeSimulatedInstrumentMinutes,
     Value<int>? timeNightMinutes,
     Value<int>? timeCrossCountryMinutes,
     Value<int>? timeCustom1Minutes,
@@ -7840,10 +7594,6 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
       timeInstructorMinutes:
           timeInstructorMinutes ?? this.timeInstructorMinutes,
       timeIFRMinutes: timeIFRMinutes ?? this.timeIFRMinutes,
-      timeInstrumentMinutes:
-          timeInstrumentMinutes ?? this.timeInstrumentMinutes,
-      timeSimulatedInstrumentMinutes:
-          timeSimulatedInstrumentMinutes ?? this.timeSimulatedInstrumentMinutes,
       timeNightMinutes: timeNightMinutes ?? this.timeNightMinutes,
       timeCrossCountryMinutes:
           timeCrossCountryMinutes ?? this.timeCrossCountryMinutes,
@@ -7902,16 +7652,6 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
     }
     if (timeIFRMinutes.present) {
       map['time_i_f_r_minutes'] = Variable<int>(timeIFRMinutes.value);
-    }
-    if (timeInstrumentMinutes.present) {
-      map['time_instrument_minutes'] = Variable<int>(
-        timeInstrumentMinutes.value,
-      );
-    }
-    if (timeSimulatedInstrumentMinutes.present) {
-      map['time_simulated_instrument_minutes'] = Variable<int>(
-        timeSimulatedInstrumentMinutes.value,
-      );
     }
     if (timeNightMinutes.present) {
       map['time_night_minutes'] = Variable<int>(timeNightMinutes.value);
@@ -7979,10 +7719,6 @@ class PreviousExperiencesCompanion extends UpdateCompanion<PreviousExperience> {
           ..write('timeDualMinutes: $timeDualMinutes, ')
           ..write('timeInstructorMinutes: $timeInstructorMinutes, ')
           ..write('timeIFRMinutes: $timeIFRMinutes, ')
-          ..write('timeInstrumentMinutes: $timeInstrumentMinutes, ')
-          ..write(
-            'timeSimulatedInstrumentMinutes: $timeSimulatedInstrumentMinutes, ',
-          )
           ..write('timeNightMinutes: $timeNightMinutes, ')
           ..write('timeCrossCountryMinutes: $timeCrossCountryMinutes, ')
           ..write('timeCustom1Minutes: $timeCustom1Minutes, ')
@@ -12958,8 +12694,6 @@ typedef $$FlightsTableCreateCompanionBuilder =
       required int timeDualMinutes,
       required int timeInstructorMinutes,
       required int timeIFRMinutes,
-      required int timeInstrumentMinutes,
-      required int timeSimulatedInstrumentMinutes,
       required int timeNightMinutes,
       required int timeCrossCountryMinutes,
       required int timeCustom1Minutes,
@@ -13000,8 +12734,6 @@ typedef $$FlightsTableUpdateCompanionBuilder =
       Value<int> timeDualMinutes,
       Value<int> timeInstructorMinutes,
       Value<int> timeIFRMinutes,
-      Value<int> timeInstrumentMinutes,
-      Value<int> timeSimulatedInstrumentMinutes,
       Value<int> timeNightMinutes,
       Value<int> timeCrossCountryMinutes,
       Value<int> timeCustom1Minutes,
@@ -13192,16 +12924,6 @@ class $$FlightsTableFilterComposer
 
   ColumnFilters<int> get timeIFRMinutes => $composableBuilder(
     column: $table.timeIFRMinutes,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get timeInstrumentMinutes => $composableBuilder(
-    column: $table.timeInstrumentMinutes,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get timeSimulatedInstrumentMinutes => $composableBuilder(
-    column: $table.timeSimulatedInstrumentMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13499,16 +13221,6 @@ class $$FlightsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get timeInstrumentMinutes => $composableBuilder(
-    column: $table.timeInstrumentMinutes,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get timeSimulatedInstrumentMinutes => $composableBuilder(
-    column: $table.timeSimulatedInstrumentMinutes,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<int> get timeNightMinutes => $composableBuilder(
     column: $table.timeNightMinutes,
     builder: (column) => ColumnOrderings(column),
@@ -13771,16 +13483,6 @@ class $$FlightsTableAnnotationComposer
 
   GeneratedColumn<int> get timeIFRMinutes => $composableBuilder(
     column: $table.timeIFRMinutes,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get timeInstrumentMinutes => $composableBuilder(
-    column: $table.timeInstrumentMinutes,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get timeSimulatedInstrumentMinutes => $composableBuilder(
-    column: $table.timeSimulatedInstrumentMinutes,
     builder: (column) => column,
   );
 
@@ -14061,9 +13763,6 @@ class $$FlightsTableTableManager
                 Value<int> timeDualMinutes = const Value.absent(),
                 Value<int> timeInstructorMinutes = const Value.absent(),
                 Value<int> timeIFRMinutes = const Value.absent(),
-                Value<int> timeInstrumentMinutes = const Value.absent(),
-                Value<int> timeSimulatedInstrumentMinutes =
-                    const Value.absent(),
                 Value<int> timeNightMinutes = const Value.absent(),
                 Value<int> timeCrossCountryMinutes = const Value.absent(),
                 Value<int> timeCustom1Minutes = const Value.absent(),
@@ -14102,8 +13801,6 @@ class $$FlightsTableTableManager
                 timeDualMinutes: timeDualMinutes,
                 timeInstructorMinutes: timeInstructorMinutes,
                 timeIFRMinutes: timeIFRMinutes,
-                timeInstrumentMinutes: timeInstrumentMinutes,
-                timeSimulatedInstrumentMinutes: timeSimulatedInstrumentMinutes,
                 timeNightMinutes: timeNightMinutes,
                 timeCrossCountryMinutes: timeCrossCountryMinutes,
                 timeCustom1Minutes: timeCustom1Minutes,
@@ -14144,8 +13841,6 @@ class $$FlightsTableTableManager
                 required int timeDualMinutes,
                 required int timeInstructorMinutes,
                 required int timeIFRMinutes,
-                required int timeInstrumentMinutes,
-                required int timeSimulatedInstrumentMinutes,
                 required int timeNightMinutes,
                 required int timeCrossCountryMinutes,
                 required int timeCustom1Minutes,
@@ -14184,8 +13879,6 @@ class $$FlightsTableTableManager
                 timeDualMinutes: timeDualMinutes,
                 timeInstructorMinutes: timeInstructorMinutes,
                 timeIFRMinutes: timeIFRMinutes,
-                timeInstrumentMinutes: timeInstrumentMinutes,
-                timeSimulatedInstrumentMinutes: timeSimulatedInstrumentMinutes,
                 timeNightMinutes: timeNightMinutes,
                 timeCrossCountryMinutes: timeCrossCountryMinutes,
                 timeCustom1Minutes: timeCustom1Minutes,
@@ -15745,8 +15438,6 @@ typedef $$PreviousExperiencesTableCreateCompanionBuilder =
       required int timeDualMinutes,
       required int timeInstructorMinutes,
       required int timeIFRMinutes,
-      required int timeInstrumentMinutes,
-      required int timeSimulatedInstrumentMinutes,
       required int timeNightMinutes,
       required int timeCrossCountryMinutes,
       required int timeCustom1Minutes,
@@ -15776,8 +15467,6 @@ typedef $$PreviousExperiencesTableUpdateCompanionBuilder =
       Value<int> timeDualMinutes,
       Value<int> timeInstructorMinutes,
       Value<int> timeIFRMinutes,
-      Value<int> timeInstrumentMinutes,
-      Value<int> timeSimulatedInstrumentMinutes,
       Value<int> timeNightMinutes,
       Value<int> timeCrossCountryMinutes,
       Value<int> timeCustom1Minutes,
@@ -15883,16 +15572,6 @@ class $$PreviousExperiencesTableFilterComposer
 
   ColumnFilters<int> get timeIFRMinutes => $composableBuilder(
     column: $table.timeIFRMinutes,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get timeInstrumentMinutes => $composableBuilder(
-    column: $table.timeInstrumentMinutes,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get timeSimulatedInstrumentMinutes => $composableBuilder(
-    column: $table.timeSimulatedInstrumentMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16054,16 +15733,6 @@ class $$PreviousExperiencesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get timeInstrumentMinutes => $composableBuilder(
-    column: $table.timeInstrumentMinutes,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get timeSimulatedInstrumentMinutes => $composableBuilder(
-    column: $table.timeSimulatedInstrumentMinutes,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<int> get timeNightMinutes => $composableBuilder(
     column: $table.timeNightMinutes,
     builder: (column) => ColumnOrderings(column),
@@ -16220,16 +15889,6 @@ class $$PreviousExperiencesTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get timeInstrumentMinutes => $composableBuilder(
-    column: $table.timeInstrumentMinutes,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get timeSimulatedInstrumentMinutes => $composableBuilder(
-    column: $table.timeSimulatedInstrumentMinutes,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<int> get timeNightMinutes => $composableBuilder(
     column: $table.timeNightMinutes,
     builder: (column) => column,
@@ -16380,9 +16039,6 @@ class $$PreviousExperiencesTableTableManager
                 Value<int> timeDualMinutes = const Value.absent(),
                 Value<int> timeInstructorMinutes = const Value.absent(),
                 Value<int> timeIFRMinutes = const Value.absent(),
-                Value<int> timeInstrumentMinutes = const Value.absent(),
-                Value<int> timeSimulatedInstrumentMinutes =
-                    const Value.absent(),
                 Value<int> timeNightMinutes = const Value.absent(),
                 Value<int> timeCrossCountryMinutes = const Value.absent(),
                 Value<int> timeCustom1Minutes = const Value.absent(),
@@ -16410,8 +16066,6 @@ class $$PreviousExperiencesTableTableManager
                 timeDualMinutes: timeDualMinutes,
                 timeInstructorMinutes: timeInstructorMinutes,
                 timeIFRMinutes: timeIFRMinutes,
-                timeInstrumentMinutes: timeInstrumentMinutes,
-                timeSimulatedInstrumentMinutes: timeSimulatedInstrumentMinutes,
                 timeNightMinutes: timeNightMinutes,
                 timeCrossCountryMinutes: timeCrossCountryMinutes,
                 timeCustom1Minutes: timeCustom1Minutes,
@@ -16441,8 +16095,6 @@ class $$PreviousExperiencesTableTableManager
                 required int timeDualMinutes,
                 required int timeInstructorMinutes,
                 required int timeIFRMinutes,
-                required int timeInstrumentMinutes,
-                required int timeSimulatedInstrumentMinutes,
                 required int timeNightMinutes,
                 required int timeCrossCountryMinutes,
                 required int timeCustom1Minutes,
@@ -16470,8 +16122,6 @@ class $$PreviousExperiencesTableTableManager
                 timeDualMinutes: timeDualMinutes,
                 timeInstructorMinutes: timeInstructorMinutes,
                 timeIFRMinutes: timeIFRMinutes,
-                timeInstrumentMinutes: timeInstrumentMinutes,
-                timeSimulatedInstrumentMinutes: timeSimulatedInstrumentMinutes,
                 timeNightMinutes: timeNightMinutes,
                 timeCrossCountryMinutes: timeCrossCountryMinutes,
                 timeCustom1Minutes: timeCustom1Minutes,

@@ -32,8 +32,6 @@ class EntryEndorsementHashService {
       'timeDualMinutes': flight.timeDualMinutes,
       'timeInstructorMinutes': flight.timeInstructorMinutes,
       'timeIFRMinutes': flight.timeIFRMinutes,
-      'timeInstrumentMinutes': flight.timeInstrumentMinutes,
-      'timeSimulatedInstrumentMinutes': flight.timeSimulatedInstrumentMinutes,
       'timeNightMinutes': flight.timeNightMinutes,
       'timeCrossCountryMinutes': flight.timeCrossCountryMinutes,
       'timeCustom1Minutes': flight.timeCustom1Minutes,

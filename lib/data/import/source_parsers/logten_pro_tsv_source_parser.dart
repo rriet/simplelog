@@ -457,30 +457,7 @@ class LogTenProTsvSourceParser {
             LogTenFieldAssociation.dualGivenTime,
           ) ??
           0,
-      timeIfrMinutes:
-          _parseOptionalDuration(
-            row.firstValue(LogTenFieldAssociation.actualInstrumentTime),
-            timeFormat,
-            row.lineNumber,
-            LogTenFieldAssociation.actualInstrumentTime,
-          ) ??
-          0,
-      timeInstrumentMinutes:
-          _parseOptionalDuration(
-            row.firstValue(LogTenFieldAssociation.actualInstrumentTime),
-            timeFormat,
-            row.lineNumber,
-            LogTenFieldAssociation.actualInstrumentTime,
-          ) ??
-          0,
-      timeSimulatedInstrumentMinutes:
-          _parseOptionalDuration(
-            row.firstValue(LogTenFieldAssociation.simulatedInstrumentTime),
-            timeFormat,
-            row.lineNumber,
-            LogTenFieldAssociation.simulatedInstrumentTime,
-          ) ??
-          0,
+      timeIfrMinutes: 0,
       timeNightMinutes:
           _parseOptionalDuration(
             row.firstValue(LogTenFieldAssociation.nightTime),
@@ -1093,8 +1070,6 @@ class LogTenProTsvSourceParser {
       LogTenFieldAssociation.sicTime,
       LogTenFieldAssociation.nightTime,
       LogTenFieldAssociation.crossCountryTime,
-      LogTenFieldAssociation.actualInstrumentTime,
-      LogTenFieldAssociation.simulatedInstrumentTime,
       LogTenFieldAssociation.dualReceivedTime,
       LogTenFieldAssociation.dualGivenTime,
       LogTenFieldAssociation.simulatorTime,

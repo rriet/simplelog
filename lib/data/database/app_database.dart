@@ -56,10 +56,23 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: appDatabaseFileName));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        await _dropFlightsInstrumentMinutesColumnIfPresent();
+      }
+      if (from < 3) {
+        await _dropPreviousExperiencesInstrumentMinutesColumnIfPresent();
+      }
+      if (from < 4) {
+        await _dropFlightsSimulatedInstrumentMinutesColumnIfPresent();
+        await _dropPreviousExperiencesSimulatedInstrumentMinutesColumnIfPresent(
+        );
+      }
+    },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
       await _createLockWriteBypassTableIfNeeded();
@@ -214,6 +227,69 @@ VALUES (1, 0)
     if (rows.isEmpty) return;
     throw StateError(
       'Foreign key integrity check failed with ${rows.length} violation(s).',
+    );
+  }
+
+  Future<void> _dropFlightsInstrumentMinutesColumnIfPresent() async {
+    final columnRows = await customSelect(
+      "PRAGMA table_info('flights')",
+    ).get();
+    final hasColumn = columnRows.any(
+      (row) => row.read<String>('name') == 'time_instrument_minutes',
+    );
+    if (!hasColumn) {
+      return;
+    }
+    await customStatement(
+      'ALTER TABLE flights DROP COLUMN time_instrument_minutes',
+    );
+  }
+
+  Future<void>
+  _dropPreviousExperiencesInstrumentMinutesColumnIfPresent() async {
+    final columnRows = await customSelect(
+      "PRAGMA table_info('previous_experiences')",
+    ).get();
+    final hasColumn = columnRows.any(
+      (row) => row.read<String>('name') == 'time_instrument_minutes',
+    );
+    if (!hasColumn) {
+      return;
+    }
+    await customStatement(
+      'ALTER TABLE previous_experiences DROP COLUMN time_instrument_minutes',
+    );
+  }
+
+  Future<void> _dropFlightsSimulatedInstrumentMinutesColumnIfPresent() async {
+    final columnRows = await customSelect(
+      "PRAGMA table_info('flights')",
+    ).get();
+    final hasColumn = columnRows.any(
+      (row) => row.read<String>('name') == 'time_simulated_instrument_minutes',
+    );
+    if (!hasColumn) {
+      return;
+    }
+    await customStatement(
+      'ALTER TABLE flights DROP COLUMN time_simulated_instrument_minutes',
+    );
+  }
+
+  Future<void>
+  _dropPreviousExperiencesSimulatedInstrumentMinutesColumnIfPresent() async {
+    final columnRows = await customSelect(
+      "PRAGMA table_info('previous_experiences')",
+    ).get();
+    final hasColumn = columnRows.any(
+      (row) => row.read<String>('name') == 'time_simulated_instrument_minutes',
+    );
+    if (!hasColumn) {
+      return;
+    }
+    await customStatement(
+      'ALTER TABLE previous_experiences '
+      'DROP COLUMN time_simulated_instrument_minutes',
     );
   }
 

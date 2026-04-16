@@ -76,8 +76,6 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
     bool? dual,
     bool? instructor,
     bool? ifr,
-    bool? instrument,
-    bool? simInstrument,
     bool? night,
     bool? crossCountry,
     bool? custom1,
@@ -96,8 +94,6 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
             dual: dual,
             instructor: instructor,
             ifr: ifr,
-            instrument: instrument,
-            simInstrument: simInstrument,
             night: night,
             crossCountry: crossCountry,
             custom1: custom1,
@@ -187,20 +183,6 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
                   value: visibility.ifr,
                   title: const Text('IFR'),
                   onChanged: (v) => _updateVisibility(visibility, ifr: v),
-                ),
-                SwitchListTile(
-                  value: visibility.instrument,
-                  title: Text(
-                    AppLocalizations.of(context)!.reportsMetricInstrument,
-                  ),
-                  onChanged: (v) =>
-                      _updateVisibility(visibility, instrument: v),
-                ),
-                SwitchListTile(
-                  value: visibility.simInstrument,
-                  title: Text(AppLocalizations.of(context)!.autoUi058),
-                  onChanged: (v) =>
-                      _updateVisibility(visibility, simInstrument: v),
                 ),
                 SwitchListTile(
                   value: visibility.night,

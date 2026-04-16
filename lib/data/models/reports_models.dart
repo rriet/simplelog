@@ -117,12 +117,6 @@ enum ReportsFilterField {
   /// IFR time.
   ifrTime,
 
-  /// Instrument time.
-  instrumentTime,
-
-  /// Simulated instrument time.
-  simulatedInstrumentTime,
-
   /// PIC time.
   picTime,
 
@@ -254,8 +248,6 @@ extension ReportsFilterFieldMeta on ReportsFilterField {
       case ReportsFilterField.totalTime:
       case ReportsFilterField.nightTime:
       case ReportsFilterField.ifrTime:
-      case ReportsFilterField.instrumentTime:
-      case ReportsFilterField.simulatedInstrumentTime:
       case ReportsFilterField.picTime:
       case ReportsFilterField.picusTime:
       case ReportsFilterField.sicTime:
@@ -329,10 +321,6 @@ extension ReportsFilterFieldMeta on ReportsFilterField {
         return 'Night Time';
       case ReportsFilterField.ifrTime:
         return 'IFR Time';
-      case ReportsFilterField.instrumentTime:
-        return 'Instrument Time';
-      case ReportsFilterField.simulatedInstrumentTime:
-        return 'Sim Instrument Time';
       case ReportsFilterField.picTime:
         return 'PIC Time';
       case ReportsFilterField.picusTime:
@@ -497,8 +485,6 @@ class ReportsTotals {
     required this.flightMinutes,
     required this.nightMinutes,
     required this.ifrMinutes,
-    required this.instrumentMinutes,
-    required this.simulatedInstrumentMinutes,
     required this.picMinutes,
     required this.picusMinutes,
     required this.sicMinutes,
@@ -528,8 +514,6 @@ class ReportsTotals {
       flightMinutes = 0,
       nightMinutes = 0,
       ifrMinutes = 0,
-      instrumentMinutes = 0,
-      simulatedInstrumentMinutes = 0,
       picMinutes = 0,
       picusMinutes = 0,
       sicMinutes = 0,
@@ -576,12 +560,6 @@ class ReportsTotals {
 
   /// IFR minutes.
   final int ifrMinutes;
-
-  /// Instrument minutes.
-  final int instrumentMinutes;
-
-  /// Simulated instrument minutes.
-  final int simulatedInstrumentMinutes;
 
   /// PIC minutes.
   final int picMinutes;
@@ -636,9 +614,6 @@ class ReportsTotals {
       flightMinutes: flightMinutes + other.flightMinutes,
       nightMinutes: nightMinutes + other.nightMinutes,
       ifrMinutes: ifrMinutes + other.ifrMinutes,
-      instrumentMinutes: instrumentMinutes + other.instrumentMinutes,
-      simulatedInstrumentMinutes:
-          simulatedInstrumentMinutes + other.simulatedInstrumentMinutes,
       picMinutes: picMinutes + other.picMinutes,
       picusMinutes: picusMinutes + other.picusMinutes,
       sicMinutes: sicMinutes + other.sicMinutes,
@@ -678,7 +653,6 @@ class ReportsFlightRow {
     required this.sicMinutes,
     required this.dualMinutes,
     required this.ifrMinutes,
-    required this.instrumentMinutes,
     required this.nightMinutes,
     required this.takeoffs,
     required this.landings,
@@ -737,9 +711,6 @@ class ReportsFlightRow {
 
   /// IFR minutes.
   final int ifrMinutes;
-
-  /// Instrument minutes.
-  final int instrumentMinutes;
 
   /// Night minutes.
   final int nightMinutes;
@@ -852,7 +823,6 @@ class ReportsPreviousExperienceRow {
     required this.sicMinutes,
     required this.dualMinutes,
     required this.ifrMinutes,
-    required this.instrumentMinutes,
     required this.nightMinutes,
     required this.takeoffs,
     required this.landings,
@@ -884,9 +854,6 @@ class ReportsPreviousExperienceRow {
 
   /// IFR minutes.
   final int ifrMinutes;
-
-  /// Instrument minutes.
-  final int instrumentMinutes;
 
   /// Night minutes.
   final int nightMinutes;
@@ -939,7 +906,6 @@ class ReportsAnalysisAggregateRow {
     required this.sicMinutes,
     required this.dualMinutes,
     required this.ifrMinutes,
-    required this.instrumentMinutes,
     required this.nightMinutes,
     required this.takeoffs,
     required this.landings,
@@ -968,9 +934,6 @@ class ReportsAnalysisAggregateRow {
 
   /// IFR minutes.
   final int ifrMinutes;
-
-  /// Instrument minutes (actual + simulated).
-  final int instrumentMinutes;
 
   /// Night minutes.
   final int nightMinutes;

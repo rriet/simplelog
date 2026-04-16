@@ -17,8 +17,6 @@ class FlightFormTimeChecks {
     this.dual = false,
     this.instructor = false,
     this.ifr = false,
-    this.instrument = false,
-    this.simInstrument = false,
     this.night = false,
     this.crossCountry = false,
     this.custom1 = false,
@@ -40,8 +38,6 @@ class FlightFormTimeChecks {
       dual: decoded['dual'] == true,
       instructor: decoded['instructor'] == true,
       ifr: decoded['ifr'] == true,
-      instrument: decoded['instrument'] == true,
-      simInstrument: decoded['simInstrument'] == true,
       night: decoded['night'] == true,
       crossCountry: decoded['crossCountry'] == true,
       custom1: decoded['custom1'] == true,
@@ -69,12 +65,6 @@ class FlightFormTimeChecks {
 
   /// Default checked state for IFR time.
   final bool ifr;
-
-  /// Default checked state for Instrument time.
-  final bool instrument;
-
-  /// Default checked state for Sim Instrument time.
-  final bool simInstrument;
 
   /// Default checked state for Night time.
   final bool night;
@@ -105,8 +95,6 @@ class FlightFormTimeChecks {
     bool? dual,
     bool? instructor,
     bool? ifr,
-    bool? instrument,
-    bool? simInstrument,
     bool? night,
     bool? crossCountry,
     bool? custom1,
@@ -122,8 +110,6 @@ class FlightFormTimeChecks {
       dual: dual ?? this.dual,
       instructor: instructor ?? this.instructor,
       ifr: ifr ?? this.ifr,
-      instrument: instrument ?? this.instrument,
-      simInstrument: simInstrument ?? this.simInstrument,
       night: night ?? this.night,
       crossCountry: crossCountry ?? this.crossCountry,
       custom1: custom1 ?? this.custom1,
@@ -143,8 +129,6 @@ class FlightFormTimeChecks {
       'dual': dual,
       'instructor': instructor,
       'ifr': ifr,
-      'instrument': instrument,
-      'simInstrument': simInstrument,
       'night': night,
       'crossCountry': crossCountry,
       'custom1': custom1,

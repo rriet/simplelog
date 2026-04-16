@@ -82,8 +82,6 @@ FlightWriteInput _baseInput({
     timeDualMinutes: 0,
     timeInstructorMinutes: 0,
     timeIFRMinutes: 0,
-    timeInstrumentMinutes: 0,
-    timeSimulatedInstrumentMinutes: 0,
     timeNightMinutes: 0,
     timeCrossCountryMinutes: 0,
     timeCustom1Minutes: 0,

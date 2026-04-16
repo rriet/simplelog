@@ -72,7 +72,7 @@ class ReportTemplateRow {
   /// Whether this row comes from a simulator training entry.
   final bool isSimulatorEntry;
 
-  /// Number of instrument approaches flown on this row.
+  /// Number of IFR approaches flown on this row.
   final int ifrApproaches;
 
   /// Total landings (day + night).
@@ -123,7 +123,7 @@ class ReportTemplateRow {
   /// IFR time in minutes.
   final int ifrMinutes;
 
-  /// Simulated instrument time in minutes.
+  /// Simulated IFR time in minutes.
   final int simInstMinutes;
 
   /// Flight simulator or FSTD time in minutes.
@@ -176,7 +176,7 @@ class ReportEntryCrewNames {
 class ReportTemplateTotals {
   /// Creates a new totals object with optional initial values.
   const ReportTemplateTotals({
-    /// Number of instrument approaches.
+    /// Number of IFR approaches.
     this.ifrApproaches = 0,
 
     /// Total landings (day + night).
@@ -215,7 +215,7 @@ class ReportTemplateTotals {
     this.nightMinutes = 0,
     this.ifrMinutes = 0,
 
-    /// Simulated instrument minutes.
+    /// Simulated IFR minutes.
     this.simInstMinutes = 0,
     this.fstdMinutes = 0,
     this.dualMinutes = 0,
@@ -227,7 +227,7 @@ class ReportTemplateTotals {
     this.totalMinutes = 0,
   });
 
-  /// Number of instrument approaches.
+  /// Number of IFR approaches.
   final int ifrApproaches;
 
   /// Total landings (day + night).
@@ -278,7 +278,7 @@ class ReportTemplateTotals {
   /// IFR minutes.
   final int ifrMinutes;
 
-  /// Simulated instrument minutes.
+  /// Simulated IFR minutes.
   final int simInstMinutes;
 
   /// Flight simulator or FSTD minutes.
@@ -1128,9 +1128,7 @@ class ReportPdfApplicationService {
             dayMinutes: dayMinutes,
             nightMinutes: nightMinutes,
             ifrMinutes: flight?.timeIFRMinutes ?? 0,
-            simInstMinutes:
-                (flight?.timeInstrumentMinutes ?? 0) +
-                (flight?.timeSimulatedInstrumentMinutes ?? 0),
+            simInstMinutes: (flight?.timeIFRMinutes ?? 0) + 0,
             fstdMinutes: sim?.timeTotal ?? 0,
             dualMinutes: flight?.timeDualMinutes ?? 0,
             picMinutes: flight?.timePICMinutes ?? 0,
@@ -1361,14 +1359,6 @@ class ReportPdfApplicationService {
     );
     put('timeIFR', _emptyIfZeroTime(flight?.timeIFRMinutes ?? 0, timeFormat));
     put(
-      'timeInstrument',
-      _emptyIfZeroTime(flight?.timeInstrumentMinutes ?? 0, timeFormat),
-    );
-    put(
-      'timeSimulatedInstrument',
-      _emptyIfZeroTime(flight?.timeSimulatedInstrumentMinutes ?? 0, timeFormat),
-    );
-    put(
       'timeNight',
       _emptyIfZeroTime(flight?.timeNightMinutes ?? 0, timeFormat),
     );
@@ -1526,12 +1516,8 @@ class ReportPdfApplicationService {
     );
     put('flight.timeIFRMinutes', (flight?.timeIFRMinutes ?? 0).toString());
     put(
-      'flight.timeInstrumentMinutes',
-      (flight?.timeInstrumentMinutes ?? 0).toString(),
-    );
-    put(
-      'flight.timeSimulatedInstrumentMinutes',
-      (flight?.timeSimulatedInstrumentMinutes ?? 0).toString(),
+      'flight.timeIFRMinutes',
+      0.toString(),
     );
     put('flight.timeNightMinutes', (flight?.timeNightMinutes ?? 0).toString());
     put(
@@ -1850,11 +1836,9 @@ class ReportPdfApplicationService {
           : (flight?.timeIFRMinutes ?? 0);
       simInstMinutes += useDecimalUnits
           ? _minutesToDecimalHundredths(
-              (flight?.timeInstrumentMinutes ?? 0) +
-                  (flight?.timeSimulatedInstrumentMinutes ?? 0),
+              (flight?.timeIFRMinutes ?? 0) + 0,
             )
-          : (flight?.timeInstrumentMinutes ?? 0) +
-                (flight?.timeSimulatedInstrumentMinutes ?? 0);
+          : (flight?.timeIFRMinutes ?? 0) + 0;
       fstdMinutes += useDecimalUnits
           ? _minutesToDecimalHundredths(sim?.timeTotal ?? 0)
           : (sim?.timeTotal ?? 0);

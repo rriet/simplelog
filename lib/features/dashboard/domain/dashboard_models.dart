@@ -75,7 +75,6 @@ class DashboardTotals {
     required this.flightMinutes,
     required this.nightMinutes,
     required this.ifrMinutes,
-    required this.instrumentMinutes,
     required this.dutyMinutes,
     required this.landings,
   });
@@ -94,9 +93,6 @@ class DashboardTotals {
 
   /// IFR time in minutes.
   final int ifrMinutes;
-
-  /// Instrument time in minutes.
-  final int instrumentMinutes;
 
   /// Duty time in minutes.
   final int dutyMinutes;

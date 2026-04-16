@@ -89,7 +89,6 @@ class LegacySimpleLogCsvSourceParser {
     final idxIfrApproaches = readIndex('IFR Approaches');
     final idxApproachType = readIndex('Approach Type');
     final idxIfrMinutes = readIndex('IFR Minutes');
-    final idxSimInstrument = readIndex('Simulated Instrument Minutes');
     final idxNightMinutes = readIndex('Night Minutes');
     final idxCrossCountry = readIndex('Corss country Minutes');
     final idxPicMinutes = readIndex('PIC Minutes');
@@ -183,9 +182,7 @@ class LegacySimpleLogCsvSourceParser {
         final totalMinutesRaw = _parseInt(get(idxTotalMinutes));
         var computedTotal = totalMinutesRaw;
         final shouldDeriveMissingBlockTime =
-            options.recalculateTotalTime ||
-            options.recalculateCrossCountry ||
-            options.recalculateInstrument;
+            options.recalculateTotalTime || options.recalculateCrossCountry;
         if (shouldDeriveMissingBlockTime &&
             computedTotal == 0 &&
             arrivalDate != null) {
@@ -344,16 +341,6 @@ class LegacySimpleLogCsvSourceParser {
           );
         }
 
-        var instrumentMinutes = 0;
-        if (options.recalculateInstrument && computedTotal > 0) {
-          instrumentMinutes = _calculateFactoredMinutes(
-            totalMinutes: computedTotal,
-            percent: options.instrumentPercent,
-            subtractMinutes: options.instrumentSubtractMinutes,
-            minimumMinutes: options.instrumentMinimumMinutes,
-          );
-        }
-
         final crewAssignments = _buildFlightCrewAssignments(
           picName: get(idxPicName),
           picEmail: get(idxPicEmail),
@@ -404,8 +391,6 @@ class LegacySimpleLogCsvSourceParser {
             timeDualMinutes: dualMinutes,
             timeInstructorMinutes: instructorMinutes,
             timeIfrMinutes: ifrMinutes,
-            timeInstrumentMinutes: instrumentMinutes,
-            timeSimulatedInstrumentMinutes: _parseInt(get(idxSimInstrument)),
             timeNightMinutes: nightMinutes,
             timeCrossCountryMinutes: crossCountryMinutes,
             timeCustom1Minutes: _parseInt(get(idxCustom1)),

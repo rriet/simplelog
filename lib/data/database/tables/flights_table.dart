@@ -69,12 +69,6 @@ class Flights extends Table {
   /// IFR time in minutes.
   IntColumn get timeIFRMinutes => integer()();
 
-  /// Instrument time in minutes.
-  IntColumn get timeInstrumentMinutes => integer()();
-
-  /// Simulated instrument time in minutes.
-  IntColumn get timeSimulatedInstrumentMinutes => integer()();
-
   /// Night time in minutes.
   IntColumn get timeNightMinutes => integer()();
 

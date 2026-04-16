@@ -92,21 +92,13 @@ class AdaptiveFormShell extends StatelessWidget {
                                 style: Theme.of(context).textTheme.titleLarge,
                               ),
                             ),
-                          ],
-                        ),
-                        if (actions.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
+                            if (actions.isNotEmpty)
+                              Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: actions,
                               ),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ],
                     ),
                   ),

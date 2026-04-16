@@ -29,8 +29,6 @@ class FlightWriteInput {
     required this.timeDualMinutes,
     required this.timeInstructorMinutes,
     required this.timeIFRMinutes,
-    required this.timeInstrumentMinutes,
-    required this.timeSimulatedInstrumentMinutes,
     required this.timeNightMinutes,
     required this.timeCrossCountryMinutes,
     required this.timeCustom1Minutes,
@@ -69,7 +67,7 @@ class FlightWriteInput {
   /// Pilot function for this leg (e.g. PIC, SIC, dual).
   final String pilotFunction;
 
-  /// Number of instrument approaches flown.
+  /// Number of IFR approaches flown.
   final int ifrApproaches;
 
   /// Type of approach flown (e.g. ILS, RNAV).
@@ -113,12 +111,6 @@ class FlightWriteInput {
 
   /// IFR time in minutes.
   final int timeIFRMinutes;
-
-  /// Time in actual or simulated instruments in minutes.
-  final int timeInstrumentMinutes;
-
-  /// Time flown in simulated instruments in minutes.
-  final int timeSimulatedInstrumentMinutes;
 
   /// Night time in minutes.
   final int timeNightMinutes;

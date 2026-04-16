@@ -295,8 +295,6 @@ class _PreviousExperienceEditDialogState
     _setTime('dual', initial?.timeDualMinutes ?? 0);
     _setTime('instructor', initial?.timeInstructorMinutes ?? 0);
     _setTime('ifr', initial?.timeIFRMinutes ?? 0);
-    _setTime('instrument', initial?.timeInstrumentMinutes ?? 0);
-    _setTime('simInstrument', initial?.timeSimulatedInstrumentMinutes ?? 0);
     _setTime('night', initial?.timeNightMinutes ?? 0);
     _setTime('xc', initial?.timeCrossCountryMinutes ?? 0);
     _setTime('custom1', initial?.timeCustom1Minutes ?? 0);
@@ -419,8 +417,6 @@ class _PreviousExperienceEditDialogState
       'Dual': dual,
       'Instructor': _minutes('instructor'),
       'IFR': _minutes('ifr'),
-      'Instrument': _minutes('instrument'),
-      'Sim Instrument': _minutes('simInstrument'),
       'Night': _minutes('night'),
       'Cross Country': _minutes('xc'),
       'Custom 1': _minutes('custom1'),
@@ -456,8 +452,6 @@ class _PreviousExperienceEditDialogState
       timeDualMinutes: Value(_minutes('dual')),
       timeInstructorMinutes: Value(_minutes('instructor')),
       timeIFRMinutes: Value(_minutes('ifr')),
-      timeInstrumentMinutes: Value(_minutes('instrument')),
-      timeSimulatedInstrumentMinutes: Value(_minutes('simInstrument')),
       timeNightMinutes: Value(_minutes('night')),
       timeCrossCountryMinutes: Value(_minutes('xc')),
       timeCustom1Minutes: Value(_minutes('custom1')),
@@ -490,8 +484,6 @@ class _PreviousExperienceEditDialogState
           timeDualMinutes: _minutes('dual'),
           timeInstructorMinutes: _minutes('instructor'),
           timeIFRMinutes: _minutes('ifr'),
-          timeInstrumentMinutes: _minutes('instrument'),
-          timeSimulatedInstrumentMinutes: _minutes('simInstrument'),
           timeNightMinutes: _minutes('night'),
           timeCrossCountryMinutes: _minutes('xc'),
           timeCustom1Minutes: _minutes('custom1'),
@@ -711,8 +703,6 @@ class _TimeGrid extends StatelessWidget {
       ('Dual', 'dual'),
       ('Instructor', 'instructor'),
       ('IFR', 'ifr'),
-      ('Instrument', 'instrument'),
-      ('Sim Instrument', 'simInstrument'),
       ('Night', 'night'),
       ('Cross Country', 'xc'),
       ('Custom 1', 'custom1'),

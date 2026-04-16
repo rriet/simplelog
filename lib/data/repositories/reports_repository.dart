@@ -32,8 +32,6 @@ class ReportsRepository {
     final flightExpr = _db.flights.timeFlightMinutes.sum();
     final nightExpr = _db.flights.timeNightMinutes.sum();
     final ifrExpr = _db.flights.timeIFRMinutes.sum();
-    final instrumentExpr = _db.flights.timeInstrumentMinutes.sum();
-    final simInstExpr = _db.flights.timeSimulatedInstrumentMinutes.sum();
     final picExpr = _db.flights.timePICMinutes.sum();
     final picusExpr = _db.flights.timePICUSMinutes.sum();
     final sicExpr = _db.flights.timeSICMinutes.sum();
@@ -75,8 +73,6 @@ class ReportsRepository {
             flightExpr,
             nightExpr,
             ifrExpr,
-            instrumentExpr,
-            simInstExpr,
             picExpr,
             picusExpr,
             sicExpr,
@@ -102,8 +98,6 @@ class ReportsRepository {
       flightMinutes: row.read(flightExpr) ?? 0,
       nightMinutes: row.read(nightExpr) ?? 0,
       ifrMinutes: row.read(ifrExpr) ?? 0,
-      instrumentMinutes: row.read(instrumentExpr) ?? 0,
-      simulatedInstrumentMinutes: row.read(simInstExpr) ?? 0,
       picMinutes: row.read(picExpr) ?? 0,
       picusMinutes: row.read(picusExpr) ?? 0,
       sicMinutes: row.read(sicExpr) ?? 0,
@@ -323,12 +317,6 @@ class ReportsRepository {
           return buildNumberExpression(_db.flights.timeNightMinutes);
         case ReportsFilterField.ifrTime:
           return buildNumberExpression(_db.flights.timeIFRMinutes);
-        case ReportsFilterField.instrumentTime:
-          return buildNumberExpression(_db.flights.timeInstrumentMinutes);
-        case ReportsFilterField.simulatedInstrumentTime:
-          return buildNumberExpression(
-            _db.flights.timeSimulatedInstrumentMinutes,
-          );
         case ReportsFilterField.picTime:
           return buildNumberExpression(_db.flights.timePICMinutes);
         case ReportsFilterField.picusTime:
@@ -483,9 +471,6 @@ class ReportsRepository {
               sicMinutes: flight.timeSICMinutes,
               dualMinutes: flight.timeDualMinutes,
               ifrMinutes: flight.timeIFRMinutes,
-              instrumentMinutes:
-                  flight.timeInstrumentMinutes +
-                  flight.timeSimulatedInstrumentMinutes,
               nightMinutes: flight.timeNightMinutes,
               takeoffs: flight.takeOffsDays + flight.takeOffsNight,
               landings: flight.landingsDay + flight.landingsNight,
@@ -620,9 +605,6 @@ class ReportsRepository {
           sicMinutes: flight.timeSICMinutes,
           dualMinutes: flight.timeDualMinutes,
           ifrMinutes: flight.timeIFRMinutes,
-          instrumentMinutes:
-              flight.timeInstrumentMinutes +
-              flight.timeSimulatedInstrumentMinutes,
           nightMinutes: flight.timeNightMinutes,
           takeoffs: flight.takeOffsDays + flight.takeOffsNight,
           landings: flight.landingsDay + flight.landingsNight,
@@ -876,7 +858,6 @@ WITH flight_keys AS (
     f.time_s_i_c_minutes AS sic_minutes,
     f.time_dual_minutes AS dual_minutes,
     f.time_i_f_r_minutes AS ifr_minutes,
-    (f.time_instrument_minutes + f.time_simulated_instrument_minutes) AS instrument_minutes,
     f.time_night_minutes AS night_minutes,
     (f.take_offs_days + f.take_offs_night) AS takeoffs,
     (f.landings_day + f.landings_night) AS landings
@@ -898,7 +879,6 @@ airport_rows AS (
     sic_minutes,
     dual_minutes,
     ifr_minutes,
-    instrument_minutes,
     night_minutes,
     takeoffs,
     0 AS landings,
@@ -915,7 +895,6 @@ airport_rows AS (
     sic_minutes,
     dual_minutes,
     ifr_minutes,
-    instrument_minutes,
     night_minutes,
     0 AS takeoffs,
     landings,
@@ -932,7 +911,6 @@ airport_rows AS (
     sic_minutes,
     dual_minutes,
     ifr_minutes,
-    instrument_minutes,
     night_minutes,
     takeoffs,
     landings,
@@ -948,7 +926,6 @@ SELECT
   SUM(sic_minutes) AS sic_minutes,
   SUM(dual_minutes) AS dual_minutes,
   SUM(ifr_minutes) AS ifr_minutes,
-  SUM(instrument_minutes) AS instrument_minutes,
   SUM(night_minutes) AS night_minutes,
   SUM(takeoffs) AS takeoffs,
   SUM(landings) AS landings,
@@ -984,7 +961,6 @@ SELECT
   SUM(f.time_s_i_c_minutes) AS sic_minutes,
   SUM(f.time_dual_minutes) AS dual_minutes,
   SUM(f.time_i_f_r_minutes) AS ifr_minutes,
-  SUM(f.time_instrument_minutes + f.time_simulated_instrument_minutes) AS instrument_minutes,
   SUM(f.time_night_minutes) AS night_minutes,
   SUM(f.take_offs_days + f.take_offs_night) AS takeoffs,
   SUM(f.landings_day + f.landings_night) AS landings,
@@ -1053,7 +1029,6 @@ SELECT
   SUM(pe.time_s_i_c_minutes) AS sic_minutes,
   SUM(pe.time_dual_minutes) AS dual_minutes,
   SUM(pe.time_i_f_r_minutes) AS ifr_minutes,
-  SUM(pe.time_instrument_minutes + pe.time_simulated_instrument_minutes) AS instrument_minutes,
   SUM(pe.time_night_minutes) AS night_minutes,
   SUM(pe.take_offs_days + pe.take_offs_night) AS takeoffs,
   SUM(pe.landings_day + pe.landings_night) AS landings,
@@ -1110,8 +1085,6 @@ GROUP BY group_key
             sicMinutes: exp.timeSICMinutes,
             dualMinutes: exp.timeDualMinutes,
             ifrMinutes: exp.timeIFRMinutes,
-            instrumentMinutes:
-                exp.timeInstrumentMinutes + exp.timeSimulatedInstrumentMinutes,
             nightMinutes: exp.timeNightMinutes,
             takeoffs: exp.takeOffsDays + exp.takeOffsNight,
             landings: exp.landingsDay + exp.landingsNight,
@@ -1135,7 +1108,6 @@ GROUP BY group_key
       sicMinutes: row.read<int?>('sic_minutes') ?? 0,
       dualMinutes: row.read<int?>('dual_minutes') ?? 0,
       ifrMinutes: row.read<int?>('ifr_minutes') ?? 0,
-      instrumentMinutes: row.read<int?>('instrument_minutes') ?? 0,
       nightMinutes: row.read<int?>('night_minutes') ?? 0,
       takeoffs: row.read<int?>('takeoffs') ?? 0,
       landings: row.read<int?>('landings') ?? 0,
@@ -1170,8 +1142,6 @@ GROUP BY group_key
               flightMinutes: 0,
               nightMinutes: 0,
               ifrMinutes: 0,
-              instrumentMinutes: 0,
-              simulatedInstrumentMinutes: 0,
               picMinutes: 0,
               picusMinutes: 0,
               sicMinutes: 0,
@@ -1202,8 +1172,6 @@ GROUP BY group_key
             flightMinutes: flight.timeFlightMinutes,
             nightMinutes: flight.timeNightMinutes,
             ifrMinutes: flight.timeIFRMinutes,
-            instrumentMinutes: flight.timeInstrumentMinutes,
-            simulatedInstrumentMinutes: flight.timeSimulatedInstrumentMinutes,
             picMinutes: flight.timePICMinutes,
             picusMinutes: flight.timePICUSMinutes,
             sicMinutes: flight.timeSICMinutes,
@@ -1385,8 +1353,6 @@ GROUP BY group_key
       case ReportsFilterField.totalTime:
       case ReportsFilterField.nightTime:
       case ReportsFilterField.ifrTime:
-      case ReportsFilterField.instrumentTime:
-      case ReportsFilterField.simulatedInstrumentTime:
       case ReportsFilterField.picTime:
       case ReportsFilterField.picusTime:
       case ReportsFilterField.sicTime:
@@ -1422,10 +1388,6 @@ GROUP BY group_key
         return row.flight.timeNightMinutes;
       case ReportsFilterField.ifrTime:
         return row.flight.timeIFRMinutes;
-      case ReportsFilterField.instrumentTime:
-        return row.flight.timeInstrumentMinutes;
-      case ReportsFilterField.simulatedInstrumentTime:
-        return row.flight.timeSimulatedInstrumentMinutes;
       case ReportsFilterField.picTime:
         return row.flight.timePICMinutes;
       case ReportsFilterField.picusTime:
@@ -1513,8 +1475,6 @@ GROUP BY group_key
       case ReportsFilterField.totalTime:
       case ReportsFilterField.nightTime:
       case ReportsFilterField.ifrTime:
-      case ReportsFilterField.instrumentTime:
-      case ReportsFilterField.simulatedInstrumentTime:
       case ReportsFilterField.picTime:
       case ReportsFilterField.picusTime:
       case ReportsFilterField.sicTime:
@@ -1602,8 +1562,6 @@ GROUP BY group_key
             flightMinutes: exp.timeFlightMinutes,
             nightMinutes: exp.timeNightMinutes,
             ifrMinutes: exp.timeIFRMinutes,
-            instrumentMinutes: exp.timeInstrumentMinutes,
-            simulatedInstrumentMinutes: exp.timeSimulatedInstrumentMinutes,
             picMinutes: exp.timePICMinutes,
             picusMinutes: exp.timePICUSMinutes,
             sicMinutes: exp.timeSICMinutes,
@@ -1657,8 +1615,6 @@ GROUP BY group_key
             flightMinutes: exp.timeFlightMinutes,
             nightMinutes: exp.timeNightMinutes,
             ifrMinutes: exp.timeIFRMinutes,
-            instrumentMinutes: exp.timeInstrumentMinutes,
-            simulatedInstrumentMinutes: exp.timeSimulatedInstrumentMinutes,
             picMinutes: exp.timePICMinutes,
             picusMinutes: exp.timePICUSMinutes,
             sicMinutes: exp.timeSICMinutes,
@@ -1802,8 +1758,6 @@ extension on ReportsTotals {
       flightMinutes: flightMinutes,
       nightMinutes: nightMinutes,
       ifrMinutes: ifrMinutes,
-      instrumentMinutes: instrumentMinutes,
-      simulatedInstrumentMinutes: simulatedInstrumentMinutes,
       picMinutes: picMinutes,
       picusMinutes: picusMinutes,
       sicMinutes: sicMinutes,

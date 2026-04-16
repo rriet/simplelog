@@ -36,12 +36,6 @@ class ImportOptionsPreferences {
         '${_simplePrefix}recalculateCrossCountry',
       ),
       crossCountryThresholdNm: factoringSettings.crossCountryThresholdNm,
-      recalculateInstrument: boolSetting(
-        '${_simplePrefix}recalculateInstrument',
-      ),
-      instrumentPercent: factoringSettings.instrumentPercent,
-      instrumentMinimumMinutes: factoringSettings.instrumentMinimumMinutes,
-      instrumentSubtractMinutes: factoringSettings.instrumentSubtractMinutes,
       recalculateIfrTime: boolSetting('${_simplePrefix}recalculateIfrTime'),
       ifrPercent: factoringSettings.ifrPercent,
       ifrMinimumMinutes: factoringSettings.ifrMinimumMinutes,
@@ -72,9 +66,6 @@ class ImportOptionsPreferences {
   ) async {
     final factoringSettings = FlightFactoringSettings(
       crossCountryThresholdNm: value.crossCountryThresholdNm,
-      instrumentPercent: value.instrumentPercent,
-      instrumentMinimumMinutes: value.instrumentMinimumMinutes,
-      instrumentSubtractMinutes: value.instrumentSubtractMinutes,
       ifrPercent: value.ifrPercent,
       ifrMinimumMinutes: value.ifrMinimumMinutes,
       ifrSubtractMinutes: value.ifrSubtractMinutes,
@@ -93,8 +84,6 @@ class ImportOptionsPreferences {
           value.recalculateTakeoffLanding;
       settings['${_simplePrefix}recalculateCrossCountry'] =
           value.recalculateCrossCountry;
-      settings['${_simplePrefix}recalculateInstrument'] =
-          value.recalculateInstrument;
       settings['${_simplePrefix}recalculateIfrTime'] = value.recalculateIfrTime;
       settings['${_simplePrefix}overrideAirportValues'] =
           value.overrideAirportValues;
@@ -157,8 +146,6 @@ class ImportOptionsPreferences {
           (settings['${_swPrefix}recalculateCrossCountry'] as bool?) ?? true,
       crossCountryThresholdNm:
           (settings['${_swPrefix}crossCountryThresholdNm'] as int?) ?? 50,
-      recalculateInstrumentTime:
-          (settings['${_swPrefix}recalculateInstrumentTime'] as bool?) ?? false,
       overrideExistingData:
           (settings['${_swPrefix}overrideExistingData'] as bool?) ?? false,
       addCopilotStaffNumberToNotes:
@@ -184,8 +171,6 @@ class ImportOptionsPreferences {
           value.recalculateCrossCountry;
       settings['${_swPrefix}crossCountryThresholdNm'] =
           value.crossCountryThresholdNm;
-      settings['${_swPrefix}recalculateInstrumentTime'] =
-          value.recalculateInstrumentTime;
       settings['${_swPrefix}overrideExistingData'] = value.overrideExistingData;
       settings['${_swPrefix}addCopilotStaffNumberToNotes'] =
           value.addCopilotStaffNumberToNotes;

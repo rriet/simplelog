@@ -29,8 +29,6 @@ enum LogTenFieldAssociation {
   sicTime,
   nightTime,
   crossCountryTime,
-  actualInstrumentTime,
-  simulatedInstrumentTime,
   dualReceivedTime,
   dualGivenTime,
   simulatorTime,
@@ -91,9 +89,6 @@ extension LogTenFieldAssociationLabel on LogTenFieldAssociation {
       LogTenFieldAssociation.sicTime => 'SIC Time',
       LogTenFieldAssociation.nightTime => 'Night Time',
       LogTenFieldAssociation.crossCountryTime => 'Cross-country Time',
-      LogTenFieldAssociation.actualInstrumentTime => 'Actual Instrument Time',
-      LogTenFieldAssociation.simulatedInstrumentTime =>
-        'Simulated Instrument Time',
       LogTenFieldAssociation.dualReceivedTime => 'Dual Received Time',
       LogTenFieldAssociation.dualGivenTime => 'Dual Given Time',
       LogTenFieldAssociation.simulatorTime => 'Simulator Time',
@@ -232,9 +227,6 @@ Map<String, LogTenFieldAssociation> buildDefaultLogTenAssignments(
       'flight_sic' => LogTenFieldAssociation.sicTime,
       'flight_night' => LogTenFieldAssociation.nightTime,
       'flight_crossCountry' => LogTenFieldAssociation.crossCountryTime,
-      'flight_actualInstrument' => LogTenFieldAssociation.actualInstrumentTime,
-      'flight_simulatedInstrument' =>
-        LogTenFieldAssociation.simulatedInstrumentTime,
       'flight_dualReceived' => LogTenFieldAssociation.dualReceivedTime,
       'flight_dualGiven' => LogTenFieldAssociation.dualGivenTime,
       'flight_simulator' => LogTenFieldAssociation.simulatorTime,

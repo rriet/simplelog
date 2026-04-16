@@ -62,7 +62,6 @@ class SimpleLogCsvExporter {
     'IFR Approaches',
     'Approach Type',
     'IFR Minutes',
-    'Simulated Instrument Minutes',
     'Night Minutes',
     'Corss country Minutes',
     'PIC Minutes',
@@ -251,8 +250,6 @@ class SimpleLogCsvExporter {
                     return flight.approachType;
                   case 'IFR Minutes':
                     return flight.timeIFRMinutes.toString();
-                  case 'Simulated Instrument Minutes':
-                    return flight.timeSimulatedInstrumentMinutes.toString();
                   case 'Night Minutes':
                     return flight.timeNightMinutes.toString();
                   case 'Corss country Minutes':

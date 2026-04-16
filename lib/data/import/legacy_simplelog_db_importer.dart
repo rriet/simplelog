@@ -355,9 +355,6 @@ class LegacySimpleLogDbImporter {
                   timeDualMinutes: _asInt(row['dual_time']) ?? 0,
                   timeInstructorMinutes: _asInt(row['instructor_time']) ?? 0,
                   timeIFRMinutes: _asInt(row['ifr_time']) ?? 0,
-                  timeInstrumentMinutes: _asInt(row['ifr_time']) ?? 0,
-                  timeSimulatedInstrumentMinutes:
-                      _asInt(row['sim_inst_time']) ?? 0,
                   timeNightMinutes: _asInt(row['night_time']) ?? 0,
                   timeCrossCountryMinutes: _asInt(row['xc_time']) ?? 0,
                   timeCustom1Minutes: _asInt(row['custom_time1']) ?? 0,

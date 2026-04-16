@@ -60,7 +60,6 @@ class _SouthwestImportOptionsDialogState
   late bool _recalcNight;
   late bool _recalcIfr;
   late bool _recalcCrossCountry;
-  late bool _recalcInstrument;
   late bool _overrideExisting;
   late bool _addCopilotStaff;
   late bool _addFlightNumber;
@@ -75,7 +74,6 @@ class _SouthwestImportOptionsDialogState
     _recalcNight = initial.recalculateNightTime;
     _recalcIfr = initial.recalculateIfrTime;
     _recalcCrossCountry = initial.recalculateCrossCountry;
-    _recalcInstrument = initial.recalculateInstrumentTime;
     _overrideExisting = initial.overrideExistingData;
     _addCopilotStaff = initial.addCopilotStaffNumberToNotes;
     _addFlightNumber = initial.addFlightNumberToNotes;
@@ -104,7 +102,6 @@ class _SouthwestImportOptionsDialogState
               _crossCountryController.text.trim(),
             ) ??
             50,
-        recalculateInstrumentTime: _recalcInstrument,
         overrideExistingData: _overrideExisting,
         addCopilotStaffNumberToNotes: _addCopilotStaff,
         addFlightNumberToNotes: _addFlightNumber,
@@ -176,13 +173,6 @@ class _SouthwestImportOptionsDialogState
             enabled: _recalcCrossCountry,
           ),
           const SizedBox(height: 8),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.southwestCalculateInstrumentTimeLabel),
-            value: _recalcInstrument,
-            onChanged: (value) =>
-                setState(() => _recalcInstrument = value ?? false),
-          ),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.southwestOverrideExistingDataLabel),

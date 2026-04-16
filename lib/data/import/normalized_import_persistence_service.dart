@@ -209,10 +209,6 @@ class NormalizedImportPersistenceService {
           timeDualMinutes: Value(record.timeDualMinutes),
           timeInstructorMinutes: Value(record.timeInstructorMinutes),
           timeIFRMinutes: Value(record.timeIfrMinutes),
-          timeInstrumentMinutes: Value(record.timeInstrumentMinutes),
-          timeSimulatedInstrumentMinutes: Value(
-            record.timeSimulatedInstrumentMinutes,
-          ),
           timeNightMinutes: Value(record.timeNightMinutes),
           timeCrossCountryMinutes: Value(record.timeCrossCountryMinutes),
           timeCustom1Minutes: Value(record.timeCustom1Minutes),
@@ -263,9 +259,6 @@ class NormalizedImportPersistenceService {
               timeDualMinutes: record.timeDualMinutes,
               timeInstructorMinutes: record.timeInstructorMinutes,
               timeIFRMinutes: record.timeIfrMinutes,
-              timeInstrumentMinutes: record.timeInstrumentMinutes,
-              timeSimulatedInstrumentMinutes:
-                  record.timeSimulatedInstrumentMinutes,
               timeNightMinutes: record.timeNightMinutes,
               timeCrossCountryMinutes: record.timeCrossCountryMinutes,
               timeCustom1Minutes: record.timeCustom1Minutes,

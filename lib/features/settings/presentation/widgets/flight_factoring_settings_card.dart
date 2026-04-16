@@ -34,9 +34,6 @@ class FlightFactoringSettingsCard extends ConsumerStatefulWidget {
 class _FlightFactoringSettingsCardState
     extends ConsumerState<FlightFactoringSettingsCard> {
   final _crossCountryThresholdController = TextEditingController();
-  final _instrumentPercentController = TextEditingController();
-  final _instrumentMinController = TextEditingController();
-  final _instrumentSubtractController = TextEditingController();
   final _ifrPercentController = TextEditingController();
   final _ifrMinController = TextEditingController();
   final _ifrSubtractController = TextEditingController();
@@ -52,9 +49,6 @@ class _FlightFactoringSettingsCardState
 
   List<TextEditingController> get _controllers => [
     _crossCountryThresholdController,
-    _instrumentPercentController,
-    _instrumentMinController,
-    _instrumentSubtractController,
     _ifrPercentController,
     _ifrMinController,
     _ifrSubtractController,
@@ -79,9 +73,6 @@ class _FlightFactoringSettingsCardState
       controller.removeListener(_onFieldChanged);
     }
     _crossCountryThresholdController.dispose();
-    _instrumentPercentController.dispose();
-    _instrumentMinController.dispose();
-    _instrumentSubtractController.dispose();
     _ifrPercentController.dispose();
     _ifrMinController.dispose();
     _ifrSubtractController.dispose();
@@ -117,13 +108,6 @@ class _FlightFactoringSettingsCardState
       _lastHydratedSettings = settings;
       _crossCountryThresholdController.text = settings.crossCountryThresholdNm
           .toString();
-      _instrumentPercentController.text = settings.instrumentPercent.toString();
-      _instrumentMinController.text = HourInputField.formatHours(
-        settings.instrumentMinimumMinutes,
-      );
-      _instrumentSubtractController.text = HourInputField.formatHours(
-        settings.instrumentSubtractMinutes,
-      );
       _ifrPercentController.text = settings.ifrPercent.toString();
       _ifrMinController.text = HourInputField.formatHours(
         settings.ifrMinimumMinutes,
@@ -160,22 +144,6 @@ class _FlightFactoringSettingsCardState
               _CompactFieldSpec.number(
                 label: 'Cross-Country NM',
                 controller: _crossCountryThresholdController,
-              ),
-            ],
-          ),
-          _compactFieldRow(
-            fields: [
-              _CompactFieldSpec.number(
-                label: 'Instrument %',
-                controller: _instrumentPercentController,
-              ),
-              _CompactFieldSpec.time(
-                label: 'Subtracted',
-                controller: _instrumentSubtractController,
-              ),
-              _CompactFieldSpec.time(
-                label: 'Minimum',
-                controller: _instrumentMinController,
               ),
             ],
           ),
@@ -268,17 +236,6 @@ class _FlightFactoringSettingsCardState
     return FlightFactoringSettings(
       crossCountryThresholdNm:
           int.tryParse(_crossCountryThresholdController.text.trim()) ?? 50,
-      instrumentPercent: percentValue(
-        _instrumentPercentController,
-        fallback: 0,
-      ),
-      instrumentMinimumMinutes:
-          HourInputField.parseHours(_instrumentMinController.text.trim()) ?? 0,
-      instrumentSubtractMinutes:
-          HourInputField.parseHours(
-            _instrumentSubtractController.text.trim(),
-          ) ??
-          0,
       ifrPercent: percentValue(_ifrPercentController, fallback: 0),
       ifrMinimumMinutes:
           HourInputField.parseHours(_ifrMinController.text.trim()) ?? 0,
@@ -298,9 +255,6 @@ class _FlightFactoringSettingsCardState
     final current = ref.read(flightFactoringSettingsProvider).valueOrNull;
     if (current != null &&
         current.crossCountryThresholdNm == next.crossCountryThresholdNm &&
-        current.instrumentPercent == next.instrumentPercent &&
-        current.instrumentMinimumMinutes == next.instrumentMinimumMinutes &&
-        current.instrumentSubtractMinutes == next.instrumentSubtractMinutes &&
         current.ifrPercent == next.ifrPercent &&
         current.ifrMinimumMinutes == next.ifrMinimumMinutes &&
         current.ifrSubtractMinutes == next.ifrSubtractMinutes &&
@@ -320,9 +274,6 @@ class _FlightFactoringSettingsCardState
     FlightFactoringSettings b,
   ) {
     return a.crossCountryThresholdNm == b.crossCountryThresholdNm &&
-        a.instrumentPercent == b.instrumentPercent &&
-        a.instrumentMinimumMinutes == b.instrumentMinimumMinutes &&
-        a.instrumentSubtractMinutes == b.instrumentSubtractMinutes &&
         a.ifrPercent == b.ifrPercent &&
         a.ifrMinimumMinutes == b.ifrMinimumMinutes &&
         a.ifrSubtractMinutes == b.ifrSubtractMinutes &&

@@ -1240,12 +1240,6 @@ abstract class AppLocalizations {
   /// **'IFR'**
   String get reportsMetricIfr;
 
-  /// No description provided for @reportsMetricInstrument.
-  ///
-  /// In en, this message translates to:
-  /// **'Instrument'**
-  String get reportsMetricInstrument;
-
   /// No description provided for @reportsMetricCrossCountry.
   ///
   /// In en, this message translates to:
@@ -1503,18 +1497,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'IFR Time'**
   String get reportsFilterFieldIfrTime;
-
-  /// No description provided for @reportsFilterFieldInstrumentTime.
-  ///
-  /// In en, this message translates to:
-  /// **'Instrument Time'**
-  String get reportsFilterFieldInstrumentTime;
-
-  /// No description provided for @reportsFilterFieldSimInstrumentTime.
-  ///
-  /// In en, this message translates to:
-  /// **'Sim Instrument Time'**
-  String get reportsFilterFieldSimInstrumentTime;
 
   /// No description provided for @reportsFilterFieldPicTime.
   ///
@@ -2146,12 +2128,6 @@ abstract class AppLocalizations {
   /// **'IFR'**
   String get dashboardIfrLabel;
 
-  /// No description provided for @dashboardInstrumentLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Instrument'**
-  String get dashboardInstrumentLabel;
-
   /// No description provided for @dashboardDutyLabel.
   ///
   /// In en, this message translates to:
@@ -2289,12 +2265,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Landings night'**
   String get dashboardLandingsNightLabel;
-
-  /// No description provided for @dashboardInstrumentApproachesLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Instrument approaches'**
-  String get dashboardInstrumentApproachesLabel;
 
   /// No description provided for @dashboardPicTimeLabel.
   ///
@@ -3106,12 +3076,6 @@ abstract class AppLocalizations {
   /// **'Signature options'**
   String get autoUi057;
 
-  /// No description provided for @autoUi058.
-  ///
-  /// In en, this message translates to:
-  /// **'Sim Instrument'**
-  String get autoUi058;
-
   /// No description provided for @autoUi059.
   ///
   /// In en, this message translates to:
@@ -3724,18 +3688,6 @@ abstract class AppLocalizations {
   /// **'Import SimpleLog'**
   String get simplelogImportOptionsTitle;
 
-  /// No description provided for @simplelogInstrumentPercentLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Instrument %'**
-  String get simplelogInstrumentPercentLabel;
-
-  /// No description provided for @simplelogInstrumentTimeLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Instrument time'**
-  String get simplelogInstrumentTimeLabel;
-
   /// No description provided for @simplelogIrp3PercentLabel.
   ///
   /// In en, this message translates to:
@@ -3825,12 +3777,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Calculate IFR time'**
   String get southwestCalculateIfrTimeLabel;
-
-  /// No description provided for @southwestCalculateInstrumentTimeLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Calculate instrument time'**
-  String get southwestCalculateInstrumentTimeLabel;
 
   /// No description provided for @southwestCalculateNightTimeLabel.
   ///

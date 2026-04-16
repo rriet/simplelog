@@ -16,8 +16,6 @@ class FlightTimeFieldsVisibility {
     this.dual = true,
     this.instructor = true,
     this.ifr = true,
-    this.instrument = true,
-    this.simInstrument = true,
     this.night = true,
     this.crossCountry = true,
     this.custom1 = true,
@@ -41,8 +39,6 @@ class FlightTimeFieldsVisibility {
       dual: decoded['dual'] != false,
       instructor: decoded['instructor'] != false,
       ifr: decoded['ifr'] != false,
-      instrument: decoded['instrument'] != false,
-      simInstrument: decoded['simInstrument'] != false,
       night: decoded['night'] != false,
       crossCountry: decoded['crossCountry'] != false,
       custom1: decoded['custom1'] != false,
@@ -70,12 +66,6 @@ class FlightTimeFieldsVisibility {
 
   /// Whether the IFR time field is visible.
   final bool ifr;
-
-  /// Whether the Instrument time field is visible.
-  final bool instrument;
-
-  /// Whether the Sim Instrument time field is visible.
-  final bool simInstrument;
 
   /// Whether the Night time field is visible.
   final bool night;
@@ -106,8 +96,6 @@ class FlightTimeFieldsVisibility {
     bool? dual,
     bool? instructor,
     bool? ifr,
-    bool? instrument,
-    bool? simInstrument,
     bool? night,
     bool? crossCountry,
     bool? custom1,
@@ -123,8 +111,6 @@ class FlightTimeFieldsVisibility {
       dual: dual ?? this.dual,
       instructor: instructor ?? this.instructor,
       ifr: ifr ?? this.ifr,
-      instrument: instrument ?? this.instrument,
-      simInstrument: simInstrument ?? this.simInstrument,
       night: night ?? this.night,
       crossCountry: crossCountry ?? this.crossCountry,
       custom1: custom1 ?? this.custom1,
@@ -144,8 +130,6 @@ class FlightTimeFieldsVisibility {
       'dual': dual,
       'instructor': instructor,
       'ifr': ifr,
-      'instrument': instrument,
-      'simInstrument': simInstrument,
       'night': night,
       'crossCountry': crossCountry,
       'custom1': custom1,

@@ -153,8 +153,6 @@ class QatarAirwaysXlsxSourceParser {
         row.read(_instructorTimeColumn),
       ),
       timeIfrMinutes: _parseDurationMinutes(row.read(_ifrTimeColumn)),
-      timeInstrumentMinutes: _parseDurationMinutes(row.read(_ifrTimeColumn)),
-      timeSimulatedInstrumentMinutes: 0,
       timeNightMinutes: _parseDurationMinutes(row.read(_nightTimeColumn)),
       timeCrossCountryMinutes: 0,
       timeCustom1Minutes: 0,

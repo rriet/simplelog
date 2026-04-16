@@ -157,8 +157,9 @@ class LogbookRepository implements LogbookRepositoryContract {
     required DateTime start,
     required DateTime end,
   }) async {
-    final rows = await _db.customSelect(
-      '''
+    final rows = await _db
+        .customSelect(
+          '''
 SELECT dp.id
 FROM duty_periods dp
 JOIN time_lines ts ON ts.id = dp.duty_start_time_line_id
@@ -166,12 +167,13 @@ JOIN time_lines te ON te.id = dp.duty_end_time_line_id
 WHERE ts.event_date_time = ? AND te.event_date_time = ?
 LIMIT 1
 ''',
-      variables: [
-        Variable<DateTime>(start),
-        Variable<DateTime>(end),
-      ],
-      readsFrom: {_db.dutyPeriods, _db.timeLines},
-    ).get();
+          variables: [
+            Variable<DateTime>(start),
+            Variable<DateTime>(end),
+          ],
+          readsFrom: {_db.dutyPeriods, _db.timeLines},
+        )
+        .get();
     if (rows.isEmpty) return null;
     final dutyId = rows.first.read<int>('id');
     return findDutyById(dutyId);
@@ -179,8 +181,9 @@ LIMIT 1
 
   @override
   Future<DutyPeriod?> findDutyCoveringTime(DateTime instant) async {
-    final rows = await _db.customSelect(
-      '''
+    final rows = await _db
+        .customSelect(
+          '''
 SELECT dp.id
 FROM duty_periods dp
 JOIN time_lines ts ON ts.id = dp.duty_start_time_line_id
@@ -189,12 +192,13 @@ WHERE ts.event_date_time <= ? AND te.event_date_time >= ?
 ORDER BY ts.event_date_time DESC
 LIMIT 1
 ''',
-      variables: [
-        Variable<DateTime>(instant),
-        Variable<DateTime>(instant),
-      ],
-      readsFrom: {_db.dutyPeriods, _db.timeLines},
-    ).get();
+          variables: [
+            Variable<DateTime>(instant),
+            Variable<DateTime>(instant),
+          ],
+          readsFrom: {_db.dutyPeriods, _db.timeLines},
+        )
+        .get();
     if (rows.isEmpty) return null;
     final dutyId = rows.first.read<int>('id');
     return findDutyById(dutyId);
@@ -377,9 +381,6 @@ LIMIT 1
               timeDualMinutes: input.timeDualMinutes,
               timeInstructorMinutes: input.timeInstructorMinutes,
               timeIFRMinutes: input.timeIFRMinutes,
-              timeInstrumentMinutes: input.timeInstrumentMinutes,
-              timeSimulatedInstrumentMinutes:
-                  input.timeSimulatedInstrumentMinutes,
               timeNightMinutes: input.timeNightMinutes,
               timeCrossCountryMinutes: input.timeCrossCountryMinutes,
               timeCustom1Minutes: input.timeCustom1Minutes,
@@ -452,9 +453,6 @@ LIMIT 1
               timeDualMinutes: input.timeDualMinutes,
               timeInstructorMinutes: input.timeInstructorMinutes,
               timeIFRMinutes: input.timeIFRMinutes,
-              timeInstrumentMinutes: input.timeInstrumentMinutes,
-              timeSimulatedInstrumentMinutes:
-                  input.timeSimulatedInstrumentMinutes,
               timeNightMinutes: input.timeNightMinutes,
               timeCrossCountryMinutes: input.timeCrossCountryMinutes,
               timeCustom1Minutes: input.timeCustom1Minutes,

@@ -115,12 +115,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
   final _ifrController = TextEditingController(
     text: TimeInputField.formatMinutes(0),
   );
-  final _instrumentController = TextEditingController(
-    text: TimeInputField.formatMinutes(0),
-  );
-  final _simInstrumentController = TextEditingController(
-    text: TimeInputField.formatMinutes(0),
-  );
   final _nightController = TextEditingController(
     text: TimeInputField.formatMinutes(0),
   );
@@ -237,8 +231,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     _dualController.dispose();
     _instructorController.dispose();
     _ifrController.dispose();
-    _instrumentController.dispose();
-    _simInstrumentController.dispose();
     _nightController.dispose();
     _crossController.dispose();
     _custom1Controller.dispose();
@@ -391,12 +383,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       flight.timeInstructorMinutes,
     );
     _ifrController.text = TimeInputField.formatMinutes(flight.timeIFRMinutes);
-    _instrumentController.text = TimeInputField.formatMinutes(
-      flight.timeInstrumentMinutes,
-    );
-    _simInstrumentController.text = TimeInputField.formatMinutes(
-      flight.timeSimulatedInstrumentMinutes,
-    );
     _nightController.text = TimeInputField.formatMinutes(
       flight.timeNightMinutes,
     );
@@ -905,14 +891,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     );
     _setControllerMinutes(_ifrController, _checks.ifr ? totalMinutes : 0);
     _setControllerMinutes(
-      _instrumentController,
-      _checks.instrument ? totalMinutes : 0,
-    );
-    _setControllerMinutes(
-      _simInstrumentController,
-      _checks.simInstrument ? totalMinutes : 0,
-    );
-    _setControllerMinutes(
       _nightController,
       _checks.night ? calculatedNight : 0,
     );
@@ -1102,10 +1080,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
     final instructor =
         TimeInputField.parseMinutes(_instructorController.text) ?? 0;
     final ifr = TimeInputField.parseMinutes(_ifrController.text) ?? 0;
-    final instrument =
-        TimeInputField.parseMinutes(_instrumentController.text) ?? 0;
-    final simInstrument =
-        TimeInputField.parseMinutes(_simInstrumentController.text) ?? 0;
     final night = TimeInputField.parseMinutes(_nightController.text) ?? 0;
     final cross = TimeInputField.parseMinutes(_crossController.text) ?? 0;
     final custom1 = TimeInputField.parseMinutes(_custom1Controller.text) ?? 0;
@@ -1157,8 +1131,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
       timeDualMinutes: dual,
       timeInstructorMinutes: instructor,
       timeIFRMinutes: ifr,
-      timeInstrumentMinutes: instrument,
-      timeSimulatedInstrumentMinutes: simInstrument,
       timeNightMinutes: night,
       timeCrossCountryMinutes: cross,
       timeCustom1Minutes: custom1,
@@ -1779,34 +1751,6 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
               _checks.copyWith(ifr: v),
               v,
               _ifrController,
-            ),
-          ),
-          _TimeFieldConfig(
-            label: 'Instrument',
-            controller: _instrumentController,
-            checked: _checks.instrument,
-            visible: _shouldShowTimeField(
-              _instrumentController,
-              visibility.instrument,
-            ),
-            onChanged: (v) => _updateChecksAndMaybeCopy(
-              _checks.copyWith(instrument: v),
-              v,
-              _instrumentController,
-            ),
-          ),
-          _TimeFieldConfig(
-            label: 'Sim Instrument',
-            controller: _simInstrumentController,
-            checked: _checks.simInstrument,
-            visible: _shouldShowTimeField(
-              _simInstrumentController,
-              visibility.simInstrument,
-            ),
-            onChanged: (v) => _updateChecksAndMaybeCopy(
-              _checks.copyWith(simInstrument: v),
-              v,
-              _simInstrumentController,
             ),
           ),
           _TimeFieldConfig(

@@ -262,8 +262,6 @@ class NormalizedFlightRecord extends NormalizedImportRecord {
     required this.timeDualMinutes,
     required this.timeInstructorMinutes,
     required this.timeIfrMinutes,
-    required this.timeInstrumentMinutes,
-    required this.timeSimulatedInstrumentMinutes,
     required this.timeNightMinutes,
     required this.timeCrossCountryMinutes,
     required this.timeCustom1Minutes,
@@ -304,8 +302,6 @@ class NormalizedFlightRecord extends NormalizedImportRecord {
   final int timeDualMinutes;
   final int timeInstructorMinutes;
   final int timeIfrMinutes;
-  final int timeInstrumentMinutes;
-  final int timeSimulatedInstrumentMinutes;
   final int timeNightMinutes;
   final int timeCrossCountryMinutes;
   final int timeCustom1Minutes;

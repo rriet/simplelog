@@ -96,8 +96,8 @@ class DashboardRulesSeedImporter {
         warnRedBefore: const Value(0),
       ),
       LimitRulesCompanion.insert(
-        ruleName: 'Currency Min Instrument Approaches (180 days)',
-        metric: 'instrument_approaches',
+        ruleName: 'Currency Min IFR Approaches (180 days)',
+        metric: 'ifr_approaches',
         ruleType: 'minimum',
         windowType: 'days|same_time',
         windowValue: 180,

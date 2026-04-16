@@ -610,9 +610,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsMetricIfr => 'IFR';
 
   @override
-  String get reportsMetricInstrument => 'Instrument';
-
-  @override
   String get reportsMetricCrossCountry => 'Cross-Country';
 
   @override
@@ -751,12 +748,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportsFilterFieldIfrTime => 'IFR Time';
-
-  @override
-  String get reportsFilterFieldInstrumentTime => 'Instrument Time';
-
-  @override
-  String get reportsFilterFieldSimInstrumentTime => 'Sim Instrument Time';
 
   @override
   String get reportsFilterFieldPicTime => 'PIC Time';
@@ -1074,9 +1065,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardIfrLabel => 'IFR';
 
   @override
-  String get dashboardInstrumentLabel => 'Instrument';
-
-  @override
   String get dashboardDutyLabel => 'Duty';
 
   @override
@@ -1144,9 +1132,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dashboardLandingsNightLabel => 'Landings night';
-
-  @override
-  String get dashboardInstrumentApproachesLabel => 'Instrument approaches';
 
   @override
   String get dashboardPicTimeLabel => 'PIC time';
@@ -1575,9 +1560,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoUi057 => 'Signature options';
 
   @override
-  String get autoUi058 => 'Sim Instrument';
-
-  @override
   String get autoUi059 => 'Start Time';
 
   @override
@@ -1884,12 +1866,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get simplelogImportOptionsTitle => 'Import SimpleLog';
 
   @override
-  String get simplelogInstrumentPercentLabel => 'Instrument %';
-
-  @override
-  String get simplelogInstrumentTimeLabel => 'Instrument time';
-
-  @override
   String get simplelogIrp3PercentLabel => 'IRP3 %';
 
   @override
@@ -1938,10 +1914,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get southwestCalculateIfrTimeLabel => 'Calculate IFR time';
-
-  @override
-  String get southwestCalculateInstrumentTimeLabel =>
-      'Calculate instrument time';
 
   @override
   String get southwestCalculateNightTimeLabel => 'Calculate night time';

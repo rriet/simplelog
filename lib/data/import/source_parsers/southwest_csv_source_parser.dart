@@ -410,10 +410,6 @@ class SouthwestCsvSourceParser {
             timeDualMinutes: 0,
             timeInstructorMinutes: 0,
             timeIfrMinutes: options.recalculateIfrTime ? blockMinutes : 0,
-            timeInstrumentMinutes: options.recalculateInstrumentTime
-                ? blockMinutes
-                : 0,
-            timeSimulatedInstrumentMinutes: 0,
             timeNightMinutes:
                 options.recalculateNightTime && calculations != null
                 ? calculations.nightTimeMinutes

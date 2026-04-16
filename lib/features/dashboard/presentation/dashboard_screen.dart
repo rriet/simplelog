@@ -388,10 +388,6 @@ class _TotalsSection extends StatelessWidget {
       ),
       (label: l10n.dashboardIfrLabel, value: _formatMinutes(totals.ifrMinutes)),
       (
-        label: l10n.dashboardInstrumentLabel,
-        value: _formatMinutes(totals.instrumentMinutes),
-      ),
-      (
         label: l10n.dashboardDutyLabel,
         value: _formatMinutes(totals.dutyMinutes),
       ),
@@ -498,14 +494,13 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
   static const String _metricFlight = 'flight';
   static const String _metricNight = 'night';
   static const String _metricIfr = 'ifr';
-  static const String _metricInstrument = 'instrument';
   static const String _metricTakeoff = 'takeoff';
   static const String _metricTakeoffDay = 'takeoff_day';
   static const String _metricTakeoffNight = 'takeoff_night';
   static const String _metricLandings = 'landings';
   static const String _metricLandingsDay = 'landings_day';
   static const String _metricLandingsNight = 'landings_night';
-  static const String _metricInstrumentApproaches = 'instrument_approaches';
+  static const String _metricIfrApproaches = 'ifr_approaches';
   static const String _metricPic = 'pic';
   static const String _metricSic = 'sic';
   static const String _metricPicus = 'picus';
@@ -542,7 +537,7 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
     _metricLandings,
     _metricLandingsDay,
     _metricLandingsNight,
-    _metricInstrumentApproaches,
+    _metricIfrApproaches,
   };
 
   static bool _isCountMetric(String metric) => _countMetrics.contains(metric);
@@ -736,10 +731,6 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                           child: Text(l10n.dashboardIfrLabel),
                         ),
                         DropdownMenuItem(
-                          value: _metricInstrument,
-                          child: Text(l10n.dashboardInstrumentLabel),
-                        ),
-                        DropdownMenuItem(
                           value: _metricTakeoff,
                           child: Text(l10n.dashboardTakeoffLabel),
                         ),
@@ -764,8 +755,8 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                           child: Text(l10n.dashboardLandingsNightLabel),
                         ),
                         DropdownMenuItem(
-                          value: _metricInstrumentApproaches,
-                          child: Text(l10n.dashboardInstrumentApproachesLabel),
+                          value: _metricIfrApproaches,
+                          child: Text(l10n.reportsMetricIfrApproaches),
                         ),
                         DropdownMenuItem(
                           value: _metricPic,
@@ -1004,14 +995,13 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
       'flight' => l10n.dashboardFlightLabel,
       'night' => l10n.dashboardNightLabel,
       'ifr' => l10n.dashboardIfrLabel,
-      'instrument' => l10n.dashboardInstrumentLabel,
       'takeoff' => l10n.dashboardTakeoffLabel,
       'takeoff_day' => l10n.dashboardTakeoffDayLabel,
       'takeoff_night' => l10n.dashboardTakeoffNightLabel,
       'landings' => l10n.dashboardLandingsLabel,
       'landings_day' => l10n.dashboardLandingsDayLabel,
       'landings_night' => l10n.dashboardLandingsNightLabel,
-      'instrument_approaches' => l10n.dashboardInstrumentApproachesLabel,
+      'ifr_approaches' => l10n.reportsMetricIfrApproaches,
       'pic' => l10n.dashboardPicTimeLabel,
       'sic' => l10n.dashboardSicTimeLabel,
       'picus' => l10n.dashboardPicusTimeLabel,
