@@ -910,6 +910,18 @@ abstract class AppLocalizations {
   /// **'Filters'**
   String get reportsTabFilters;
 
+  /// No description provided for @logbookFiltersHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get logbookFiltersHelpTitle;
+
+  /// No description provided for @logbookFiltersHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use From and To to define the date range for the logbook list and analysis tabs.\n\nOpen Filters to add advanced conditions.\n\nDisabled time fields remain visible in existing entries whenever they contain recorded values.'**
+  String get logbookFiltersHelpBody;
+
   /// No description provided for @reportsEntryGeneric.
   ///
   /// In en, this message translates to:
@@ -1131,6 +1143,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Any'**
   String get reportsMatchAny;
+
+  /// No description provided for @reportsFiltersHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get reportsFiltersHelpTitle;
+
+  /// No description provided for @reportsFiltersHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this screen to narrow results by date range, event types, and custom filter conditions.\n\nSave stores the current setup as a Saved query. Select a saved query to reapply it later. Delete removes a saved query.\n\nMatch mode controls how multiple filter conditions are evaluated:\nAll: every condition must match.\nAny: at least one condition must match.'**
+  String get reportsFiltersHelpBody;
 
   /// No description provided for @reportsAddFilter.
   ///
@@ -2716,6 +2740,24 @@ abstract class AppLocalizations {
   /// **'Pilot identity and signature preferences.'**
   String get settingsCalculationPilotProfileSubtitle;
 
+  /// No description provided for @settingsDefaultCrewFunctionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Default crew function'**
+  String get settingsDefaultCrewFunctionTitle;
+
+  /// No description provided for @settingsDefaultCrewFunctionHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Default crew function'**
+  String get settingsDefaultCrewFunctionHelpTitle;
+
+  /// No description provided for @settingsDefaultCrewFunctionHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The Default Crew Function is applied when creating a new flight. It automatically assigns the \"Self\" crew member to the appropriate crew function.\n\nWhen importing crew data from a CSV file in which the crew function is not explicitly specified, the Default Crew Function is used as a fallback mechanism to ensure the \"Self\" crew member is correctly assigned.\n\nFor this functionality to operate correctly, exactly one crew member must be marked as \"Self\".'**
+  String get settingsDefaultCrewFunctionHelpBody;
+
   /// No description provided for @previousExperienceEntriesSubtitle.
   ///
   /// In en, this message translates to:
@@ -2971,7 +3013,7 @@ abstract class AppLocalizations {
   /// No description provided for @autoUi039.
   ///
   /// In en, this message translates to:
-  /// **'Log takeoff and landing times'**
+  /// **'Takeoff and landing Times'**
   String get autoUi039;
 
   /// No description provided for @autoUi040.
@@ -3154,6 +3196,18 @@ abstract class AppLocalizations {
   /// **'Backup & Restore'**
   String get databaseBackupRestoreTitle;
 
+  /// No description provided for @databaseBackupRestoreInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & Restore'**
+  String get databaseBackupRestoreInfoTitle;
+
+  /// No description provided for @databaseBackupRestoreInfoMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saves a full copy of your current database to a file.\nRestore replaces the current database with the selected backup file.\n\nImportant:\nRestore overwrites current data on this device.'**
+  String get databaseBackupRestoreInfoMessage;
+
   /// No description provided for @databaseDangerZoneSubtitle.
   ///
   /// In en, this message translates to:
@@ -3189,6 +3243,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import & Export'**
   String get databaseImportExportTitle;
+
+  /// No description provided for @databaseImportExportInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import & Export'**
+  String get databaseImportExportInfoTitle;
+
+  /// No description provided for @databaseImportExportInfoMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Import reads supported files and writes their data into your logbook.\nExport creates a CSV snapshot of current flights/simulators.\n\nDepending on the selected import options, existing records may be updated or replaced.'**
+  String get databaseImportExportInfoMessage;
 
   /// No description provided for @databaseImportFileAction.
   ///
@@ -3442,6 +3508,18 @@ abstract class AppLocalizations {
   /// **'Batch edit'**
   String get reportsBatchTitle;
 
+  /// No description provided for @reportsBatchHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch edit (filtered entries)'**
+  String get reportsBatchHelpTitle;
+
+  /// No description provided for @reportsBatchHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch actions apply to entries in the current filtered result set.\n\nThe affected scope follows your current date range, event-type toggles, and active filter conditions.\n\nUse Check flights to preview issues before applying updates.'**
+  String get reportsBatchHelpBody;
+
   /// No description provided for @reportsCalculateAction.
   ///
   /// In en, this message translates to:
@@ -3453,6 +3531,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Calculate all'**
   String get reportsCalculateAll;
+
+  /// No description provided for @reportsCalculateAllFlightsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate all flights'**
+  String get reportsCalculateAllFlightsTitle;
+
+  /// No description provided for @reportsCalculateAllHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate all (filtered flights)'**
+  String get reportsCalculateAllHelpTitle;
+
+  /// No description provided for @reportsCalculateAllHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This applies to all currently filtered flights.\n\nFor each field:\n- Don\'t change: keeps the current value.\n- Recalculate: sets the field from available flight data/rules.\n- Set Zero: sets the field to 0.\n\nField notes:\n- Block recalculates from chocks when timestamps are available.\n- IFR, Flight, Instructor, and Custom fields recalculate from Block.\n- Cross-country recalculates using the configured NM threshold.\n- Distance NM recalculates from departure/arrival coordinates.\n- Night, takeoffs, and landings recalculate from day/night calculations.'**
+  String get reportsCalculateAllHelpBody;
 
   /// No description provided for @reportsCalculateDuty.
   ///
@@ -3639,6 +3735,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'General'**
   String get settingsTabGeneral;
+
+  /// No description provided for @settingsCalculationRulesHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculation Rules'**
+  String get settingsCalculationRulesHelpTitle;
+
+  /// No description provided for @settingsCalculationRulesHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'These rules control automatic flight-time calculations and apply when calculations are run for filtered flights.\n\nCross-country NM: Minimum distance (NM) required to count cross-country time.\n\nIFR %: Percent of block time used for IFR calculation.\nMinus: Time deducted before IFR percentage is applied.\nMinimum: Minimum IFR time to enforce after percentage/reduction.\n\nIRP3 Reduction: Time deducted before IRP3 percentage is applied.\nIRP3 %: Percent applied for IRP3 after reduction.\n\nIRP4 Reduction: Time deducted before IRP4 percentage is applied.\nIRP4 %: Percent applied for IRP4 after reduction.'**
+  String get settingsCalculationRulesHelpBody;
+
+  /// No description provided for @settingsCalculationRulesMinusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Minus'**
+  String get settingsCalculationRulesMinusLabel;
+
+  /// No description provided for @settingsCalculationRulesMinimumLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum'**
+  String get settingsCalculationRulesMinimumLabel;
+
+  /// No description provided for @settingsCalculationRulesIrp3ReductionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'IRP3 Reduction'**
+  String get settingsCalculationRulesIrp3ReductionLabel;
+
+  /// No description provided for @settingsCalculationRulesIrp4ReductionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'IRP4 Reduction'**
+  String get settingsCalculationRulesIrp4ReductionLabel;
+
+  /// No description provided for @settingsExperienceHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Experience'**
+  String get settingsExperienceHelpTitle;
+
+  /// No description provided for @settingsExperienceHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This section allows you to manage previous experience totals by aircraft type.\nThese totals are automatically included in all relevant reports and calculations whenever previous experience is enabled in the system.'**
+  String get settingsExperienceHelpBody;
+
+  /// No description provided for @settingsPilotProfileHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot Profile'**
+  String get settingsPilotProfileHelpTitle;
+
+  /// No description provided for @settingsPilotProfileHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pilot Profile stores report identity and signature preferences.\n\nName, Address, and Licenses are used in generated reports.\nSignature is used where report templates include a signature field.\n\nUse Edit profile to update these values.'**
+  String get settingsPilotProfileHelpBody;
+
+  /// No description provided for @settingsPilotProfileNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get settingsPilotProfileNameLabel;
+
+  /// No description provided for @settingsPilotProfileAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get settingsPilotProfileAddressLabel;
+
+  /// No description provided for @settingsPilotProfileLicensesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Licenses'**
+  String get settingsPilotProfileLicensesLabel;
+
+  /// No description provided for @settingsPilotProfileNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get settingsPilotProfileNotSet;
+
+  /// No description provided for @settingsTimeFieldsHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Fields'**
+  String get settingsTimeFieldsHelpTitle;
+
+  /// No description provided for @settingsTimeFieldsHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure which time fields are displayed in the Add Flight form to match your logging requirements. Enabling a field includes it in new entries, while disabling it removes it from the form to reduce clutter and focus on relevant data.\n\nFields that are disabled will still be shown when they contain recorded time, ensuring all logged data remains visible and available for review or amendment.'**
+  String get settingsTimeFieldsHelpBody;
+
+  /// No description provided for @settingsDutyRulesHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Duty Rules'**
+  String get settingsDutyRulesHelpTitle;
+
+  /// No description provided for @settingsDutyRulesHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Duty rules are used when calculating duty periods.\n\nCrew home base airport: Airport used to determine on-base vs off-base reporting assumptions.\nReporting time on base: Minutes added before duty start when departure is from home base.\nReporting time offbase: Minutes added before duty start when away from home base.\nDuty end time allowance: Minutes added after the last operational event before duty ends.\nMinimum rest time: Minimum rest required between consecutive duty periods.'**
+  String get settingsDutyRulesHelpBody;
 
   /// No description provided for @settingsTabTimeFields.
   ///
@@ -4051,7 +4255,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportsBatchWarning.
   ///
   /// In en, this message translates to:
-  /// **'This action will update {count} filtered flights.'**
+  /// **'This action will update {count} filtered entries.'**
   String reportsBatchWarning(int count);
 
   /// No description provided for @reportsCalculateDutyConfirmBody.

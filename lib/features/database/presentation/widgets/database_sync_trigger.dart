@@ -61,10 +61,12 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     required IconData secondIcon,
     required String secondLabel,
     required VoidCallback onSecondPressed,
+    Widget? headerTrailing,
   }) {
     return _DatabaseSectionCard(
       title: title,
       subtitle: subtitle,
+      headerTrailing: headerTrailing,
       children: [
         _DatabaseActionButton(
           icon: firstIcon,
@@ -120,6 +122,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
             _buildTwoActionSection(
               title: l10n.databaseImportExportTitle,
               subtitle: l10n.databaseImportExportSubtitle,
+              headerTrailing: InfoHelpButton(
+                title: l10n.databaseImportExportInfoTitle,
+                message: l10n.databaseImportExportInfoMessage,
+              ),
               firstIcon: Icons.upload_file,
               firstLabel: l10n.databaseImportFileAction,
               onFirstPressed: () => _importCsv(context, ref),
@@ -131,6 +137,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
             _DatabaseSectionCard(
               title: l10n.databaseBackupRestoreTitle,
               subtitle: l10n.databaseBackupRestoreSubtitle,
+              headerTrailing: InfoHelpButton(
+                title: l10n.databaseBackupRestoreInfoTitle,
+                message: l10n.databaseBackupRestoreInfoMessage,
+              ),
               children: [
                 _DatabaseActionButton(
                   icon: Icons.save_alt_outlined,

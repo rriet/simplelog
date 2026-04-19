@@ -14,6 +14,7 @@ import 'package:simplelog/data/models/airport_row.dart';
 import 'package:simplelog/features/airports/application/providers/airport_repository_provider.dart';
 import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_picker_dialog.dart';
+import 'package:simplelog/features/settings/presentation/widgets/settings_expandable_info_trailing.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/duty_rules_settings_provider.dart';
 
@@ -38,6 +39,7 @@ class DutyRulesSettingsCard extends ConsumerStatefulWidget {
 }
 
 class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
+  final ExpansibleController _expansionController = ExpansibleController();
   final _onBaseController = TextEditingController(
     text: ClockTimeInputField.formatMinutesOfDay(0),
   );
@@ -57,6 +59,7 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
   int _offBaseMinutes = 0;
   int _dutyEndAllowanceMinutes = 0;
   int _minimumRestMinutes = 0;
+  late bool _isExpanded = widget.initiallyExpanded;
   bool _isHydrating = false;
   Timer? _saveDebounce;
 
@@ -71,6 +74,7 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
     _offBaseController.dispose();
     _dutyEndAllowanceController.dispose();
     _minimumRestController.dispose();
+    _expansionController.dispose();
     super.dispose();
   }
 
@@ -200,6 +204,7 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
     final settings = settingsAsync.valueOrNull ?? const DutyRulesSettings();
     final airports = airportsAsync.valueOrNull ?? const <AirportRow>[];
     _hydrateIfNeeded(settings);
+    final l10n = AppLocalizations.of(context)!;
 
     final hasLoadError = settingsAsync.hasError || airportsAsync.hasError;
 
@@ -207,8 +212,18 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
       child: ExpansionTile(
         initiallyExpanded: widget.initiallyExpanded,
         title: widget.showTitle
-            ? Text(AppLocalizations.of(context)!.autoUi023)
+            ? Text(l10n.autoUi023)
             : const SizedBox.shrink(),
+        controller: _expansionController,
+        onExpansionChanged: (expanded) {
+          setState(() => _isExpanded = expanded);
+        },
+        trailing: SettingsExpandableInfoTrailing(
+          controller: _expansionController,
+          isExpanded: _isExpanded,
+          helpTitle: l10n.settingsDutyRulesHelpTitle,
+          helpMessage: l10n.settingsDutyRulesHelpBody,
+        ),
         tilePadding: widget.showTitle
             ? null
             : const EdgeInsets.symmetric(horizontal: 8),
@@ -224,11 +239,11 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
               padding: const EdgeInsets.only(bottom: 8),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text(AppLocalizations.of(context)!.autoUi064),
+                child: Text(l10n.autoUi064),
               ),
             ),
           PickerWithAddInputField(
-            label: AppLocalizations.of(context)!.autoUi016,
+            label: l10n.autoUi016,
             valueText: _airportLabelForId(_homeBaseAirportId, airports),
             onTap: _pickHomeBaseAirport,
             onAdd: _createAndSelectHomeBaseAirport,
@@ -237,7 +252,7 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
           const SizedBox(height: 8),
           ClockTimeInputField(
             controller: _onBaseController,
-            label: AppLocalizations.of(context)!.autoUi050,
+            label: l10n.autoUi050,
             fallbackMinutes: _onBaseMinutes,
             onChangedMinutes: (minutes) {
               if (_isHydrating) return;
@@ -248,7 +263,7 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
           const SizedBox(height: 8),
           ClockTimeInputField(
             controller: _offBaseController,
-            label: AppLocalizations.of(context)!.autoUi049,
+            label: l10n.autoUi049,
             fallbackMinutes: _offBaseMinutes,
             onChangedMinutes: (minutes) {
               if (_isHydrating) return;
@@ -259,7 +274,7 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
           const SizedBox(height: 8),
           ClockTimeInputField(
             controller: _dutyEndAllowanceController,
-            label: AppLocalizations.of(context)!.autoUi025,
+            label: l10n.autoUi025,
             fallbackMinutes: _dutyEndAllowanceMinutes,
             onChangedMinutes: (minutes) {
               if (_isHydrating) return;
@@ -270,7 +285,7 @@ class _DutyRulesSettingsCardState extends ConsumerState<DutyRulesSettingsCard> {
           const SizedBox(height: 8),
           ClockTimeInputField(
             controller: _minimumRestController,
-            label: AppLocalizations.of(context)!.autoUi041,
+            label: l10n.autoUi041,
             fallbackMinutes: _minimumRestMinutes,
             onChangedMinutes: (minutes) {
               if (_isHydrating) return;

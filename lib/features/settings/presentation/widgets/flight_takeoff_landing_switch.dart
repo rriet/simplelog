@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/state/providers/flight_form_settings_provider.dart';
 
-/// Displays and persists the "log takeoff and landing times" preference.
+/// Displays and persists the takeoff/landing times preference.
 ///
 /// Reads the current boolean value from [flightFormTakeoffLandingLogProvider]
 /// and writes changes back when toggled by the user.

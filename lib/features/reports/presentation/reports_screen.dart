@@ -22,6 +22,7 @@ import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/core/presentation/widgets/display/event_type_toggle_button.dart';
 import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
@@ -2761,6 +2762,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
               _ReportsSectionCard(
                 title: l10n.reportsBatchTitle,
                 subtitle: l10n.reportsBatchSubtitle,
+                headerTrailing: InfoHelpButton(
+                  title: l10n.reportsBatchHelpTitle,
+                  message: l10n.reportsBatchHelpBody,
+                ),
                 children: [
                   Text(
                     l10n.reportsBatchWarning(filteredCount),
@@ -4633,6 +4638,7 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isNarrow = MediaQuery.of(context).size.width < 400;
     final isCompact = isCompactDialogScreen(context);
 
@@ -4699,12 +4705,16 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
 
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
-      title: AppLocalizations.of(context)!.reportsCalculateAction,
+      title: l10n.reportsCalculateAllFlightsTitle,
       popupMaxWidth: 620,
       actions: [
+        InfoHelpButton(
+          title: l10n.reportsCalculateAllHelpTitle,
+          message: l10n.reportsCalculateAllHelpBody,
+        ),
         TextButton(
           onPressed: () => AppNavigator.pop(context, _preferences),
-          child: Text(AppLocalizations.of(context)!.applyAction),
+          child: Text(l10n.applyAction),
         ),
       ],
       contentView: Padding(
@@ -5025,11 +5035,13 @@ class _ReportsSectionCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.children,
+    this.headerTrailing,
   });
 
   final String title;
   final String subtitle;
   final List<Widget> children;
+  final Widget? headerTrailing;
 
   @override
   Widget build(BuildContext context) {
@@ -5043,11 +5055,19 @@ class _ReportsSectionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (headerTrailing != null) ...[
+                  const Spacer(),
+                  headerTrailing!,
+                ],
+              ],
             ),
             const SizedBox(height: 2),
             Text(
@@ -5550,7 +5570,6 @@ class _FiltersCard extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 760;
-        final maxFieldWidth = compact ? constraints.maxWidth - 40 : 250.0;
         final topControlsHeight = compact ? 57.0 : 61.0;
         const sectionSpacingHeight = 21.0;
         final availableScrollableHeight = constraints.maxHeight.isFinite
@@ -5660,6 +5679,11 @@ class _FiltersCard extends StatelessWidget {
                               child: Text(l10n.deleteAction),
                             ),
                     ),
+                    const SizedBox(width: 8),
+                    InfoHelpButton(
+                      title: l10n.reportsFiltersHelpTitle,
+                      message: l10n.reportsFiltersHelpBody,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -5742,97 +5766,72 @@ class _FiltersCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SizedBox(
-                              width: maxFieldWidth,
-                              child:
-                                  ReportsEnumDropdownField<
-                                    _ReportDateRangePreset
-                                  >(
-                                    value: preset,
-                                    label: l10n.logbookFilterRange,
-                                    options: _ReportDateRangePreset.values
-                                        .toList(growable: false),
-                                    optionLabel: (value) =>
-                                        _reportDateRangePresetLabel(
-                                          l10n,
-                                          value,
-                                        ),
-                                    onChanged: (value) =>
-                                        unawaited(onPresetChanged(value)),
-                                  ),
-                            ),
-                            SizedBox(
-                              width: maxFieldWidth * 2 + 8,
-                              child: DateAndHourRow(
-                                dateLabel: l10n.logbookFilterFromDate,
-                                dateValueText: DateFormat(
-                                  'dd/MMM yyyy',
-                                  locale,
-                                ).format(from),
-                                onPickDate: onPickStart,
-                                timeController: fromTimeController,
-                                onTimeChanged: onFromTimeChanged,
+                            ReportsEnumDropdownField<_ReportDateRangePreset>(
+                              value: preset,
+                              label: l10n.logbookFilterRange,
+                              options: _ReportDateRangePreset.values.toList(
+                                growable: false,
                               ),
+                              optionLabel: (value) =>
+                                  _reportDateRangePresetLabel(l10n, value),
+                              onChanged: (value) =>
+                                  unawaited(onPresetChanged(value)),
                             ),
-                            SizedBox(
-                              width: maxFieldWidth * 2 + 8,
-                              child: DateAndHourRow(
-                                dateLabel: l10n.logbookFilterToDate,
-                                dateValueText: DateFormat(
-                                  'dd/MMM yyyy',
-                                  locale,
-                                ).format(to),
-                                onPickDate: onPickEnd,
-                                timeController: toTimeController,
-                                onTimeChanged: onToTimeChanged,
+                            const SizedBox(height: 8),
+                            DateAndHourRow(
+                              dateLabel: l10n.logbookFilterFromDate,
+                              dateValueText: DateFormat(
+                                'dd/MMM yyyy',
+                                locale,
+                              ).format(from),
+                              onPickDate: onPickStart,
+                              timeController: fromTimeController,
+                              onTimeChanged: onFromTimeChanged,
+                            ),
+                            const SizedBox(height: 8),
+                            DateAndHourRow(
+                              dateLabel: l10n.logbookFilterToDate,
+                              dateValueText: DateFormat(
+                                'dd/MMM yyyy',
+                                locale,
+                              ).format(to),
+                              onPickDate: onPickEnd,
+                              timeController: toTimeController,
+                              onTimeChanged: onToTimeChanged,
+                            ),
+                            const SizedBox(height: 8),
+                            DropdownButtonFormField<ReportsFilterMatchMode>(
+                              initialValue: matchMode,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                labelText: l10n.reportsMatchModeLabel,
+                                border: const OutlineInputBorder(),
+                                isDense: true,
                               ),
+                              items: [
+                                DropdownMenuItem(
+                                  value: ReportsFilterMatchMode.all,
+                                  child: _overflowText(l10n.reportsMatchAll),
+                                ),
+                                DropdownMenuItem(
+                                  value: ReportsFilterMatchMode.any,
+                                  child: _overflowText(l10n.reportsMatchAny),
+                                ),
+                              ],
+                              selectedItemBuilder: (context) => [
+                                _dropdownSelectedItem(l10n.reportsMatchAll),
+                                _dropdownSelectedItem(l10n.reportsMatchAny),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  unawaited(onMatchModeChanged(value));
+                                }
+                              },
                             ),
-                            SizedBox(
-                              width: compact ? maxFieldWidth : 150,
-                              child:
-                                  DropdownButtonFormField<
-                                    ReportsFilterMatchMode
-                                  >(
-                                    initialValue: matchMode,
-                                    isExpanded: true,
-                                    decoration: InputDecoration(
-                                      labelText: l10n.reportsMatchModeLabel,
-                                      border: const OutlineInputBorder(),
-                                      isDense: true,
-                                    ),
-                                    items: [
-                                      DropdownMenuItem(
-                                        value: ReportsFilterMatchMode.all,
-                                        child: _overflowText(
-                                          l10n.reportsMatchAll,
-                                        ),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: ReportsFilterMatchMode.any,
-                                        child: _overflowText(
-                                          l10n.reportsMatchAny,
-                                        ),
-                                      ),
-                                    ],
-                                    selectedItemBuilder: (context) => [
-                                      _dropdownSelectedItem(
-                                        l10n.reportsMatchAll,
-                                      ),
-                                      _dropdownSelectedItem(
-                                        l10n.reportsMatchAny,
-                                      ),
-                                    ],
-                                    onChanged: (value) {
-                                      if (value != null) {
-                                        unawaited(onMatchModeChanged(value));
-                                      }
-                                    },
-                                  ),
-                            ),
+                            const SizedBox(height: 8),
                             SizedBox(
                               height: compact ? 36 : 40,
                               child: FilledButton.icon(

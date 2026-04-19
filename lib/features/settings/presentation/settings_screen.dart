@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/features/database/presentation/database_screen.dart';
 import 'package:simplelog/features/settings/presentation/widgets/duty_rules_settings_card.dart';
@@ -52,18 +53,23 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         _SettingsSectionCard(
-                          title: l10n.settingsCalculationPilotProfileTitle,
-                          subtitle:
-                              l10n.settingsCalculationPilotProfileSubtitle,
+                          title: l10n.settingsDefaultCrewFunctionTitle,
+                          headerTrailing: InfoHelpButton(
+                            title: l10n.settingsDefaultCrewFunctionHelpTitle,
+                            message: l10n.settingsDefaultCrewFunctionHelpBody,
+                          ),
                           children: const [
-                            SimulatorDefaultPositionSelector(),
-                            SizedBox(height: 8),
-                            PilotProfileSettingsCard(),
-                            FlightFactoringSettingsCard(),
-                            SizedBox(height: 8),
-                            DutyRulesSettingsCard(),
+                            SimulatorDefaultPositionSelector(
+                              labelText: null,
+                            ),
                           ],
                         ),
+                        const SizedBox(height: 12),
+                        const PilotProfileSettingsCard(),
+                        const SizedBox(height: 8),
+                        const FlightFactoringSettingsCard(),
+                        const SizedBox(height: 8),
+                        const DutyRulesSettingsCard(),
                       ],
                     ),
                   ),
@@ -85,11 +91,13 @@ class _SettingsSectionCard extends StatelessWidget {
     required this.title,
     required this.children,
     this.subtitle,
+    this.headerTrailing,
   });
 
   final String title;
   final String? subtitle;
   final List<Widget> children;
+  final Widget? headerTrailing;
 
   @override
   Widget build(BuildContext context) {
@@ -103,11 +111,19 @@ class _SettingsSectionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (headerTrailing != null) ...<Widget>[
+                  const Spacer(),
+                  headerTrailing!,
+                ],
+              ],
             ),
             if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
               const SizedBox(height: 2),

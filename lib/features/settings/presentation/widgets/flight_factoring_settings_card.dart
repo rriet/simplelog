@@ -6,6 +6,7 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
+import 'package:simplelog/features/settings/presentation/widgets/settings_expandable_info_trailing.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 
 /// Editable card for import/flight calculation factors.
@@ -33,6 +34,7 @@ class FlightFactoringSettingsCard extends ConsumerStatefulWidget {
 
 class _FlightFactoringSettingsCardState
     extends ConsumerState<FlightFactoringSettingsCard> {
+  final ExpansibleController _expansionController = ExpansibleController();
   final _crossCountryThresholdController = TextEditingController();
   final _ifrPercentController = TextEditingController();
   final _ifrMinController = TextEditingController();
@@ -44,6 +46,7 @@ class _FlightFactoringSettingsCardState
 
   bool _initialized = false;
   bool _isHydrating = false;
+  late bool _isExpanded = widget.initiallyExpanded;
   Timer? _saveDebounce;
   FlightFactoringSettings? _lastHydratedSettings;
 
@@ -80,6 +83,7 @@ class _FlightFactoringSettingsCardState
     _irp3SubtractController.dispose();
     _irp4PercentController.dispose();
     _irp4SubtractController.dispose();
+    _expansionController.dispose();
     super.dispose();
   }
 
@@ -97,6 +101,7 @@ class _FlightFactoringSettingsCardState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final asyncValue = ref.watch(flightFactoringSettingsProvider);
     final settings = asyncValue.asData?.value;
     if (settings != null &&
@@ -130,8 +135,18 @@ class _FlightFactoringSettingsCardState
       child: ExpansionTile(
         initiallyExpanded: widget.initiallyExpanded,
         title: widget.showTitle
-            ? Text(AppLocalizations.of(context)!.autoUi008)
+            ? Text(l10n.autoUi008)
             : const SizedBox.shrink(),
+        controller: _expansionController,
+        onExpansionChanged: (expanded) {
+          setState(() => _isExpanded = expanded);
+        },
+        trailing: SettingsExpandableInfoTrailing(
+          controller: _expansionController,
+          isExpanded: _isExpanded,
+          helpTitle: l10n.settingsCalculationRulesHelpTitle,
+          helpMessage: l10n.settingsCalculationRulesHelpBody,
+        ),
         tilePadding: widget.showTitle
             ? null
             : const EdgeInsets.symmetric(
@@ -142,7 +157,7 @@ class _FlightFactoringSettingsCardState
           _compactFieldRow(
             fields: [
               _CompactFieldSpec.number(
-                label: 'Cross-Country NM',
+                label: l10n.simplelogCrossCountryNmLabel,
                 controller: _crossCountryThresholdController,
               ),
             ],
@@ -150,15 +165,15 @@ class _FlightFactoringSettingsCardState
           _compactFieldRow(
             fields: [
               _CompactFieldSpec.number(
-                label: 'IFR %',
+                label: l10n.simplelogIfrPercentLabel,
                 controller: _ifrPercentController,
               ),
               _CompactFieldSpec.time(
-                label: 'Subtracted',
+                label: l10n.settingsCalculationRulesMinusLabel,
                 controller: _ifrSubtractController,
               ),
               _CompactFieldSpec.time(
-                label: 'Minimum',
+                label: l10n.settingsCalculationRulesMinimumLabel,
                 controller: _ifrMinController,
               ),
             ],
@@ -167,11 +182,11 @@ class _FlightFactoringSettingsCardState
           _compactFieldRow(
             fields: [
               _CompactFieldSpec.time(
-                label: 'IRP3 Time Reduction',
+                label: l10n.settingsCalculationRulesIrp3ReductionLabel,
                 controller: _irp3SubtractController,
               ),
               _CompactFieldSpec.number(
-                label: 'IRP3 %',
+                label: l10n.simplelogIrp3PercentLabel,
                 controller: _irp3PercentController,
               ),
             ],
@@ -179,11 +194,11 @@ class _FlightFactoringSettingsCardState
           _compactFieldRow(
             fields: [
               _CompactFieldSpec.time(
-                label: 'IRP4 Time Reduction',
+                label: l10n.settingsCalculationRulesIrp4ReductionLabel,
                 controller: _irp4SubtractController,
               ),
               _CompactFieldSpec.number(
-                label: 'IRP4 %',
+                label: l10n.simplelogIrp4PercentLabel,
                 controller: _irp4PercentController,
               ),
             ],

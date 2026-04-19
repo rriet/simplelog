@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/features/settings/presentation/widgets/flight_takeoff_landing_switch.dart';
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
@@ -141,37 +142,41 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
               ),
             ),
             const SizedBox(height: 16),
-            const _SettingsPlainCard(
-              child: FlightTakeoffLandingSwitch(
-                contentPadding: EdgeInsets.symmetric(horizontal: 16),
-              ),
-            ),
-            const SizedBox(height: 12),
             _SettingsSectionCard(
               title: AppLocalizations.of(context)!.autoUi067,
               subtitle: l10n.timeFieldsVisibleSubtitle,
+              headerTrailing: InfoHelpButton(
+                title: l10n.settingsTimeFieldsHelpTitle,
+                message: l10n.settingsTimeFieldsHelpBody,
+              ),
               children: [
+                const FlightTakeoffLandingSwitch(),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: visibility.pic,
                   title: const Text('PIC'),
                   onChanged: (v) => _updateVisibility(visibility, pic: v),
                 ),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: visibility.picus,
                   title: const Text('PICUS'),
                   onChanged: (v) => _updateVisibility(visibility, picus: v),
                 ),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: visibility.sic,
                   title: const Text('SIC'),
                   onChanged: (v) => _updateVisibility(visibility, sic: v),
                 ),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: visibility.dual,
                   title: Text(AppLocalizations.of(context)!.reportsMetricDual),
                   onChanged: (v) => _updateVisibility(visibility, dual: v),
                 ),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: visibility.instructor,
                   title: Text(
                     AppLocalizations.of(context)!.reportsMetricInstructor,
@@ -180,37 +185,44 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
                       _updateVisibility(visibility, instructor: v),
                 ),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: visibility.ifr,
                   title: const Text('IFR'),
                   onChanged: (v) => _updateVisibility(visibility, ifr: v),
                 ),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: visibility.night,
                   title: Text(AppLocalizations.of(context)!.reportsMetricNight),
                   onChanged: (v) => _updateVisibility(visibility, night: v),
                 ),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: visibility.crossCountry,
                   title: Text(AppLocalizations.of(context)!.autoUi017),
                   onChanged: (v) =>
                       _updateVisibility(visibility, crossCountry: v),
                 ),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: visibility.custom1,
                   title: Text(labels.custom1),
                   onChanged: (v) => _updateVisibility(visibility, custom1: v),
                 ),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: visibility.custom2,
                   title: Text(labels.custom2),
                   onChanged: (v) => _updateVisibility(visibility, custom2: v),
                 ),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: visibility.custom3,
                   title: Text(labels.custom3),
                   onChanged: (v) => _updateVisibility(visibility, custom3: v),
                 ),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: visibility.custom4,
                   title: Text(labels.custom4),
                   onChanged: (v) => _updateVisibility(visibility, custom4: v),
@@ -264,11 +276,13 @@ class _SettingsSectionCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.children,
+    this.headerTrailing,
   });
 
   final String title;
   final String subtitle;
   final List<Widget> children;
+  final Widget? headerTrailing;
 
   @override
   Widget build(BuildContext context) {
@@ -282,11 +296,19 @@ class _SettingsSectionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (headerTrailing != null) ...<Widget>[
+                  const Spacer(),
+                  headerTrailing!,
+                ],
+              ],
             ),
             const SizedBox(height: 2),
             Text(
@@ -299,25 +321,6 @@ class _SettingsSectionCard extends StatelessWidget {
             ...children,
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SettingsPlainCard extends StatelessWidget {
-  const _SettingsPlainCard({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Card(
-      elevation: 0,
-      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: child,
       ),
     );
   }

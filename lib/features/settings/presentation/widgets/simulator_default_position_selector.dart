@@ -8,7 +8,13 @@ import 'package:simplelog/state/providers/simulator_default_crew_position_provid
 /// when importing simulator data.
 class SimulatorDefaultPositionSelector extends ConsumerWidget {
   /// Creates the simulator default position selector.
-  const SimulatorDefaultPositionSelector({super.key});
+  const SimulatorDefaultPositionSelector({
+    super.key,
+    this.labelText = 'Default self crew position',
+  });
+
+  /// Optional field label shown by the dropdown decoration.
+  final String? labelText;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -16,9 +22,9 @@ class SimulatorDefaultPositionSelector extends ConsumerWidget {
     return selected.when(
       data: (value) => DropdownButtonFormField<CrewPosition>(
         initialValue: value,
-        decoration: const InputDecoration(
-          labelText: 'Default self crew position',
-          border: OutlineInputBorder(),
+        decoration: InputDecoration(
+          labelText: labelText,
+          border: const OutlineInputBorder(),
         ),
         items: _positions
             .map(

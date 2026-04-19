@@ -9,6 +9,7 @@ import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/core/presentation/widgets/display/event_type_toggle_button.dart';
 import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
@@ -1206,7 +1207,7 @@ class _GlobalFilterBar extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final showTypeChips = constraints.maxWidth >= 1020;
-        const dateFieldWidth = 128.0;
+        const dateFieldWidth = 116.0;
         return Material(
           color: colorScheme.surfaceContainerHighest,
           child: Padding(
@@ -1220,6 +1221,7 @@ class _GlobalFilterBar extends StatelessWidget {
                 ? Row(
                     children: [
                       _buildDateSelector(
+                        context: context,
                         width: dateFieldWidth,
                         label: 'From',
                         valueText: fromDateLabel,
@@ -1227,6 +1229,7 @@ class _GlobalFilterBar extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       _buildDateSelector(
+                        context: context,
                         width: dateFieldWidth,
                         label: 'To',
                         valueText: toDateLabel,
@@ -1245,6 +1248,11 @@ class _GlobalFilterBar extends StatelessWidget {
                             ? '${l10n.reportsTabFilters} ($filtersCount)'
                             : l10n.reportsTabFilters,
                       ),
+                      const SizedBox(width: 6),
+                      InfoHelpButton(
+                        title: l10n.logbookFiltersHelpTitle,
+                        message: l10n.logbookFiltersHelpBody,
+                      ),
                     ],
                   )
                 : SingleChildScrollView(
@@ -1252,6 +1260,7 @@ class _GlobalFilterBar extends StatelessWidget {
                     child: Row(
                       children: [
                         _buildDateSelector(
+                          context: context,
                           width: dateFieldWidth,
                           label: 'From',
                           valueText: fromDateLabel,
@@ -1259,6 +1268,7 @@ class _GlobalFilterBar extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         _buildDateSelector(
+                          context: context,
                           width: dateFieldWidth,
                           label: 'To',
                           valueText: toDateLabel,
@@ -1267,11 +1277,15 @@ class _GlobalFilterBar extends StatelessWidget {
                         const SizedBox(width: 8),
                         SquareOutlineButton(
                           onPressed: onMoreFilters,
-                          icon: Icons.filter_list,
                           height: 34,
                           label: filtersCount > 0
                               ? '${l10n.reportsTabFilters} ($filtersCount)'
                               : l10n.reportsTabFilters,
+                        ),
+                        const SizedBox(width: 6),
+                        InfoHelpButton(
+                          title: l10n.logbookFiltersHelpTitle,
+                          message: l10n.logbookFiltersHelpBody,
                         ),
                       ],
                     ),
@@ -1340,6 +1354,7 @@ class _GlobalFilterBar extends StatelessWidget {
   }
 
   Widget _buildDateSelector({
+    required BuildContext context,
     required double width,
     required String label,
     required String valueText,
@@ -1351,6 +1366,9 @@ class _GlobalFilterBar extends StatelessWidget {
         label: label,
         valueText: valueText,
         onTap: onTap,
+        labelBackgroundColor: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest,
       ),
     );
   }

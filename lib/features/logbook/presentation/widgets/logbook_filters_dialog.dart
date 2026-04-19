@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
 
@@ -11,24 +12,34 @@ import 'package:simplelog/data/models/logbook_filters.dart';
 enum LogbookDatePreset {
   /// User-selected custom dates.
   custom,
+
   /// Since first recorded flight.
   sinceFirstFlight,
+
   /// Last 7 days.
   last7Days,
+
   /// Last 14 days.
   last14Days,
+
   /// Last 21 days.
   last21Days,
+
   /// Last 28 days.
   last28Days,
+
   /// Last 365 days.
   last365Days,
+
   /// Previous calendar month.
   lastMonth,
+
   /// Previous calendar year.
   lastYear,
+
   /// Current calendar month.
   currentMonth,
+
   /// Current calendar year.
   currentYear,
 }
@@ -44,6 +55,7 @@ class LogbookFiltersDialog extends StatefulWidget {
 
   /// Initial filter state.
   final LogbookFilters initial;
+
   /// Async loader used by "since first flight" preset.
   final Future<DateTime?> Function() loadFirstEventDate;
 
@@ -268,17 +280,23 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
                     },
             ),
             const SizedBox(height: 12),
-            _DateField(
+            DateSelectorInputField(
               label: l10n.logbookFilterFromDate,
-              value: _fromDate,
-              onPick: () => _pickDate(isFrom: true),
+              valueText: _fromDate == null
+                  ? '-'
+                  : MaterialLocalizations.of(
+                      context,
+                    ).formatShortDate(_fromDate!),
+              onTap: () => _pickDate(isFrom: true),
               onClear: _fromDate == null ? null : () => _clearDate(true),
             ),
             const SizedBox(height: 12),
-            _DateField(
+            DateSelectorInputField(
               label: l10n.logbookFilterToDate,
-              value: _toDate,
-              onPick: () => _pickDate(isFrom: false),
+              valueText: _toDate == null
+                  ? '-'
+                  : MaterialLocalizations.of(context).formatShortDate(_toDate!),
+              onTap: () => _pickDate(isFrom: false),
               onClear: _toDate == null ? null : () => _clearDate(false),
             ),
             const SizedBox(height: 16),
@@ -389,39 +407,5 @@ class _LogbookFiltersDialogState extends State<LogbookFiltersDialog> {
         child: Text(l10n.logbookFilterPresetCurrentYear),
       ),
     ];
-  }
-}
-
-class _DateField extends StatelessWidget {
-  const _DateField({
-    required this.label,
-    required this.value,
-    required this.onPick,
-    this.onClear,
-  });
-
-  final String label;
-  final DateTime? value;
-  final VoidCallback onPick;
-  final VoidCallback? onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final locale = MaterialLocalizations.of(context);
-    final text = value == null ? '-' : locale.formatShortDate(value!);
-
-    return InkWell(
-      onTap: onPick,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-          suffixIcon: onClear == null
-              ? null
-              : IconButton(onPressed: onClear, icon: const Icon(Icons.clear)),
-        ),
-        child: Text(text),
-      ),
-    );
   }
 }

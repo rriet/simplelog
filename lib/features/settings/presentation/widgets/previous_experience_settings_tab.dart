@@ -7,6 +7,8 @@ import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
@@ -77,6 +79,10 @@ class PreviousExperienceSettingsTab extends ConsumerWidget {
             _SettingsSectionCard(
               title: AppLocalizations.of(context)!.autoUi029,
               subtitle: l10n.previousExperienceEntriesSubtitle,
+              headerTrailing: InfoHelpButton(
+                title: l10n.settingsExperienceHelpTitle,
+                message: l10n.settingsExperienceHelpBody,
+              ),
               children: [
                 Align(
                   alignment: Alignment.centerRight,
@@ -201,11 +207,13 @@ class _SettingsSectionCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.children,
+    this.headerTrailing,
   });
 
   final String title;
   final String subtitle;
   final List<Widget> children;
+  final Widget? headerTrailing;
 
   @override
   Widget build(BuildContext context) {
@@ -219,11 +227,19 @@ class _SettingsSectionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (headerTrailing != null) ...<Widget>[
+                  const Spacer(),
+                  headerTrailing!,
+                ],
+              ],
             ),
             const SizedBox(height: 2),
             Text(
@@ -599,14 +615,19 @@ class _PreviousExperienceEditDialogState
   }
 
   Widget _buildFirstFlightField() {
-    return _DateField(
+    final value = _firstFlight?.toUtc();
+    return DateSelectorInputField(
       label: AppLocalizations.of(context)!.autoUi032,
-      value: _firstFlight,
-      onPick: () => _pickDateTime(first: true),
-      onClear: () => setState(() {
-        _firstFlight = null;
-        _showRequiredErrors = true;
-      }),
+      valueText: value == null
+          ? '-'
+          : DateFormat('dd/MM/yyyy HH:mm').format(value),
+      onTap: () => _pickDateTime(first: true),
+      onClear: _firstFlight == null
+          ? null
+          : () => setState(() {
+              _firstFlight = null;
+              _showRequiredErrors = true;
+            }),
       errorText: _showRequiredErrors && _firstFlight == null
           ? AppLocalizations.of(context)!.previousExperienceFirstFlightRequired
           : null,
@@ -614,75 +635,22 @@ class _PreviousExperienceEditDialogState
   }
 
   Widget _buildLastFlightField() {
-    return _DateField(
+    final value = _lastFlight?.toUtc();
+    return DateSelectorInputField(
       label: AppLocalizations.of(context)!.autoUi037,
-      value: _lastFlight,
-      onPick: () => _pickDateTime(first: false),
-      onClear: () => setState(() {
-        _lastFlight = null;
-        _showRequiredErrors = true;
-      }),
+      valueText: value == null
+          ? '-'
+          : DateFormat('dd/MM/yyyy HH:mm').format(value),
+      onTap: () => _pickDateTime(first: false),
+      onClear: _lastFlight == null
+          ? null
+          : () => setState(() {
+              _lastFlight = null;
+              _showRequiredErrors = true;
+            }),
       errorText: _showRequiredErrors && _lastFlight == null
           ? AppLocalizations.of(context)!.previousExperienceLastFlightRequired
           : null,
-    );
-  }
-}
-
-class _DateField extends StatelessWidget {
-  const _DateField({
-    required this.label,
-    required this.value,
-    required this.onPick,
-    required this.onClear,
-    this.errorText,
-  });
-
-  final String label;
-  final DateTime? value;
-  final VoidCallback onPick;
-  final VoidCallback onClear;
-  final String? errorText;
-
-  @override
-  Widget build(BuildContext context) {
-    final displayValue = value?.toUtc();
-    final text = value == null
-        ? '-'
-        : DateFormat('dd/MM/yyyy HH:mm').format(displayValue!);
-    return InkWell(
-      onTap: onPick,
-      borderRadius: BorderRadius.circular(4),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-          errorText: errorText,
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 10,
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                text,
-                style: Theme.of(context).textTheme.bodyMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            IconButton(
-              onPressed: onClear,
-              icon: const Icon(Icons.clear, size: 18),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

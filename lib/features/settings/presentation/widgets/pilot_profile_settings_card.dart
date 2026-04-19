@@ -16,20 +16,419 @@ import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
 import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
 import 'package:simplelog/features/reports/presentation/providers/reports_preferences_provider.dart';
+import 'package:simplelog/features/settings/presentation/widgets/settings_expandable_info_trailing.dart';
 
-/// Compact settings card that opens the pilot profile editor popup.
-class PilotProfileSettingsCard extends ConsumerWidget {
+/// Expandable settings card for pilot identity and signature preferences.
+class PilotProfileSettingsCard extends ConsumerStatefulWidget {
   /// Creates the settings card.
-  const PilotProfileSettingsCard({super.key});
+  const PilotProfileSettingsCard({super.key, this.initiallyExpanded = false});
+
+  /// Whether the expansion tile should start opened.
+  final bool initiallyExpanded;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return SizedBox(
-      width: double.infinity,
-      child: SquareOutlineButton(
-        label: AppLocalizations.of(context)!.autoUi026,
-        icon: Icons.edit_outlined,
-        onPressed: () => showPilotProfileEditorDialog(context),
+  ConsumerState<PilotProfileSettingsCard> createState() =>
+      _PilotProfileSettingsCardState();
+}
+
+class _PilotProfileSettingsCardState
+    extends ConsumerState<PilotProfileSettingsCard> {
+  final ExpansibleController _expansionController = ExpansibleController();
+  final _nameController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _licensesController = TextEditingController();
+  late bool _isExpanded = widget.initiallyExpanded;
+  bool _isHydrating = false;
+  Timer? _saveDebounce;
+  Uint8List? _signatureImage;
+  ReportPilotInfo? _lastHydrated;
+
+  bool get _canUseCamera {
+    if (kIsWeb) {
+      return false;
+    }
+    return Platform.isAndroid || Platform.isIOS;
+  }
+
+  @override
+  void dispose() {
+    _saveDebounce?.cancel();
+    _expansionController.dispose();
+    _nameController.dispose();
+    _addressController.dispose();
+    _licensesController.dispose();
+    super.dispose();
+  }
+
+  bool _sameProfile(ReportPilotInfo a, ReportPilotInfo b) {
+    final aSignature = a.signatureImage;
+    final bSignature = b.signatureImage;
+    final signatureMatches =
+        (aSignature == null && bSignature == null) ||
+        (aSignature != null &&
+            bSignature != null &&
+            listEquals(aSignature, bSignature));
+    return a.name == b.name &&
+        a.address == b.address &&
+        a.licenses == b.licenses &&
+        signatureMatches;
+  }
+
+  void _hydrateFromProfileIfNeeded(ReportPilotInfo profile) {
+    if (_lastHydrated != null && _sameProfile(_lastHydrated!, profile)) {
+      return;
+    }
+    _isHydrating = true;
+    _nameController.text = profile.name;
+    _addressController.text = profile.address;
+    _licensesController.text = profile.licenses;
+    _signatureImage = profile.signatureImage;
+    _lastHydrated = profile;
+    _isHydrating = false;
+  }
+
+  ReportPilotInfo _draftProfile() {
+    return ReportPilotInfo(
+      name: _nameController.text.trim(),
+      address: _addressController.text.trim(),
+      licenses: _licensesController.text.trim(),
+      signatureImage: _signatureImage,
+    );
+  }
+
+  Future<void> _saveNow() async {
+    final current = ref.read(reportPilotInfoProvider);
+    final next = _draftProfile();
+    if (_sameProfile(current, next)) return;
+    await ref.read(reportPilotInfoProvider.notifier).setValue(value: next);
+    _lastHydrated = next;
+  }
+
+  void _scheduleSave() {
+    _saveDebounce?.cancel();
+    _saveDebounce = Timer(const Duration(milliseconds: 400), () {
+      unawaited(_saveNow());
+    });
+  }
+
+  Widget _buildEditableProfileField({
+    required String label,
+    required TextEditingController controller,
+    int minLines = 1,
+    int? maxLines = 1,
+  }) {
+    return TextFormField(
+      controller: controller,
+      minLines: minLines,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        isDense: true,
+      ),
+      onChanged: (_) {
+        if (_isHydrating) return;
+        _scheduleSave();
+      },
+      onEditingComplete: () => unawaited(_saveNow()),
+    );
+  }
+
+  Future<void> _showSignatureOptions() async {
+    final action = await showModalBottomSheet<_SignatureAction>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSignatureActionTile(
+              context: context,
+              icon: Icons.gesture,
+              title: 'Sign on screen',
+              action: _SignatureAction.sign,
+            ),
+            if (_canUseCamera)
+              _buildSignatureActionTile(
+                context: context,
+                icon: Icons.photo_camera_outlined,
+                title: 'Take picture',
+                action: _SignatureAction.camera,
+              ),
+            _buildSignatureActionTile(
+              context: context,
+              icon: Icons.image_outlined,
+              title: 'Select picture file',
+              action: _SignatureAction.file,
+            ),
+            _buildSignatureActionTile(
+              context: context,
+              icon: Icons.delete_outline,
+              title: 'Clear signature',
+              action: _SignatureAction.clear,
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case _SignatureAction.sign:
+        final bytes = await showSmallDialogScreen<Uint8List>(
+          context: context,
+          builder: (_) => const _SignaturePadDialog(),
+        );
+        if (bytes != null && mounted) {
+          final normalized = await _normalizeSignatureBytes(bytes);
+          if (!mounted) return;
+          setState(() => _signatureImage = normalized);
+          await _saveNow();
+        }
+      case _SignatureAction.camera:
+        await _pickFromCamera();
+      case _SignatureAction.file:
+        await _pickFromFile();
+      case _SignatureAction.clear:
+        setState(() => _signatureImage = null);
+        await _saveNow();
+    }
+    if (!mounted) return;
+  }
+
+  Widget _buildSignatureActionTile({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required _SignatureAction action,
+  }) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      onTap: () => AppNavigator.pop(context, action),
+    );
+  }
+
+  Future<void> _pickFromCamera() async {
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 90,
+      );
+      if (image == null || !mounted) return;
+      final sourcePath = await _prepareCameraSourcePath(image.path);
+      final bytes = await _cropOrReadBytes(sourcePath: sourcePath);
+      final normalized = await _normalizeSignatureBytes(bytes);
+      if (!mounted) return;
+      setState(() => _signatureImage = normalized);
+      await _saveNow();
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.autoUi014)),
+      );
+    }
+  }
+
+  Future<void> _pickFromFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        withData: true,
+      );
+      if (result == null || !mounted) return;
+      final file = result.files.single;
+      final sourcePath = await _resolveImagePath(
+        path: file.path,
+        bytes: file.bytes,
+      );
+      if (sourcePath == null) return;
+      final bytes = await _cropOrReadBytes(sourcePath: sourcePath);
+      final normalized = await _normalizeSignatureBytes(bytes);
+      if (!mounted) return;
+      setState(() => _signatureImage = normalized);
+      await _saveNow();
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.autoUi015)),
+      );
+    }
+  }
+
+  Future<String?> _resolveImagePath({
+    required String? path,
+    required Uint8List? bytes,
+  }) async {
+    if (path != null && path.isNotEmpty) {
+      return path;
+    }
+    if (bytes == null || bytes.isEmpty) {
+      return null;
+    }
+    final tempDir = await getTemporaryDirectory();
+    final filePath =
+        '${tempDir.path}/signature_${DateTime.now().millisecondsSinceEpoch}.png';
+    await File(filePath).writeAsBytes(bytes, flush: true);
+    return filePath;
+  }
+
+  Future<String> _prepareCameraSourcePath(String path) async {
+    if (!Platform.isIOS) {
+      return path;
+    }
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final tempPath =
+          '${tempDir.path}/signature_camera_'
+          '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await File(path).copy(tempPath);
+      return tempPath;
+    } on Object {
+      return path;
+    }
+  }
+
+  Future<Uint8List> _cropOrReadBytes({required String sourcePath}) async {
+    try {
+      final result = await showAdaptiveImageCropper(
+        context,
+        imageProvider: FileImage(File(sourcePath)),
+        allowedAspectRatios: const [
+          CropAspectRatio(width: 3, height: 1),
+        ],
+      );
+      if (result == null) {
+        return File(sourcePath).readAsBytes();
+      }
+      final byteData = await result.uiImage.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      result.uiImage.dispose();
+      if (byteData == null) {
+        return File(sourcePath).readAsBytes();
+      }
+      return byteData.buffer.asUint8List();
+    } on Object {
+      return File(sourcePath).readAsBytes();
+    }
+  }
+
+  Future<Uint8List> _normalizeSignatureBytes(Uint8List inputBytes) async {
+    const signatureOutputWidth = 1200;
+    const signatureOutputHeight = 400;
+    final codec = await ui.instantiateImageCodec(inputBytes);
+    final frame = await codec.getNextFrame();
+    final source = frame.image;
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final targetWidth = signatureOutputWidth.toDouble();
+    final targetHeight = signatureOutputHeight.toDouble();
+    const padding = 18.0;
+    final usableWidth = targetWidth - (padding * 2);
+    final usableHeight = targetHeight - (padding * 2);
+    final sx = usableWidth / source.width;
+    final sy = usableHeight / source.height;
+    final scale = math.min(sx, sy);
+    final drawWidth = source.width * scale;
+    final drawHeight = source.height * scale;
+    final left = (targetWidth - drawWidth) / 2;
+    final top = (targetHeight - drawHeight) / 2;
+
+    final srcRect = Rect.fromLTWH(
+      0,
+      0,
+      source.width.toDouble(),
+      source.height.toDouble(),
+    );
+    final dstRect = Rect.fromLTWH(left, top, drawWidth, drawHeight);
+    canvas.drawImageRect(source, srcRect, dstRect, Paint());
+
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(
+      signatureOutputWidth,
+      signatureOutputHeight,
+    );
+    source.dispose();
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    if (byteData == null) {
+      return inputBytes;
+    }
+    return byteData.buffer.asUint8List();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final profile = ref.watch(reportPilotInfoProvider);
+    _hydrateFromProfileIfNeeded(profile);
+    final hasSignature =
+        _signatureImage != null && _signatureImage!.isNotEmpty;
+
+    return Card(
+      child: ExpansionTile(
+        initiallyExpanded: widget.initiallyExpanded,
+        controller: _expansionController,
+        onExpansionChanged: (expanded) {
+          setState(() => _isExpanded = expanded);
+        },
+        title: Text(l10n.settingsCalculationPilotProfileTitle),
+        trailing: SettingsExpandableInfoTrailing(
+          controller: _expansionController,
+          isExpanded: _isExpanded,
+          helpTitle: l10n.settingsPilotProfileHelpTitle,
+          helpMessage: l10n.settingsPilotProfileHelpBody,
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        children: [
+          _buildEditableProfileField(
+            label: l10n.settingsPilotProfileNameLabel,
+            controller: _nameController,
+          ),
+          const SizedBox(height: 8),
+          _buildEditableProfileField(
+            label: l10n.settingsPilotProfileAddressLabel,
+            controller: _addressController,
+            minLines: 2,
+            maxLines: null,
+          ),
+          const SizedBox(height: 8),
+          _buildEditableProfileField(
+            label: l10n.settingsPilotProfileLicensesLabel,
+            controller: _licensesController,
+            minLines: 2,
+            maxLines: null,
+          ),
+          const SizedBox(height: 10),
+          ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.autoUi056),
+            subtitle: hasSignature
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: SizedBox(
+                      height: 56,
+                      child: Image.memory(
+                        _signatureImage!,
+                        fit: BoxFit.contain,
+                        alignment: Alignment.centerLeft,
+                      ),
+                    ),
+                  )
+                : Text(l10n.autoUi044),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: double.infinity,
+            child: SquareOutlineButton(
+              label: l10n.autoUi057,
+              icon: Icons.edit_outlined,
+              onPressed: _showSignatureOptions,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -8,6 +8,7 @@ import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
 import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/data/models/endorsement_data.dart';
 
 /// Dialog to edit an entry endorsement and signature.
@@ -122,19 +123,15 @@ class _EndorsementDialogState extends State<EndorsementDialog> {
               decoration: const InputDecoration(labelText: 'Type'),
             ),
             const SizedBox(height: 8),
-            TextField(
-              controller: _expiryController,
-              readOnly: true,
+            DateSelectorInputField(
+              label: l10n.autoUi030,
+              valueText: _expiryController.text.trim().isEmpty
+                  ? '-'
+                  : _expiryController.text.trim(),
               onTap: _pickExpiry,
-              decoration: InputDecoration(
-                labelText: 'Expiry',
-                suffixIcon: IconButton(
-                  onPressed: _expiryController.text.trim().isEmpty
-                      ? null
-                      : () => setState(() => _expiryController.text = ''),
-                  icon: const Icon(Icons.clear),
-                ),
-              ),
+              onClear: _expiryController.text.trim().isEmpty
+                  ? null
+                  : () => setState(() => _expiryController.text = ''),
             ),
             const SizedBox(height: 12),
             _SignaturePreviewPanel(

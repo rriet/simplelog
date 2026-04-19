@@ -434,6 +434,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsTabFilters => 'Filters';
 
   @override
+  String get logbookFiltersHelpTitle => 'Filters';
+
+  @override
+  String get logbookFiltersHelpBody =>
+      'Use From and To to define the date range for the logbook list and analysis tabs.\n\nOpen Filters to add advanced conditions.\n\nDisabled time fields remain visible in existing entries whenever they contain recorded values.';
+
+  @override
   String get reportsEntryGeneric => 'Entry';
 
   @override
@@ -550,6 +557,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportsMatchAny => 'Any';
+
+  @override
+  String get reportsFiltersHelpTitle => 'Filters';
+
+  @override
+  String get reportsFiltersHelpBody =>
+      'Use this screen to narrow results by date range, event types, and custom filter conditions.\n\nSave stores the current setup as a Saved query. Select a saved query to reapply it later. Delete removes a saved query.\n\nMatch mode controls how multiple filter conditions are evaluated:\nAll: every condition must match.\nAny: at least one condition must match.';
 
   @override
   String get reportsAddFilter => 'Add Filter';
@@ -1376,6 +1390,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Pilot identity and signature preferences.';
 
   @override
+  String get settingsDefaultCrewFunctionTitle => 'Default crew function';
+
+  @override
+  String get settingsDefaultCrewFunctionHelpTitle => 'Default crew function';
+
+  @override
+  String get settingsDefaultCrewFunctionHelpBody =>
+      'The Default Crew Function is applied when creating a new flight. It automatically assigns the \"Self\" crew member to the appropriate crew function.\n\nWhen importing crew data from a CSV file in which the crew function is not explicitly specified, the Default Crew Function is used as a fallback mechanism to ensure the \"Self\" crew member is correctly assigned.\n\nFor this functionality to operate correctly, exactly one crew member must be marked as \"Self\".';
+
+  @override
   String get previousExperienceEntriesSubtitle =>
       'Edit, add, or remove previous experience records.';
 
@@ -1506,7 +1530,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoUi038 => 'Licenses';
 
   @override
-  String get autoUi039 => 'Log takeoff and landing times';
+  String get autoUi039 => 'Takeoff and landing Times';
 
   @override
   String get autoUi040 => 'Manage prior totals by aircraft type.';
@@ -1599,6 +1623,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get databaseBackupRestoreTitle => 'Backup & Restore';
 
   @override
+  String get databaseBackupRestoreInfoTitle => 'Backup & Restore';
+
+  @override
+  String get databaseBackupRestoreInfoMessage =>
+      'Backup saves a full copy of your current database to a file.\nRestore replaces the current database with the selected backup file.\n\nImportant:\nRestore overwrites current data on this device.';
+
+  @override
   String get databaseDangerZoneSubtitle => 'Irreversible actions.';
 
   @override
@@ -1615,6 +1646,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get databaseImportExportTitle => 'Import & Export';
+
+  @override
+  String get databaseImportExportInfoTitle => 'Import & Export';
+
+  @override
+  String get databaseImportExportInfoMessage =>
+      'Import reads supported files and writes their data into your logbook.\nExport creates a CSV snapshot of current flights/simulators.\n\nDepending on the selected import options, existing records may be updated or replaced.';
 
   @override
   String get databaseImportFileAction => 'Import file';
@@ -1743,10 +1781,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsBatchTitle => 'Batch edit';
 
   @override
+  String get reportsBatchHelpTitle => 'Batch edit (filtered entries)';
+
+  @override
+  String get reportsBatchHelpBody =>
+      'Batch actions apply to entries in the current filtered result set.\n\nThe affected scope follows your current date range, event-type toggles, and active filter conditions.\n\nUse Check flights to preview issues before applying updates.';
+
+  @override
   String get reportsCalculateAction => 'Calculate';
 
   @override
   String get reportsCalculateAll => 'Calculate all';
+
+  @override
+  String get reportsCalculateAllFlightsTitle => 'Calculate all flights';
+
+  @override
+  String get reportsCalculateAllHelpTitle => 'Calculate all (filtered flights)';
+
+  @override
+  String get reportsCalculateAllHelpBody =>
+      'This applies to all currently filtered flights.\n\nFor each field:\n- Don\'t change: keeps the current value.\n- Recalculate: sets the field from available flight data/rules.\n- Set Zero: sets the field to 0.\n\nField notes:\n- Block recalculates from chocks when timestamps are available.\n- IFR, Flight, Instructor, and Custom fields recalculate from Block.\n- Cross-country recalculates using the configured NM threshold.\n- Distance NM recalculates from departure/arrival coordinates.\n- Night, takeoffs, and landings recalculate from day/night calculations.';
 
   @override
   String get reportsCalculateDuty => 'Calculate duty';
@@ -1840,6 +1895,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsTabGeneral => 'General';
+
+  @override
+  String get settingsCalculationRulesHelpTitle => 'Calculation Rules';
+
+  @override
+  String get settingsCalculationRulesHelpBody =>
+      'These rules control automatic flight-time calculations and apply when calculations are run for filtered flights.\n\nCross-country NM: Minimum distance (NM) required to count cross-country time.\n\nIFR %: Percent of block time used for IFR calculation.\nMinus: Time deducted before IFR percentage is applied.\nMinimum: Minimum IFR time to enforce after percentage/reduction.\n\nIRP3 Reduction: Time deducted before IRP3 percentage is applied.\nIRP3 %: Percent applied for IRP3 after reduction.\n\nIRP4 Reduction: Time deducted before IRP4 percentage is applied.\nIRP4 %: Percent applied for IRP4 after reduction.';
+
+  @override
+  String get settingsCalculationRulesMinusLabel => 'Minus';
+
+  @override
+  String get settingsCalculationRulesMinimumLabel => 'Minimum';
+
+  @override
+  String get settingsCalculationRulesIrp3ReductionLabel => 'IRP3 Reduction';
+
+  @override
+  String get settingsCalculationRulesIrp4ReductionLabel => 'IRP4 Reduction';
+
+  @override
+  String get settingsExperienceHelpTitle => 'Experience';
+
+  @override
+  String get settingsExperienceHelpBody =>
+      'This section allows you to manage previous experience totals by aircraft type.\nThese totals are automatically included in all relevant reports and calculations whenever previous experience is enabled in the system.';
+
+  @override
+  String get settingsPilotProfileHelpTitle => 'Pilot Profile';
+
+  @override
+  String get settingsPilotProfileHelpBody =>
+      'Pilot Profile stores report identity and signature preferences.\n\nName, Address, and Licenses are used in generated reports.\nSignature is used where report templates include a signature field.\n\nUse Edit profile to update these values.';
+
+  @override
+  String get settingsPilotProfileNameLabel => 'Name';
+
+  @override
+  String get settingsPilotProfileAddressLabel => 'Address';
+
+  @override
+  String get settingsPilotProfileLicensesLabel => 'Licenses';
+
+  @override
+  String get settingsPilotProfileNotSet => 'Not set';
+
+  @override
+  String get settingsTimeFieldsHelpTitle => 'Time Fields';
+
+  @override
+  String get settingsTimeFieldsHelpBody =>
+      'Configure which time fields are displayed in the Add Flight form to match your logging requirements. Enabling a field includes it in new entries, while disabling it removes it from the form to reduce clutter and focus on relevant data.\n\nFields that are disabled will still be shown when they contain recorded time, ensuring all logged data remains visible and available for review or amendment.';
+
+  @override
+  String get settingsDutyRulesHelpTitle => 'Duty Rules';
+
+  @override
+  String get settingsDutyRulesHelpBody =>
+      'Duty rules are used when calculating duty periods.\n\nCrew home base airport: Airport used to determine on-base vs off-base reporting assumptions.\nReporting time on base: Minutes added before duty start when departure is from home base.\nReporting time offbase: Minutes added before duty start when away from home base.\nDuty end time allowance: Minutes added after the last operational event before duty ends.\nMinimum rest time: Minimum rest required between consecutive duty periods.';
 
   @override
   String get settingsTabTimeFields => 'Time Fields';
@@ -2094,7 +2208,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String reportsBatchWarning(int count) {
-    return 'This action will update $count filtered flights.';
+    return 'This action will update $count filtered entries.';
   }
 
   @override
