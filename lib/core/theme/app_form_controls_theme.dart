@@ -44,7 +44,7 @@ class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
     errorTopSpacing: 4,
     errorLeftPadding: 12,
     suffixIconMinSize: 24,
-    bodyFontSize: 14,
+    bodyFontSize: 11,
     labelFontSize: 11,
     errorFontSize: 12,
   );

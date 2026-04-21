@@ -22,10 +22,10 @@ import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.d
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/core/presentation/widgets/display/buttons.dart';
-import 'package:simplelog/core/presentation/widgets/display/event_type_toggle_button.dart';
 import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/event_type_toggle_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/time_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/maps/flight_routes_map_view.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';

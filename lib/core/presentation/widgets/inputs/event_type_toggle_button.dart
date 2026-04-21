@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 
 /// Compact toggle button used for event-type filters.
 class EventTypeToggleButton extends StatelessWidget {
@@ -21,20 +22,31 @@ class EventTypeToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final controlsTheme =
+        theme.extension<AppFormControlsTheme>() ??
+        AppFormControlsTheme.fallback;
     return SizedBox(
       width: double.infinity,
-      height: 34,
+      height: controlsTheme.compactFieldHeight,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          minimumSize: const Size(0, 34),
+          padding: EdgeInsets.symmetric(
+            horizontal: controlsTheme.horizontalContentPadding,
+          ),
+          minimumSize: Size(0, controlsTheme.compactFieldHeight),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           visualDensity: VisualDensity.compact,
-          side: BorderSide(color: colors.outlineVariant),
+          side: BorderSide(
+            color: colors.outlineVariant,
+            width: controlsTheme.compactBorderWidth,
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(
+              controlsTheme.compactBorderRadius,
+            ),
           ),
           backgroundColor: selected
               ? colors.secondaryContainer
@@ -43,7 +55,9 @@ class EventTypeToggleButton extends StatelessWidget {
         child: Text(
           label,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.labelSmall,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontSize: controlsTheme.bodyFontSize,
+          ),
         ),
       ),
     );

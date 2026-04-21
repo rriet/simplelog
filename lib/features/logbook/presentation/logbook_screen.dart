@@ -11,8 +11,8 @@ import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.d
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/core/presentation/widgets/display/buttons.dart';
-import 'package:simplelog/core/presentation/widgets/display/event_type_toggle_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/event_type_toggle_button.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
