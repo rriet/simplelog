@@ -3454,6 +3454,18 @@ abstract class AppLocalizations {
   /// **'Import'**
   String get qatarImportAction;
 
+  /// No description provided for @qatarImportOptionsHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Qatar options'**
+  String get qatarImportOptionsHelpTitle;
+
+  /// No description provided for @qatarImportOptionsHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Default position controls how the \"Self\" crew member is assigned during import.\n\nSIC: Self is imported as SIC. Names from the PIC column are imported as PIC crew members.\n\nPIC: Self is matched from PIC names using Pilot Name.\nPilot Name is required when Default position is PIC and must match the workbook text.\n- If only your name is present in PIC names, Self is imported as PIC.\n- If your name is missing, or appears together with other PIC names, Self is imported as Relief Captain and the other names are imported as PIC crew members.'**
+  String get qatarImportOptionsHelpBody;
+
   /// No description provided for @qatarImportTitle.
   ///
   /// In en, this message translates to:
@@ -3475,7 +3487,7 @@ abstract class AppLocalizations {
   /// No description provided for @qatarPilotNameAsWrittenLabel.
   ///
   /// In en, this message translates to:
-  /// **'Keep pilot name as-is'**
+  /// **'Pilot Name'**
   String get qatarPilotNameAsWrittenLabel;
 
   /// No description provided for @qatarPositionPic.

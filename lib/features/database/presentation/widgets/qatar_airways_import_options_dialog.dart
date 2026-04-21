@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/import/qatar_airways_import_options.dart';
@@ -98,7 +99,15 @@ class _QatarAirwaysImportOptionsDialogState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.databaseFileLabel(widget.fileName)),
+          Row(
+            children: [
+              Expanded(child: Text(l10n.databaseFileLabel(widget.fileName))),
+              InfoHelpButton(
+                title: l10n.qatarImportOptionsHelpTitle,
+                message: l10n.qatarImportOptionsHelpBody,
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           DropdownButtonFormField<CrewPosition>(
             initialValue: _defaultPosition,
