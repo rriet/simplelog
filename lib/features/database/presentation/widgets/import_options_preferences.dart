@@ -142,6 +142,11 @@ class ImportOptionsPreferences {
           (settings['${_swPrefix}recalculateNightTime'] as bool?) ?? true,
       recalculateIfrTime:
           (settings['${_swPrefix}recalculateIfrTime'] as bool?) ?? true,
+      ifrPercent: (settings['${_swPrefix}ifrPercent'] as num?)?.toInt() ?? 100,
+      ifrSubtractMinutes:
+          (settings['${_swPrefix}ifrSubtractMinutes'] as num?)?.toInt() ?? 0,
+      ifrMinimumMinutes:
+          (settings['${_swPrefix}ifrMinimumMinutes'] as num?)?.toInt() ?? 0,
       recalculateCrossCountry:
           (settings['${_swPrefix}recalculateCrossCountry'] as bool?) ?? true,
       crossCountryThresholdNm:
@@ -167,6 +172,9 @@ class ImportOptionsPreferences {
       settings['${_swPrefix}recalculateBlockTime'] = value.recalculateBlockTime;
       settings['${_swPrefix}recalculateNightTime'] = value.recalculateNightTime;
       settings['${_swPrefix}recalculateIfrTime'] = value.recalculateIfrTime;
+      settings['${_swPrefix}ifrPercent'] = value.ifrPercent;
+      settings['${_swPrefix}ifrSubtractMinutes'] = value.ifrSubtractMinutes;
+      settings['${_swPrefix}ifrMinimumMinutes'] = value.ifrMinimumMinutes;
       settings['${_swPrefix}recalculateCrossCountry'] =
           value.recalculateCrossCountry;
       settings['${_swPrefix}crossCountryThresholdNm'] =

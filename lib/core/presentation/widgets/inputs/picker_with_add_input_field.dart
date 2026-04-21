@@ -39,6 +39,15 @@ class PickerWithAddInputField extends StatelessWidget {
     final controlsTheme =
         theme.extension<AppFormControlsTheme>() ??
         AppFormControlsTheme.fallback;
+    final compactHeight = controlsTheme.resolvedCompactFieldHeight(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+    );
+    final effectiveBodyFontSize = controlsTheme.resolvedBodyFontSize(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+      controlHeight: compactHeight,
+    );
     final addIconSize = controlsTheme.pickerAddIconSize;
     final addBorderRadius = controlsTheme.pickerAddBorderRadius;
     final hasError = (errorText ?? '').trim().isNotEmpty;
@@ -50,7 +59,7 @@ class PickerWithAddInputField extends StatelessWidget {
         : colorScheme.onSurfaceVariant;
 
     final control = SizedBox(
-      height: controlsTheme.compactFieldHeight,
+      height: compactHeight,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -84,7 +93,7 @@ class PickerWithAddInputField extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            fontSize: controlsTheme.bodyFontSize,
+                            fontSize: effectiveBodyFontSize,
                           ),
                         ),
                       ),
@@ -156,8 +165,8 @@ class PickerWithAddInputField extends StatelessWidget {
                 onTap: onAdd,
                 borderRadius: BorderRadius.circular(addBorderRadius),
                 child: Container(
-                  width: controlsTheme.compactFieldHeight,
-                  height: controlsTheme.compactFieldHeight,
+                  width: compactHeight,
+                  height: compactHeight,
                   decoration: BoxDecoration(
                     border: Border.all(color: colorScheme.outline),
                     borderRadius: BorderRadius.circular(addBorderRadius),

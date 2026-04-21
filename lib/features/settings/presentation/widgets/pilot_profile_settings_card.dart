@@ -14,7 +14,9 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
+import 'package:simplelog/core/presentation/widgets/display/buttons.dart';
 import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/features/reports/presentation/providers/reports_preferences_provider.dart';
 import 'package:simplelog/features/settings/presentation/widgets/settings_expandable_info_trailing.dart';
 
@@ -117,20 +119,16 @@ class _PilotProfileSettingsCardState
     int minLines = 1,
     int? maxLines = 1,
   }) {
-    return TextFormField(
+    return TextInputField(
       controller: controller,
+      label: label,
       minLines: minLines,
       maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        isDense: true,
-      ),
       onChanged: (_) {
         if (_isHydrating) return;
         _scheduleSave();
       },
-      onEditingComplete: () => unawaited(_saveNow()),
+      onSubmitted: (_) => unawaited(_saveNow()),
     );
   }
 
@@ -363,8 +361,7 @@ class _PilotProfileSettingsCardState
     final l10n = AppLocalizations.of(context)!;
     final profile = ref.watch(reportPilotInfoProvider);
     _hydrateFromProfileIfNeeded(profile);
-    final hasSignature =
-        _signatureImage != null && _signatureImage!.isNotEmpty;
+    final hasSignature = _signatureImage != null && _signatureImage!.isNotEmpty;
 
     return Card(
       child: ExpansionTile(
@@ -422,7 +419,7 @@ class _PilotProfileSettingsCardState
           const SizedBox(height: 6),
           SizedBox(
             width: double.infinity,
-            child: SquareOutlineButton(
+            child: Buttons(
               label: l10n.autoUi057,
               icon: Icons.edit_outlined,
               onPressed: _showSignatureOptions,

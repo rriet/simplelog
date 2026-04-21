@@ -191,10 +191,10 @@ class ReportsDialogScaffoldSection extends StatelessWidget {
   /// - [actionLabel]: action button text in header row.
   /// - [onAction]: callback invoked when header action is pressed.
   /// - [content]: dialog body widget.
-  /// - [maxWidth]: fixed dialog width used by [SizedBox].
+  /// - [maxWidth]: max popup width used by [AdaptiveFormShell].
   ///
   /// Output:
-  /// - A [Dialog] containing a padded header + body column.
+  /// - An [AdaptiveFormShell] with a single primary top-right action.
   const ReportsDialogScaffoldSection({
     required this.title,
     required this.actionLabel,
@@ -221,31 +221,17 @@ class ReportsDialogScaffoldSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: SizedBox(
-        width: maxWidth,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                  TextButton(onPressed: onAction, child: Text(actionLabel)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              content,
-            ],
-          ),
-        ),
+    return AdaptiveFormShell(
+      title: title,
+      onClose: () => AppNavigator.pop(context),
+      fullScreen: false,
+      popupMaxWidth: maxWidth,
+      actions: [
+        TextButton(onPressed: onAction, child: Text(actionLabel)),
+      ],
+      contentView: Padding(
+        padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(child: content),
       ),
     );
   }

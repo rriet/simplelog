@@ -2024,7 +2024,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get southwestCalculateCrossCountryTimeLabel =>
-      'Calculate cross-country time';
+      'Calculate cross-country';
 
   @override
   String get southwestCalculateIfrTimeLabel => 'Calculate IFR time';
@@ -2037,10 +2037,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Cross-country threshold (NM)';
 
   @override
-  String get southwestDefaultSelfPositionLabel => 'Default self position';
+  String get southwestDefaultSelfPositionLabel => 'Crew Function';
 
   @override
   String get southwestImportAction => 'Import';
+
+  @override
+  String get southwestImportOptionsHelpTitle => 'Import Southwest options';
+
+  @override
+  String get southwestImportOptionsHelpBody =>
+      'Crew Function: sets your own role for imported Southwest flights (PIC or SIC).\n\nRecalculate block time: uses departure/arrival timestamps to compute block.\nCalculate night time: computes night minutes from departure/arrival and route.\nCalculate IFR time: computes IFR from block using IFR %, Minus, and Minimum.\nIFR %: percentage applied to block minutes.\nMinus: minutes subtracted before the percentage is applied.\nMinimum: minimum IFR minutes enforced after percentage/subtraction.\nCalculate cross-country: computes cross-country minutes from distance.\nCross-country threshold (NM): minimum distance required to count as cross-country.\n\nOverwrite existing data: updates matching flights already in the database.\nAdd copilot staff number: appends copilot staff number to notes when available.\nAdd flight number to notes: appends the Southwest flight number to notes.';
 
   @override
   String get southwestImportOptionsTitle => 'Import Southwest';

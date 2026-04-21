@@ -168,10 +168,19 @@ class _TimeInputFieldState extends State<TimeInputField> {
     final inputTheme =
         theme.extension<AppFormControlsTheme>() ??
         AppFormControlsTheme.fallback;
+    final compactHeight = inputTheme.resolvedCompactFieldHeight(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+    );
+    final effectiveBodyFontSize = inputTheme.resolvedBodyFontSize(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+      controlHeight: compactHeight,
+    );
     return Padding(
       padding: EdgeInsets.symmetric(vertical: inputTheme.fieldVerticalGap / 2),
       child: SizedBox(
-        height: inputTheme.compactFieldHeight,
+        height: compactHeight,
         child: TextFormField(
           key: _fieldKey,
           controller: widget.controller,
@@ -179,7 +188,7 @@ class _TimeInputFieldState extends State<TimeInputField> {
           keyboardType: TextInputType.number,
           textAlignVertical: TextAlignVertical.center,
           style: theme.textTheme.bodyMedium?.copyWith(
-            fontSize: inputTheme.bodyFontSize,
+            fontSize: effectiveBodyFontSize,
           ),
           inputFormatters: const [TimeInputFormatter()],
           decoration: inputTheme.compactDecoration(

@@ -572,29 +572,58 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
 
   Future<void> _openMoreFilters() async {
     final l10n = AppLocalizations.of(context)!;
-    _filtersDialogOpen = true;
-    final shell = AdaptiveFormShell(
-      onClose: () => AppNavigator.pop(context),
-      title: l10n.reportsTabFilters,
-      popupMaxWidth: 900,
-      actions: [
-        TextButton(
-          onPressed: () => AppNavigator.pop(context),
-          child: Text(l10n.reportsDone),
-        ),
-      ],
-      contentView: const ReportsScreen(section: ReportsPanelSection.filters),
+    final initialRuntimeQuery = _cloneRuntimeQueryState(
+      ref.read(reportsRuntimeQueryProvider),
     );
+    final initialEventTypes = ref.read(reportsEventTypesProvider);
+    final initialIncludePreviousExperience = ref.read(
+      includePreviousExperienceProvider,
+    );
+    _filtersDialogOpen = true;
+    bool? applied;
     if (isCompactDialogScreen(context)) {
-      await AppNavigator.pushMaterial<void>(
+      applied = await AppNavigator.pushMaterial<bool>(
         context,
-        (_) => shell,
+        (routeContext) => AdaptiveFormShell(
+          onClose: () => AppNavigator.pop(routeContext, false),
+          title: l10n.reportsTabFilters,
+          popupMaxWidth: 900,
+          actions: [
+            TextButton(
+              onPressed: () => AppNavigator.pop(routeContext, true),
+              child: Text(l10n.reportsDone),
+            ),
+          ],
+          contentView: const ReportsScreen(
+            section: ReportsPanelSection.filters,
+          ),
+        ),
         rootNavigator: true,
       );
     } else {
-      await showDialog<void>(
+      applied = await showDialog<bool>(
         context: context,
-        builder: (_) => shell,
+        builder: (dialogContext) => AdaptiveFormShell(
+          onClose: () => AppNavigator.pop(dialogContext, false),
+          title: l10n.reportsTabFilters,
+          popupMaxWidth: 900,
+          actions: [
+            TextButton(
+              onPressed: () => AppNavigator.pop(dialogContext, true),
+              child: Text(l10n.reportsDone),
+            ),
+          ],
+          contentView: const ReportsScreen(
+            section: ReportsPanelSection.filters,
+          ),
+        ),
+      );
+    }
+    if (applied != true) {
+      await _restoreFiltersSnapshot(
+        runtimeQuery: initialRuntimeQuery,
+        eventTypes: initialEventTypes,
+        includePreviousExperience: initialIncludePreviousExperience,
       );
     }
     _filtersDialogOpen = false;
@@ -606,6 +635,83 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
         setState(() => _reportsPanelVersion++);
       }
     }
+  }
+
+  ReportsRuntimeQueryState _cloneRuntimeQueryState(
+    ReportsRuntimeQueryState value,
+  ) {
+    return ReportsRuntimeQueryState(
+      from: value.from,
+      to: value.to,
+      selectedPreset: value.selectedPreset,
+      matchMode: value.matchMode,
+      filters: List<ReportsFilterCondition>.from(value.filters),
+    );
+  }
+
+  Future<void> _restoreFiltersSnapshot({
+    required ReportsRuntimeQueryState runtimeQuery,
+    required ReportsEventTypesSelection eventTypes,
+    required bool includePreviousExperience,
+  }) async {
+    final currentRuntimeQuery = ref.read(reportsRuntimeQueryProvider);
+    if (!_sameRuntimeQuery(currentRuntimeQuery, runtimeQuery)) {
+      ref.read(reportsRuntimeQueryProvider.notifier).value = runtimeQuery;
+    }
+
+    final currentEventTypes = ref.read(reportsEventTypesProvider);
+    if (!_sameEventTypes(currentEventTypes, eventTypes)) {
+      await ref.read(reportsEventTypesProvider.notifier).setValue(eventTypes);
+    }
+
+    final currentIncludePreviousExperience = ref.read(
+      includePreviousExperienceProvider,
+    );
+    if (currentIncludePreviousExperience != includePreviousExperience) {
+      await ref
+          .read(includePreviousExperienceProvider.notifier)
+          .setValue(value: includePreviousExperience);
+    }
+  }
+
+  bool _sameRuntimeQuery(
+    ReportsRuntimeQueryState a,
+    ReportsRuntimeQueryState b,
+  ) {
+    return a.from.isAtSameMomentAs(b.from) &&
+        a.to.isAtSameMomentAs(b.to) &&
+        a.selectedPreset == b.selectedPreset &&
+        a.matchMode == b.matchMode &&
+        _sameFilterList(a.filters, b.filters);
+  }
+
+  bool _sameFilterList(
+    List<ReportsFilterCondition> a,
+    List<ReportsFilterCondition> b,
+  ) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (var index = 0; index < a.length; index++) {
+      final left = a[index];
+      final right = b[index];
+      if (left.field != right.field ||
+          left.operator != right.operator ||
+          left.textValue != right.textValue ||
+          left.numberValue != right.numberValue) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _sameEventTypes(
+    ReportsEventTypesSelection a,
+    ReportsEventTypesSelection b,
+  ) {
+    return a.flights == b.flights &&
+        a.simulator == b.simulator &&
+        a.duty == b.duty &&
+        a.positioning == b.positioning;
   }
 
   Future<void> _editEntry(LogbookEntry entry) async {
@@ -1212,10 +1318,10 @@ class _GlobalFilterBar extends StatelessWidget {
           color: colorScheme.surfaceContainerHighest,
           child: Padding(
             padding: const EdgeInsets.only(
-              left: 8,
-              top: 4,
-              right: 8,
-              bottom: 8,
+              left: 4,
+              top: 10,
+              right: 4,
+              bottom: 2,
             ),
             child: showTypeChips
                 ? Row(
@@ -1240,12 +1346,11 @@ class _GlobalFilterBar extends StatelessWidget {
                         child: Row(children: _buildTypeToggleItems(l10n)),
                       ),
                       const SizedBox(width: 8),
-                      Buttons(
-                        onPressed: onMoreFilters,
-                        icon: Icons.filter_list,
-                        label: filtersCount > 0
-                            ? '${l10n.reportsTabFilters} ($filtersCount)'
-                            : l10n.reportsTabFilters,
+                      _buildFiltersButton(
+                        context: context,
+                        l10n: l10n,
+                        showCount: true,
+                        showIcon: true,
                       ),
                       const SizedBox(width: 6),
                       InfoHelpButton(
@@ -1274,11 +1379,11 @@ class _GlobalFilterBar extends StatelessWidget {
                           onTap: onSelectToDate,
                         ),
                         const SizedBox(width: 8),
-                        Buttons(
-                          onPressed: onMoreFilters,
-                          label: filtersCount > 0
-                              ? '${l10n.reportsTabFilters} ($filtersCount)'
-                              : l10n.reportsTabFilters,
+                        _buildFiltersButton(
+                          context: context,
+                          l10n: l10n,
+                          showCount: false,
+                          showIcon: false,
                         ),
                         const SizedBox(width: 6),
                         InfoHelpButton(
@@ -1307,6 +1412,45 @@ class _GlobalFilterBar extends StatelessWidget {
         selected: selected,
         onTap: onTap,
       ),
+    );
+  }
+
+  Widget _buildFiltersButton({
+    required BuildContext context,
+    required AppLocalizations l10n,
+    required bool showCount,
+    required bool showIcon,
+  }) {
+    final hasFilters = filtersCount > 0;
+    final label = showCount && hasFilters
+        ? '${l10n.reportsTabFilters} ($filtersCount)'
+        : l10n.reportsTabFilters;
+    final button = Buttons(
+      onPressed: onMoreFilters,
+      icon: showIcon ? Icons.filter_list : null,
+      variant: hasFilters ? ButtonsVariant.filled : ButtonsVariant.outlined,
+      label: label,
+    );
+    if (!hasFilters) {
+      return button;
+    }
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final accentBackground = theme.brightness == Brightness.dark
+        ? colorScheme.primary
+        : colorScheme.tertiary;
+    final accentForeground = theme.brightness == Brightness.dark
+        ? colorScheme.onPrimary
+        : colorScheme.onTertiary;
+    return Theme(
+      data: theme.copyWith(
+        colorScheme: colorScheme.copyWith(
+          primary: accentBackground,
+          onPrimary: accentForeground,
+        ),
+      ),
+      child: button,
     );
   }
 

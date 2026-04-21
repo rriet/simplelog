@@ -198,6 +198,15 @@ class _ClockTimeInputFieldState extends State<ClockTimeInputField> {
         theme.extension<AppFormControlsTheme>() ??
         AppFormControlsTheme.fallback;
     final colorScheme = theme.colorScheme;
+    final compactHeight = inputTheme.resolvedCompactFieldHeight(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+    );
+    final effectiveBodyFontSize = inputTheme.resolvedBodyFontSize(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+      controlHeight: compactHeight,
+    );
 
     return FormField<String>(
       key: _fieldKey,
@@ -215,7 +224,7 @@ class _ClockTimeInputFieldState extends State<ClockTimeInputField> {
             : colorScheme.onSurfaceVariant;
 
         final control = SizedBox(
-          height: inputTheme.compactFieldHeight,
+          height: compactHeight,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -245,7 +254,7 @@ class _ClockTimeInputFieldState extends State<ClockTimeInputField> {
                             keyboardType: TextInputType.number,
                             textAlignVertical: TextAlignVertical.center,
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              fontSize: inputTheme.bodyFontSize,
+                              fontSize: effectiveBodyFontSize,
                             ),
                             inputFormatters: const [ClockTimeInputFormatter()],
                             decoration: const InputDecoration(

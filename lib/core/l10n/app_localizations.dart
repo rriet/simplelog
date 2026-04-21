@@ -3973,7 +3973,7 @@ abstract class AppLocalizations {
   /// No description provided for @southwestCalculateCrossCountryTimeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Calculate cross-country time'**
+  /// **'Calculate cross-country'**
   String get southwestCalculateCrossCountryTimeLabel;
 
   /// No description provided for @southwestCalculateIfrTimeLabel.
@@ -3997,7 +3997,7 @@ abstract class AppLocalizations {
   /// No description provided for @southwestDefaultSelfPositionLabel.
   ///
   /// In en, this message translates to:
-  /// **'Default self position'**
+  /// **'Crew Function'**
   String get southwestDefaultSelfPositionLabel;
 
   /// No description provided for @southwestImportAction.
@@ -4005,6 +4005,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import'**
   String get southwestImportAction;
+
+  /// No description provided for @southwestImportOptionsHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Southwest options'**
+  String get southwestImportOptionsHelpTitle;
+
+  /// No description provided for @southwestImportOptionsHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Crew Function: sets your own role for imported Southwest flights (PIC or SIC).\n\nRecalculate block time: uses departure/arrival timestamps to compute block.\nCalculate night time: computes night minutes from departure/arrival and route.\nCalculate IFR time: computes IFR from block using IFR %, Minus, and Minimum.\nIFR %: percentage applied to block minutes.\nMinus: minutes subtracted before the percentage is applied.\nMinimum: minimum IFR minutes enforced after percentage/subtraction.\nCalculate cross-country: computes cross-country minutes from distance.\nCross-country threshold (NM): minimum distance required to count as cross-country.\n\nOverwrite existing data: updates matching flights already in the database.\nAdd copilot staff number: appends copilot staff number to notes when available.\nAdd flight number to notes: appends the Southwest flight number to notes.'**
+  String get southwestImportOptionsHelpBody;
 
   /// No description provided for @southwestImportOptionsTitle.
   ///

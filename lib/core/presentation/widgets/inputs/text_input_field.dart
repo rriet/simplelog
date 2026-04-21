@@ -126,6 +126,15 @@ class _TextInputFieldState extends State<TextInputField> {
         theme.extension<AppFormControlsTheme>() ??
         AppFormControlsTheme.fallback;
     final colorScheme = theme.colorScheme;
+    final compactHeight = controlsTheme.resolvedCompactFieldHeight(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+    );
+    final effectiveBodyFontSize = controlsTheme.resolvedBodyFontSize(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+      controlHeight: compactHeight,
+    );
 
     return FormField<String>(
       key: _fieldKey,
@@ -177,7 +186,7 @@ class _TextInputFieldState extends State<TextInputField> {
                       ? TextAlignVertical.center
                       : TextAlignVertical.top,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    fontSize: controlsTheme.bodyFontSize,
+                    fontSize: effectiveBodyFontSize,
                   ),
                   keyboardType: widget.keyboardType,
                   inputFormatters: widget.inputFormatters,
@@ -249,10 +258,10 @@ class _TextInputFieldState extends State<TextInputField> {
         );
 
         final control = isSingleLine
-            ? SizedBox(height: controlsTheme.compactFieldHeight, child: shell)
+            ? SizedBox(height: compactHeight, child: shell)
             : ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: controlsTheme.compactFieldHeight,
+                  minHeight: compactHeight,
                 ),
                 child: shell,
               );

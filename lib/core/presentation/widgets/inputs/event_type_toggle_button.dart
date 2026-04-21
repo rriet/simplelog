@@ -27,16 +27,25 @@ class EventTypeToggleButton extends StatelessWidget {
     final controlsTheme =
         theme.extension<AppFormControlsTheme>() ??
         AppFormControlsTheme.fallback;
+    final compactHeight = controlsTheme.resolvedCompactFieldHeight(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+    );
+    final effectiveBodyFontSize = controlsTheme.resolvedBodyFontSize(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+      controlHeight: compactHeight,
+    );
     return SizedBox(
       width: double.infinity,
-      height: controlsTheme.compactFieldHeight,
+      height: compactHeight,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
           padding: EdgeInsets.symmetric(
             horizontal: controlsTheme.horizontalContentPadding,
           ),
-          minimumSize: Size(0, controlsTheme.compactFieldHeight),
+          minimumSize: Size(0, compactHeight),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           visualDensity: VisualDensity.compact,
           side: BorderSide(
@@ -56,7 +65,7 @@ class EventTypeToggleButton extends StatelessWidget {
           label,
           overflow: TextOverflow.ellipsis,
           style: theme.textTheme.bodyMedium?.copyWith(
-            fontSize: controlsTheme.bodyFontSize,
+            fontSize: effectiveBodyFontSize,
           ),
         ),
       ),

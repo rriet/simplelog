@@ -26,6 +26,9 @@ class SouthwestImportOptions {
     this.recalculateBlockTime = true,
     this.recalculateNightTime = true,
     this.recalculateIfrTime = true,
+    this.ifrPercent = 100,
+    this.ifrSubtractMinutes = 0,
+    this.ifrMinimumMinutes = 0,
     this.recalculateCrossCountry = true,
     this.crossCountryThresholdNm = 50,
     this.overrideExistingData = false,
@@ -49,6 +52,15 @@ class SouthwestImportOptions {
 
   /// Whether to recompute IFR time from block time.
   final bool recalculateIfrTime;
+
+  /// IFR percentage applied to block minutes when IFR recalculation is enabled.
+  final int ifrPercent;
+
+  /// Minutes subtracted before IFR percentage is applied.
+  final int ifrSubtractMinutes;
+
+  /// Minimum IFR time enforced after percentage/subtraction.
+  final int ifrMinimumMinutes;
 
   /// Whether to recompute cross‑country time from leg distance.
   final bool recalculateCrossCountry;
@@ -80,6 +92,9 @@ class SouthwestImportOptions {
     bool? recalculateBlockTime,
     bool? recalculateNightTime,
     bool? recalculateIfrTime,
+    int? ifrPercent,
+    int? ifrSubtractMinutes,
+    int? ifrMinimumMinutes,
     bool? recalculateCrossCountry,
     int? crossCountryThresholdNm,
     bool? overrideExistingData,
@@ -94,6 +109,9 @@ class SouthwestImportOptions {
       recalculateBlockTime: recalculateBlockTime ?? this.recalculateBlockTime,
       recalculateNightTime: recalculateNightTime ?? this.recalculateNightTime,
       recalculateIfrTime: recalculateIfrTime ?? this.recalculateIfrTime,
+      ifrPercent: ifrPercent ?? this.ifrPercent,
+      ifrSubtractMinutes: ifrSubtractMinutes ?? this.ifrSubtractMinutes,
+      ifrMinimumMinutes: ifrMinimumMinutes ?? this.ifrMinimumMinutes,
       recalculateCrossCountry:
           recalculateCrossCountry ?? this.recalculateCrossCountry,
       crossCountryThresholdNm:

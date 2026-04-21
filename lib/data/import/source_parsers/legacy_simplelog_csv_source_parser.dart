@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/flight/flight_calculations.dart';
+import 'package:simplelog/core/flight/ifr_calculation.dart';
 import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
@@ -333,7 +334,7 @@ class LegacySimpleLogCsvSourceParser {
 
         var ifrMinutes = _parseInt(get(idxIfrMinutes));
         if (options.recalculateIfrTime && computedTotal > 0) {
-          ifrMinutes = _calculateFactoredMinutes(
+          ifrMinutes = calculateIfrMinutes(
             totalMinutes: computedTotal,
             percent: options.ifrPercent,
             subtractMinutes: options.ifrSubtractMinutes,
@@ -662,21 +663,6 @@ double _calculateDistanceNm(
 }
 
 double _degToRad(double angleDeg) => angleDeg * pi / 180.0;
-
-int _calculateFactoredMinutes({
-  required int totalMinutes,
-  required int percent,
-  required int subtractMinutes,
-  required int minimumMinutes,
-}) {
-  final clampedPercent = percent.clamp(0, 100);
-  var result = ((totalMinutes * clampedPercent) / 100).round();
-  result -= subtractMinutes;
-  if (result < 0) result = 0;
-  if (result < minimumMinutes) result = minimumMinutes;
-  if (result > totalMinutes) result = totalMinutes;
-  return result;
-}
 
 enum _Role { pic, picus, sic, dual, instructor, none }
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/ifr_factoring_fields_row.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/features/settings/presentation/widgets/settings_expandable_info_trailing.dart';
@@ -162,21 +163,11 @@ class _FlightFactoringSettingsCardState
               ),
             ],
           ),
-          _compactFieldRow(
-            fields: [
-              _CompactFieldSpec.number(
-                label: l10n.simplelogIfrPercentLabel,
-                controller: _ifrPercentController,
-              ),
-              _CompactFieldSpec.time(
-                label: l10n.settingsCalculationRulesMinusLabel,
-                controller: _ifrSubtractController,
-              ),
-              _CompactFieldSpec.time(
-                label: l10n.settingsCalculationRulesMinimumLabel,
-                controller: _ifrMinController,
-              ),
-            ],
+          const Divider(height: 20),
+          IfrFactoringFieldsRow(
+            subtractController: _ifrSubtractController,
+            percentController: _ifrPercentController,
+            minimumController: _ifrMinController,
           ),
           const Divider(height: 20),
           _compactFieldRow(

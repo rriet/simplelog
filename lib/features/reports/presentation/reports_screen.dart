@@ -14,6 +14,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/flight/flight_calculations.dart';
+import 'package:simplelog/core/flight/ifr_calculation.dart';
 import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
@@ -26,6 +27,9 @@ import 'package:simplelog/core/presentation/widgets/display/square_outline_butto
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/event_type_toggle_button.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/ifr_factoring_fields_row.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/time_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/maps/flight_routes_map_view.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
@@ -3115,13 +3119,20 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     if (!mounted) return;
     final initialPreferences = await _loadBatchCalculateAllPreferences();
     if (!mounted) return;
+    final initialFactoringSettings = await ref.read(
+      flightFactoringSettingsProvider.future,
+    );
+    if (!mounted) return;
     final selection = await _BatchCalculateAllDialog.show(
       context,
       initialPreferences: initialPreferences,
+      initialFactoringSettings: initialFactoringSettings,
     );
     if (selection == null) return;
+    final selectedPreferences = selection.preferences;
+    final selectedFactoringSettings = selection.factoringSettings;
     await _runGuardedBatchWrite(() async {
-      await _saveBatchCalculateAllPreferences(selection);
+      await _saveBatchCalculateAllPreferences(selectedPreferences);
       await _ensureBatchFlightsReadyForActions();
       final snapshots = await _loadBatchSnapshots(_filteredFlightIds());
       final modifiable = _unlockedBatchSnapshots(snapshots);
@@ -3130,13 +3141,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         await _showInfoDialog('All filtered flights are locked.');
         return;
       }
-      final settings = await ref.read(flightFactoringSettingsProvider.future);
+      final settings = selectedFactoringSettings;
       final changes = <_BatchFlightChange>[];
       final db = ref.read(databaseProvider);
       await db.transaction(() async {
         for (final snapshot in modifiable.values) {
           final next = snapshot.copy();
-          final blockMode = selection.modeFor(_BatchCalcField.block);
+          final blockMode = selectedPreferences.modeFor(_BatchCalcField.block);
           if (blockMode == _BatchFieldMode.recalculate) {
             final calculatedBlock = _calculateBlockMinutesFromChocks(snapshot);
             if (calculatedBlock != null) {
@@ -3152,27 +3163,30 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           final base = next.timeBlockMinutes;
 
           _applyTimeMode(
-            mode: selection.modeFor(_BatchCalcField.instructor),
+            mode: selectedPreferences.modeFor(_BatchCalcField.instructor),
             recalculateValue: base,
             assign: (value) => next.timeInstructorMinutes = value,
           );
+          final ifrMode = selectedPreferences.modeFor(_BatchCalcField.ifr);
+          if (ifrMode == _BatchFieldMode.recalculate) {
+            next.timeIFRMinutes = calculateIfrMinutes(
+              totalMinutes: base,
+              percent: settings.ifrPercent,
+              subtractMinutes: settings.ifrSubtractMinutes,
+              minimumMinutes: settings.ifrMinimumMinutes,
+            );
+          } else if (ifrMode == _BatchFieldMode.setZero) {
+            next.timeIFRMinutes = 0;
+          }
           _applyTimeMode(
-            mode: selection.modeFor(_BatchCalcField.ifr),
-            recalculateValue: base,
-            assign: (value) => next.timeIFRMinutes = value,
-          );
-          _applyTimeMode(
-            mode: selection.modeFor(_BatchCalcField.ifr),
-            recalculateValue: base,
-            assign: (value) => next.timeIFRMinutes = value,
-          );
-          _applyTimeMode(
-            mode: selection.modeFor(_BatchCalcField.flight),
+            mode: selectedPreferences.modeFor(_BatchCalcField.flight),
             recalculateValue: base,
             assign: (value) => next.timeFlightMinutes = value,
           );
 
-          final distanceMode = selection.modeFor(_BatchCalcField.distanceNm);
+          final distanceMode = selectedPreferences.modeFor(
+            _BatchCalcField.distanceNm,
+          );
           if (distanceMode == _BatchFieldMode.recalculate) {
             final distance = _calculateDistanceForSnapshot(snapshot);
             if (distance != null) {
@@ -3182,7 +3196,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             next.distanceNm = 0;
           }
 
-          final crossMode = selection.modeFor(_BatchCalcField.crossCountry);
+          final crossMode = selectedPreferences.modeFor(
+            _BatchCalcField.crossCountry,
+          );
           if (crossMode == _BatchFieldMode.recalculate) {
             next.timeCrossCountryMinutes =
                 next.distanceNm >= settings.crossCountryThresholdNm ? base : 0;
@@ -3191,80 +3207,80 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           }
 
           final applyNightDerivedValues =
-              selection.modeFor(_BatchCalcField.night) ==
+              selectedPreferences.modeFor(_BatchCalcField.night) ==
                   _BatchFieldMode.recalculate ||
-              selection.modeFor(_BatchCalcField.takeoffDay) ==
+              selectedPreferences.modeFor(_BatchCalcField.takeoffDay) ==
                   _BatchFieldMode.recalculate ||
-              selection.modeFor(_BatchCalcField.takeoffNight) ==
+              selectedPreferences.modeFor(_BatchCalcField.takeoffNight) ==
                   _BatchFieldMode.recalculate ||
-              selection.modeFor(_BatchCalcField.landingDay) ==
+              selectedPreferences.modeFor(_BatchCalcField.landingDay) ==
                   _BatchFieldMode.recalculate ||
-              selection.modeFor(_BatchCalcField.landingNight) ==
+              selectedPreferences.modeFor(_BatchCalcField.landingNight) ==
                   _BatchFieldMode.recalculate;
           if (applyNightDerivedValues) {
             final calc = _calculateNightForSnapshot(snapshot);
             if (calc != null) {
-              if (selection.modeFor(_BatchCalcField.night) ==
+              if (selectedPreferences.modeFor(_BatchCalcField.night) ==
                   _BatchFieldMode.recalculate) {
                 next.timeNightMinutes = calc.nightMinutes;
               }
-              if (selection.modeFor(_BatchCalcField.takeoffDay) ==
+              if (selectedPreferences.modeFor(_BatchCalcField.takeoffDay) ==
                   _BatchFieldMode.recalculate) {
                 next.takeOffsDays = calc.takeoffsDay;
               }
-              if (selection.modeFor(_BatchCalcField.takeoffNight) ==
+              if (selectedPreferences.modeFor(_BatchCalcField.takeoffNight) ==
                   _BatchFieldMode.recalculate) {
                 next.takeOffsNight = calc.takeoffsNight;
               }
-              if (selection.modeFor(_BatchCalcField.landingDay) ==
+              if (selectedPreferences.modeFor(_BatchCalcField.landingDay) ==
                   _BatchFieldMode.recalculate) {
                 next.landingsDay = calc.landingsDay;
               }
-              if (selection.modeFor(_BatchCalcField.landingNight) ==
+              if (selectedPreferences.modeFor(_BatchCalcField.landingNight) ==
                   _BatchFieldMode.recalculate) {
                 next.landingsNight = calc.landingsNight;
               }
             }
           }
 
-          if (selection.modeFor(_BatchCalcField.night) ==
+          if (selectedPreferences.modeFor(_BatchCalcField.night) ==
               _BatchFieldMode.setZero) {
             next.timeNightMinutes = 0;
           }
-          if (selection.modeFor(_BatchCalcField.takeoffDay) ==
+          if (selectedPreferences.modeFor(_BatchCalcField.takeoffDay) ==
               _BatchFieldMode.setZero) {
             next.takeOffsDays = 0;
           }
-          if (selection.modeFor(_BatchCalcField.takeoffNight) ==
+          if (selectedPreferences.modeFor(_BatchCalcField.takeoffNight) ==
               _BatchFieldMode.setZero) {
             next.takeOffsNight = 0;
           }
-          if (selection.modeFor(_BatchCalcField.landingDay) ==
+          if (selectedPreferences.modeFor(_BatchCalcField.landingDay) ==
               _BatchFieldMode.setZero) {
             next.landingsDay = 0;
           }
-          if (selection.modeFor(_BatchCalcField.landingNight) ==
+          if (selectedPreferences.modeFor(_BatchCalcField.landingNight) ==
               _BatchFieldMode.setZero) {
             next.landingsNight = 0;
           }
 
           _applyTimeMode(
-            mode: selection.modeFor(_BatchCalcField.custom1),
+            mode: selectedPreferences.modeFor(_BatchCalcField.custom1),
             recalculateValue: base,
             assign: (value) => next.timeCustom1Minutes = value,
           );
           _applyTimeMode(
-            mode: selection.modeFor(_BatchCalcField.custom2),
+            mode: selectedPreferences.modeFor(_BatchCalcField.custom2),
             recalculateValue: base,
             assign: (value) => next.timeCustom2Minutes = value,
           );
           _applyTimeMode(
-            mode: selection.modeFor(_BatchCalcField.custom3),
+            mode: selectedPreferences.modeFor(_BatchCalcField.custom3),
             recalculateValue: base,
             assign: (value) => next.timeCustom3Minutes = value,
           );
           _applyTimeMode(
-            mode: selection.modeFor(_BatchCalcField.custom4),
+            mode: selectedPreferences.modeFor(_BatchCalcField.custom4),
             recalculateValue: base,
             assign: (value) => next.timeCustom4Minutes = value,
           );
@@ -4579,26 +4595,42 @@ class _BatchCalculateAllPreferences {
   }
 }
 
+class _BatchCalculateAllDialogResult {
+  const _BatchCalculateAllDialogResult({
+    required this.preferences,
+    required this.factoringSettings,
+  });
+
+  final _BatchCalculateAllPreferences preferences;
+  final FlightFactoringSettings factoringSettings;
+}
+
 class _BatchCalculateAllDialog extends StatefulWidget {
-  const _BatchCalculateAllDialog({required this.initialPreferences});
+  const _BatchCalculateAllDialog({
+    required this.initialPreferences,
+    required this.initialFactoringSettings,
+  });
 
   final _BatchCalculateAllPreferences initialPreferences;
+  final FlightFactoringSettings initialFactoringSettings;
 
-  static Future<_BatchCalculateAllPreferences?> show(
+  static Future<_BatchCalculateAllDialogResult?> show(
     BuildContext context, {
     required _BatchCalculateAllPreferences initialPreferences,
+    required FlightFactoringSettings initialFactoringSettings,
   }) {
     final screen = _BatchCalculateAllDialog(
       initialPreferences: initialPreferences,
+      initialFactoringSettings: initialFactoringSettings,
     );
     if (isCompactDialogScreen(context)) {
-      return AppNavigator.pushMaterial<_BatchCalculateAllPreferences>(
+      return AppNavigator.pushMaterial<_BatchCalculateAllDialogResult>(
         context,
         (_) => screen,
         rootNavigator: true,
       );
     }
-    return showDialog<_BatchCalculateAllPreferences>(
+    return showDialog<_BatchCalculateAllDialogResult>(
       context: context,
       builder: (_) => screen,
     );
@@ -4611,6 +4643,10 @@ class _BatchCalculateAllDialog extends StatefulWidget {
 
 class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
   late _BatchCalculateAllPreferences _preferences = widget.initialPreferences;
+  late final TextEditingController _crossCountryThresholdController;
+  late final TextEditingController _ifrPercentController;
+  late final TextEditingController _ifrSubtractController;
+  late final TextEditingController _ifrMinimumController;
 
   static const _fields = <_BatchCalcField>[
     _BatchCalcField.block,
@@ -4629,6 +4665,77 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
     _BatchCalcField.custom3,
     _BatchCalcField.custom4,
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final settings = widget.initialFactoringSettings;
+    _crossCountryThresholdController = TextEditingController(
+      text: settings.crossCountryThresholdNm.toString(),
+    );
+    _ifrPercentController = TextEditingController(
+      text: settings.ifrPercent.toString(),
+    );
+    _ifrSubtractController = TextEditingController(
+      text: HourInputField.formatHours(settings.ifrSubtractMinutes),
+    );
+    _ifrMinimumController = TextEditingController(
+      text: HourInputField.formatHours(settings.ifrMinimumMinutes),
+    );
+  }
+
+  @override
+  void dispose() {
+    _crossCountryThresholdController.dispose();
+    _ifrPercentController.dispose();
+    _ifrSubtractController.dispose();
+    _ifrMinimumController.dispose();
+    super.dispose();
+  }
+
+  void _setMode(_BatchCalcField field, _BatchFieldMode mode) {
+    final nextModes = Map<_BatchCalcField, _BatchFieldMode>.from(
+      _preferences.fieldModes,
+    )..[field] = mode;
+    setState(() {
+      _preferences = _preferences.copyWith(fieldModes: nextModes);
+    });
+  }
+
+  int _parsePercent(TextEditingController controller, {required int fallback}) {
+    final value = int.tryParse(controller.text.trim()) ?? fallback;
+    return value.clamp(0, 100);
+  }
+
+  int _parseHours(TextEditingController controller, {required int fallback}) {
+    return HourInputField.parseHours(controller.text.trim()) ?? fallback;
+  }
+
+  int _parseNumber(TextEditingController controller, {required int fallback}) {
+    return NumberInputField.parse(controller.text.trim()) ?? fallback;
+  }
+
+  FlightFactoringSettings _factoringSettingsFromControllers() {
+    final fallback = widget.initialFactoringSettings;
+    return fallback.copyWith(
+      crossCountryThresholdNm: _parseNumber(
+        _crossCountryThresholdController,
+        fallback: fallback.crossCountryThresholdNm,
+      ),
+      ifrPercent: _parsePercent(
+        _ifrPercentController,
+        fallback: fallback.ifrPercent,
+      ),
+      ifrSubtractMinutes: _parseHours(
+        _ifrSubtractController,
+        fallback: fallback.ifrSubtractMinutes,
+      ),
+      ifrMinimumMinutes: _parseHours(
+        _ifrMinimumController,
+        fallback: fallback.ifrMinimumMinutes,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -4697,6 +4804,35 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
       );
     }
 
+    Widget fieldModeRow(_BatchCalcField field) {
+      if (isNarrow) {
+        return modeDropdown(
+          fieldLabel: label(field),
+          showFieldLabel: true,
+          value: _preferences.modeFor(field),
+          onChanged: (value) {
+            if (value != null) _setMode(field, value);
+          },
+        );
+      }
+      return Row(
+        children: [
+          Expanded(child: Text(label(field))),
+          const SizedBox(width: 12),
+          Expanded(
+            child: modeDropdown(
+              fieldLabel: label(field),
+              showFieldLabel: false,
+              value: _preferences.modeFor(field),
+              onChanged: (value) {
+                if (value != null) _setMode(field, value);
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
     return AdaptiveFormShell(
       onClose: () => AppNavigator.pop(context),
       title: l10n.reportsCalculateAllFlightsTitle,
@@ -4707,70 +4843,47 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
           message: l10n.reportsCalculateAllHelpBody,
         ),
         TextButton(
-          onPressed: () => AppNavigator.pop(context, _preferences),
+          onPressed: () => AppNavigator.pop(
+            context,
+            _BatchCalculateAllDialogResult(
+              preferences: _preferences,
+              factoringSettings: _factoringSettingsFromControllers(),
+            ),
+          ),
           child: Text(l10n.applyAction),
         ),
       ],
-      contentView: Padding(
-        padding: EdgeInsets.symmetric(horizontal: isCompact ? 16 : 0),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              for (final field in _fields)
+      contentView: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          shrinkWrap: true,
+          children: [
+            for (final field in _fields) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: fieldModeRow(field),
+              ),
+              if (field == _BatchCalcField.ifr &&
+                  _preferences.modeFor(_BatchCalcField.ifr) ==
+                      _BatchFieldMode.recalculate)
+                IfrFactoringFieldsRow(
+                  subtractController: _ifrSubtractController,
+                  percentController: _ifrPercentController,
+                  minimumController: _ifrMinimumController,
+                ),
+              if (field == _BatchCalcField.crossCountry &&
+                  _preferences.modeFor(_BatchCalcField.crossCountry) ==
+                      _BatchFieldMode.recalculate)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: isNarrow
-                      ? modeDropdown(
-                          fieldLabel: label(field),
-                          showFieldLabel: true,
-                          value: _preferences.modeFor(field),
-                          onChanged: (value) {
-                            if (value == null) return;
-                            final nextModes =
-                                Map<_BatchCalcField, _BatchFieldMode>.from(
-                                  _preferences.fieldModes,
-                                )..[field] = value;
-                            setState(() {
-                              _preferences = _preferences.copyWith(
-                                fieldModes: nextModes,
-                              );
-                            });
-                          },
-                        )
-                      : Row(
-                          children: [
-                            Expanded(child: Text(label(field))),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: modeDropdown(
-                                fieldLabel: label(field),
-                                showFieldLabel: false,
-                                value: _preferences.modeFor(field),
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  final nextModes =
-                                      Map<
-                                          _BatchCalcField,
-                                          _BatchFieldMode
-                                        >.from(
-                                          _preferences.fieldModes,
-                                        )
-                                        ..[field] = value;
-                                  setState(() {
-                                    _preferences = _preferences.copyWith(
-                                      fieldModes: nextModes,
-                                    );
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
+                  child: NumberInputField(
+                    controller: _crossCountryThresholdController,
+                    label: l10n.simplelogCrossCountryNmLabel,
+                  ),
                 ),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -5649,61 +5762,114 @@ class _FiltersCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Wrap(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: EventTypeToggleButton(
-                                    label: l10n.logbookEventFlight,
-                                    selected: eventTypes.flights,
-                                    onTap: () => onEventTypesChanged(
-                                      eventTypes.copyWith(
-                                        flights: !eventTypes.flights,
-                                      ),
+                        if (compact) ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: EventTypeToggleButton(
+                                  label: l10n.logbookEventFlight,
+                                  selected: eventTypes.flights,
+                                  onTap: () => onEventTypesChanged(
+                                    eventTypes.copyWith(
+                                      flights: !eventTypes.flights,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: EventTypeToggleButton(
-                                    label: l10n.fieldIsSimulator,
-                                    selected: eventTypes.simulator,
-                                    onTap: () => onEventTypesChanged(
-                                      eventTypes.copyWith(
-                                        simulator: !eventTypes.simulator,
-                                      ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: EventTypeToggleButton(
+                                  label: l10n.fieldIsSimulator,
+                                  selected: eventTypes.simulator,
+                                  onTap: () => onEventTypesChanged(
+                                    eventTypes.copyWith(
+                                      simulator: !eventTypes.simulator,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: EventTypeToggleButton(
-                                    label: l10n.reportsMetricDuty,
-                                    selected: eventTypes.duty,
-                                    onTap: () => onEventTypesChanged(
-                                      eventTypes.copyWith(
-                                        duty: !eventTypes.duty,
-                                      ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: EventTypeToggleButton(
+                                  label: l10n.reportsMetricDuty,
+                                  selected: eventTypes.duty,
+                                  onTap: () => onEventTypesChanged(
+                                    eventTypes.copyWith(
+                                      duty: !eventTypes.duty,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: EventTypeToggleButton(
-                                    label: l10n.logbookEventPositioning,
-                                    selected: eventTypes.positioning,
-                                    onTap: () => onEventTypesChanged(
-                                      eventTypes.copyWith(
-                                        positioning: !eventTypes.positioning,
-                                      ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: EventTypeToggleButton(
+                                  label: l10n.logbookEventPositioning,
+                                  selected: eventTypes.positioning,
+                                  onTap: () => onEventTypesChanged(
+                                    eventTypes.copyWith(
+                                      positioning: !eventTypes.positioning,
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
+                              ),
+                            ],
+                          ),
+                        ] else
+                          Row(
+                            children: [
+                              Expanded(
+                                child: EventTypeToggleButton(
+                                  label: l10n.logbookEventFlight,
+                                  selected: eventTypes.flights,
+                                  onTap: () => onEventTypesChanged(
+                                    eventTypes.copyWith(
+                                      flights: !eventTypes.flights,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: EventTypeToggleButton(
+                                  label: l10n.fieldIsSimulator,
+                                  selected: eventTypes.simulator,
+                                  onTap: () => onEventTypesChanged(
+                                    eventTypes.copyWith(
+                                      simulator: !eventTypes.simulator,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: EventTypeToggleButton(
+                                  label: l10n.reportsMetricDuty,
+                                  selected: eventTypes.duty,
+                                  onTap: () => onEventTypesChanged(
+                                    eventTypes.copyWith(
+                                      duty: !eventTypes.duty,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: EventTypeToggleButton(
+                                  label: l10n.logbookEventPositioning,
+                                  selected: eventTypes.positioning,
+                                  onTap: () => onEventTypesChanged(
+                                    eventTypes.copyWith(
+                                      positioning: !eventTypes.positioning,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         const SizedBox(height: 8),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -5742,28 +5908,38 @@ class _FiltersCard extends StatelessWidget {
                               onTimeChanged: onToTimeChanged,
                             ),
                             const SizedBox(height: 8),
-                            ReportsEnumDropdownField<ReportsFilterMatchMode>(
-                              value: matchMode,
-                              label: l10n.reportsMatchModeLabel,
-                              options: const [
-                                ReportsFilterMatchMode.all,
-                                ReportsFilterMatchMode.any,
-                              ],
-                              optionLabel: (value) =>
-                                  value == ReportsFilterMatchMode.all
-                                  ? l10n.reportsMatchAll
-                                  : l10n.reportsMatchAny,
-                              onChanged: (value) =>
-                                  unawaited(onMatchModeChanged(value)),
-                            ),
+                            const Divider(height: 1),
                             const SizedBox(height: 8),
-                            Buttons(
-                              onPressed: onAddFilter,
-                              icon: Icons.add,
-                              label: compact
-                                  ? l10n.addAction
-                                  : l10n.reportsAddFilter,
-                              variant: ButtonsVariant.filled,
+                            Row(
+                              children: [
+                                Buttons(
+                                  onPressed: onAddFilter,
+                                  icon: Icons.add,
+                                  label: l10n.reportsAddFilter,
+                                  variant: ButtonsVariant.filled,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child:
+                                      ReportsEnumDropdownField<
+                                        ReportsFilterMatchMode
+                                      >(
+                                        value: matchMode,
+                                        label: l10n.reportsMatchModeLabel,
+                                        options: const [
+                                          ReportsFilterMatchMode.all,
+                                          ReportsFilterMatchMode.any,
+                                        ],
+                                        optionLabel: (value) =>
+                                            value == ReportsFilterMatchMode.all
+                                            ? l10n.reportsMatchAll
+                                            : l10n.reportsMatchAny,
+                                        onChanged: (value) => unawaited(
+                                          onMatchModeChanged(value),
+                                        ),
+                                      ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

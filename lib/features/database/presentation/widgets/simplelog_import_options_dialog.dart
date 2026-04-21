@@ -3,6 +3,7 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/ifr_factoring_fields_row.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/data/import/simplelog_import_options.dart';
 
@@ -205,10 +206,9 @@ class _SimpleLogImportOptionsDialogState
                   onChanged: (value) => setState(() => _recalcIfr = value),
                 ),
                 if (_recalcIfr) ...[
-                  _buildPercentTimeMinimumRow(
-                    percentLabel: l10n.simplelogIfrPercentLabel,
-                    percentController: _ifrPercentController,
+                  IfrFactoringFieldsRow(
                     subtractController: _ifrSubtractController,
+                    percentController: _ifrPercentController,
                     minimumController: _ifrMinController,
                   ),
                 ],
@@ -341,30 +341,6 @@ class _SimpleLogImportOptionsDialogState
         _CompactFieldSpec.time(
           label: timeLabel,
           controller: timeController,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPercentTimeMinimumRow({
-    required String percentLabel,
-    required TextEditingController percentController,
-    required TextEditingController subtractController,
-    required TextEditingController minimumController,
-  }) {
-    return _CompactFieldRow(
-      fields: [
-        _CompactFieldSpec.number(
-          label: percentLabel,
-          controller: percentController,
-        ),
-        _CompactFieldSpec.time(
-          label: 'Subtracted',
-          controller: subtractController,
-        ),
-        _CompactFieldSpec.time(
-          label: 'Minimum',
-          controller: minimumController,
         ),
       ],
     );

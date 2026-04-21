@@ -106,6 +106,15 @@ class _NumberInputFieldState extends State<NumberInputField> {
         theme.extension<AppFormControlsTheme>() ??
         AppFormControlsTheme.fallback;
     final colorScheme = theme.colorScheme;
+    final compactHeight = controlsTheme.resolvedCompactFieldHeight(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+    );
+    final effectiveBodyFontSize = controlsTheme.resolvedBodyFontSize(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+      controlHeight: compactHeight,
+    );
 
     return FormField<String>(
       key: _fieldKey,
@@ -125,7 +134,7 @@ class _NumberInputFieldState extends State<NumberInputField> {
             widget.floatingLabelBehavior != FloatingLabelBehavior.never;
 
         final control = SizedBox(
-          height: controlsTheme.compactFieldHeight,
+          height: compactHeight,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -155,7 +164,7 @@ class _NumberInputFieldState extends State<NumberInputField> {
                             keyboardType: TextInputType.number,
                             textAlignVertical: TextAlignVertical.center,
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              fontSize: controlsTheme.bodyFontSize,
+                              fontSize: effectiveBodyFontSize,
                             ),
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
@@ -172,7 +181,7 @@ class _NumberInputFieldState extends State<NumberInputField> {
                               hintText: widget.hintText,
                               hintStyle: theme.textTheme.bodyMedium?.copyWith(
                                 color: colorScheme.onSurfaceVariant,
-                                fontSize: controlsTheme.bodyFontSize,
+                                fontSize: effectiveBodyFontSize,
                               ),
                             ),
                             onChanged: (value) {

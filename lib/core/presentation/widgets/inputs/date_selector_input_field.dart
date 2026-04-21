@@ -39,6 +39,15 @@ class DateSelectorInputField extends StatelessWidget {
     final inputTheme =
         theme.extension<AppFormControlsTheme>() ??
         AppFormControlsTheme.fallback;
+    final compactHeight = inputTheme.resolvedCompactFieldHeight(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+    );
+    final effectiveBodyFontSize = inputTheme.resolvedBodyFontSize(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+      controlHeight: compactHeight,
+    );
     final hasError = (errorText ?? '').trim().isNotEmpty;
     final borderColor = hasError
         ? colorScheme.error
@@ -48,7 +57,7 @@ class DateSelectorInputField extends StatelessWidget {
         : colorScheme.onSurfaceVariant;
 
     final control = SizedBox(
-      height: inputTheme.compactFieldHeight,
+      height: compactHeight,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -82,7 +91,7 @@ class DateSelectorInputField extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            fontSize: inputTheme.bodyFontSize,
+                            fontSize: effectiveBodyFontSize,
                           ),
                         ),
                       ),

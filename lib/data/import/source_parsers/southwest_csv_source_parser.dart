@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/flight/flight_calculations.dart';
+import 'package:simplelog/core/flight/ifr_calculation.dart';
 import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/database/enums/aircraft_category.dart';
@@ -395,6 +396,16 @@ class SouthwestCsvSourceParser {
           crewAssignments.removeWhere((assignment) => assignment.assignSelf);
         }
 
+        var ifrMinutes = 0;
+        if (options.recalculateIfrTime && blockMinutes > 0) {
+          ifrMinutes = calculateIfrMinutes(
+            totalMinutes: blockMinutes,
+            percent: options.ifrPercent,
+            subtractMinutes: options.ifrSubtractMinutes,
+            minimumMinutes: options.ifrMinimumMinutes,
+          );
+        }
+
         records.add(
           NormalizedFlightRecord(
             progressOrdinal: progressOrdinal,
@@ -409,7 +420,7 @@ class SouthwestCsvSourceParser {
             timeSicMinutes: selfIsPic ? 0 : blockMinutes,
             timeDualMinutes: 0,
             timeInstructorMinutes: 0,
-            timeIfrMinutes: options.recalculateIfrTime ? blockMinutes : 0,
+            timeIfrMinutes: ifrMinutes,
             timeNightMinutes:
                 options.recalculateNightTime && calculations != null
                 ? calculations.nightTimeMinutes

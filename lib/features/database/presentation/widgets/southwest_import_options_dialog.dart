@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/ifr_factoring_fields_row.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
@@ -64,6 +68,9 @@ class _SouthwestImportOptionsDialogState
   late bool _addCopilotStaff;
   late bool _addFlightNumber;
   late final TextEditingController _crossCountryController;
+  late final TextEditingController _ifrPercentController;
+  late final TextEditingController _ifrSubtractController;
+  late final TextEditingController _ifrMinController;
 
   @override
   void initState() {
@@ -80,11 +87,23 @@ class _SouthwestImportOptionsDialogState
     _crossCountryController = TextEditingController(
       text: initial.crossCountryThresholdNm.toString(),
     );
+    _ifrPercentController = TextEditingController(
+      text: initial.ifrPercent.toString(),
+    );
+    _ifrSubtractController = TextEditingController(
+      text: HourInputField.formatHours(initial.ifrSubtractMinutes),
+    );
+    _ifrMinController = TextEditingController(
+      text: HourInputField.formatHours(initial.ifrMinimumMinutes),
+    );
   }
 
   @override
   void dispose() {
     _crossCountryController.dispose();
+    _ifrPercentController.dispose();
+    _ifrSubtractController.dispose();
+    _ifrMinController.dispose();
     super.dispose();
   }
 
@@ -96,6 +115,9 @@ class _SouthwestImportOptionsDialogState
         recalculateBlockTime: _recalcBlock,
         recalculateNightTime: _recalcNight,
         recalculateIfrTime: _recalcIfr,
+        ifrPercent: _parsePercent(_ifrPercentController),
+        ifrSubtractMinutes: _parseTime(_ifrSubtractController),
+        ifrMinimumMinutes: _parseTime(_ifrMinController),
         recalculateCrossCountry: _recalcCrossCountry,
         crossCountryThresholdNm:
             int.tryParse(
@@ -117,14 +139,19 @@ class _SouthwestImportOptionsDialogState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.databaseFileLabel(widget.fileName)),
+          Row(
+            children: [
+              Expanded(child: Text(l10n.databaseFileLabel(widget.fileName))),
+              InfoHelpButton(
+                title: l10n.southwestImportOptionsHelpTitle,
+                message: l10n.southwestImportOptionsHelpBody,
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<CrewPosition>(
-            initialValue: _defaultSelfPosition,
-            decoration: InputDecoration(
-              labelText: l10n.southwestDefaultSelfPositionLabel,
-              border: const OutlineInputBorder(),
-            ),
+          DropdownInputField<CrewPosition>(
+            label: l10n.southwestDefaultSelfPositionLabel,
+            value: _defaultSelfPosition,
             items: [
               DropdownMenuItem(
                 value: CrewPosition.pic,
@@ -160,6 +187,14 @@ class _SouthwestImportOptionsDialogState
             value: _recalcIfr,
             onChanged: (value) => setState(() => _recalcIfr = value ?? true),
           ),
+          if (_recalcIfr) ...[
+            IfrFactoringFieldsRow(
+              subtractController: _ifrSubtractController,
+              percentController: _ifrPercentController,
+              minimumController: _ifrMinController,
+            ),
+            const SizedBox(height: 4),
+          ],
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.southwestCalculateCrossCountryTimeLabel),
@@ -167,11 +202,13 @@ class _SouthwestImportOptionsDialogState
             onChanged: (value) =>
                 setState(() => _recalcCrossCountry = value ?? true),
           ),
-          NumberInputField(
-            controller: _crossCountryController,
-            label: l10n.southwestCrossCountryThresholdLabel,
-            enabled: _recalcCrossCountry,
-          ),
+          if (_recalcCrossCountry) ...[
+            NumberInputField(
+              controller: _crossCountryController,
+              label: l10n.southwestCrossCountryThresholdLabel,
+            ),
+            const SizedBox(height: 8),
+          ],
           const SizedBox(height: 8),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
@@ -205,5 +242,14 @@ class _SouthwestImportOptionsDialogState
       ],
       contentView: body,
     );
+  }
+
+  int _parsePercent(TextEditingController controller, {int fallback = 100}) {
+    final value = int.tryParse(controller.text.trim()) ?? fallback;
+    return value.clamp(0, 100);
+  }
+
+  int _parseTime(TextEditingController controller) {
+    return HourInputField.parseHours(controller.text.trim()) ?? 0;
   }
 }

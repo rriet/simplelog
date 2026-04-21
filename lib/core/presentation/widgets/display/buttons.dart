@@ -40,6 +40,15 @@ class Buttons extends StatelessWidget {
     final controlsTheme =
         theme.extension<AppFormControlsTheme>() ??
         AppFormControlsTheme.fallback;
+    final compactHeight = controlsTheme.resolvedCompactFieldHeight(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+    );
+    final effectiveBodyFontSize = controlsTheme.resolvedBodyFontSize(
+      context,
+      baseTextStyle: theme.textTheme.bodyMedium,
+      controlHeight: compactHeight,
+    );
 
     final child = icon == null
         ? Text(label, overflow: TextOverflow.ellipsis)
@@ -61,7 +70,7 @@ class Buttons extends StatelessWidget {
       ),
     );
     final textStyle = theme.textTheme.bodyMedium?.copyWith(
-      fontSize: controlsTheme.bodyFontSize,
+      fontSize: effectiveBodyFontSize,
     );
 
     final button = switch (variant) {
@@ -69,7 +78,7 @@ class Buttons extends StatelessWidget {
         onPressed: onPressed,
         style: FilledButton.styleFrom(
           padding: horizontalPadding,
-          minimumSize: Size(0, controlsTheme.compactFieldHeight),
+          minimumSize: Size(0, compactHeight),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           visualDensity: VisualDensity.standard,
           shape: shape,
@@ -81,7 +90,7 @@ class Buttons extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           padding: horizontalPadding,
-          minimumSize: Size(0, controlsTheme.compactFieldHeight),
+          minimumSize: Size(0, compactHeight),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           visualDensity: VisualDensity.standard,
           side: BorderSide(
@@ -95,6 +104,6 @@ class Buttons extends StatelessWidget {
       ),
     };
 
-    return SizedBox(height: controlsTheme.compactFieldHeight, child: button);
+    return SizedBox(height: compactHeight, child: button);
   }
 }

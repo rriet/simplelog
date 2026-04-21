@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
     required this.pickerAddIconSize,
     required this.pickerAddBorderRadius,
     required this.compactFieldHeight,
+    required this.compactFieldMinHeight,
     required this.compactBorderRadius,
     required this.compactBorderWidth,
     required this.horizontalContentPadding,
@@ -23,6 +25,7 @@ class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
     required this.errorLeftPadding,
     required this.suffixIconMinSize,
     required this.bodyFontSize,
+    required this.minBodyFontSize,
     required this.labelFontSize,
     required this.errorFontSize,
   });
@@ -33,19 +36,21 @@ class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
     pickerAddIconSize: 20,
     pickerAddBorderRadius: 8,
     compactFieldHeight: 38,
+    compactFieldMinHeight: 34,
     compactBorderRadius: 8,
     compactBorderWidth: 1,
     horizontalContentPadding: 10,
     verticalContentPadding: 4,
-    fieldVerticalGap: 7,
-    labelOffsetTop: -8,
+    fieldVerticalGap: 15,
+    labelOffsetTop: -15,
     labelOffsetLeft: 10,
     labelChipHorizontalPadding: 4,
     errorTopSpacing: 4,
     errorLeftPadding: 12,
     suffixIconMinSize: 24,
-    bodyFontSize: 11,
-    labelFontSize: 11,
+    bodyFontSize: 14,
+    minBodyFontSize: 11,
+    labelFontSize: 12,
     errorFontSize: 12,
   );
 
@@ -72,6 +77,9 @@ class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
 
   /// Fixed control height for compact single-line fields.
   final double compactFieldHeight;
+
+  /// Minimum control height for compact single-line fields.
+  final double compactFieldMinHeight;
 
   /// Border radius for compact input fields.
   final double compactBorderRadius;
@@ -111,6 +119,9 @@ class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
 
   /// Body text font size for compact controls.
   final double bodyFontSize;
+
+  /// Lowest body text size used when fitting text to compact controls.
+  final double minBodyFontSize;
 
   /// Label font size for compact controls.
   final double labelFontSize;
@@ -168,12 +179,46 @@ class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
     );
   }
 
+  /// Calculates compact control height that avoids clipping text content.
+  double resolvedCompactFieldHeight(
+    BuildContext context, {
+    TextStyle? baseTextStyle,
+  }) {
+    final textScaler = MediaQuery.textScalerOf(context);
+    final lineHeight = baseTextStyle?.height ?? 1.2;
+    final scaledBodyFontSize = textScaler.scale(bodyFontSize);
+    final requiredContentHeight =
+        (scaledBodyFontSize * lineHeight) + (verticalContentPadding * 2);
+    return math.max(
+      math.max(compactFieldHeight, compactFieldMinHeight),
+      requiredContentHeight,
+    );
+  }
+
+  /// Calculates body font size that fits inside compact controls.
+  double resolvedBodyFontSize(
+    BuildContext context, {
+    TextStyle? baseTextStyle,
+    double? controlHeight,
+  }) {
+    final textScaler = MediaQuery.textScalerOf(context);
+    final lineHeight = baseTextStyle?.height ?? 1.2;
+    final targetHeight =
+        controlHeight ??
+        resolvedCompactFieldHeight(context, baseTextStyle: baseTextStyle);
+    final maxBodyFontSizeForHeight =
+        (targetHeight - (verticalContentPadding * 2)) / lineHeight;
+    final scaledBodyFontSize = textScaler.scale(bodyFontSize);
+    return scaledBodyFontSize.clamp(minBodyFontSize, maxBodyFontSizeForHeight);
+  }
+
   @override
   AppFormControlsTheme copyWith({
     double? pickerAddButtonSize,
     double? pickerAddIconSize,
     double? pickerAddBorderRadius,
     double? compactFieldHeight,
+    double? compactFieldMinHeight,
     double? compactBorderRadius,
     double? compactBorderWidth,
     double? horizontalContentPadding,
@@ -186,6 +231,7 @@ class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
     double? errorLeftPadding,
     double? suffixIconMinSize,
     double? bodyFontSize,
+    double? minBodyFontSize,
     double? labelFontSize,
     double? errorFontSize,
   }) {
@@ -195,6 +241,8 @@ class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
       pickerAddBorderRadius:
           pickerAddBorderRadius ?? this.pickerAddBorderRadius,
       compactFieldHeight: compactFieldHeight ?? this.compactFieldHeight,
+      compactFieldMinHeight:
+          compactFieldMinHeight ?? this.compactFieldMinHeight,
       compactBorderRadius: compactBorderRadius ?? this.compactBorderRadius,
       compactBorderWidth: compactBorderWidth ?? this.compactBorderWidth,
       horizontalContentPadding:
@@ -210,6 +258,7 @@ class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
       errorLeftPadding: errorLeftPadding ?? this.errorLeftPadding,
       suffixIconMinSize: suffixIconMinSize ?? this.suffixIconMinSize,
       bodyFontSize: bodyFontSize ?? this.bodyFontSize,
+      minBodyFontSize: minBodyFontSize ?? this.minBodyFontSize,
       labelFontSize: labelFontSize ?? this.labelFontSize,
       errorFontSize: errorFontSize ?? this.errorFontSize,
     );
@@ -240,6 +289,11 @@ class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
       compactFieldHeight: lerpDouble(
         compactFieldHeight,
         other.compactFieldHeight,
+        t,
+      )!,
+      compactFieldMinHeight: lerpDouble(
+        compactFieldMinHeight,
+        other.compactFieldMinHeight,
         t,
       )!,
       compactBorderRadius: lerpDouble(
@@ -286,6 +340,7 @@ class AppFormControlsTheme extends ThemeExtension<AppFormControlsTheme> {
         t,
       )!,
       bodyFontSize: lerpDouble(bodyFontSize, other.bodyFontSize, t)!,
+      minBodyFontSize: lerpDouble(minBodyFontSize, other.minBodyFontSize, t)!,
       labelFontSize: lerpDouble(labelFontSize, other.labelFontSize, t)!,
       errorFontSize: lerpDouble(errorFontSize, other.errorFontSize, t)!,
     );

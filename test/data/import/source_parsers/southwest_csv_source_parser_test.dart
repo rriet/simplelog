@@ -246,4 +246,38 @@ void main() {
     expect(record.matchExistingByPositioningDateKey, isTrue);
     expect(record.overrideMatchedPositioning, isTrue);
   });
+
+  test('parse applies IFR minus before percent and enforces minimum', () {
+    final content = csv([
+      header,
+      [
+        '2026-03-01',
+        '125',
+        '',
+        'KHOU',
+        '08:00',
+        'KDAL',
+        '10:00',
+        '0200',
+        'N123SW',
+        'B737-700',
+        '1',
+        '1',
+        '',
+      ],
+    ]);
+
+    final batch = parser.parse(
+      content,
+      options: const SouthwestImportOptions(
+        ifrPercent: 50,
+        ifrSubtractMinutes: 30,
+        ifrMinimumMinutes: 40,
+      ),
+    );
+    final record = batch.records.single as NormalizedFlightRecord;
+
+    expect(record.timeBlockMinutes, 120);
+    expect(record.timeIfrMinutes, 45);
+  });
 }
