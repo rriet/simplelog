@@ -1219,7 +1219,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportsMetricTotalBlock.
   ///
   /// In en, this message translates to:
-  /// **'Total Block'**
+  /// **'Block'**
   String get reportsMetricTotalBlock;
 
   /// No description provided for @reportsMetricPic.

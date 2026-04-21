@@ -3,6 +3,7 @@ import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 
 /// Generic dropdown form field for enum-like report selectors.
 class ReportsEnumDropdownField<T> extends StatelessWidget {
@@ -16,7 +17,7 @@ class ReportsEnumDropdownField<T> extends StatelessWidget {
   /// - [onChanged]: called when user selects a non-null option.
   ///
   /// Output:
-  /// - A dense outlined [DropdownButtonFormField] with truncation handling.
+  /// - A compact [DropdownInputField] with truncation handling.
   const ReportsEnumDropdownField({
     required this.value,
     required this.label,
@@ -43,14 +44,9 @@ class ReportsEnumDropdownField<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<T>(
-      initialValue: value,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        isDense: true,
-      ),
+    return DropdownInputField<T>(
+      label: label,
+      value: value,
       items: options
           .map(
             (item) => DropdownMenuItem<T>(
@@ -58,9 +54,6 @@ class ReportsEnumDropdownField<T> extends StatelessWidget {
               child: _DropdownOverflowText(optionLabel(item)),
             ),
           )
-          .toList(growable: false),
-      selectedItemBuilder: (context) => options
-          .map((item) => _DropdownSelectedText(optionLabel(item)))
           .toList(growable: false),
       onChanged: (next) {
         if (next != null) {
@@ -310,25 +303,6 @@ class _DropdownOverflowText extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       softWrap: false,
-    );
-  }
-}
-
-class _DropdownSelectedText extends StatelessWidget {
-  const _DropdownSelectedText(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        text,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        softWrap: false,
-      ),
     );
   }
 }

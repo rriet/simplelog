@@ -18,6 +18,7 @@ import 'package:simplelog/features/reports/presentation/providers/reports_prefer
 import 'package:simplelog/state/providers/custom_time_labels_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/database_sync_controller_provider.dart';
+import 'package:simplelog/state/providers/duty_rules_settings_provider.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 import 'package:simplelog/state/providers/flight_form_settings_provider.dart';
 import 'package:simplelog/state/providers/flight_time_fields_visibility_provider.dart';
@@ -766,6 +767,7 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
     ref
       ..invalidate(databaseProvider)
       ..invalidate(flightFactoringSettingsProvider)
+      ..invalidate(dutyRulesSettingsProvider)
       ..invalidate(reportPilotInfoProvider)
       ..invalidate(flightFormTimeChecksProvider)
       ..invalidate(flightTimeFieldsVisibilityProvider)

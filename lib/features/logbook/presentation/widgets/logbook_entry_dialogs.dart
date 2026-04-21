@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart'
     show isCompactDialogScreen;
+import 'package:simplelog/core/presentation/widgets/maps/flight_routes_map_view.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
 import 'package:simplelog/data/models/aircraft_type_row.dart';
@@ -305,6 +307,13 @@ class LogbookEntryDialogs {
                         arrAirport,
                         useCases,
                       ),
+                onMapTap: depAirport == null || arrAirport == null
+                    ? null
+                    : () => _showSingleFlightMap(
+                        dialogContext,
+                        departure: depAirport,
+                        arrival: arrAirport,
+                      ),
               ),
               const SizedBox(height: 10),
               _DepartureBlockArrivalRow(
@@ -370,8 +379,9 @@ class LogbookEntryDialogs {
               if (remarks.isNotEmpty) ...[
                 _SectionDivider(color: colorScheme.outlineVariant),
                 _SectionLabelAndText(
-                  label:
-                      AppLocalizations.of(context)!.reportsFilterFieldRemarks,
+                  label: AppLocalizations.of(
+                    context,
+                  )!.reportsFilterFieldRemarks,
                   value: remarks,
                 ),
               ],
@@ -566,6 +576,20 @@ class LogbookEntryDialogs {
       row: AircraftTypeRow(type),
       logbookUseCases: useCases,
       onEntryTap: (entry) => show(context, entry: entry, useCases: useCases),
+    );
+  }
+
+  static Future<void> _showSingleFlightMap(
+    BuildContext context, {
+    required Airport departure,
+    required Airport arrival,
+  }) async {
+    await _showEntryInfoShell(
+      context,
+      builder: (_) => _SingleFlightMapDialog(
+        departure: departure,
+        arrival: arrival,
+      ),
     );
   }
 
@@ -793,12 +817,14 @@ class _FromToInfoRow extends StatelessWidget {
     required this.rightValue,
     this.leftOnTap,
     this.rightOnTap,
+    this.onMapTap,
   });
 
   final String leftValue;
   final String rightValue;
   final VoidCallback? leftOnTap;
   final VoidCallback? rightOnTap;
+  final VoidCallback? onMapTap;
 
   @override
   Widget build(BuildContext context) {
@@ -814,11 +840,28 @@ class _FromToInfoRow extends StatelessWidget {
         ),
         Expanded(
           child: Center(
-            child: Text(
-              AppLocalizations.of(context)!.autoUi068,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.primary,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (onMapTap != null) ...[
+                  IconButton(
+                    tooltip: AppLocalizations.of(context)!.mapTitle,
+                    onPressed: onMapTap,
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(
+                      Icons.map_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                ],
+                Text(
+                  AppLocalizations.of(context)!.autoUi068,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -831,6 +874,44 @@ class _FromToInfoRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SingleFlightMapDialog extends StatefulWidget {
+  const _SingleFlightMapDialog({
+    required this.departure,
+    required this.arrival,
+  });
+
+  final Airport departure;
+  final Airport arrival;
+
+  @override
+  State<_SingleFlightMapDialog> createState() => _SingleFlightMapDialogState();
+}
+
+class _SingleFlightMapDialogState extends State<_SingleFlightMapDialog> {
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return AdaptiveFormShell(
+      onClose: () => AppNavigator.pop(context),
+      title: l10n.reportsFlightMapTitle,
+      popupMaxWidth: 1100,
+      contentView: FlightRoutesMapView(
+        pairs: [
+          FlightRoutePair(
+            from: LatLng(
+              widget.departure.latitude,
+              widget.departure.longitude,
+            ),
+            to: LatLng(widget.arrival.latitude, widget.arrival.longitude),
+          ),
+        ],
+        airportCountLabel: l10n.reportsAirportsCount(2),
+      ),
     );
   }
 }

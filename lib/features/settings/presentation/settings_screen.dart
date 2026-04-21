@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
-import 'package:simplelog/features/database/presentation/database_screen.dart';
 import 'package:simplelog/features/settings/presentation/widgets/duty_rules_settings_card.dart';
 import 'package:simplelog/features/settings/presentation/widgets/flight_factoring_settings_card.dart';
 import 'package:simplelog/features/settings/presentation/widgets/pilot_profile_settings_card.dart';
@@ -12,7 +11,7 @@ import 'package:simplelog/features/settings/presentation/widgets/simulator_defau
 import 'package:simplelog/features/settings/presentation/widgets/theme_mode_selector.dart';
 import 'package:simplelog/features/settings/presentation/widgets/time_fields_settings_tab.dart';
 
-/// Root settings screen with tabs for general, database and time-field options.
+/// Root settings screen with general, experience, and time-fields tabs.
 class SettingsScreen extends ConsumerWidget {
   /// Creates the settings screen widget.
   const SettingsScreen({super.key});
@@ -21,7 +20,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     return DefaultTabController(
-      length: 4,
+      length: 3,
       child: Column(
         children: [
           TabBar(
@@ -30,7 +29,6 @@ class SettingsScreen extends ConsumerWidget {
             labelPadding: AppTabBarStyles.labelPadding,
             tabs: [
               Tab(text: l10n.settingsTabGeneral),
-              Tab(text: l10n.settingsTabDatabase),
               Tab(text: l10n.settingsTabExperience),
               Tab(text: l10n.settingsTabTimeFields),
             ],
@@ -74,7 +72,6 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const DatabaseScreen(),
                 const PreviousExperienceSettingsTab(),
                 const TimeFieldsSettingsTab(),
               ],

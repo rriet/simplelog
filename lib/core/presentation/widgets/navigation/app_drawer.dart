@@ -21,6 +21,7 @@ class AppDrawer extends ConsumerWidget {
     AppScreen.crew,
     AppScreen.dashboard,
     AppScreen.settings,
+    AppScreen.database,
     AppScreen.about,
   ];
 

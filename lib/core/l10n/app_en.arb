@@ -242,7 +242,7 @@
   "reportsMetricTakeoffNight": "Takeoff Night",
   "reportsMetricLandingDay": "Landing Day",
   "reportsMetricLandingNight": "Landing Night",
-  "reportsMetricTotalBlock": "Total Block",
+  "reportsMetricTotalBlock": "Block",
   "reportsMetricPic": "PIC",
   "reportsMetricPicus": "PICUS",
   "reportsMetricSic": "SIC",

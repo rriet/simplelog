@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/data/models/airport_filters.dart';
 
 /// Modal dialog that edits airport list ordering and search filters.
@@ -201,23 +202,11 @@ class _AirportFiltersDialogState extends State<AirportFiltersDialog> {
     required List<DropdownMenuItem<T>> items,
     required ValueChanged<T?> onChanged,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<T>(
-          initialValue: value,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-          ),
-          items: items,
-          onChanged: onChanged,
-        ),
-      ],
+    return DropdownInputField<T>(
+      label: label,
+      value: value,
+      items: items,
+      onChanged: onChanged,
     );
   }
 }

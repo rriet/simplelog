@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/keyboard/alphanumeric_search_keyboard.dart';
 
 /// Search input used by picker dialogs, with optional iOS custom keyboard.
@@ -194,17 +195,14 @@ class _PickerSearchBarState extends State<PickerSearchBar> {
           Expanded(
             child: Focus(
               onKeyEvent: widget.onKeyEvent,
-              child: TextField(
+              child: TextInputField(
                 controller: widget.controller,
+                label: widget.label,
                 focusNode: _effectiveFocusNode,
                 autofocus: widget.autofocus,
                 readOnly: widget.useCustomKeyboard && _isIos,
                 textCapitalization: TextCapitalization.characters,
-                decoration: InputDecoration(
-                  labelText: widget.label,
-                  prefixIcon: const Icon(Icons.search),
-                  border: const OutlineInputBorder(),
-                ),
+                prefixIcon: const Icon(Icons.search),
                 onTap: () => _effectiveFocusNode.requestFocus(),
                 onChanged: widget.onChanged,
                 onSubmitted: widget.onSubmitted,

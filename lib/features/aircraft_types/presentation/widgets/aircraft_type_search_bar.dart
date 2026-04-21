@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
 
 /// Search bar used by aircraft type screens.
 class AircraftTypeSearchBar extends StatelessWidget {
@@ -12,8 +13,10 @@ class AircraftTypeSearchBar extends StatelessWidget {
 
   /// Search text controller.
   final TextEditingController controller;
+
   /// Field label.
   final String label;
+
   /// Called when query changes.
   final ValueChanged<String> onChanged;
 
@@ -21,13 +24,10 @@ class AircraftTypeSearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: TextField(
+      child: TextInputField(
         controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: const Icon(Icons.search),
-          border: const OutlineInputBorder(),
-        ),
+        label: label,
+        prefixIcon: const Icon(Icons.search),
         onChanged: onChanged,
       ),
     );

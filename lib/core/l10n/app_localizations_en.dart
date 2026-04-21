@@ -600,7 +600,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsMetricLandingNight => 'Landing Night';
 
   @override
-  String get reportsMetricTotalBlock => 'Total Block';
+  String get reportsMetricTotalBlock => 'Block';
 
   @override
   String get reportsMetricPic => 'PIC';

@@ -38,6 +38,7 @@ import 'package:simplelog/features/database/presentation/widgets/southwest_impor
 import 'package:simplelog/features/database/presentation/widgets/southwest_import_preflight_dialog.dart';
 import 'package:simplelog/features/reports/presentation/providers/reports_preferences_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
+import 'package:simplelog/state/providers/duty_rules_settings_provider.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 import 'package:simplelog/state/providers/simulator_default_crew_position_provider.dart';
 
@@ -1297,6 +1298,7 @@ ${l10n.databaseErrorsLabel(stats.errors)}
     ref
       ..invalidate(databaseProvider)
       ..invalidate(flightFactoringSettingsProvider)
+      ..invalidate(dutyRulesSettingsProvider)
       ..invalidate(reportPilotInfoProvider);
   }
 

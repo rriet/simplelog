@@ -7,7 +7,6 @@ import 'package:drift/drift.dart' as d;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
@@ -17,16 +16,18 @@ import 'package:simplelog/core/date/db_date_time.dart';
 import 'package:simplelog/core/flight/flight_calculations.dart';
 import 'package:simplelog/core/flight/pilot_function_logic.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
-import 'package:simplelog/core/maps/map_tile_caching.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
+import 'package:simplelog/core/presentation/widgets/display/buttons.dart';
 import 'package:simplelog/core/presentation/widgets/display/event_type_toggle_button.dart';
 import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/time_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/maps/flight_routes_map_view.dart';
 import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
@@ -2558,11 +2559,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                       const SizedBox(height: 8),
                       Align(
                         alignment: Alignment.centerLeft,
-                        child: OutlinedButton.icon(
+                        child: Buttons(
                           onPressed: () =>
                               showPilotProfileEditorDialog(context),
-                          icon: const Icon(Icons.person_outline),
-                          label: Text(l10n.reportsEditPilotProfile),
+                          icon: Icons.person_outline,
+                          label: l10n.reportsEditPilotProfile,
                         ),
                       ),
                     ],
@@ -2647,29 +2648,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: DropdownButtonFormField<_XslTemplateOption>(
+                  child: DropdownInputField<_XslTemplateOption>(
                     key: ValueKey(
                       _selectedTemplate?.fileName ?? 'template_selector',
                     ),
-                    initialValue: _selectedTemplate,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: l10n.reportsXmlTemplateLabel,
-                      border: const OutlineInputBorder(),
-                      isDense: true,
-                    ),
+                    label: l10n.reportsXmlTemplateLabel,
+                    value: _selectedTemplate,
+                    hintText: _xslTemplateOptions.isEmpty
+                        ? l10n.reportsNoTemplateAvailable
+                        : null,
                     items: _xslTemplateOptions
                         .map(
                           (template) => DropdownMenuItem<_XslTemplateOption>(
                             value: template,
                             child: _overflowText(template.description),
                           ),
-                        )
-                        .toList(growable: false),
-                    selectedItemBuilder: (context) => _xslTemplateOptions
-                        .map(
-                          (template) =>
-                              _dropdownSelectedItem(template.description),
                         )
                         .toList(growable: false),
                     onChanged: (value) {
@@ -3060,8 +3053,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
             ],
             contentView: Padding(
               padding: const EdgeInsets.all(16),
-              child: DropdownButtonFormField<CrewPosition>(
-                initialValue: selectedPosition,
+              child: DropdownInputField<CrewPosition>(
+                label: AppLocalizations.of(context)!.crewPositionLabel,
+                value: selectedPosition,
                 items: [
                   DropdownMenuItem(
                     value: CrewPosition.pic,
@@ -4477,7 +4471,7 @@ class _BatchFlightChecksDialogState extends State<_BatchFlightChecksDialog> {
             const SizedBox(height: 10),
             Row(
               children: [
-                OutlinedButton(
+                Buttons(
                   onPressed: () {
                     setState(() {
                       _selected
@@ -4485,14 +4479,14 @@ class _BatchFlightChecksDialogState extends State<_BatchFlightChecksDialog> {
                         ..addAll(_BatchFlightCheck.values);
                     });
                   },
-                  child: Text(AppLocalizations.of(context)!.reportsSelectAll),
+                  label: AppLocalizations.of(context)!.reportsSelectAll,
                 ),
                 const SizedBox(width: 8),
-                OutlinedButton(
+                Buttons(
                   onPressed: () {
                     setState(_selected.clear);
                   },
-                  child: Text(AppLocalizations.of(context)!.reportsClearAction),
+                  label: AppLocalizations.of(context)!.reportsClearAction,
                 ),
               ],
             ),
@@ -4679,26 +4673,26 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
     }
 
     Widget modeDropdown({
+      required String fieldLabel,
       required _BatchFieldMode value,
       required ValueChanged<_BatchFieldMode?> onChanged,
+      required bool showFieldLabel,
     }) {
-      return DropdownButtonFormField<_BatchFieldMode>(
-        isExpanded: true,
-        initialValue: value,
+      final useCompactLabels = isCompact || isNarrow;
+      return DropdownInputField<_BatchFieldMode>(
+        label: fieldLabel,
+        value: value,
+        showLabel: showFieldLabel,
         items: _BatchFieldMode.values
             .map(
               (mode) => DropdownMenuItem(
                 value: mode,
-                child: Text(modeLabel(mode)),
+                child: Text(
+                  useCompactLabels ? compactModeLabel(mode) : modeLabel(mode),
+                ),
               ),
             )
             .toList(growable: false),
-        selectedItemBuilder: (context) {
-          return _BatchFieldMode.values
-              .map((mode) => Text(compactModeLabel(mode)))
-              .toList(growable: false);
-        },
-        decoration: const InputDecoration(isDense: true),
         onChanged: onChanged,
       );
     }
@@ -4728,27 +4722,22 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: isNarrow
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(label(field)),
-                            const SizedBox(height: 6),
-                            modeDropdown(
-                              value: _preferences.modeFor(field),
-                              onChanged: (value) {
-                                if (value == null) return;
-                                final nextModes =
-                                    Map<_BatchCalcField, _BatchFieldMode>.from(
-                                      _preferences.fieldModes,
-                                    )..[field] = value;
-                                setState(() {
-                                  _preferences = _preferences.copyWith(
-                                    fieldModes: nextModes,
-                                  );
-                                });
-                              },
-                            ),
-                          ],
+                      ? modeDropdown(
+                          fieldLabel: label(field),
+                          showFieldLabel: true,
+                          value: _preferences.modeFor(field),
+                          onChanged: (value) {
+                            if (value == null) return;
+                            final nextModes =
+                                Map<_BatchCalcField, _BatchFieldMode>.from(
+                                  _preferences.fieldModes,
+                                )..[field] = value;
+                            setState(() {
+                              _preferences = _preferences.copyWith(
+                                fieldModes: nextModes,
+                              );
+                            });
+                          },
                         )
                       : Row(
                           children: [
@@ -4756,6 +4745,8 @@ class _BatchCalculateAllDialogState extends State<_BatchCalculateAllDialog> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: modeDropdown(
+                                fieldLabel: label(field),
+                                showFieldLabel: false,
                                 value: _preferences.modeFor(field),
                                 onChanged: (value) {
                                   if (value == null) return;
@@ -5100,32 +5091,13 @@ class _ReportsActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (filled) {
-      return SizedBox(
-        width: double.infinity,
-        child: FilledButton.icon(
-          onPressed: onPressed,
-          icon: Icon(icon),
-          label: Text(
-            label,
-            maxLines: 1,
-            softWrap: false,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      );
-    }
     return SizedBox(
       width: double.infinity,
-      child: OutlinedButton.icon(
+      child: Buttons(
         onPressed: onPressed,
-        icon: Icon(icon),
-        label: Text(
-          label,
-          maxLines: 1,
-          softWrap: false,
-          overflow: TextOverflow.ellipsis,
-        ),
+        icon: icon,
+        label: label,
+        variant: filled ? ButtonsVariant.filled : ButtonsVariant.outlined,
       ),
     );
   }
@@ -5592,13 +5564,9 @@ class _FiltersCard extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          labelText: l10n.reportsSavedQueriesLabel,
-                          border: const OutlineInputBorder(),
-                          isDense: true,
-                        ),
+                      child: DropdownInputField<String>(
+                        label: l10n.reportsSavedQueriesLabel,
+                        hintText: l10n.reportsSavedQueriesLabel,
                         items: savedQueries
                             .map(
                               (query) => DropdownMenuItem(
@@ -5606,9 +5574,6 @@ class _FiltersCard extends StatelessWidget {
                                 child: _overflowText(query.name),
                               ),
                             )
-                            .toList(growable: false),
-                        selectedItemBuilder: (context) => savedQueries
-                            .map((query) => _dropdownSelectedItem(query.name))
                             .toList(growable: false),
                         onChanged: (value) {
                           if (value == null) return;
@@ -5620,65 +5585,39 @@ class _FiltersCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    SizedBox(
-                      height: compact ? 36 : 40,
-                      child: FilledButton(
-                        onPressed: onSaveQuery,
-                        style: FilledButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: compact ? 8 : 10,
-                          ),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        child: Text(l10n.saveAction),
-                      ),
+                    Buttons(
+                      onPressed: onSaveQuery,
+                      label: l10n.saveAction,
+                      variant: ButtonsVariant.filled,
                     ),
                     const SizedBox(width: 8),
-                    SizedBox(
-                      height: compact ? 36 : 40,
-                      child: savedQueries.isNotEmpty
-                          ? PopupMenuButton<String>(
-                              onSelected: onDeleteSavedQuery,
-                              itemBuilder: (context) => savedQueries
-                                  .map(
-                                    (query) => PopupMenuItem(
-                                      value: query.id,
-                                      child: Text(
-                                        l10n.reportsDeleteSavedQuery(
-                                          query.name,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(growable: false),
-                              child: Container(
-                                height: compact ? 36 : 40,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: compact ? 8 : 12,
-                                ),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Theme.of(context).dividerColor,
+                    if (savedQueries.isNotEmpty)
+                      PopupMenuButton<String>(
+                        onSelected: onDeleteSavedQuery,
+                        itemBuilder: (context) => savedQueries
+                            .map(
+                              (query) => PopupMenuItem(
+                                value: query.id,
+                                child: Text(
+                                  l10n.reportsDeleteSavedQuery(
+                                    query.name,
                                   ),
                                 ),
-                                child: Text(l10n.deleteAction),
                               ),
                             )
-                          : OutlinedButton(
-                              onPressed: null,
-                              style: OutlinedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: compact ? 8 : 10,
-                                ),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              child: Text(l10n.deleteAction),
-                            ),
-                    ),
+                            .toList(growable: false),
+                        child: IgnorePointer(
+                          child: Buttons(
+                            onPressed: () {},
+                            label: l10n.deleteAction,
+                          ),
+                        ),
+                      )
+                    else
+                      Buttons(
+                        onPressed: null,
+                        label: l10n.deleteAction,
+                      ),
                     const SizedBox(width: 8),
                     InfoHelpButton(
                       title: l10n.reportsFiltersHelpTitle,
@@ -5803,51 +5742,28 @@ class _FiltersCard extends StatelessWidget {
                               onTimeChanged: onToTimeChanged,
                             ),
                             const SizedBox(height: 8),
-                            DropdownButtonFormField<ReportsFilterMatchMode>(
-                              initialValue: matchMode,
-                              isExpanded: true,
-                              decoration: InputDecoration(
-                                labelText: l10n.reportsMatchModeLabel,
-                                border: const OutlineInputBorder(),
-                                isDense: true,
-                              ),
-                              items: [
-                                DropdownMenuItem(
-                                  value: ReportsFilterMatchMode.all,
-                                  child: _overflowText(l10n.reportsMatchAll),
-                                ),
-                                DropdownMenuItem(
-                                  value: ReportsFilterMatchMode.any,
-                                  child: _overflowText(l10n.reportsMatchAny),
-                                ),
+                            ReportsEnumDropdownField<ReportsFilterMatchMode>(
+                              value: matchMode,
+                              label: l10n.reportsMatchModeLabel,
+                              options: const [
+                                ReportsFilterMatchMode.all,
+                                ReportsFilterMatchMode.any,
                               ],
-                              selectedItemBuilder: (context) => [
-                                _dropdownSelectedItem(l10n.reportsMatchAll),
-                                _dropdownSelectedItem(l10n.reportsMatchAny),
-                              ],
-                              onChanged: (value) {
-                                if (value != null) {
-                                  unawaited(onMatchModeChanged(value));
-                                }
-                              },
+                              optionLabel: (value) =>
+                                  value == ReportsFilterMatchMode.all
+                                  ? l10n.reportsMatchAll
+                                  : l10n.reportsMatchAny,
+                              onChanged: (value) =>
+                                  unawaited(onMatchModeChanged(value)),
                             ),
                             const SizedBox(height: 8),
-                            SizedBox(
-                              height: compact ? 36 : 40,
-                              child: FilledButton.icon(
-                                onPressed: onAddFilter,
-                                icon: const Icon(Icons.add),
-                                label: Text(
-                                  compact
-                                      ? l10n.addAction
-                                      : l10n.reportsAddFilter,
-                                ),
-                                style: FilledButton.styleFrom(
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                              ),
+                            Buttons(
+                              onPressed: onAddFilter,
+                              icon: Icons.add,
+                              label: compact
+                                  ? l10n.addAction
+                                  : l10n.reportsAddFilter,
+                              variant: ButtonsVariant.filled,
                             ),
                           ],
                         ),
@@ -6534,58 +6450,12 @@ class _FlightsMapDialog extends StatefulWidget {
 }
 
 class _FlightsMapDialogState extends State<_FlightsMapDialog> {
-  final _mapController = MapController();
-  double _zoom = 2;
   late bool _showLines;
-  static const Color _mapLineColor = Color(0x994A90E2);
-  static const Color _mapDotColor = Color(0xFF1565C0);
 
   @override
   void initState() {
     super.initState();
     _showLines = widget.initialShowLines;
-  }
-
-  List<LatLng> _greatCirclePoints(LatLng from, LatLng to, {int segments = 48}) {
-    final lat1 = from.latitude * math.pi / 180.0;
-    final lon1 = from.longitude * math.pi / 180.0;
-    final lat2 = to.latitude * math.pi / 180.0;
-    final lon2 = to.longitude * math.pi / 180.0;
-
-    final d =
-        2 *
-        math.asin(
-          math.sqrt(
-            math.pow(math.sin((lat2 - lat1) / 2), 2).toDouble() +
-                math.cos(lat1) *
-                    math.cos(lat2) *
-                    math.pow(math.sin((lon2 - lon1) / 2), 2).toDouble(),
-          ),
-        );
-    if (d == 0 || d.isNaN) {
-      return [from, to];
-    }
-
-    final points = <LatLng>[];
-    final sinD = math.sin(d);
-    for (var i = 0; i <= segments; i++) {
-      final f = i / segments;
-      final a = math.sin((1 - f) * d) / sinD;
-      final b = math.sin(f * d) / sinD;
-
-      final x =
-          a * math.cos(lat1) * math.cos(lon1) +
-          b * math.cos(lat2) * math.cos(lon2);
-      final y =
-          a * math.cos(lat1) * math.sin(lon1) +
-          b * math.cos(lat2) * math.sin(lon2);
-      final z = a * math.sin(lat1) + b * math.sin(lat2);
-
-      final lat = math.atan2(z, math.sqrt(x * x + y * y));
-      final lon = math.atan2(y, x);
-      points.add(LatLng(lat * 180.0 / math.pi, lon * 180.0 / math.pi));
-    }
-    return points;
   }
 
   Future<void> _exportInteractiveHtmlMap() async {
@@ -6638,14 +6508,14 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
 
   String _buildInteractiveMapHtml() {
     final points = <Map<String, dynamic>>[];
-    final bounds = _BoundsAccumulator();
     final routeFeatures = widget.mapData.routes.map((route) {
       final fromPoint = LatLng(route.airportALatitude, route.airportALongitude);
       final toPoint = LatLng(route.airportBLatitude, route.airportBLongitude);
-      final greatCircle = _greatCirclePoints(fromPoint, toPoint, segments: 24);
-      for (final p in greatCircle) {
-        bounds.extend(p.latitude, p.longitude);
-      }
+      final greatCircle = _greatCirclePointsForHtml(
+        fromPoint,
+        toPoint,
+        segments: 24,
+      );
       final coordinates = greatCircle
           .map((p) => [_roundCoord(p.longitude), _roundCoord(p.latitude)])
           .toList(growable: false);
@@ -6673,7 +6543,6 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
         },
         'properties': {'icao': airport.icao},
       });
-      bounds.extend(airport.latitude, airport.longitude);
     }
 
     final collection = {
@@ -6681,7 +6550,7 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
       'features': [...routeFeatures, ...points],
     };
     final geoJson = const JsonEncoder.withIndent('  ').convert(collection);
-    final center = bounds.centerOrDefault();
+    final center = _centerFromAirports(widget.mapData.airports);
     final centerLat = (center.$1 + center.$3) / 2;
     final centerLon = (center.$2 + center.$4) / 2;
 
@@ -6806,103 +6675,22 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final lines = <Polyline>[];
-    final markers = <Marker>[];
-
-    for (final route in widget.mapData.routes) {
-      final fromPoint = LatLng(route.airportALatitude, route.airportALongitude);
-      final toPoint = LatLng(route.airportBLatitude, route.airportBLongitude);
-      if (_showLines) {
-        lines.add(
-          Polyline(
-            points: _greatCirclePoints(fromPoint, toPoint),
-            strokeWidth: 2,
-            color: _mapLineColor,
+    final pairs = widget.mapData.routes
+        .map(
+          (route) => FlightRoutePair(
+            from: LatLng(route.airportALatitude, route.airportALongitude),
+            to: LatLng(route.airportBLatitude, route.airportBLongitude),
           ),
-        );
-      }
-    }
-    for (final airport in widget.mapData.airports) {
-      markers.add(
-        Marker(
-          point: LatLng(airport.latitude, airport.longitude),
-          width: 14,
-          height: 14,
-          child: const Icon(Icons.circle, size: 9, color: _mapDotColor),
-        ),
-      );
-    }
+        )
+        .toList(growable: false);
     final airportCount = widget.mapData.airports.length;
 
-    final mapBody = markers.isEmpty
+    final mapBody = pairs.isEmpty
         ? Center(child: Text(l10n.reportsNoCoordinatesAvailable))
-        : Stack(
-            children: [
-              FlutterMap(
-                mapController: _mapController,
-                options: const MapOptions(
-                  initialCenter: LatLng(20, 0),
-                  initialZoom: 2,
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.rietlabs.simplelog',
-                    tileProvider: NetworkTileProvider(
-                      cachingProvider: appMapCachingProvider(),
-                    ),
-                  ),
-                  PolylineLayer(polylines: lines),
-                  MarkerLayer(markers: markers),
-                ],
-              ),
-              Positioned(
-                left: 12,
-                top: 12,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                    child: Text(
-                      l10n.reportsAirportsCount(airportCount),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                right: 12,
-                top: 12,
-                child: Card(
-                  child: Column(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          _zoom += 1;
-                          _mapController.move(
-                            _mapController.camera.center,
-                            _zoom,
-                          );
-                        },
-                        icon: const Icon(Icons.add),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          _zoom -= 1;
-                          _mapController.move(
-                            _mapController.camera.center,
-                            _zoom,
-                          );
-                        },
-                        icon: const Icon(Icons.remove),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+        : FlightRoutesMapView(
+            pairs: pairs,
+            airportCountLabel: l10n.reportsAirportsCount(airportCount),
+            showLines: _showLines,
           );
 
     final actions = <Widget>[
@@ -6926,26 +6714,67 @@ class _FlightsMapDialogState extends State<_FlightsMapDialog> {
       contentView: mapBody,
     );
   }
-}
 
-class _BoundsAccumulator {
-  double? _minLat;
-  double? _maxLat;
-  double? _minLon;
-  double? _maxLon;
+  List<LatLng> _greatCirclePointsForHtml(
+    LatLng from,
+    LatLng to, {
+    int segments = 48,
+  }) {
+    final lat1 = from.latitude * math.pi / 180.0;
+    final lon1 = from.longitude * math.pi / 180.0;
+    final lat2 = to.latitude * math.pi / 180.0;
+    final lon2 = to.longitude * math.pi / 180.0;
 
-  void extend(double lat, double lon) {
-    _minLat = _minLat == null ? lat : math.min(_minLat!, lat);
-    _maxLat = _maxLat == null ? lat : math.max(_maxLat!, lat);
-    _minLon = _minLon == null ? lon : math.min(_minLon!, lon);
-    _maxLon = _maxLon == null ? lon : math.max(_maxLon!, lon);
+    final d =
+        2 *
+        math.asin(
+          math.sqrt(
+            math.pow(math.sin((lat2 - lat1) / 2), 2).toDouble() +
+                math.cos(lat1) *
+                    math.cos(lat2) *
+                    math.pow(math.sin((lon2 - lon1) / 2), 2).toDouble(),
+          ),
+        );
+    if (d == 0 || d.isNaN) {
+      return [from, to];
+    }
+
+    final points = <LatLng>[];
+    final sinD = math.sin(d);
+    for (var i = 0; i <= segments; i++) {
+      final f = i / segments;
+      final a = math.sin((1 - f) * d) / sinD;
+      final b = math.sin(f * d) / sinD;
+
+      final x =
+          a * math.cos(lat1) * math.cos(lon1) +
+          b * math.cos(lat2) * math.cos(lon2);
+      final y =
+          a * math.cos(lat1) * math.sin(lon1) +
+          b * math.cos(lat2) * math.sin(lon2);
+      final z = a * math.sin(lat1) + b * math.sin(lat2);
+
+      final lat = math.atan2(z, math.sqrt(x * x + y * y));
+      final lon = math.atan2(y, x);
+      points.add(LatLng(lat * 180.0 / math.pi, lon * 180.0 / math.pi));
+    }
+    return points;
   }
 
-  (double, double, double, double) centerOrDefault() {
-    final minLat = _minLat ?? -45;
-    final minLon = _minLon ?? -90;
-    final maxLat = _maxLat ?? 45;
-    final maxLon = _maxLon ?? 90;
+  (double, double, double, double) _centerFromAirports(
+    List<ReportsMapAirportPoint> airports,
+  ) {
+    if (airports.isEmpty) return (-45, -90, 45, 90);
+    var minLat = airports.first.latitude;
+    var maxLat = airports.first.latitude;
+    var minLon = airports.first.longitude;
+    var maxLon = airports.first.longitude;
+    for (final airport in airports.skip(1)) {
+      minLat = math.min(minLat, airport.latitude);
+      maxLat = math.max(maxLat, airport.latitude);
+      minLon = math.min(minLon, airport.longitude);
+      maxLon = math.max(maxLon, airport.longitude);
+    }
     return (minLat, minLon, maxLat, maxLon);
   }
 }
@@ -7525,13 +7354,6 @@ Widget _overflowText(String value) {
     maxLines: 1,
     softWrap: false,
     overflow: TextOverflow.ellipsis,
-  );
-}
-
-Widget _dropdownSelectedItem(String value) {
-  return Align(
-    alignment: AlignmentDirectional.centerStart,
-    child: _overflowText(value),
   );
 }
 

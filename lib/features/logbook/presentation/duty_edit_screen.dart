@@ -369,15 +369,10 @@ class _DutyEditScreenState extends ConsumerState<DutyEditScreen> {
             Row(
               children: [
                 Expanded(
-                  child: TextFormField(
+                  child: HourInputField(
                     controller: _dutyTimeController,
-                    enabled: false,
                     readOnly: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Duty Time',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
+                    label: AppLocalizations.of(context)!.reportsMetricDuty,
                   ),
                 ),
                 const SizedBox(width: 8),

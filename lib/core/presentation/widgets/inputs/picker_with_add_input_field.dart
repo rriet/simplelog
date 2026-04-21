@@ -34,63 +34,142 @@ class PickerWithAddInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controlsTheme = Theme.of(context).extension<AppFormControlsTheme>();
-    final addButtonSize = controlsTheme?.pickerAddButtonSize ?? 40;
-    final addIconSize = controlsTheme?.pickerAddIconSize ?? 20;
-    final addBorderRadius = controlsTheme?.pickerAddBorderRadius ?? 8;
-    final borderColor = Theme.of(context).colorScheme.outline;
-    return Row(
-      children: [
-        Expanded(
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(addBorderRadius),
-            child: InputDecorator(
-              decoration: InputDecoration(
-                labelText: label,
-                border: const OutlineInputBorder(),
-                errorText: errorText,
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final controlsTheme =
+        theme.extension<AppFormControlsTheme>() ??
+        AppFormControlsTheme.fallback;
+    final addIconSize = controlsTheme.pickerAddIconSize;
+    final addBorderRadius = controlsTheme.pickerAddBorderRadius;
+    final hasError = (errorText ?? '').trim().isNotEmpty;
+    final borderColor = hasError
+        ? colorScheme.error
+        : colorScheme.outlineVariant;
+    final labelColor = hasError
+        ? colorScheme.error
+        : colorScheme.onSurfaceVariant;
+
+    final control = SizedBox(
+      height: controlsTheme.compactFieldHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: Material(
+              color: colorScheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(
+                  controlsTheme.compactBorderRadius,
+                ),
+                side: BorderSide(
+                  color: borderColor,
+                  width: controlsTheme.compactBorderWidth,
+                ),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      valueText,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(
+                  controlsTheme.compactBorderRadius,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: controlsTheme.horizontalContentPadding,
+                    vertical: controlsTheme.verticalContentPadding,
                   ),
-                  Icon(
-                    Icons.search,
-                    size: 18,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          valueText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontSize: controlsTheme.bodyFontSize,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.search,
+                        size: 18,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-        if (onAdd != null) ...[
-          const SizedBox(width: 8),
-          Tooltip(
-            message: addTooltip ?? 'Add',
-            child: InkWell(
-              onTap: onAdd,
-              borderRadius: BorderRadius.circular(addBorderRadius),
-              child: Container(
-                width: addButtonSize,
-                height: addButtonSize,
-                decoration: BoxDecoration(
-                  border: Border.all(color: borderColor),
-                  borderRadius: BorderRadius.circular(addBorderRadius),
+          Positioned(
+            left: controlsTheme.labelOffsetLeft,
+            top: controlsTheme.labelOffsetTop,
+            child: Container(
+              color: colorScheme.surface,
+              padding: EdgeInsets.symmetric(
+                horizontal: controlsTheme.labelChipHorizontalPadding,
+              ),
+              child: Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: labelColor,
+                  fontSize: controlsTheme.labelFontSize,
                 ),
-                alignment: Alignment.center,
-                child: Icon(Icons.add, size: addIconSize),
               ),
             ),
           ),
         ],
-      ],
+      ),
+    );
+
+    final field = !hasError
+        ? control
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              control,
+              SizedBox(height: controlsTheme.errorTopSpacing),
+              Padding(
+                padding: EdgeInsets.only(left: controlsTheme.errorLeftPadding),
+                child: Text(
+                  errorText!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.error,
+                    fontSize: controlsTheme.errorFontSize,
+                  ),
+                ),
+              ),
+            ],
+          );
+
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        vertical: controlsTheme.fieldVerticalGap / 2,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: field),
+          if (onAdd != null) ...[
+            const SizedBox(width: 8),
+            Tooltip(
+              message: addTooltip ?? 'Add',
+              child: InkWell(
+                onTap: onAdd,
+                borderRadius: BorderRadius.circular(addBorderRadius),
+                child: Container(
+                  width: controlsTheme.compactFieldHeight,
+                  height: controlsTheme.compactFieldHeight,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: colorScheme.outline),
+                    borderRadius: BorderRadius.circular(addBorderRadius),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(Icons.add, size: addIconSize),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -1620,13 +1620,10 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
         Row(
           children: [
             Expanded(
-              child: TextFormField(
+              child: HourInputField(
                 controller: _totalBlockController,
+                label: AppLocalizations.of(context)!.reportsMetricTotalBlock,
                 readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: 'Total Block',
-                  border: OutlineInputBorder(),
-                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -1851,14 +1848,11 @@ class _FlightEditScreenState extends ConsumerState<FlightEditScreen> {
           label: AppLocalizations.of(context)!.fieldRemarks,
         ),
         const SizedBox(height: 8),
-        TextFormField(
+        TextInputField(
           controller: _notesController,
+          label: AppLocalizations.of(context)!.fieldNotes,
           minLines: 2,
           maxLines: 2,
-          decoration: InputDecoration(
-            labelText: AppLocalizations.of(context)!.fieldNotes,
-            border: const OutlineInputBorder(),
-          ),
         ),
       ],
     );

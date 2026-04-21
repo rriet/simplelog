@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 
 /// Reusable elapsed-time input field (`h:mm`) with optional constraints.
 class TimeInputField extends StatefulWidget {
@@ -163,46 +164,57 @@ class _TimeInputFieldState extends State<TimeInputField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      key: _fieldKey,
-      controller: widget.controller,
-      focusNode: _focusNode,
-      keyboardType: TextInputType.number,
-      inputFormatters: const [TimeInputFormatter()],
-      decoration: InputDecoration(
-        labelText: widget.label,
-        border: const OutlineInputBorder(),
-        errorText: widget.errorText,
-        suffixIconConstraints: const BoxConstraints(
-          minWidth: 24,
-          minHeight: 24,
+    final theme = Theme.of(context);
+    final inputTheme =
+        theme.extension<AppFormControlsTheme>() ??
+        AppFormControlsTheme.fallback;
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: inputTheme.fieldVerticalGap / 2),
+      child: SizedBox(
+        height: inputTheme.compactFieldHeight,
+        child: TextFormField(
+          key: _fieldKey,
+          controller: widget.controller,
+          focusNode: _focusNode,
+          keyboardType: TextInputType.number,
+          textAlignVertical: TextAlignVertical.center,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontSize: inputTheme.bodyFontSize,
+          ),
+          inputFormatters: const [TimeInputFormatter()],
+          decoration: inputTheme.compactDecoration(
+            context: context,
+            label: widget.label,
+            errorText: widget.errorText,
+            suffixIcon: widget.suffixIcon,
+          ),
+          onChanged: (value) {
+            final parsed = TimeInputField.parseMinutes(value);
+            if (parsed != null) {
+              widget.onChangedMinutes?.call(parsed);
+            } else if (widget.allowEmpty && value.trim().isEmpty) {
+              widget.onCleared?.call();
+            }
+          },
+          autovalidateMode: AutovalidateMode.disabled,
+          validator: (value) {
+            final raw = value ?? '';
+            if (!TimeInputField.isValidTimeText(
+              raw,
+              allowEmpty: widget.allowEmpty,
+              maxHours: widget.maxHours,
+            )) {
+              final hoursHint = widget.maxHours != null
+                  ? ' and hours must be between 00 and '
+                        '${widget.maxHours!.toString().padLeft(2, '0')}'
+                  : '';
+              return 'Invalid time. Minutes must be between 00 and 59'
+                  '$hoursHint.';
+            }
+            return widget.validator?.call(value);
+          },
         ),
-        suffixIcon: widget.suffixIcon,
       ),
-      onChanged: (value) {
-        final parsed = TimeInputField.parseMinutes(value);
-        if (parsed != null) {
-          widget.onChangedMinutes?.call(parsed);
-        } else if (widget.allowEmpty && value.trim().isEmpty) {
-          widget.onCleared?.call();
-        }
-      },
-      autovalidateMode: AutovalidateMode.disabled,
-      validator: (value) {
-        final raw = value ?? '';
-        if (!TimeInputField.isValidTimeText(
-          raw,
-          allowEmpty: widget.allowEmpty,
-          maxHours: widget.maxHours,
-        )) {
-          final hoursHint = widget.maxHours != null
-              ? ' and hours must be between 00 and '
-                    '${widget.maxHours!.toString().padLeft(2, '0')}'
-              : '';
-          return 'Invalid time. Minutes must be between 00 and 59$hoursHint.';
-        }
-        return widget.validator?.call(value);
-      },
     );
   }
 }

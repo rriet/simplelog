@@ -5,6 +5,7 @@ import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/delete_confirmation_dialog.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/core/text/search_normalizer.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/aircraft_row.dart';
@@ -197,14 +198,9 @@ class _AircraftScreenState extends ConsumerState<AircraftScreen> {
               onChanged: (value) => setState(() => _query = value),
               trailing: SizedBox(
                 width: isCompact ? 132 : 190,
-                child: DropdownButtonFormField<AircraftSearchBy>(
-                  isExpanded: true,
-                  initialValue: _searchBy,
-                  decoration: InputDecoration(
-                    labelText: l10n.searchByLabel,
-                    border: const OutlineInputBorder(),
-                    isDense: true,
-                  ),
+                child: DropdownInputField<AircraftSearchBy>(
+                  label: l10n.searchByLabel,
+                  value: _searchBy,
                   items: [
                     DropdownMenuItem(
                       value: AircraftSearchBy.all,

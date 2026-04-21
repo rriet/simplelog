@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/theme/app_form_controls_theme.dart';
 
 /// Compact reusable dropdown input field.
 class DropdownInputField<T> extends StatelessWidget {
@@ -10,6 +11,8 @@ class DropdownInputField<T> extends StatelessWidget {
     super.key,
     this.value,
     this.errorText,
+    this.hintText,
+    this.showLabel = true,
   });
 
   /// Field label.
@@ -27,10 +30,19 @@ class DropdownInputField<T> extends StatelessWidget {
   /// Optional inline validation error.
   final String? errorText;
 
+  /// Optional placeholder shown when no [value] is selected.
+  final String? hintText;
+
+  /// Whether the floating label chip is shown.
+  final bool showLabel;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final inputTheme =
+        theme.extension<AppFormControlsTheme>() ??
+        AppFormControlsTheme.fallback;
     final hasError = (errorText ?? '').trim().isNotEmpty;
     final borderColor = hasError
         ? colorScheme.error
@@ -38,10 +50,17 @@ class DropdownInputField<T> extends StatelessWidget {
     final labelColor = hasError
         ? colorScheme.error
         : colorScheme.onSurfaceVariant;
-    const controlHeight = 34.0;
+    final textStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: colorScheme.onSurface,
+      fontSize: inputTheme.bodyFontSize,
+    );
+    final hintStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: colorScheme.onSurfaceVariant,
+      fontSize: inputTheme.bodyFontSize,
+    );
 
     final control = SizedBox(
-      height: controlHeight,
+      height: inputTheme.compactFieldHeight,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -49,11 +68,19 @@ class DropdownInputField<T> extends StatelessWidget {
             child: Material(
               color: colorScheme.surface,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: borderColor),
+                borderRadius: BorderRadius.circular(
+                  inputTheme.compactBorderRadius,
+                ),
+                side: BorderSide(
+                  color: borderColor,
+                  width: inputTheme.compactBorderWidth,
+                ),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: EdgeInsets.symmetric(
+                  horizontal: inputTheme.horizontalContentPadding,
+                  vertical: inputTheme.verticalContentPadding,
+                ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<T>(
                     value: value,
@@ -61,47 +88,67 @@ class DropdownInputField<T> extends StatelessWidget {
                     onChanged: onChanged,
                     isExpanded: true,
                     icon: const Icon(Icons.arrow_drop_down),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface,
-                    ),
+                    style: textStyle,
+                    hint: hintText == null
+                        ? null
+                        : Text(
+                            hintText!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                            style: hintStyle,
+                          ),
                   ),
                 ),
               ),
             ),
           ),
-          Positioned(
-            left: 10,
-            top: -8,
-            child: Container(
-              color: colorScheme.surface,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                label,
-                style: theme.textTheme.labelMedium?.copyWith(color: labelColor),
+          if (showLabel)
+            Positioned(
+              left: inputTheme.labelOffsetLeft,
+              top: inputTheme.labelOffsetTop,
+              child: Container(
+                color: colorScheme.surface,
+                padding: EdgeInsets.symmetric(
+                  horizontal: inputTheme.labelChipHorizontalPadding,
+                ),
+                child: Text(
+                  label,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: labelColor,
+                    fontSize: inputTheme.labelFontSize,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+
+    final padded = EdgeInsets.symmetric(
+      vertical: inputTheme.fieldVerticalGap / 2,
+    );
+    if (!hasError) return Padding(padding: padded, child: control);
+
+    return Padding(
+      padding: padded,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          control,
+          SizedBox(height: inputTheme.errorTopSpacing),
+          Padding(
+            padding: EdgeInsets.only(left: inputTheme.errorLeftPadding),
+            child: Text(
+              errorText!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.error,
+                fontSize: inputTheme.errorFontSize,
               ),
             ),
           ),
         ],
       ),
-    );
-
-    if (!hasError) return control;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        control,
-        const SizedBox(height: 4),
-        Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: Text(
-            errorText!,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.error,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

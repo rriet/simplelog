@@ -70,6 +70,7 @@ dev_dependencies:
   very_good_analysis: ^10.2.0
 
 dependency_overrides:
+  path_provider_foundation: 2.5.1
   sqlite3: ^3.2.0
 
 # For information on the generic Dart part of this file, see the

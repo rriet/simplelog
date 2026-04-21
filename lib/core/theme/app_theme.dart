@@ -42,12 +42,8 @@ class AppTheme {
       colorScheme: colorScheme,
       useMaterial3: true,
       fontFamily: _fontFamily,
-      extensions: const <ThemeExtension<dynamic>>[
-        AppFormControlsTheme(
-          pickerAddButtonSize: 33,
-          pickerAddIconSize: 20,
-          pickerAddBorderRadius: 6,
-        ),
+      extensions: <ThemeExtension<dynamic>>[
+        AppFormControlsTheme.light,
       ],
       inputDecorationTheme: const InputDecorationTheme(
         isDense: true,
@@ -121,12 +117,8 @@ class AppTheme {
       colorScheme: colorScheme,
       useMaterial3: true,
       fontFamily: _fontFamily,
-      extensions: const <ThemeExtension<dynamic>>[
-        AppFormControlsTheme(
-          pickerAddButtonSize: 40,
-          pickerAddIconSize: 20,
-          pickerAddBorderRadius: 8,
-        ),
+      extensions: <ThemeExtension<dynamic>>[
+        AppFormControlsTheme.dark,
       ],
       inputDecorationTheme: const InputDecorationTheme(
         isDense: true,

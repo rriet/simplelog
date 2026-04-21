@@ -10,8 +10,8 @@ import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.
 import 'package:simplelog/core/presentation/widgets/dialogs/app_message_dialog.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
+import 'package:simplelog/core/presentation/widgets/display/buttons.dart';
 import 'package:simplelog/core/presentation/widgets/display/event_type_toggle_button.dart';
-import 'package:simplelog/core/presentation/widgets/display/square_outline_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
 import 'package:simplelog/core/theme/app_tab_bar_styles.dart';
 import 'package:simplelog/data/database/app_database.dart';
@@ -1240,10 +1240,9 @@ class _GlobalFilterBar extends StatelessWidget {
                         child: Row(children: _buildTypeToggleItems(l10n)),
                       ),
                       const SizedBox(width: 8),
-                      SquareOutlineButton(
+                      Buttons(
                         onPressed: onMoreFilters,
                         icon: Icons.filter_list,
-                        height: 34,
                         label: filtersCount > 0
                             ? '${l10n.reportsTabFilters} ($filtersCount)'
                             : l10n.reportsTabFilters,
@@ -1275,9 +1274,8 @@ class _GlobalFilterBar extends StatelessWidget {
                           onTap: onSelectToDate,
                         ),
                         const SizedBox(width: 8),
-                        SquareOutlineButton(
+                        Buttons(
                           onPressed: onMoreFilters,
-                          height: 34,
                           label: filtersCount > 0
                               ? '${l10n.reportsTabFilters} ($filtersCount)'
                               : l10n.reportsTabFilters,

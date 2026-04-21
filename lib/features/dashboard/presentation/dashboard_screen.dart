@@ -9,6 +9,8 @@ import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/dialog_adaptive_presenter.dart'
     show isCompactDialogScreen;
+import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/models/logbook_entry.dart';
 import 'package:simplelog/data/models/logbook_filters.dart';
@@ -697,18 +699,14 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
+                    TextInputField(
                       controller: ruleNameController,
-                      decoration: InputDecoration(
-                        labelText: l10n.dashboardRuleNameLabel,
-                      ),
+                      label: l10n.dashboardRuleNameLabel,
                     ),
                     const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      initialValue: metric,
-                      decoration: InputDecoration(
-                        labelText: l10n.dashboardMetricLabel,
-                      ),
+                    DropdownInputField<String>(
+                      label: l10n.dashboardMetricLabel,
+                      value: metric,
                       items: [
                         DropdownMenuItem(
                           value: _metricDuty,
@@ -784,18 +782,17 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                         ),
                       ],
                       onChanged: (value) => setState(() {
-                        metric = value ?? metric;
+                        if (value == null) return;
+                        metric = value;
                         limitUnit = _isCountMetric(metric)
                             ? _unitCount
                             : _unitHours;
                       }),
                     ),
                     const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      initialValue: ruleType,
-                      decoration: InputDecoration(
-                        labelText: l10n.dashboardRuleTypeLabel,
-                      ),
+                    DropdownInputField<String>(
+                      label: l10n.dashboardRuleTypeLabel,
+                      value: ruleType,
                       items: [
                         DropdownMenuItem(
                           value: _ruleTypeMinimum,
@@ -806,15 +803,15 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                           child: Text(l10n.dashboardMaximumLabel),
                         ),
                       ],
-                      onChanged: (value) =>
-                          setState(() => ruleType = value ?? ruleType),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => ruleType = value);
+                      },
                     ),
                     const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      initialValue: windowType,
-                      decoration: InputDecoration(
-                        labelText: l10n.dashboardWindowTypeLabel,
-                      ),
+                    DropdownInputField<String>(
+                      label: l10n.dashboardWindowTypeLabel,
+                      value: windowType,
                       items: [
                         DropdownMenuItem(
                           value: _windowHours,
@@ -853,15 +850,15 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                           child: Text(l10n.dashboardCalendarQuarterLabel),
                         ),
                       ],
-                      onChanged: (value) =>
-                          setState(() => windowType = value ?? windowType),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => windowType = value);
+                      },
                     ),
                     const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      initialValue: windowReference,
-                      decoration: InputDecoration(
-                        labelText: l10n.dashboardStartReferenceLabel,
-                      ),
+                    DropdownInputField<String>(
+                      label: l10n.dashboardStartReferenceLabel,
+                      value: windowReference,
                       items: [
                         DropdownMenuItem(
                           value: _referenceSameTime,
@@ -876,17 +873,16 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                           child: Text(l10n.dashboardMidnightUtcLabel),
                         ),
                       ],
-                      onChanged: (value) => setState(
-                        () => windowReference = value ?? windowReference,
-                      ),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => windowReference = value);
+                      },
                     ),
                     const SizedBox(height: 8),
-                    TextField(
+                    TextInputField(
                       controller: windowController,
+                      label: l10n.dashboardWindowValueLabel,
                       keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: l10n.dashboardWindowValueLabel,
-                      ),
                     ),
                     const SizedBox(height: 8),
                     ..._buildThresholdFields(
@@ -895,11 +891,9 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                       yellowController: yellowController,
                       redController: redController,
                     ),
-                    DropdownButtonFormField<String>(
-                      initialValue: limitUnit,
-                      decoration: InputDecoration(
-                        labelText: l10n.dashboardUnitLabel,
-                      ),
+                    DropdownInputField<String>(
+                      label: l10n.dashboardUnitLabel,
+                      value: limitUnit,
                       items: [
                         DropdownMenuItem(
                           value: _unitHours,
@@ -918,8 +912,10 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
                           child: Text(l10n.dashboardCountUnit),
                         ),
                       ],
-                      onChanged: (value) =>
-                          setState(() => limitUnit = value ?? limitUnit),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => limitUnit = value);
+                      },
                     ),
                   ],
                 ),
@@ -1045,12 +1041,12 @@ class _DashboardSetupDialogState extends ConsumerState<_DashboardSetupDialog> {
     required String label,
     bool decimal = false,
   }) {
-    return TextField(
+    return TextInputField(
       controller: controller,
+      label: label,
       keyboardType: decimal
           ? const TextInputType.numberWithOptions(decimal: true)
           : TextInputType.number,
-      decoration: InputDecoration(labelText: label),
     );
   }
 
