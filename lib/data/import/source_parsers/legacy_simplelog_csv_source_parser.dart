@@ -182,8 +182,7 @@ class LegacySimpleLogCsvSourceParser {
 
         final totalMinutesRaw = _parseInt(get(idxTotalMinutes));
         var computedTotal = totalMinutesRaw;
-        final shouldDeriveMissingBlockTime =
-            options.recalculateTotalTime || options.recalculateCrossCountry;
+        final shouldDeriveMissingBlockTime = options.recalculateTotalTime;
         if (shouldDeriveMissingBlockTime &&
             computedTotal == 0 &&
             arrivalDate != null) {

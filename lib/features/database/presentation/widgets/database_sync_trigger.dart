@@ -36,6 +36,7 @@ import 'package:simplelog/features/database/presentation/widgets/qatar_airways_p
 import 'package:simplelog/features/database/presentation/widgets/simplelog_import_options_dialog.dart';
 import 'package:simplelog/features/database/presentation/widgets/southwest_import_options_dialog.dart';
 import 'package:simplelog/features/database/presentation/widgets/southwest_import_preflight_dialog.dart';
+import 'package:simplelog/features/database/presentation/widgets/southwest_type_mappings_dialog.dart';
 import 'package:simplelog/features/reports/presentation/providers/reports_preferences_provider.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/duty_rules_settings_provider.dart';
@@ -347,14 +348,25 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       );
       if (options == null || !context.mounted) return;
       final importer = SimpleLogCsvImporter(db);
+      final resolvedTypeMappings = await _resolveSouthwestTypeMappings(
+        context,
+        importer: importer,
+        content: content,
+        fileName: file.name,
+        initialMappings: options.aircraftTypeMappings,
+      );
+      if (resolvedTypeMappings == null || !context.mounted) return;
+      final optionsWithMappings = options.copyWith(
+        aircraftTypeMappings: resolvedTypeMappings,
+      );
       final preflightOptions = await _resolveSouthwestPreflight(
         context,
         importer: importer,
         content: content,
-        initialOptions: options,
+        initialOptions: optionsWithMappings,
       );
       if (preflightOptions == null || !context.mounted) return;
-      await ImportOptionsPreferences.saveSouthwest(db, options);
+      await ImportOptionsPreferences.saveSouthwest(db, optionsWithMappings);
       if (!context.mounted) return;
       final progress = ValueNotifier<_ImportProgress>(
         const _ImportProgress(processed: 0, total: 0),
@@ -755,7 +767,10 @@ ${l10n.databaseErrorsLabel(stats.errors)}
   }) async {
     final l10n = AppLocalizations.of(context)!;
     final report = importer.inspectSouthwestCsv(content);
-    if (!report.hasIssues) {
+    final hasBlockingIssues =
+        report.missingRequiredIssues.isNotEmpty ||
+        report.missingAircraftTailIssues.isNotEmpty;
+    if (!hasBlockingIssues) {
       return initialOptions.copyWith(
         missingAircraftTypePolicy:
             SouthwestMissingAircraftTypePolicy.useUnknown,
@@ -766,7 +781,6 @@ ${l10n.databaseErrorsLabel(stats.errors)}
     }
 
     final skippedLines = <int>{};
-    var typePolicy = SouthwestMissingAircraftTypePolicy.useUnknown;
     var tailPolicy = SouthwestMissingAircraftTailPolicy.useTypeAsTail;
 
     if (report.missingRequiredIssues.isNotEmpty) {
@@ -786,36 +800,6 @@ ${l10n.databaseErrorsLabel(stats.errors)}
       skippedLines.addAll(
         report.missingRequiredIssues.map((issue) => issue.sourceLineNumber),
       );
-      if (!context.mounted) return null;
-    }
-
-    final unresolvedTypeIssues = report.missingAircraftTypeIssues
-        .where((issue) => !skippedLines.contains(issue.sourceLineNumber))
-        .toList(growable: false);
-    if (unresolvedTypeIssues.isNotEmpty) {
-      final decision = await SouthwestImportPreflightDialog.show(
-        context,
-        title: l10n.southwestPreflightMissingTypeTitle,
-        message: l10n.southwestPreflightMissingTypeMessage,
-        issues: _buildSouthwestMissingTypeIssueLines(
-          l10n,
-          unresolvedTypeIssues,
-        ),
-        primaryActionLabel: l10n.southwestPreflightImportAnywayAction,
-        secondaryActionLabel: l10n.southwestPreflightSkipLinesAction,
-        infoTitle: l10n.southwestPreflightMissingTypeInfoTitle,
-        infoMessage: l10n.southwestPreflightMissingTypeInfoMessage,
-        showInfoNextToProceedLabel: true,
-      );
-      if (decision == SouthwestPreflightDialogDecision.cancel) {
-        return null;
-      }
-      if (decision == SouthwestPreflightDialogDecision.secondary) {
-        skippedLines.addAll(
-          unresolvedTypeIssues.map((issue) => issue.sourceLineNumber),
-        );
-        typePolicy = SouthwestMissingAircraftTypePolicy.skipLines;
-      }
       if (!context.mounted) return null;
     }
 
@@ -849,10 +833,137 @@ ${l10n.databaseErrorsLabel(stats.errors)}
     }
 
     return initialOptions.copyWith(
-      missingAircraftTypePolicy: typePolicy,
       missingAircraftTailPolicy: tailPolicy,
       skippedSourceLineNumbers: skippedLines,
     );
+  }
+
+  Future<Map<String, String>?> _resolveSouthwestTypeMappings(
+    BuildContext context, {
+    required SimpleLogCsvImporter importer,
+    required String content,
+    required String fileName,
+    required Map<String, String> initialMappings,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final rawTypeCodes = importer.extractSouthwestRawTypeCodes(content).toList()
+      ..sort(_compareSouthwestRawTypeCodes);
+    if (rawTypeCodes.isEmpty) {
+      return const <String, String>{};
+    }
+
+    final normalizedInitialMappings = _normalizeSouthwestTypeMappings(
+      initialMappings,
+    );
+    final scopedInitialMappings = <String, String>{
+      for (final rawTypeCode in rawTypeCodes)
+        if (normalizedInitialMappings.containsKey(rawTypeCode))
+          rawTypeCode: normalizedInitialMappings[rawTypeCode]!,
+    };
+    final unresolvedTypeCodes = rawTypeCodes
+        .where((rawTypeCode) => !scopedInitialMappings.containsKey(rawTypeCode))
+        .toList(growable: false);
+
+    if (unresolvedTypeCodes.isEmpty) {
+      final decision = await _showSouthwestMappingsReviewChoice(
+        context,
+        message: l10n.southwestTypeMappingsResolvedPrompt,
+      );
+      if (!context.mounted) {
+        return null;
+      }
+      if (decision == _SouthwestMappingsReviewChoice.cancel) {
+        return null;
+      }
+      if (decision == _SouthwestMappingsReviewChoice.skipReview) {
+        return scopedInitialMappings;
+      }
+    }
+
+    final reviewedMappings = await SouthwestTypeMappingsDialog.show(
+      context,
+      fileName: fileName,
+      rawTypeCodes: rawTypeCodes,
+      initialMappings: scopedInitialMappings,
+    );
+    if (reviewedMappings == null || !context.mounted) {
+      return null;
+    }
+    return _normalizeSouthwestTypeMappings(reviewedMappings);
+  }
+
+  Future<_SouthwestMappingsReviewChoice> _showSouthwestMappingsReviewChoice(
+    BuildContext context, {
+    required String message,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final choice = await showDialog<_SouthwestMappingsReviewChoice>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.southwestTypeMappingsDialogTitle),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => AppNavigator.pop(
+                dialogContext,
+                _SouthwestMappingsReviewChoice.cancel,
+              ),
+              child: Text(l10n.cancelAction),
+            ),
+            TextButton(
+              onPressed: () => AppNavigator.pop(
+                dialogContext,
+                _SouthwestMappingsReviewChoice.skipReview,
+              ),
+              child: Text(
+                l10n.southwestTypeMappingsContinueWithoutReviewAction,
+              ),
+            ),
+            FilledButton(
+              onPressed: () => AppNavigator.pop(
+                dialogContext,
+                _SouthwestMappingsReviewChoice.reviewNow,
+              ),
+              child: Text(l10n.southwestTypeMappingsReviewAction),
+            ),
+          ],
+        );
+      },
+    );
+    return choice ?? _SouthwestMappingsReviewChoice.cancel;
+  }
+
+  int _compareSouthwestRawTypeCodes(String left, String right) {
+    if (left.isEmpty && right.isNotEmpty) {
+      return -1;
+    }
+    if (left.isNotEmpty && right.isEmpty) {
+      return 1;
+    }
+    return left.compareTo(right);
+  }
+
+  Map<String, String> _normalizeSouthwestTypeMappings(
+    Map<String, String> mappings,
+  ) {
+    return <String, String>{
+      for (final entry in mappings.entries)
+        if (_normalizeSouthwestTypeCode(entry.value) != null)
+          _normalizeSouthwestTypeCode(entry.key) ?? '':
+              _normalizeSouthwestTypeCode(entry.value)!,
+    };
+  }
+
+  String? _normalizeSouthwestTypeCode(String? value) {
+    if (value == null) {
+      return null;
+    }
+    final normalized = value.trim().toUpperCase();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    return normalized;
   }
 
   List<String> _buildSouthwestRequiredIssueLines(
@@ -889,25 +1000,6 @@ ${l10n.databaseErrorsLabel(stats.errors)}
             l10n.southwestPreflightMissingFieldsReason(fields),
           );
         })
-        .toList(growable: false);
-  }
-
-  List<String> _buildSouthwestMissingTypeIssueLines(
-    AppLocalizations l10n,
-    List<SouthwestMissingAircraftTypeIssue> issues,
-  ) {
-    final ordered = issues.toList()
-      ..sort(
-        (left, right) =>
-            left.sourceLineNumber.compareTo(right.sourceLineNumber),
-      );
-    return ordered
-        .map(
-          (issue) => l10n.databaseLineIssueLabel(
-            issue.sourceLineNumber,
-            l10n.southwestPreflightMissingTypeReason,
-          ),
-        )
         .toList(growable: false);
   }
 
@@ -1344,6 +1436,12 @@ ${l10n.databaseErrorsLabel(stats.errors)}
     if (failure.message.isEmpty) return prefix;
     return '$prefix ${failure.message}';
   }
+}
+
+enum _SouthwestMappingsReviewChoice {
+  cancel,
+  skipReview,
+  reviewNow,
 }
 
 class _DatabaseSectionCard extends StatelessWidget {

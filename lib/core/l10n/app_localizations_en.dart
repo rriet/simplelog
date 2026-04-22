@@ -1984,6 +1984,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get simplelogImportAction => 'Import';
 
   @override
+  String get simplelogImportOptionsHelpTitle => 'Import SimpleLog options';
+
+  @override
+  String get simplelogImportOptionsHelpBody =>
+      'Recalculate total time: recalculates Total Minutes from available departure/arrival data.\nIRP3 time: minutes deducted before IRP3 % is applied.\nIRP3 %: percentage applied after IRP3 deduction.\nIRP4 time: minutes deducted before IRP4 % is applied.\nIRP4 %: percentage applied after IRP4 deduction.\n\nNight time: recalculates night minutes from route and timestamps.\nTakeoffs and landings: recalculates day/night takeoff and landing distribution.\nCross-country time: recalculates cross-country minutes from distance.\nDistance threshold (NM): minimum distance required to count as cross-country.\n\nIFR time: recalculates IFR minutes.\nMinus: minutes subtracted before IFR % is applied.\nIFR %: percentage applied after subtraction.\nMinimum: minimum IFR minutes enforced after subtraction and percentage.\n\nOverwrite airport on conflict: updates existing airport records when imported values differ.\nOverwrite aircraft on conflict: updates existing aircraft records when imported values differ.\nOverwrite type on conflict: updates existing aircraft type records when imported values differ.';
+
+  @override
   String get simplelogImportOptionsTitle => 'Import SimpleLog';
 
   @override
@@ -2149,6 +2156,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get southwestPreflightUnknownTypeLabel => 'UNKNOWN';
+
+  @override
+  String get southwestTypeMappingsDialogTitle => 'Aircraft type mappings';
+
+  @override
+  String get southwestTypeMappingsDialogMessage =>
+      'Resolve aircraft types from this file before importing.';
+
+  @override
+  String southwestTypeMappingsRawTypeValue(String value) {
+    return 'Raw type: $value';
+  }
+
+  @override
+  String get southwestTypeMappingsEmptyRawTypeLabel => '(empty)';
+
+  @override
+  String get southwestTypeMappingsAutoCreateAction =>
+      'Auto-create from raw type';
+
+  @override
+  String get southwestTypeMappingsUseUnknownAction => 'Use UNKNOWN';
+
+  @override
+  String get southwestTypeMappingsReviewAction =>
+      'Review aircraft type mappings';
+
+  @override
+  String get southwestTypeMappingsContinueWithoutReviewAction =>
+      'Continue import';
+
+  @override
+  String get southwestTypeMappingsResolvedPrompt =>
+      'All aircraft types in this file are already mapped. You can continue or review mappings before import.';
 
   @override
   String databaseAircraftLabel(int count) {

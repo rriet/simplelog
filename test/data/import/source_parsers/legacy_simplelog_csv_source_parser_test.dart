@@ -53,4 +53,36 @@ void main() {
     expect(record.timeBlockMinutes, 120);
     expect(record.timeIfrMinutes, 45);
   });
+
+  test(
+    'parse does not derive block from dep/arr when total recalc is off',
+    () {
+      final content = csv([
+        header,
+        [
+          '01/03/2026',
+          '08:00',
+          '10:00',
+          'KHOU',
+          'KDAL',
+          'N123SW',
+          'B737-700',
+          '0',
+          '0',
+          '0',
+        ],
+      ]);
+
+      final batch = parser.parse(
+        content,
+        options: const SimpleLogImportOptions(
+          recalculateCrossCountry: true,
+        ),
+      );
+      final record = batch.records.single as NormalizedFlightRecord;
+
+      expect(record.timeBlockMinutes, 0);
+      expect(record.timeCrossCountryMinutes, 0);
+    },
+  );
 }

@@ -38,6 +38,11 @@ class SimpleLogCsvImporter {
     return _southwestParser.inspect(content);
   }
 
+  /// Returns unique raw Southwest aircraft type designators from source file.
+  Set<String> extractSouthwestRawTypeCodes(String content) {
+    return _southwestParser.extractUniqueRawTypeCodes(content);
+  }
+
   /// Imports a legacy SimpleLog CSV string into the database.
   Future<SimpleLogImportResult> importCsv(
     String content, {

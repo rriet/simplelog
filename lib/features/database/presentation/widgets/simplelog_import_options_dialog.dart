@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/ifr_factoring_fields_row.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
@@ -137,7 +138,15 @@ class _SimpleLogImportOptionsDialogState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.databaseFileLabel(widget.fileName)),
+          Row(
+            children: [
+              Expanded(child: Text(l10n.databaseFileLabel(widget.fileName))),
+              InfoHelpButton(
+                title: l10n.simplelogImportOptionsHelpTitle,
+                message: l10n.simplelogImportOptionsHelpBody,
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           const SizedBox(height: 8),
           Card(

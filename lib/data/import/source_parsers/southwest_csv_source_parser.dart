@@ -109,6 +109,35 @@ class SouthwestCsvSourceParser {
   /// Creates a parser.
   const SouthwestCsvSourceParser();
 
+  /// Extracts unique raw aircraft type designators from non-positioning rows.
+  ///
+  /// Empty designators are represented by an empty string.
+  Set<String> extractUniqueRawTypeCodes(String content) {
+    final rows = SimpleLogCsvSupport.parseCsv(content);
+    final headerRowIndex = _findHeaderRowIndex(rows);
+    if (headerRowIndex < 0) {
+      throw const FormatException('Southwest CSV header not found.');
+    }
+    final indices = _SouthwestHeaderIndices(rows[headerRowIndex]);
+    final types = <String>{};
+    for (
+      var rowIndex = headerRowIndex + 1;
+      rowIndex < rows.length;
+      rowIndex += 1
+    ) {
+      final row = rows[rowIndex];
+      if (row.isEmpty) continue;
+      String get(int idx) =>
+          idx >= 0 && idx < row.length ? row[idx].trim() : '';
+      if (get(indices.dhd).toUpperCase() == 'DH') {
+        continue;
+      }
+      final rawType = _normalizeSouthwestTypeCode(get(indices.type));
+      types.add(rawType);
+    }
+    return types;
+  }
+
   /// Inspects Southwest CSV rows and reports missing required values.
   SouthwestCsvPreflightReport inspect(String content) {
     final rows = SimpleLogCsvSupport.parseCsv(content);
@@ -204,6 +233,9 @@ class SouthwestCsvSourceParser {
     }
 
     final indices = _SouthwestHeaderIndices(rows[headerRowIndex]);
+    final normalizedTypeMappings = _normalizeSouthwestTypeMappings(
+      options.aircraftTypeMappings,
+    );
 
     final records = <NormalizedImportRecord>[];
     var skipped = 0;
@@ -287,14 +319,20 @@ class SouthwestCsvSourceParser {
           continue;
         }
 
-        final rawTypeCode = get(indices.type).toUpperCase();
-        if (rawTypeCode.isEmpty &&
+        final rawTypeCode = _normalizeSouthwestTypeCode(get(indices.type));
+        final mappedTypeCode = _resolveMappedSouthwestTypeCode(
+          rawTypeCode: rawTypeCode,
+          mappings: normalizedTypeMappings,
+        );
+        if (mappedTypeCode == null &&
+            rawTypeCode.isEmpty &&
             options.missingAircraftTypePolicy ==
                 SouthwestMissingAircraftTypePolicy.skipLines) {
           skipped += 1;
           continue;
         }
-        final typeCode = rawTypeCode.isEmpty ? 'UNKNOWN' : rawTypeCode;
+        final typeCode =
+            mappedTypeCode ?? (rawTypeCode.isEmpty ? 'UNKNOWN' : rawTypeCode);
         final aircraftType = ImportedAircraftTypeDraft(
           code: typeCode,
           family: _southwestFamily(typeCode),
@@ -510,6 +548,40 @@ class _SouthwestHeaderIndices {
   int get takeoff => _read('TakeOff');
   int get landing => _read('Landing');
   int get copilot => _read('CoPilot');
+}
+
+String? _resolveMappedSouthwestTypeCode({
+  required String rawTypeCode,
+  required Map<String, String> mappings,
+}) {
+  if (mappings.isEmpty) {
+    return null;
+  }
+  final normalizedRawType = _normalizeSouthwestTypeCode(rawTypeCode);
+  final rawMappedValue = mappings[normalizedRawType] ?? '';
+  final normalizedMappedValue = _normalizeSouthwestTypeCode(rawMappedValue);
+  if (normalizedMappedValue.isEmpty) {
+    return null;
+  }
+  return normalizedMappedValue;
+}
+
+String _normalizeSouthwestTypeCode(String value) {
+  return value.trim().toUpperCase();
+}
+
+Map<String, String> _normalizeSouthwestTypeMappings(
+  Map<String, String> mappings,
+) {
+  if (mappings.isEmpty) {
+    return const <String, String>{};
+  }
+  return <String, String>{
+    for (final entry in mappings.entries)
+      _normalizeSouthwestTypeCode(entry.key): _normalizeSouthwestTypeCode(
+        entry.value,
+      ),
+  };
 }
 
 ImportedAirportDraft _airportDraftForCode(

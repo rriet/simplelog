@@ -13,6 +13,7 @@ class ImportOptionsPreferences {
   static const _simplePrefix = 'import.simplelog.';
   static const _qatarPrefix = 'import.qatar.';
   static const _swPrefix = 'import.southwest.';
+  static const _swTypeMappingsKey = '${_swPrefix}aircraftTypeMappings';
 
   /// Loads import options used for legacy SimpleLog CSV files.
   static Future<SimpleLogImportOptions> loadSimpleLog(AppDatabase db) async {
@@ -158,6 +159,9 @@ class ImportOptionsPreferences {
           true,
       addFlightNumberToNotes:
           (settings['${_swPrefix}addFlightNumberToNotes'] as bool?) ?? true,
+      aircraftTypeMappings: _parseSouthwestTypeMappings(
+        settings[_swTypeMappingsKey],
+      ),
     );
   }
 
@@ -184,8 +188,34 @@ class ImportOptionsPreferences {
           value.addCopilotStaffNumberToNotes;
       settings['${_swPrefix}addFlightNumberToNotes'] =
           value.addFlightNumberToNotes;
+      settings[_swTypeMappingsKey] = <String, String>{
+        for (final entry in value.aircraftTypeMappings.entries)
+          _normalizeSouthwestTypeCode(entry.key): _normalizeSouthwestTypeCode(
+            entry.value,
+          ),
+      };
     });
   }
+}
+
+Map<String, String> _parseSouthwestTypeMappings(Object? raw) {
+  if (raw is! Map) {
+    return const <String, String>{};
+  }
+  final mapped = <String, String>{};
+  for (final entry in raw.entries) {
+    final key = _normalizeSouthwestTypeCode(entry.key.toString());
+    final value = _normalizeSouthwestTypeCode(entry.value?.toString() ?? '');
+    if (value.isEmpty) {
+      continue;
+    }
+    mapped[key] = value;
+  }
+  return mapped;
+}
+
+String _normalizeSouthwestTypeCode(String value) {
+  return value.trim().toUpperCase();
 }
 
 CrewPosition? _parseCrewPosition(String? raw) {

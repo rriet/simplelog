@@ -24,6 +24,18 @@ class ImportSourceDispatcher {
 
   static const _logTenProInspector = LogTenProTsvInspector();
   static const _qatarAirwaysInspector = QatarAirwaysWorkbookInspector();
+  static final Set<String> _legacySimpleLogRequiredHeaders = () {
+    final parsed = SimpleLogCsvSupport.parseCsv(
+      SimpleLogCsvSupport.simpleLogOldHeader,
+    );
+    if (parsed.isEmpty) {
+      return const <String>{};
+    }
+    return parsed.first
+        .map(SimpleLogCsvSupport.clean)
+        .map((value) => value.toLowerCase())
+        .toSet();
+  }();
 
   /// Detects a source kind from file metadata and optional file contents.
   ImportSourceKind detect({
@@ -58,11 +70,7 @@ class ImportSourceDispatcher {
     if (lines.isEmpty) return ImportSourceKind.unknown;
 
     final first = lines.first.trim();
-    final normalized = SimpleLogCsvSupport.normalizeHeader(first);
-    if (normalized ==
-        SimpleLogCsvSupport.normalizeHeader(
-          SimpleLogCsvSupport.simpleLogOldHeader,
-        )) {
+    if (_isLegacySimpleLogHeader(first)) {
       return ImportSourceKind.legacySimpleLogCsv;
     }
 
@@ -76,6 +84,18 @@ class ImportSourceDispatcher {
     }
 
     return ImportSourceKind.unknown;
+  }
+
+  bool _isLegacySimpleLogHeader(String headerLine) {
+    final parsed = SimpleLogCsvSupport.parseCsv(headerLine);
+    if (parsed.isEmpty || _legacySimpleLogRequiredHeaders.isEmpty) {
+      return false;
+    }
+    final normalized = parsed.first
+        .map(SimpleLogCsvSupport.clean)
+        .map((value) => value.toLowerCase())
+        .toSet();
+    return _legacySimpleLogRequiredHeaders.every(normalized.contains);
   }
 
   /// Human-readable label used by the UI.

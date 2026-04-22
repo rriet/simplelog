@@ -280,4 +280,123 @@ void main() {
     expect(record.timeBlockMinutes, 120);
     expect(record.timeIfrMinutes, 45);
   });
+
+  test('extractUniqueRawTypeCodes returns unique raw types with empty', () {
+    final content = csv([
+      header,
+      [
+        '2026-03-01',
+        '125',
+        '',
+        'KHOU',
+        '08:00',
+        'KDAL',
+        '10:00',
+        '0200',
+        'N123SW',
+        '73w',
+        '1',
+        '1',
+        '',
+      ],
+      [
+        '2026-03-02',
+        '126',
+        '',
+        'KHOU',
+        '08:00',
+        'KDAL',
+        '10:00',
+        '0200',
+        'N124SW',
+        '',
+        '1',
+        '1',
+        '',
+      ],
+      [
+        '2026-03-03',
+        '127',
+        'DH',
+        'KHOU',
+        '08:00',
+        'KDAL',
+        '10:00',
+        '0200',
+        '',
+        'DH-TYPE',
+        '0',
+        '0',
+        '',
+      ],
+    ]);
+
+    final uniqueTypes = parser.extractUniqueRawTypeCodes(content);
+
+    expect(uniqueTypes, containsAll(<String>{'73W', ''}));
+    expect(uniqueTypes, hasLength(2));
+  });
+
+  test('parse applies configured aircraft type mappings', () {
+    final content = csv([
+      header,
+      [
+        '2026-03-01',
+        '125',
+        '',
+        'KHOU',
+        '08:00',
+        'KDAL',
+        '10:00',
+        '0200',
+        'N123SW',
+        '73W',
+        '1',
+        '1',
+        '',
+      ],
+    ]);
+
+    final batch = parser.parse(
+      content,
+      options: const SouthwestImportOptions(
+        aircraftTypeMappings: <String, String>{'73W': 'B737-700'},
+      ),
+    );
+    final record = batch.records.single as NormalizedFlightRecord;
+
+    expect(record.aircraftType.code, 'B737-700');
+  });
+
+  test('parse honors empty-type mapping before skip-lines policy', () {
+    final content = csv([
+      header,
+      [
+        '2026-03-01',
+        '125',
+        '',
+        'KHOU',
+        '08:00',
+        'KDAL',
+        '10:00',
+        '0200',
+        'N123SW',
+        '',
+        '1',
+        '1',
+        '',
+      ],
+    ]);
+
+    final batch = parser.parse(
+      content,
+      options: const SouthwestImportOptions(
+        missingAircraftTypePolicy: SouthwestMissingAircraftTypePolicy.skipLines,
+        aircraftTypeMappings: <String, String>{'': 'UNKNOWN'},
+      ),
+    );
+    final record = batch.records.single as NormalizedFlightRecord;
+
+    expect(record.aircraftType.code, 'UNKNOWN');
+  });
 }

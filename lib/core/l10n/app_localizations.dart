@@ -3898,6 +3898,18 @@ abstract class AppLocalizations {
   /// **'Import'**
   String get simplelogImportAction;
 
+  /// No description provided for @simplelogImportOptionsHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import SimpleLog options'**
+  String get simplelogImportOptionsHelpTitle;
+
+  /// No description provided for @simplelogImportOptionsHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Recalculate total time: recalculates Total Minutes from available departure/arrival data.\nIRP3 time: minutes deducted before IRP3 % is applied.\nIRP3 %: percentage applied after IRP3 deduction.\nIRP4 time: minutes deducted before IRP4 % is applied.\nIRP4 %: percentage applied after IRP4 deduction.\n\nNight time: recalculates night minutes from route and timestamps.\nTakeoffs and landings: recalculates day/night takeoff and landing distribution.\nCross-country time: recalculates cross-country minutes from distance.\nDistance threshold (NM): minimum distance required to count as cross-country.\n\nIFR time: recalculates IFR minutes.\nMinus: minutes subtracted before IFR % is applied.\nIFR %: percentage applied after subtraction.\nMinimum: minimum IFR minutes enforced after subtraction and percentage.\n\nOverwrite airport on conflict: updates existing airport records when imported values differ.\nOverwrite aircraft on conflict: updates existing aircraft records when imported values differ.\nOverwrite type on conflict: updates existing aircraft type records when imported values differ.'**
+  String get simplelogImportOptionsHelpBody;
+
   /// No description provided for @simplelogImportOptionsTitle.
   ///
   /// In en, this message translates to:
@@ -4191,6 +4203,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'UNKNOWN'**
   String get southwestPreflightUnknownTypeLabel;
+
+  /// No description provided for @southwestTypeMappingsDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Aircraft type mappings'**
+  String get southwestTypeMappingsDialogTitle;
+
+  /// No description provided for @southwestTypeMappingsDialogMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve aircraft types from this file before importing.'**
+  String get southwestTypeMappingsDialogMessage;
+
+  /// No description provided for @southwestTypeMappingsRawTypeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Raw type: {value}'**
+  String southwestTypeMappingsRawTypeValue(String value);
+
+  /// No description provided for @southwestTypeMappingsEmptyRawTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'(empty)'**
+  String get southwestTypeMappingsEmptyRawTypeLabel;
+
+  /// No description provided for @southwestTypeMappingsAutoCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-create from raw type'**
+  String get southwestTypeMappingsAutoCreateAction;
+
+  /// No description provided for @southwestTypeMappingsUseUnknownAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Use UNKNOWN'**
+  String get southwestTypeMappingsUseUnknownAction;
+
+  /// No description provided for @southwestTypeMappingsReviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review aircraft type mappings'**
+  String get southwestTypeMappingsReviewAction;
+
+  /// No description provided for @southwestTypeMappingsContinueWithoutReviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue import'**
+  String get southwestTypeMappingsContinueWithoutReviewAction;
+
+  /// No description provided for @southwestTypeMappingsResolvedPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'All aircraft types in this file are already mapped. You can continue or review mappings before import.'**
+  String get southwestTypeMappingsResolvedPrompt;
 
   /// No description provided for @databaseAircraftLabel.
   ///
