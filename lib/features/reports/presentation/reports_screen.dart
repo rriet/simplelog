@@ -65,6 +65,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 const _batchCalculateAllPreferencesKey =
     'reports_batch_calculate_all_preferences_v1';
+const _androidFileSaveChannel = MethodChannel('simplelog/android_file_save');
 
 /// Entry section to open directly when navigating into the reports module.
 enum ReportsPanelSection {
@@ -1486,6 +1487,18 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
 
   Future<void> _openExportedFile(String path) async {
     try {
+      if (Platform.isAndroid && path.startsWith('content://')) {
+        final opened = await _androidFileSaveChannel.invokeMethod<bool>(
+          'openSavedUri',
+          <String, String>{
+            'uri': path,
+            'mimeType': 'application/pdf',
+          },
+        );
+        if (opened == true) {
+          return;
+        }
+      }
       if (Platform.isMacOS) {
         await Process.run('open', [path]);
         return;
@@ -1853,8 +1866,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     required Uint8List bytes,
     required String fileName,
   }) async {
+    if (Platform.isAndroid) {
+      return _savePdfBytesAndroid(bytes: bytes, fileName: fileName);
+    }
     final l10n = AppLocalizations.of(context)!;
-    final isMobile = Platform.isIOS || Platform.isAndroid;
+    final isMobile = Platform.isIOS;
     String? path;
     try {
       path = await FilePicker.platform.saveFile(
@@ -1905,6 +1921,48 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       await File(path).writeAsBytes(bytes, flush: true);
     }
     return path;
+  }
+
+  Future<String?> _savePdfBytesAndroid({
+    required Uint8List bytes,
+    required String fileName,
+  }) async {
+    final docsDir = await getApplicationDocumentsDirectory();
+    final timestamp = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final tempPath =
+        '${docsDir.path}${Platform.pathSeparator}report_$timestamp.pdf';
+    final tempFile = File(tempPath);
+    await tempFile.writeAsBytes(bytes, flush: true);
+    try {
+      final savedPath = await _androidFileSaveChannel
+          .invokeMethod<String>(
+            'saveFileFromPath',
+            <String, String>{
+              'sourcePath': tempPath,
+              'fileName': fileName,
+              'mimeType': 'application/pdf',
+            },
+          )
+          .timeout(const Duration(seconds: 45));
+      if (savedPath == null || savedPath.isEmpty) {
+        return null;
+      }
+      return savedPath;
+    } on TimeoutException catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
+      throw StateError('Android save timed out.');
+    } on PlatformException catch (error, stackTrace) {
+      Zone.current.handleUncaughtError(error, stackTrace);
+      throw StateError(error.message ?? 'Failed to save PDF on Android.');
+    } finally {
+      try {
+        if (tempFile.existsSync()) {
+          tempFile.deleteSync();
+        }
+      } on Object catch (error, stackTrace) {
+        Zone.current.handleUncaughtError(error, stackTrace);
+      }
+    }
   }
 
   Future<void> _refreshAnalysisGroups() async {
