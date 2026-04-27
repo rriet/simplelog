@@ -1614,7 +1614,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoUi068 => '→';
 
   @override
-  String get databaseBackupLogbookAction => 'Backup logbook';
+  String get databaseBackupLogbookAction => 'Create Backup';
 
   @override
   String get databaseBackupRestoreSubtitle => 'Back up or restore your data.';
@@ -1642,6 +1642,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get databaseExportCsvAction => 'Export CSV';
 
   @override
+  String get databaseExportFileAction => 'Export file';
+
+  @override
   String get databaseImportExportSubtitle => 'Import or export data files.';
 
   @override
@@ -1652,7 +1655,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get databaseImportExportInfoMessage =>
-      'Import reads supported files and writes their data into your logbook.\nExport creates a CSV snapshot of current flights/simulators.\n\nDepending on the selected import options, existing records may be updated or replaced.';
+      'Import reads supported files and writes their data into your logbook.\nFor database files, SimpleLog detects schema automatically:\n- Current SimpleLog backup schema restores (replaces current data).\n- Legacy SimpleLog schema imports into current format.\n\nExport lets you choose:\n- Export CSV: flights/simulators snapshot.\n- Backup logbook: full SQLite backup for restore.';
 
   @override
   String get databaseImportFileAction => 'Import file';

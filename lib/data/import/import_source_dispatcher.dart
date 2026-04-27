@@ -13,7 +13,6 @@ enum ImportSourceKind {
   southwestCsv,
   qatarAirwaysXlsx,
   logTenProTsv,
-  legacySimpleLogDb,
   unknown,
 }
 
@@ -44,9 +43,6 @@ class ImportSourceDispatcher {
     Uint8List? bytes,
   }) {
     final lowerName = fileName.toLowerCase();
-    if (lowerName.endsWith('.sqlite') || lowerName.endsWith('.db')) {
-      return ImportSourceKind.legacySimpleLogDb;
-    }
     if (lowerName.endsWith('.xlsx') &&
         bytes != null &&
         _qatarAirwaysInspector.inspect(bytes) != null) {
@@ -105,7 +101,6 @@ class ImportSourceDispatcher {
       ImportSourceKind.southwestCsv => 'SWAPA',
       ImportSourceKind.qatarAirwaysXlsx => 'Qatar Airways',
       ImportSourceKind.logTenProTsv => 'LogTen Pro',
-      ImportSourceKind.legacySimpleLogDb => 'SimpleLog database',
       ImportSourceKind.unknown => 'Unknown file',
     };
   }

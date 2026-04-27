@@ -23,6 +23,7 @@ import 'package:simplelog/data/import/logten_pro_tsv_inspector.dart';
 import 'package:simplelog/data/import/qatar_airways_import_options.dart';
 import 'package:simplelog/data/import/qatar_airways_workbook_inspector.dart';
 import 'package:simplelog/data/import/simplelog_csv_importer.dart';
+import 'package:simplelog/data/import/simplelog_database_source_detector.dart';
 import 'package:simplelog/data/import/source_parsers/southwest_csv_source_parser.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
 import 'package:simplelog/features/aircraft/presentation/aircraft_edit_screen.dart';
@@ -51,6 +52,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   static const _sourceDispatcher = ImportSourceDispatcher();
   static const _logTenProInspector = LogTenProTsvInspector();
   static const _qatarAirwaysInspector = QatarAirwaysWorkbookInspector();
+  static const _databaseSourceDetector = SimpleLogDatabaseSourceDetector();
   static const _replaceDataWarningMessage =
       'Current logbook data will be replaced. This cannot be undone.';
 
@@ -132,35 +134,23 @@ class DatabaseSyncTrigger extends ConsumerWidget {
               firstLabel: l10n.databaseImportFileAction,
               onFirstPressed: () => _importCsv(context, ref),
               secondIcon: Icons.download_outlined,
-              secondLabel: l10n.databaseExportCsvAction,
-              onSecondPressed: () => _exportCsv(context, ref),
-            ),
-            const SizedBox(height: 12),
-            _DatabaseSectionCard(
-              title: l10n.databaseBackupRestoreTitle,
-              subtitle: l10n.databaseBackupRestoreSubtitle,
-              headerTrailing: InfoHelpButton(
-                title: l10n.databaseBackupRestoreInfoTitle,
-                message: l10n.databaseBackupRestoreInfoMessage,
-              ),
-              children: [
-                _DatabaseActionButton(
-                  icon: Icons.save_alt_outlined,
-                  label: l10n.databaseBackupLogbookAction,
-                  onPressed: () => _backupDatabase(context, ref),
-                ),
-                const SizedBox(height: 8),
-                _DatabaseActionButton(
-                  icon: Icons.restore_outlined,
-                  label: l10n.databaseRestoreLogbookAction,
-                  onPressed: () => _restoreDatabase(context, ref),
-                ),
-              ],
+              secondLabel: l10n.databaseExportFileAction,
+              onSecondPressed: () => _exportData(context, ref),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _exportData(BuildContext context, WidgetRef ref) async {
+    final choice = await _showExportTypeDialog(context);
+    if (!context.mounted || choice == null) return;
+    if (choice == _DatabaseExportChoice.csv) {
+      await _exportCsv(context, ref);
+      return;
+    }
+    await _backupDatabase(context, ref);
   }
 
   Future<void> _importCsv(BuildContext context, WidgetRef ref) async {
@@ -169,20 +159,30 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       type: isAndroid ? FileType.any : FileType.custom,
       allowedExtensions: isAndroid
           ? null
-          : const ['csv', 'sqlite', 'db', 'xlsx', 'txt', 'tsv'],
+          : const ['csv', 'sqlite', 'db', 'backup', 'xlsx', 'txt', 'tsv'],
     );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.single;
     if (!context.mounted) return;
-    final detectedFromName = _sourceDispatcher.detect(fileName: file.name);
-    if (detectedFromName == ImportSourceKind.legacySimpleLogDb) {
-      await _importDatabaseFile(context, ref, file);
-      return;
-    }
     final bytes =
         (file.path == null ? null : await File(file.path!).readAsBytes()) ??
         file.bytes;
     if (bytes == null) return;
+    final dbInspection = await _databaseSourceDetector.inspectBytes(bytes);
+    if (!context.mounted) return;
+    if (dbInspection.kind == SimpleLogDatabaseSourceKind.currentSimpleLog) {
+      await _restoreDatabaseBytes(context, ref, bytes);
+      return;
+    }
+    if (dbInspection.kind == SimpleLogDatabaseSourceKind.legacySimpleLog) {
+      await _importDatabaseFile(context, ref, bytes);
+      return;
+    }
+    if (dbInspection.isSqlite) {
+      await _showInfoDialog(context, 'Unsupported database file format.');
+      return;
+    }
+
     final content = _decodeCsvBytes(bytes);
     final type = _sourceDispatcher.detect(
       fileName: file.name,
@@ -404,16 +404,13 @@ class DatabaseSyncTrigger extends ConsumerWidget {
   Future<void> _importDatabaseFile(
     BuildContext context,
     WidgetRef ref,
-    PlatformFile file,
+    Uint8List bytes,
   ) async {
-    final bytes =
-        (file.path == null ? null : await File(file.path!).readAsBytes()) ??
-        file.bytes;
-    if (bytes == null || bytes.isEmpty || !context.mounted) return;
+    if (bytes.isEmpty || !context.mounted) return;
 
     final confirmed = await _showDestructiveReplaceConfirmation(
       context: context,
-      title: 'Import database file?',
+      title: 'Import legacy database file?',
       confirmLabel: 'Import',
     );
     if (confirmed != true || !context.mounted) return;
@@ -423,6 +420,25 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     final result = await importer.importFromBytes(bytes);
     if (!context.mounted) return;
     await _showLegacyImportSummary(context, result);
+  }
+
+  Future<void> _restoreDatabaseBytes(
+    BuildContext context,
+    WidgetRef ref,
+    Uint8List bytes,
+  ) async {
+    if (bytes.isEmpty || !context.mounted) return;
+
+    final confirmed = await _showDestructiveReplaceConfirmation(
+      context: context,
+      title: 'Restore database backup?',
+      confirmLabel: 'Restore',
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    await _replaceDatabaseBytes(ref, bytes);
+    if (!context.mounted) return;
+    await _showInfoDialog(context, 'Database restored from backup.');
   }
 
   Future<void> _showLegacyImportSummary(
@@ -536,33 +552,6 @@ class DatabaseSyncTrigger extends ConsumerWidget {
 
     if (!context.mounted) return;
     await _showInfoDialog(context, 'Backup saved.');
-  }
-
-  Future<void> _restoreDatabase(BuildContext context, WidgetRef ref) async {
-    final isAppleMobile = Platform.isIOS;
-    final picked = await FilePicker.platform.pickFiles(
-      type: isAppleMobile ? FileType.any : FileType.custom,
-      allowedExtensions: isAppleMobile
-          ? null
-          : const ['sqlite', 'db', 'backup'],
-    );
-    if (picked == null || picked.files.isEmpty || !context.mounted) return;
-    final file = picked.files.single;
-    final bytes =
-        (file.path == null ? null : await File(file.path!).readAsBytes()) ??
-        file.bytes;
-    if (bytes == null || bytes.isEmpty || !context.mounted) return;
-
-    final confirmed = await _showDestructiveReplaceConfirmation(
-      context: context,
-      title: 'Restore database backup?',
-      confirmLabel: 'Restore',
-    );
-
-    if (confirmed != true || !context.mounted) return;
-    await _replaceDatabaseBytes(ref, bytes);
-    if (!context.mounted) return;
-    await _showInfoDialog(context, 'Database restored from backup.');
   }
 
   String _decodeCsvBytes(Uint8List bytes) {
@@ -897,39 +886,16 @@ ${l10n.databaseErrorsLabel(stats.errors)}
     required String message,
   }) async {
     final l10n = AppLocalizations.of(context)!;
-    final choice = await showDialog<_SouthwestMappingsReviewChoice>(
+    final choice = await _showThreeChoiceDialog<_SouthwestMappingsReviewChoice>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.southwestTypeMappingsDialogTitle),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => AppNavigator.pop(
-                dialogContext,
-                _SouthwestMappingsReviewChoice.cancel,
-              ),
-              child: Text(l10n.cancelAction),
-            ),
-            TextButton(
-              onPressed: () => AppNavigator.pop(
-                dialogContext,
-                _SouthwestMappingsReviewChoice.skipReview,
-              ),
-              child: Text(
-                l10n.southwestTypeMappingsContinueWithoutReviewAction,
-              ),
-            ),
-            FilledButton(
-              onPressed: () => AppNavigator.pop(
-                dialogContext,
-                _SouthwestMappingsReviewChoice.reviewNow,
-              ),
-              child: Text(l10n.southwestTypeMappingsReviewAction),
-            ),
-          ],
-        );
-      },
+      title: l10n.southwestTypeMappingsDialogTitle,
+      message: message,
+      cancelLabel: l10n.cancelAction,
+      cancelValue: _SouthwestMappingsReviewChoice.cancel,
+      secondaryLabel: l10n.southwestTypeMappingsContinueWithoutReviewAction,
+      secondaryValue: _SouthwestMappingsReviewChoice.skipReview,
+      primaryLabel: l10n.southwestTypeMappingsReviewAction,
+      primaryValue: _SouthwestMappingsReviewChoice.reviewNow,
     );
     return choice ?? _SouthwestMappingsReviewChoice.cancel;
   }
@@ -1028,6 +994,74 @@ ${l10n.databaseErrorsLabel(stats.errors)}
               '${typeLabel(issue)}',
         )
         .toList(growable: false);
+  }
+
+  Future<_DatabaseExportChoice?> _showExportTypeDialog(
+    BuildContext context,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    return showModalBottomSheet<_DatabaseExportChoice?>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.table_view_outlined),
+              title: Text(l10n.databaseExportCsvAction),
+              onTap: () =>
+                  AppNavigator.pop(sheetContext, _DatabaseExportChoice.csv),
+            ),
+            ListTile(
+              leading: const Icon(Icons.save_alt_outlined),
+              title: Text(l10n.databaseBackupLogbookAction),
+              onTap: () =>
+                  AppNavigator.pop(sheetContext, _DatabaseExportChoice.backup),
+            ),
+            ListTile(
+              leading: const Icon(Icons.close),
+              title: Text(l10n.cancelAction),
+              onTap: () => AppNavigator.pop(sheetContext),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<T?> _showThreeChoiceDialog<T>({
+    required BuildContext context,
+    required String title,
+    required String message,
+    required String cancelLabel,
+    required T? cancelValue,
+    required String secondaryLabel,
+    required T secondaryValue,
+    required String primaryLabel,
+    required T primaryValue,
+  }) {
+    return showDialog<T>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => AppNavigator.pop(dialogContext, cancelValue),
+            child: Text(cancelLabel),
+          ),
+          TextButton(
+            onPressed: () => AppNavigator.pop(dialogContext, secondaryValue),
+            child: Text(secondaryLabel),
+          ),
+          FilledButton(
+            onPressed: () => AppNavigator.pop(dialogContext, primaryValue),
+            child: Text(primaryLabel),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _showInfoDialog(BuildContext context, String message) async {
@@ -1442,6 +1476,11 @@ enum _SouthwestMappingsReviewChoice {
   cancel,
   skipReview,
   reviewNow,
+}
+
+enum _DatabaseExportChoice {
+  csv,
+  backup,
 }
 
 class _DatabaseSectionCard extends StatelessWidget {

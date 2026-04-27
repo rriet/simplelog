@@ -41,4 +41,10 @@ void main() {
 
     expect(result, ImportSourceKind.unknown);
   });
+
+  test('detect returns unknown for sqlite extension without known content', () {
+    final result = dispatcher.detect(fileName: 'backup.sqlite');
+
+    expect(result, ImportSourceKind.unknown);
+  });
 }
