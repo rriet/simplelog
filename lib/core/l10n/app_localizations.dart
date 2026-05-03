@@ -4225,8 +4225,17 @@ abstract class AppLocalizations {
   /// No description provided for @southwestTypeMappingsRawTypeValue.
   ///
   /// In en, this message translates to:
-  /// **'Raw type: {value}'**
+  /// **'Original type: {value}'**
   String southwestTypeMappingsRawTypeValue(String value);
+
+  /// No description provided for @southwestTypeMappingsAircraftUsageValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Used by {count} aircraft: {registrations}'**
+  String southwestTypeMappingsAircraftUsageValue(
+    int count,
+    String registrations,
+  );
 
   /// No description provided for @southwestTypeMappingsEmptyRawTypeLabel.
   ///

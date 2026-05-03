@@ -112,13 +112,20 @@ class SouthwestCsvSourceParser {
   /// Extracts unique raw aircraft type designators from non-positioning rows.
   ///
   /// Empty designators are represented by an empty string.
-  Set<String> extractUniqueRawTypeCodes(String content) {
+  Set<String> extractUniqueRawTypeCodes(
+    String content, {
+    Set<String> existingAircraftRegistrations = const <String>{},
+  }) {
     final rows = SimpleLogCsvSupport.parseCsv(content);
     final headerRowIndex = _findHeaderRowIndex(rows);
     if (headerRowIndex < 0) {
       throw const FormatException('Southwest CSV header not found.');
     }
     final indices = _SouthwestHeaderIndices(rows[headerRowIndex]);
+    final normalizedExistingRegistrations = existingAircraftRegistrations
+        .map(_normalizeSouthwestAircraftRegistration)
+        .where((registration) => registration.isNotEmpty)
+        .toSet();
     final types = <String>{};
     for (
       var rowIndex = headerRowIndex + 1;
@@ -132,10 +139,137 @@ class SouthwestCsvSourceParser {
       if (get(indices.dhd).toUpperCase() == 'DH') {
         continue;
       }
+      final registration = _normalizeSouthwestAircraftRegistration(
+        get(indices.tail),
+      );
+      if (registration.isNotEmpty &&
+          normalizedExistingRegistrations.contains(registration)) {
+        continue;
+      }
       final rawType = _normalizeSouthwestTypeCode(get(indices.type));
       types.add(rawType);
     }
     return types;
+  }
+
+  /// Collects aircraft registrations grouped by raw type.
+  ///
+  /// When [existingAircraftRegistrations] is provided, those registrations
+  /// are excluded so the caller can focus on aircraft rows that still need
+  /// creation.
+  Map<String, List<String>> collectAircraftRegistrationsByRawType(
+    String content, {
+    Set<String> existingAircraftRegistrations = const <String>{},
+  }) {
+    final rows = SimpleLogCsvSupport.parseCsv(content);
+    final headerRowIndex = _findHeaderRowIndex(rows);
+    if (headerRowIndex < 0) {
+      throw const FormatException('Southwest CSV header not found.');
+    }
+    final indices = _SouthwestHeaderIndices(rows[headerRowIndex]);
+    final normalizedExistingRegistrations = existingAircraftRegistrations
+        .map(_normalizeSouthwestAircraftRegistration)
+        .where((registration) => registration.isNotEmpty)
+        .toSet();
+    final registrationsByRawType = <String, Set<String>>{};
+
+    for (
+      var rowIndex = headerRowIndex + 1;
+      rowIndex < rows.length;
+      rowIndex += 1
+    ) {
+      final row = rows[rowIndex];
+      if (row.isEmpty) continue;
+      String get(int idx) =>
+          idx >= 0 && idx < row.length ? row[idx].trim() : '';
+      if (get(indices.dhd).toUpperCase() == 'DH') {
+        continue;
+      }
+      final registration = _normalizeSouthwestAircraftRegistration(
+        get(indices.tail),
+      );
+      if (registration.isEmpty ||
+          normalizedExistingRegistrations.contains(registration)) {
+        continue;
+      }
+      final rawType = _normalizeSouthwestTypeCode(get(indices.type));
+      registrationsByRawType
+          .putIfAbsent(rawType, () => <String>{})
+          .add(
+            registration,
+          );
+    }
+
+    return <String, List<String>>{
+      for (final entry in registrationsByRawType.entries)
+        entry.key: (entry.value.toList()..sort()),
+    };
+  }
+
+  /// Infers raw Southwest type mappings from already existing aircraft rows.
+  ///
+  /// Returns only unambiguous mappings where one raw type resolves to exactly
+  /// one existing aircraft type code.
+  Map<String, String> inferTypeMappingsFromExistingAircraft(
+    String content, {
+    required Map<String, String> existingAircraftTypeCodesByRegistration,
+  }) {
+    final rows = SimpleLogCsvSupport.parseCsv(content);
+    final headerRowIndex = _findHeaderRowIndex(rows);
+    if (headerRowIndex < 0) {
+      throw const FormatException('Southwest CSV header not found.');
+    }
+    final indices = _SouthwestHeaderIndices(rows[headerRowIndex]);
+    final existingTypeByRegistration = <String, String>{
+      for (final entry in existingAircraftTypeCodesByRegistration.entries)
+        _normalizeSouthwestAircraftRegistration(
+          entry.key,
+        ): _normalizeSouthwestTypeCode(
+          entry.value,
+        ),
+    };
+    final candidatesByRawType = <String, Set<String>>{};
+
+    for (
+      var rowIndex = headerRowIndex + 1;
+      rowIndex < rows.length;
+      rowIndex += 1
+    ) {
+      final row = rows[rowIndex];
+      if (row.isEmpty) continue;
+      String get(int idx) =>
+          idx >= 0 && idx < row.length ? row[idx].trim() : '';
+      if (get(indices.dhd).toUpperCase() == 'DH') {
+        continue;
+      }
+      final rawType = _normalizeSouthwestTypeCode(get(indices.type));
+      if (rawType.isEmpty) {
+        continue;
+      }
+      final registration = _normalizeSouthwestAircraftRegistration(
+        get(indices.tail),
+      );
+      if (registration.isEmpty) {
+        continue;
+      }
+      final existingType = existingTypeByRegistration[registration];
+      if (existingType == null || existingType.isEmpty) {
+        continue;
+      }
+      candidatesByRawType
+          .putIfAbsent(rawType, () => <String>{})
+          .add(
+            existingType,
+          );
+    }
+
+    final inferred = <String, String>{};
+    for (final entry in candidatesByRawType.entries) {
+      if (entry.value.length == 1) {
+        inferred[entry.key] = entry.value.first;
+      }
+    }
+    return inferred;
   }
 
   /// Inspects Southwest CSV rows and reports missing required values.
@@ -567,6 +701,10 @@ String? _resolveMappedSouthwestTypeCode({
 }
 
 String _normalizeSouthwestTypeCode(String value) {
+  return value.trim().toUpperCase();
+}
+
+String _normalizeSouthwestAircraftRegistration(String value) {
   return value.trim().toUpperCase();
 }
 

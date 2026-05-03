@@ -819,7 +819,8 @@
   "southwestPreflightUnknownTypeLabel": "UNKNOWN",
   "southwestTypeMappingsDialogTitle": "Aircraft type mappings",
   "southwestTypeMappingsDialogMessage": "Resolve aircraft types from this file before importing.",
-  "southwestTypeMappingsRawTypeValue": "Raw type: {value}",
+  "southwestTypeMappingsRawTypeValue": "Original type: {value}",
+  "southwestTypeMappingsAircraftUsageValue": "Used by {count} aircraft: {registrations}",
   "southwestTypeMappingsEmptyRawTypeLabel": "(empty)",
   "southwestTypeMappingsAutoCreateAction": "Auto-create from raw type",
   "southwestTypeMappingsUseUnknownAction": "Use UNKNOWN",
@@ -868,6 +869,16 @@
   "@southwestTypeMappingsRawTypeValue": {
     "placeholders": {
       "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@southwestTypeMappingsAircraftUsageValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "registrations": {
         "type": "String"
       }
     }

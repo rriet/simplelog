@@ -835,22 +835,39 @@ ${l10n.databaseErrorsLabel(stats.errors)}
     required Map<String, String> initialMappings,
   }) async {
     final l10n = AppLocalizations.of(context)!;
-    final rawTypeCodes = importer.extractSouthwestRawTypeCodes(content).toList()
-      ..sort(_compareSouthwestRawTypeCodes);
-    if (rawTypeCodes.isEmpty) {
-      return const <String, String>{};
-    }
-
     final normalizedInitialMappings = _normalizeSouthwestTypeMappings(
       initialMappings,
     );
-    final scopedInitialMappings = <String, String>{
+    final inferredMappings = _normalizeSouthwestTypeMappings(
+      await importer.inferSouthwestTypeMappingsFromExistingAircraft(content),
+    );
+    final knownMappings = <String, String>{
+      ...inferredMappings,
+      ...normalizedInitialMappings,
+    };
+
+    final rawTypeCodes =
+        (await importer.extractSouthwestRawTypeCodesForAircraftCreation(
+          content,
+        )).toList()..sort(_compareSouthwestRawTypeCodes);
+    final registrationsByRawType = await importer
+        .extractSouthwestAircraftRegistrationsByRawTypeForAircraftCreation(
+          content,
+        );
+    if (!context.mounted) {
+      return null;
+    }
+    if (rawTypeCodes.isEmpty) {
+      return knownMappings;
+    }
+
+    final scopedKnownMappings = <String, String>{
       for (final rawTypeCode in rawTypeCodes)
-        if (normalizedInitialMappings.containsKey(rawTypeCode))
-          rawTypeCode: normalizedInitialMappings[rawTypeCode]!,
+        if (knownMappings.containsKey(rawTypeCode))
+          rawTypeCode: knownMappings[rawTypeCode]!,
     };
     final unresolvedTypeCodes = rawTypeCodes
-        .where((rawTypeCode) => !scopedInitialMappings.containsKey(rawTypeCode))
+        .where((rawTypeCode) => !scopedKnownMappings.containsKey(rawTypeCode))
         .toList(growable: false);
 
     if (unresolvedTypeCodes.isEmpty) {
@@ -865,20 +882,27 @@ ${l10n.databaseErrorsLabel(stats.errors)}
         return null;
       }
       if (decision == _SouthwestMappingsReviewChoice.skipReview) {
-        return scopedInitialMappings;
+        return knownMappings;
       }
     }
 
+    if (!context.mounted) {
+      return null;
+    }
     final reviewedMappings = await SouthwestTypeMappingsDialog.show(
       context,
       fileName: fileName,
       rawTypeCodes: rawTypeCodes,
-      initialMappings: scopedInitialMappings,
+      rawTypeAircraftRegistrations: registrationsByRawType,
+      initialMappings: scopedKnownMappings,
     );
     if (reviewedMappings == null || !context.mounted) {
       return null;
     }
-    return _normalizeSouthwestTypeMappings(reviewedMappings);
+    return <String, String>{
+      ...knownMappings,
+      ..._normalizeSouthwestTypeMappings(reviewedMappings),
+    };
   }
 
   Future<_SouthwestMappingsReviewChoice> _showSouthwestMappingsReviewChoice(

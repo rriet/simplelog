@@ -2169,7 +2169,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String southwestTypeMappingsRawTypeValue(String value) {
-    return 'Raw type: $value';
+    return 'Original type: $value';
+  }
+
+  @override
+  String southwestTypeMappingsAircraftUsageValue(
+    int count,
+    String registrations,
+  ) {
+    return 'Used by $count aircraft: $registrations';
   }
 
   @override

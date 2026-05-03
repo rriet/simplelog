@@ -43,6 +43,57 @@ class SimpleLogCsvImporter {
     return _southwestParser.extractUniqueRawTypeCodes(content);
   }
 
+  /// Returns raw type designators only for rows that would create aircraft.
+  Future<Set<String>> extractSouthwestRawTypeCodesForAircraftCreation(
+    String content,
+  ) async {
+    final existingAircraft = await db.select(db.aircrafts).get();
+    final existingRegistrations = <String>{
+      for (final aircraft in existingAircraft)
+        aircraft.registration.trim().toUpperCase(),
+    };
+    return _southwestParser.extractUniqueRawTypeCodes(
+      content,
+      existingAircraftRegistrations: existingRegistrations,
+    );
+  }
+
+  /// Returns aircraft registrations grouped by raw type for creation rows only.
+  Future<Map<String, List<String>>>
+  extractSouthwestAircraftRegistrationsByRawTypeForAircraftCreation(
+    String content,
+  ) async {
+    final existingAircraft = await db.select(db.aircrafts).get();
+    final existingRegistrations = <String>{
+      for (final aircraft in existingAircraft)
+        aircraft.registration.trim().toUpperCase(),
+    };
+    return _southwestParser.collectAircraftRegistrationsByRawType(
+      content,
+      existingAircraftRegistrations: existingRegistrations,
+    );
+  }
+
+  /// Infers Southwest raw type mappings from existing aircraft registrations.
+  Future<Map<String, String>> inferSouthwestTypeMappingsFromExistingAircraft(
+    String content,
+  ) async {
+    final existingAircraft = await db.select(db.aircrafts).get();
+    final existingTypes = await db.select(db.aircraftTypes).get();
+    final typeCodeById = <int, String>{
+      for (final type in existingTypes) type.id: type.code.trim().toUpperCase(),
+    };
+    final typeCodeByRegistration = <String, String>{
+      for (final aircraft in existingAircraft)
+        aircraft.registration.trim().toUpperCase():
+            typeCodeById[aircraft.aircraftTypeId] ?? '',
+    };
+    return _southwestParser.inferTypeMappingsFromExistingAircraft(
+      content,
+      existingAircraftTypeCodesByRegistration: typeCodeByRegistration,
+    );
+  }
+
   /// Imports a legacy SimpleLog CSV string into the database.
   Future<SimpleLogImportResult> importCsv(
     String content, {

@@ -19,6 +19,7 @@ class SouthwestTypeMappingsDialog extends ConsumerStatefulWidget {
   const SouthwestTypeMappingsDialog({
     required this.fileName,
     required this.rawTypeCodes,
+    required this.rawTypeAircraftRegistrations,
     required this.initialMappings,
     super.key,
   });
@@ -29,6 +30,9 @@ class SouthwestTypeMappingsDialog extends ConsumerStatefulWidget {
   /// Unique raw type designators extracted from the source file.
   final List<String> rawTypeCodes;
 
+  /// Aircraft registrations grouped by raw type for rows to be created.
+  final Map<String, List<String>> rawTypeAircraftRegistrations;
+
   /// Initial mapping values loaded from persisted settings.
   final Map<String, String> initialMappings;
 
@@ -37,11 +41,13 @@ class SouthwestTypeMappingsDialog extends ConsumerStatefulWidget {
     BuildContext context, {
     required String fileName,
     required List<String> rawTypeCodes,
+    required Map<String, List<String>> rawTypeAircraftRegistrations,
     required Map<String, String> initialMappings,
   }) {
     final screen = SouthwestTypeMappingsDialog(
       fileName: fileName,
       rawTypeCodes: rawTypeCodes,
+      rawTypeAircraftRegistrations: rawTypeAircraftRegistrations,
       initialMappings: initialMappings,
     );
     final isCompact = MediaQuery.sizeOf(context).width < 600;
@@ -162,11 +168,25 @@ class _SouthwestTypeMappingsDialogState
         : rawTypeCode;
   }
 
+  String _aircraftUsagePreview(List<String> registrations) {
+    const maxPreviewCount = 3;
+    final preview = registrations.take(maxPreviewCount).toList(growable: false);
+    final overflowCount = registrations.length - preview.length;
+    if (overflowCount <= 0) {
+      return preview.join(', ');
+    }
+    return '${preview.join(', ')}, +$overflowCount';
+  }
+
   String _mappingQuickActionLabel(AppLocalizations l10n, String rawTypeCode) {
     if (rawTypeCode.isEmpty) {
       return l10n.southwestTypeMappingsUseUnknownAction;
     }
     return l10n.southwestTypeMappingsAutoCreateAction;
+  }
+
+  List<String> _aircraftRegistrationsForRawType(String rawTypeCode) {
+    return widget.rawTypeAircraftRegistrations[rawTypeCode] ?? const <String>[];
   }
 
   @override
@@ -215,6 +235,24 @@ class _SouthwestTypeMappingsDialogState
                                 _rawTypeLabel(l10n, rawTypeCode),
                               ),
                             ),
+                            if (_aircraftRegistrationsForRawType(
+                              rawTypeCode,
+                            ).isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                l10n.southwestTypeMappingsAircraftUsageValue(
+                                  _aircraftRegistrationsForRawType(
+                                    rawTypeCode,
+                                  ).length,
+                                  _aircraftUsagePreview(
+                                    _aircraftRegistrationsForRawType(
+                                      rawTypeCode,
+                                    ),
+                                  ),
+                                ),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
                             const SizedBox(height: 10),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,

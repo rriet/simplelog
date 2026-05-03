@@ -399,4 +399,174 @@ void main() {
 
     expect(record.aircraftType.code, 'UNKNOWN');
   });
+
+  test('extractUniqueRawTypeCodes excludes rows for existing aircraft', () {
+    final content = csv([
+      header,
+      [
+        '2026-03-01',
+        '125',
+        '',
+        'KHOU',
+        '08:00',
+        'KDAL',
+        '10:00',
+        '0200',
+        'N123SW',
+        '73W',
+        '1',
+        '1',
+        '',
+      ],
+      [
+        '2026-03-02',
+        '126',
+        '',
+        'KHOU',
+        '08:00',
+        'KDAL',
+        '10:00',
+        '0200',
+        'N124SW',
+        '73H',
+        '1',
+        '1',
+        '',
+      ],
+    ]);
+
+    final uniqueTypes = parser.extractUniqueRawTypeCodes(
+      content,
+      existingAircraftRegistrations: const <String>{'n123sw'},
+    );
+
+    expect(uniqueTypes, equals(const <String>{'73H'}));
+  });
+
+  test('inferTypeMappingsFromExistingAircraft infers unambiguous mappings', () {
+    final content = csv([
+      header,
+      [
+        '2026-03-01',
+        '125',
+        '',
+        'KHOU',
+        '08:00',
+        'KDAL',
+        '10:00',
+        '0200',
+        'N123SW',
+        '73W',
+        '1',
+        '1',
+        '',
+      ],
+      [
+        '2026-03-02',
+        '126',
+        '',
+        'KHOU',
+        '08:00',
+        'KDAL',
+        '10:00',
+        '0200',
+        'N124SW',
+        '73W',
+        '1',
+        '1',
+        '',
+      ],
+      [
+        '2026-03-03',
+        '127',
+        '',
+        'KHOU',
+        '08:00',
+        'KDAL',
+        '10:00',
+        '0200',
+        'N125SW',
+        '73G',
+        '1',
+        '1',
+        '',
+      ],
+    ]);
+
+    final inferred = parser.inferTypeMappingsFromExistingAircraft(
+      content,
+      existingAircraftTypeCodesByRegistration: const <String, String>{
+        'N123SW': 'B737-700',
+        'N124SW': 'B737-700',
+        'N125SW': 'B737-800',
+      },
+    );
+
+    expect(
+      inferred,
+      equals(const <String, String>{'73W': 'B737-700', '73G': 'B737-800'}),
+    );
+  });
+
+  test(
+    'collectAircraftRegistrationsByRawType returns new-aircraft usage groups',
+    () {
+      final content = csv([
+        header,
+        [
+          '2026-03-01',
+          '125',
+          '',
+          'KHOU',
+          '08:00',
+          'KDAL',
+          '10:00',
+          '0200',
+          'N123SW',
+          '73W',
+          '1',
+          '1',
+          '',
+        ],
+        [
+          '2026-03-02',
+          '126',
+          '',
+          'KHOU',
+          '08:00',
+          'KDAL',
+          '10:00',
+          '0200',
+          'N124SW',
+          '73W',
+          '1',
+          '1',
+          '',
+        ],
+        [
+          '2026-03-03',
+          '127',
+          '',
+          'KHOU',
+          '08:00',
+          'KDAL',
+          '10:00',
+          '0200',
+          'N125SW',
+          '73G',
+          '1',
+          '1',
+          '',
+        ],
+      ]);
+
+      final grouped = parser.collectAircraftRegistrationsByRawType(
+        content,
+        existingAircraftRegistrations: const <String>{'N123SW'},
+      );
+
+      expect(grouped['73W'], equals(const <String>['N124SW']));
+      expect(grouped['73G'], equals(const <String>['N125SW']));
+    },
+  );
 }
