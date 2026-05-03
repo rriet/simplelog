@@ -55,6 +55,7 @@ dependencies:
 
   riverpod: any
   sqlite3: ^3.2.0
+  timezone: ^0.10.1
   url_launcher: 6.3.2
   xml: ^6.6.1
 dev_dependencies:

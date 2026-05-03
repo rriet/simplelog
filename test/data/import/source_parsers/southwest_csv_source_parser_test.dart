@@ -569,4 +569,33 @@ void main() {
       expect(grouped['73G'], equals(const <String>['N125SW']));
     },
   );
+
+  test('parse converts overnight DST-transition row from Central to UTC', () {
+    final content = csv([
+      header,
+      [
+        '2026-03-08',
+        'WN302',
+        '',
+        'KDEN',
+        '20:24',
+        'KMCO',
+        '0:01',
+        '337',
+        'N8307K',
+        '737-7R8',
+        '',
+        '',
+        'CA  DEAN TOM [55856]',
+      ],
+    ]);
+
+    final batch = parser.parse(content);
+    final flight = batch.records.single as NormalizedFlightRecord;
+
+    expect(flight.departureDateTime, DateTime.utc(2026, 3, 9, 1, 24));
+    expect(flight.arrivalDateTime, DateTime.utc(2026, 3, 9, 5, 1));
+    expect(flight.timeBlockMinutes, 217);
+    expect(flight.timeTotalBlockMinutes, 217);
+  });
 }

@@ -9,6 +9,8 @@ import 'package:simplelog/data/database/enums/engine_type.dart';
 import 'package:simplelog/data/import/normalized_import_models.dart';
 import 'package:simplelog/data/import/simplelog_csv_support.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
+import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:timezone/timezone.dart' as tz;
 
 /// Missing required value detected in a Southwest source row.
 enum SouthwestMissingRequiredField {
@@ -408,16 +410,30 @@ class SouthwestCsvSourceParser {
           continue;
         }
 
-        final departureDateTime = _parseSouthwestDateTime(dateText, departText);
-        final arrivalDateTime = _parseSouthwestDateTime(dateText, arriveText);
-        if (departureDateTime == null || arrivalDateTime == null) {
+        final departureLocalDateTime = _parseSouthwestLocalDateTime(
+          dateText,
+          departText,
+        );
+        final arrivalLocalDateTime = _parseSouthwestLocalDateTime(
+          dateText,
+          arriveText,
+        );
+        if (departureLocalDateTime == null || arrivalLocalDateTime == null) {
           skipped += 1;
           continue;
         }
-        var resolvedArrival = arrivalDateTime;
-        if (resolvedArrival.isBefore(departureDateTime)) {
-          resolvedArrival = resolvedArrival.add(const Duration(days: 1));
+        var resolvedArrivalLocal = arrivalLocalDateTime;
+        if (resolvedArrivalLocal.isBefore(departureLocalDateTime)) {
+          resolvedArrivalLocal = resolvedArrivalLocal.add(
+            const Duration(days: 1),
+          );
         }
+        final departureDateTime = _southwestCentralLocalToUtc(
+          departureLocalDateTime,
+        );
+        final resolvedArrival = _southwestCentralLocalToUtc(
+          resolvedArrivalLocal,
+        );
 
         final departureAirport = _airportDraftForCode(
           fromCode,
@@ -736,7 +752,7 @@ ImportedAirportDraft _airportDraftForCode(
   );
 }
 
-DateTime? _parseSouthwestDateTime(String date, String time) {
+DateTime? _parseSouthwestLocalDateTime(String date, String time) {
   try {
     final d = DateFormat('yyyy-MM-dd').parseStrict(date.trim());
     final parts = time.trim().split(':');
@@ -744,13 +760,9 @@ DateTime? _parseSouthwestDateTime(String date, String time) {
     final hour = int.tryParse(parts[0]) ?? -1;
     final minute = int.tryParse(parts[1]) ?? -1;
     if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
-    return _southwestCsvCentralTimeToDbUtc(
-      year: d.year,
-      month: d.month,
-      day: d.day,
-      hour: hour,
-      minute: minute,
-    );
+    // Keep this as a timezone-neutral wall-clock container so adding
+    // a day for overnight legs is not affected by the host device timezone.
+    return DateTime.utc(d.year, d.month, d.day, hour, minute);
   } on Object catch (_) {
     return null;
   }
@@ -830,31 +842,32 @@ int _wallClockAsUtcEpochSeconds(DateTime dt) {
 
 String _airportKey(String icao) => icao.trim().toLowerCase();
 
-DateTime _southwestCsvCentralTimeToDbUtc({
-  required int year,
-  required int month,
-  required int day,
-  required int hour,
-  required int minute,
-}) {
-  final local = DateTime(year, month, day, hour, minute);
-  final dstStart = _secondSunday(year, 3, 2);
-  final dstEnd = _firstSunday(year, 11, 2);
-  final isDst = !local.isBefore(dstStart) && local.isBefore(dstEnd);
-  final offsetHours = isDst ? 5 : 6;
-  return DateTime.utc(year, month, day, hour, minute).add(
-    Duration(hours: offsetHours),
+DateTime _southwestCentralLocalToUtc(DateTime localDateTime) {
+  _ensureSouthwestTimezoneInitialized();
+  final central = _southwestCentralTimezone!;
+  final zoned = tz.TZDateTime(
+    central,
+    localDateTime.year,
+    localDateTime.month,
+    localDateTime.day,
+    localDateTime.hour,
+    localDateTime.minute,
+    localDateTime.second,
+    localDateTime.millisecond,
+    localDateTime.microsecond,
   );
+  return zoned.toUtc();
 }
 
-DateTime _firstSunday(int year, int month, int hour) {
-  final firstDay = DateTime(year, month, 1, hour);
-  final delta = (DateTime.sunday - firstDay.weekday + 7) % 7;
-  return firstDay.add(Duration(days: delta));
-}
+tz.Location? _southwestCentralTimezone;
+bool _southwestTimezoneInitialized = false;
 
-DateTime _secondSunday(int year, int month, int hour) {
-  return _firstSunday(year, month, hour).add(const Duration(days: 7));
+void _ensureSouthwestTimezoneInitialized() {
+  if (!_southwestTimezoneInitialized) {
+    tz_data.initializeTimeZones();
+    _southwestTimezoneInitialized = true;
+  }
+  _southwestCentralTimezone ??= tz.getLocation('America/Chicago');
 }
 
 class _SouthwestCopilot {
