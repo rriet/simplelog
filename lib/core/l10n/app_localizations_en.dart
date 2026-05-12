@@ -1782,6 +1782,96 @@ class AppLocalizationsEn extends AppLocalizations {
   String get qatarPositionSic => 'SIC';
 
   @override
+  String get waderReviewTitle => 'Review Wader import';
+
+  @override
+  String get waderReviewHelpText =>
+      'Fix invalid values before import, or ignore specific lines.';
+
+  @override
+  String get waderReviewIgnoreAllAction => 'Ignore all';
+
+  @override
+  String get waderReviewIgnoreLineAction => 'Ignore line';
+
+  @override
+  String get waderReviewIncludeLineAction => 'Include line';
+
+  @override
+  String get waderReviewApplyAction => 'Continue';
+
+  @override
+  String get waderReviewCorrectedValueLabel => 'Corrected value';
+
+  @override
+  String get waderReviewSelectDateHint => 'Select date';
+
+  @override
+  String get waderImportOptionsTitle => 'Import Wader';
+
+  @override
+  String get waderImportAction => 'Import';
+
+  @override
+  String get waderImportRecalculationsTitle => 'Recalculations';
+
+  @override
+  String get waderRecalculateTotalTimeLabel => 'Recalculate total time';
+
+  @override
+  String get waderImportOptionsHelpTitle => 'Import Wader options';
+
+  @override
+  String get waderImportOptionsHelpBody =>
+      'Recalculate total time OFF: import uses the CSV total time as entered. Missing or invalid totals must be fixed, ignored, or resolved in review.\n\nRecalculate total time ON: import recalculates total from start/parking times for all eligible rows.';
+
+  @override
+  String get waderTotalTimeResolutionLabel => 'Missing total time resolution';
+
+  @override
+  String get waderTotalTimeResolutionNone => 'Fix manually';
+
+  @override
+  String get waderTotalTimeResolutionCalculateFromChocks =>
+      'Calculate from chocks';
+
+  @override
+  String get waderTotalTimeResolutionUseBlock => 'Use block value';
+
+  @override
+  String get waderTotalTimeResolutionIgnoreLine => 'Ignore line';
+
+  @override
+  String get waderFieldDate => 'Date';
+
+  @override
+  String get waderFieldStartTime => 'Start time';
+
+  @override
+  String get waderFieldParkingTime => 'Parking time';
+
+  @override
+  String get waderFieldDepartureAirport => 'Departure airport';
+
+  @override
+  String get waderFieldArrivalAirport => 'Arrival airport';
+
+  @override
+  String get waderFieldAircraftTail => 'Aircraft tail';
+
+  @override
+  String get waderFieldAircraftType => 'Aircraft type';
+
+  @override
+  String get waderFieldTotalTime => 'Total time';
+
+  @override
+  String get waderFieldSimTraineeTime => 'Simulator trainee time';
+
+  @override
+  String get waderFieldSimTrainerTime => 'Simulator trainer time';
+
+  @override
   String get reportsBatchChangesTitle => 'Batch changes';
 
   @override

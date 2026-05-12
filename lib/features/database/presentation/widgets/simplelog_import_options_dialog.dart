@@ -4,9 +4,9 @@ import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
-import 'package:simplelog/core/presentation/widgets/inputs/ifr_factoring_fields_row.dart';
-import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/data/import/simplelog_import_options.dart';
+import 'package:simplelog/features/database/presentation/widgets/import_wizard/sections/import_conflict_resolution_section.dart';
+import 'package:simplelog/features/database/presentation/widgets/import_wizard/sections/import_recalculation_section.dart';
 
 /// Dialog to configure how legacy SimpleLog CSV rows are imported.
 ///
@@ -148,112 +148,70 @@ class _SimpleLogImportOptionsDialogState
             ],
           ),
           const SizedBox(height: 12),
-          const SizedBox(height: 8),
-          Card(
-            margin: EdgeInsets.zero,
-            child: ExpansionTile(
-              initiallyExpanded: _showRecalculations,
-              onExpansionChanged: (expanded) =>
-                  setState(() => _showRecalculations = expanded),
-              title: Text(l10n.simplelogRecalculationsTitle),
-              childrenPadding: const EdgeInsets.fromLTRB(
-                16,
-                0,
-                16,
-                8,
-              ),
-              children: [
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l10n.simplelogRecalcTotalTimeLabel),
-                  value: _recalcTotal,
-                  onChanged: (value) => setState(() => _recalcTotal = value),
-                ),
-                if (_recalcTotal) ...[
-                  _buildPercentTimePairRow(
-                    percentLabel: l10n.simplelogIrp3PercentLabel,
-                    percentController: _irp3PercentController,
-                    timeLabel: l10n.simplelogIrp3TimeLabel,
-                    timeController: _irp3SubtractController,
-                  ),
-                  _buildPercentTimePairRow(
-                    percentLabel: l10n.simplelogIrp4PercentLabel,
-                    percentController: _irp4PercentController,
-                    timeLabel: l10n.simplelogIrp4TimeLabel,
-                    timeController: _irp4SubtractController,
-                  ),
-                ],
-                _buildRecalculationToggle(
-                  title: l10n.simplelogNightTimeLabel,
-                  value: _recalcNight,
-                  onChanged: (value) => setState(() => _recalcNight = value),
-                ),
-                _buildRecalculationToggle(
-                  title: l10n.simplelogTakeoffLandingsLabel,
-                  value: _recalcTakeoffLanding,
-                  onChanged: (value) =>
-                      setState(() => _recalcTakeoffLanding = value),
-                ),
-                _buildRecalculationToggle(
-                  title: l10n.simplelogCrossCountryLabel,
-                  value: _recalcCrossCountry,
-                  onChanged: (value) =>
-                      setState(() => _recalcCrossCountry = value),
-                ),
-                if (_recalcCrossCountry)
-                  _CompactFieldRow(
-                    fields: [
-                      _CompactFieldSpec.number(
-                        label: l10n.simplelogCrossCountryNmLabel,
-                        controller: _crossCountryThresholdController,
-                      ),
-                    ],
-                  ),
-                _buildRecalculationToggle(
-                  title: l10n.simplelogIfrTimeLabel,
-                  value: _recalcIfr,
-                  onChanged: (value) => setState(() => _recalcIfr = value),
-                ),
-                if (_recalcIfr) ...[
-                  IfrFactoringFieldsRow(
-                    subtractController: _ifrSubtractController,
-                    percentController: _ifrPercentController,
-                    minimumController: _ifrMinController,
-                  ),
-                ],
-              ],
+          ImportRecalculationSection(
+            labels: ImportRecalculationSectionLabels(
+              title: l10n.simplelogRecalculationsTitle,
+              recalculateTotal: l10n.simplelogRecalcTotalTimeLabel,
+              irp3Percent: l10n.simplelogIrp3PercentLabel,
+              irp3Time: l10n.simplelogIrp3TimeLabel,
+              irp4Percent: l10n.simplelogIrp4PercentLabel,
+              irp4Time: l10n.simplelogIrp4TimeLabel,
+              recalculateNight: l10n.simplelogNightTimeLabel,
+              recalculateTakeoffLanding: l10n.simplelogTakeoffLandingsLabel,
+              recalculateCrossCountry: l10n.simplelogCrossCountryLabel,
+              crossCountryThreshold: l10n.simplelogCrossCountryNmLabel,
+              recalculateIfr: l10n.simplelogIfrTimeLabel,
             ),
+            initiallyExpanded: _showRecalculations,
+            onExpansionChanged: (expanded) =>
+                setState(() => _showRecalculations = expanded),
+            recalcTotalValue: _recalcTotal,
+            onRecalcTotalChanged: (value) =>
+                setState(() => _recalcTotal = value),
+            irp3PercentController: _irp3PercentController,
+            irp3SubtractController: _irp3SubtractController,
+            irp4PercentController: _irp4PercentController,
+            irp4SubtractController: _irp4SubtractController,
+            recalcNightValue: _recalcNight,
+            onRecalcNightChanged: (value) =>
+                setState(() => _recalcNight = value),
+            recalcTakeoffLandingValue: _recalcTakeoffLanding,
+            onRecalcTakeoffLandingChanged: (value) =>
+                setState(() => _recalcTakeoffLanding = value),
+            recalcCrossCountryValue: _recalcCrossCountry,
+            onRecalcCrossCountryChanged: (value) =>
+                setState(() => _recalcCrossCountry = value),
+            crossCountryThresholdController: _crossCountryThresholdController,
+            recalcIfrValue: _recalcIfr,
+            onRecalcIfrChanged: (value) => setState(() => _recalcIfr = value),
+            ifrSubtractController: _ifrSubtractController,
+            ifrPercentController: _ifrPercentController,
+            ifrMinimumController: _ifrMinController,
           ),
           const SizedBox(height: 8),
-          Card(
-            margin: EdgeInsets.zero,
-            child: ExpansionTile(
-              initiallyExpanded: _showConflictResolution,
-              onExpansionChanged: (expanded) => setState(
-                () => _showConflictResolution = expanded,
+          ImportConflictResolutionSection(
+            title: l10n.simplelogConflictResolutionTitle,
+            initiallyExpanded: _showConflictResolution,
+            onExpansionChanged: (expanded) =>
+                setState(() => _showConflictResolution = expanded),
+            toggles: [
+              ImportConflictToggleConfig(
+                label: l10n.simplelogOverrideAirportOnConflict,
+                value: _overrideAirports,
+                onChanged: (value) => setState(() => _overrideAirports = value),
               ),
-              title: Text(l10n.simplelogConflictResolutionTitle),
-              children: [
-                _buildConflictToggle(
-                  title: l10n.simplelogOverrideAirportOnConflict,
-                  value: _overrideAirports,
-                  onChanged: (value) =>
-                      setState(() => _overrideAirports = value),
-                ),
-                _buildConflictToggle(
-                  title: l10n.simplelogOverrideAircraftOnConflict,
-                  value: _overrideAircraft,
-                  onChanged: (value) =>
-                      setState(() => _overrideAircraft = value),
-                ),
-                _buildConflictToggle(
-                  title: l10n.simplelogOverrideAircraftTypeOnConflict,
-                  value: _overrideAircraftTypes,
-                  onChanged: (value) =>
-                      setState(() => _overrideAircraftTypes = value),
-                ),
-              ],
-            ),
+              ImportConflictToggleConfig(
+                label: l10n.simplelogOverrideAircraftOnConflict,
+                value: _overrideAircraft,
+                onChanged: (value) => setState(() => _overrideAircraft = value),
+              ),
+              ImportConflictToggleConfig(
+                label: l10n.simplelogOverrideAircraftTypeOnConflict,
+                value: _overrideAircraftTypes,
+                onChanged: (value) =>
+                    setState(() => _overrideAircraftTypes = value),
+              ),
+            ],
           ),
         ],
       ),
@@ -306,117 +264,6 @@ class _SimpleLogImportOptionsDialogState
       overrideAirportValues: _overrideAirports,
       overrideAircraftValues: _overrideAircraft,
       overrideAircraftTypeValues: _overrideAircraftTypes,
-    );
-  }
-
-  Widget _buildRecalculationToggle({
-    required String title,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return SwitchListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(title),
-      value: value,
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _buildConflictToggle({
-    required String title,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return SwitchListTile(
-      contentPadding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      title: Text(title),
-      value: value,
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _buildPercentTimePairRow({
-    required String percentLabel,
-    required TextEditingController percentController,
-    required String timeLabel,
-    required TextEditingController timeController,
-  }) {
-    return _CompactFieldRow(
-      fields: [
-        _CompactFieldSpec.number(
-          label: percentLabel,
-          controller: percentController,
-        ),
-        _CompactFieldSpec.time(
-          label: timeLabel,
-          controller: timeController,
-        ),
-      ],
-    );
-  }
-}
-
-class _CompactFieldSpec {
-  const _CompactFieldSpec._({
-    required this.label,
-    required this.controller,
-    required this.isTime,
-  });
-
-  const _CompactFieldSpec.number({
-    required String label,
-    required TextEditingController controller,
-  }) : this._(label: label, controller: controller, isTime: false);
-
-  const _CompactFieldSpec.time({
-    required String label,
-    required TextEditingController controller,
-  }) : this._(label: label, controller: controller, isTime: true);
-
-  final String label;
-  final TextEditingController controller;
-  final bool isTime;
-}
-
-class _CompactFieldRow extends StatelessWidget {
-  const _CompactFieldRow({required this.fields});
-
-  final List<_CompactFieldSpec> fields;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const spacing = 8.0;
-        final count = fields.length;
-        final totalSpacing = (count - 1) * spacing;
-        final eachWidth = count == 0
-            ? constraints.maxWidth
-            : (constraints.maxWidth - totalSpacing) / count;
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Wrap(
-            spacing: spacing,
-            runSpacing: 8,
-            children: [
-              for (final field in fields)
-                SizedBox(
-                  width: eachWidth,
-                  child: field.isTime
-                      ? HourInputField(
-                          controller: field.controller,
-                          label: field.label,
-                        )
-                      : NumberInputField(
-                          controller: field.controller,
-                          label: field.label,
-                        ),
-                ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

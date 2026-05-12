@@ -5,10 +5,9 @@ import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.
 import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
-import 'package:simplelog/core/presentation/widgets/inputs/ifr_factoring_fields_row.dart';
-import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
+import 'package:simplelog/features/database/presentation/widgets/import_wizard/sections/import_recalculation_section.dart';
 
 /// Dialog to configure Southwest CSV import rules before processing.
 ///
@@ -67,6 +66,7 @@ class _SouthwestImportOptionsDialogState
   late bool _overrideExisting;
   late bool _addCopilotStaff;
   late bool _addFlightNumber;
+  var _showRecalculations = false;
   late final TextEditingController _crossCountryController;
   late final TextEditingController _ifrPercentController;
   late final TextEditingController _ifrSubtractController;
@@ -169,67 +169,53 @@ class _SouthwestImportOptionsDialogState
             },
           ),
           const SizedBox(height: 12),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.southwestRecalculateBlockTimeLabel),
-            value: _recalcBlock,
-            onChanged: (value) => setState(() => _recalcBlock = value ?? true),
-          ),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.southwestCalculateNightTimeLabel),
-            value: _recalcNight,
-            onChanged: (value) => setState(() => _recalcNight = value ?? true),
-          ),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.southwestCalculateIfrTimeLabel),
-            value: _recalcIfr,
-            onChanged: (value) => setState(() => _recalcIfr = value ?? true),
-          ),
-          if (_recalcIfr) ...[
-            IfrFactoringFieldsRow(
-              subtractController: _ifrSubtractController,
-              percentController: _ifrPercentController,
-              minimumController: _ifrMinController,
+          ImportRecalculationSection(
+            labels: ImportRecalculationSectionLabels(
+              title: l10n.simplelogRecalculationsTitle,
+              recalculateBlock: l10n.southwestRecalculateBlockTimeLabel,
+              recalculateNight: l10n.southwestCalculateNightTimeLabel,
+              recalculateIfr: l10n.southwestCalculateIfrTimeLabel,
+              recalculateCrossCountry:
+                  l10n.southwestCalculateCrossCountryTimeLabel,
+              crossCountryThreshold: l10n.southwestCrossCountryThresholdLabel,
             ),
-            const SizedBox(height: 4),
-          ],
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.southwestCalculateCrossCountryTimeLabel),
-            value: _recalcCrossCountry,
-            onChanged: (value) =>
-                setState(() => _recalcCrossCountry = value ?? true),
+            initiallyExpanded: _showRecalculations,
+            onExpansionChanged: (expanded) =>
+                setState(() => _showRecalculations = expanded),
+            recalcBlockValue: _recalcBlock,
+            onRecalcBlockChanged: (value) =>
+                setState(() => _recalcBlock = value),
+            recalcNightValue: _recalcNight,
+            onRecalcNightChanged: (value) =>
+                setState(() => _recalcNight = value),
+            recalcCrossCountryValue: _recalcCrossCountry,
+            onRecalcCrossCountryChanged: (value) =>
+                setState(() => _recalcCrossCountry = value),
+            crossCountryThresholdController: _crossCountryController,
+            recalcIfrValue: _recalcIfr,
+            onRecalcIfrChanged: (value) => setState(() => _recalcIfr = value),
+            ifrSubtractController: _ifrSubtractController,
+            ifrPercentController: _ifrPercentController,
+            ifrMinimumController: _ifrMinController,
           ),
-          if (_recalcCrossCountry) ...[
-            NumberInputField(
-              controller: _crossCountryController,
-              label: l10n.southwestCrossCountryThresholdLabel,
-            ),
-            const SizedBox(height: 8),
-          ],
           const SizedBox(height: 8),
-          CheckboxListTile(
+          SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.southwestOverrideExistingDataLabel),
             value: _overrideExisting,
-            onChanged: (value) =>
-                setState(() => _overrideExisting = value ?? false),
+            onChanged: (value) => setState(() => _overrideExisting = value),
           ),
-          CheckboxListTile(
+          SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.southwestAddCopilotStaffNumberLabel),
             value: _addCopilotStaff,
-            onChanged: (value) =>
-                setState(() => _addCopilotStaff = value ?? true),
+            onChanged: (value) => setState(() => _addCopilotStaff = value),
           ),
-          CheckboxListTile(
+          SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.southwestAddFlightNumberToNotesLabel),
             value: _addFlightNumber,
-            onChanged: (value) =>
-                setState(() => _addFlightNumber = value ?? true),
+            onChanged: (value) => setState(() => _addFlightNumber = value),
           ),
         ],
       ),

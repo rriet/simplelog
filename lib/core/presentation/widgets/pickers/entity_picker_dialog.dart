@@ -127,12 +127,10 @@ class _EntityPickerDialogState<T> extends ConsumerState<EntityPickerDialog<T>> {
       _itemFocusNodes[index].requestFocus();
       final itemContext = _itemKeys[index].currentContext;
       if (itemContext != null) {
-        unawaited(
-          Scrollable.ensureVisible(
-            itemContext,
-            duration: const Duration(milliseconds: 120),
-            alignment: 0.5,
-          ),
+        Scrollable.ensureVisible(
+          itemContext,
+          duration: const Duration(milliseconds: 120),
+          alignment: 0.5,
         );
       }
     });

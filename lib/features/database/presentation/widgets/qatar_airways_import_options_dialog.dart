@@ -7,6 +7,7 @@ import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/import/qatar_airways_import_options.dart';
 import 'package:simplelog/data/import/qatar_airways_workbook_inspector.dart';
+import 'package:simplelog/features/database/presentation/widgets/import_wizard/import_wizard_section_card.dart';
 
 /// Configuration dialog shown before importing a Qatar Airways workbook.
 class QatarAirwaysImportOptionsDialog extends StatefulWidget {
@@ -109,35 +110,42 @@ class _QatarAirwaysImportOptionsDialogState
             ],
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<CrewPosition>(
-            initialValue: _defaultPosition,
-            decoration: InputDecoration(
-              labelText: l10n.qatarDefaultPositionLabel,
-              border: const OutlineInputBorder(),
-            ),
-            items: [
-              DropdownMenuItem(
-                value: CrewPosition.pic,
-                child: Text(l10n.qatarPositionPic),
+          ImportWizardSectionCard(
+            title: l10n.qatarDefaultPositionLabel,
+            initiallyExpanded: true,
+            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            children: [
+              DropdownButtonFormField<CrewPosition>(
+                initialValue: _defaultPosition,
+                decoration: InputDecoration(
+                  labelText: l10n.qatarDefaultPositionLabel,
+                  border: const OutlineInputBorder(),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: CrewPosition.pic,
+                    child: Text(l10n.qatarPositionPic),
+                  ),
+                  DropdownMenuItem(
+                    value: CrewPosition.sic,
+                    child: Text(l10n.qatarPositionSic),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _defaultPosition = value);
+                  }
+                },
               ),
-              DropdownMenuItem(
-                value: CrewPosition.sic,
-                child: Text(l10n.qatarPositionSic),
-              ),
+              if (showMyName) ...[
+                const SizedBox(height: 12),
+                TextInputField(
+                  controller: _myNameController,
+                  label: l10n.qatarPilotNameAsWrittenLabel,
+                ),
+              ],
             ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _defaultPosition = value);
-              }
-            },
           ),
-          if (showMyName) ...[
-            const SizedBox(height: 12),
-            TextInputField(
-              controller: _myNameController,
-              label: l10n.qatarPilotNameAsWrittenLabel,
-            ),
-          ],
         ],
       ),
     );

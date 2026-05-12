@@ -6,6 +6,7 @@ import 'package:simplelog/data/database/user_settings_json.dart';
 import 'package:simplelog/data/import/qatar_airways_import_options.dart';
 import 'package:simplelog/data/import/simplelog_import_options.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
+import 'package:simplelog/data/import/wader_import_options.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 
 /// Persists CSV import options in `user_profiles.settings_json`.
@@ -13,6 +14,7 @@ class ImportOptionsPreferences {
   static const _simplePrefix = 'import.simplelog.';
   static const _qatarPrefix = 'import.qatar.';
   static const _swPrefix = 'import.southwest.';
+  static const _waderPrefix = 'import.wader.';
   static const _swTypeMappingsKey = '${_swPrefix}aircraftTypeMappings';
 
   /// Loads import options used for legacy SimpleLog CSV files.
@@ -194,6 +196,28 @@ class ImportOptionsPreferences {
             entry.value,
           ),
       };
+    });
+  }
+
+  /// Loads import options used for Wader CSV files.
+  static Future<WaderImportOptions> loadWader({
+    required AppDatabase db,
+  }) async {
+    final settings = await UserSettingsJsonStore(db).load();
+    return WaderImportOptions(
+      recalculateTotalTime:
+          (settings['${_waderPrefix}recalculateTotalTime'] as bool?) ?? false,
+    );
+  }
+
+  /// Saves import options used for Wader CSV files.
+  static Future<void> saveWader(
+    AppDatabase db,
+    WaderImportOptions value,
+  ) async {
+    await UserSettingsJsonStore(db).patch((settings) {
+      settings['${_waderPrefix}recalculateTotalTime'] =
+          value.recalculateTotalTime;
     });
   }
 }

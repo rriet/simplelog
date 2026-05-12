@@ -47,4 +47,15 @@ void main() {
 
     expect(result, ImportSourceKind.unknown);
   });
+
+  test('detectCsv identifies Wader CSV header', () {
+    const content =
+        'isPreviousExperience,isSimulator,flightDate,startTime,'
+        'depAirport,arrAirport,aircraftTailnumber,aircraftType,totalTime\n'
+        'false,false,2024-01-01,10:00,KJFK,KLAX,N12345,B738,320\n';
+
+    final result = dispatcher.detectCsv(content);
+
+    expect(result, ImportSourceKind.waderLogbookCsv);
+  });
 }

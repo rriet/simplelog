@@ -3508,6 +3508,180 @@ abstract class AppLocalizations {
   /// **'SIC'**
   String get qatarPositionSic;
 
+  /// No description provided for @waderReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Wader import'**
+  String get waderReviewTitle;
+
+  /// No description provided for @waderReviewHelpText.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix invalid values before import, or ignore specific lines.'**
+  String get waderReviewHelpText;
+
+  /// No description provided for @waderReviewIgnoreAllAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore all'**
+  String get waderReviewIgnoreAllAction;
+
+  /// No description provided for @waderReviewIgnoreLineAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore line'**
+  String get waderReviewIgnoreLineAction;
+
+  /// No description provided for @waderReviewIncludeLineAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Include line'**
+  String get waderReviewIncludeLineAction;
+
+  /// No description provided for @waderReviewApplyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get waderReviewApplyAction;
+
+  /// No description provided for @waderReviewCorrectedValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Corrected value'**
+  String get waderReviewCorrectedValueLabel;
+
+  /// No description provided for @waderReviewSelectDateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date'**
+  String get waderReviewSelectDateHint;
+
+  /// No description provided for @waderImportOptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Wader'**
+  String get waderImportOptionsTitle;
+
+  /// No description provided for @waderImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get waderImportAction;
+
+  /// No description provided for @waderImportRecalculationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recalculations'**
+  String get waderImportRecalculationsTitle;
+
+  /// No description provided for @waderRecalculateTotalTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recalculate total time'**
+  String get waderRecalculateTotalTimeLabel;
+
+  /// No description provided for @waderImportOptionsHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Wader options'**
+  String get waderImportOptionsHelpTitle;
+
+  /// No description provided for @waderImportOptionsHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Recalculate total time OFF: import uses the CSV total time as entered. Missing or invalid totals must be fixed, ignored, or resolved in review.\n\nRecalculate total time ON: import recalculates total from start/parking times for all eligible rows.'**
+  String get waderImportOptionsHelpBody;
+
+  /// No description provided for @waderTotalTimeResolutionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing total time resolution'**
+  String get waderTotalTimeResolutionLabel;
+
+  /// No description provided for @waderTotalTimeResolutionNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix manually'**
+  String get waderTotalTimeResolutionNone;
+
+  /// No description provided for @waderTotalTimeResolutionCalculateFromChocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate from chocks'**
+  String get waderTotalTimeResolutionCalculateFromChocks;
+
+  /// No description provided for @waderTotalTimeResolutionUseBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Use block value'**
+  String get waderTotalTimeResolutionUseBlock;
+
+  /// No description provided for @waderTotalTimeResolutionIgnoreLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore line'**
+  String get waderTotalTimeResolutionIgnoreLine;
+
+  /// No description provided for @waderFieldDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get waderFieldDate;
+
+  /// No description provided for @waderFieldStartTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start time'**
+  String get waderFieldStartTime;
+
+  /// No description provided for @waderFieldParkingTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Parking time'**
+  String get waderFieldParkingTime;
+
+  /// No description provided for @waderFieldDepartureAirport.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure airport'**
+  String get waderFieldDepartureAirport;
+
+  /// No description provided for @waderFieldArrivalAirport.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival airport'**
+  String get waderFieldArrivalAirport;
+
+  /// No description provided for @waderFieldAircraftTail.
+  ///
+  /// In en, this message translates to:
+  /// **'Aircraft tail'**
+  String get waderFieldAircraftTail;
+
+  /// No description provided for @waderFieldAircraftType.
+  ///
+  /// In en, this message translates to:
+  /// **'Aircraft type'**
+  String get waderFieldAircraftType;
+
+  /// No description provided for @waderFieldTotalTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Total time'**
+  String get waderFieldTotalTime;
+
+  /// No description provided for @waderFieldSimTraineeTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulator trainee time'**
+  String get waderFieldSimTraineeTime;
+
+  /// No description provided for @waderFieldSimTrainerTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulator trainer time'**
+  String get waderFieldSimTrainerTime;
+
   /// No description provided for @reportsBatchChangesTitle.
   ///
   /// In en, this message translates to:

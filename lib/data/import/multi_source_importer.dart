@@ -10,7 +10,10 @@ import 'package:simplelog/data/import/source_parsers/legacy_simplelog_csv_source
 import 'package:simplelog/data/import/source_parsers/logten_pro_tsv_source_parser.dart';
 import 'package:simplelog/data/import/source_parsers/qatar_airways_xlsx_source_parser.dart';
 import 'package:simplelog/data/import/source_parsers/southwest_csv_source_parser.dart';
+import 'package:simplelog/data/import/source_parsers/wader_logbook_csv_source_parser.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
+import 'package:simplelog/data/import/wader_import_models.dart';
+import 'package:simplelog/data/import/wader_import_options.dart';
 
 export 'package:simplelog/data/import/simplelog_import_result.dart';
 
@@ -22,6 +25,7 @@ class SimpleLogCsvImporter {
       _logTenProParser = const LogTenProTsvSourceParser(),
       _qatarParser = const QatarAirwaysXlsxSourceParser(),
       _southwestParser = const SouthwestCsvSourceParser(),
+      _waderParser = const WaderLogbookCsvSourceParser(),
       _persistence = NormalizedImportPersistenceService(db);
 
   /// Database used as the target for the import.
@@ -31,6 +35,7 @@ class SimpleLogCsvImporter {
   final LogTenProTsvSourceParser _logTenProParser;
   final QatarAirwaysXlsxSourceParser _qatarParser;
   final SouthwestCsvSourceParser _southwestParser;
+  final WaderLogbookCsvSourceParser _waderParser;
   final NormalizedImportPersistenceService _persistence;
 
   /// Inspects Southwest CSV rows and reports preflight issues.
@@ -330,6 +335,69 @@ class SimpleLogCsvImporter {
         ImportFailure(
           type: ImportFailureType.unexpected,
           message: 'Unexpected LogTen Pro import error.',
+          exception: error,
+        ),
+      );
+    }
+  }
+
+  /// Imports a Wader Logbook CSV export.
+  Future<SimpleLogImportResult> importWaderLogbookCsv(
+    String content, {
+    WaderImportOptions options = const WaderImportOptions(),
+    WaderImportReviewOptions reviewOptions = const WaderImportReviewOptions(),
+    ImportProgressCallback? onProgress,
+  }) async {
+    final batch = _waderParser.parse(
+      content,
+      options: options,
+      reviewOptions: reviewOptions,
+    );
+    return _persistence.importBatch(batch, onProgress: onProgress);
+  }
+
+  /// Validates Wader CSV rows without persisting data.
+  List<WaderImportIssue> validateWaderLogbookCsv(
+    String content, {
+    WaderImportOptions options = const WaderImportOptions(),
+    WaderImportReviewOptions reviewOptions = const WaderImportReviewOptions(),
+  }) {
+    return _waderParser.validate(
+      content,
+      options: options,
+      reviewOptions: reviewOptions,
+    );
+  }
+
+  /// Safe variant of [importWaderLogbookCsv].
+  Future<ImportOperationResult<SimpleLogImportResult>>
+  importWaderLogbookCsvSafely(
+    String content, {
+    WaderImportOptions options = const WaderImportOptions(),
+    WaderImportReviewOptions reviewOptions = const WaderImportReviewOptions(),
+    ImportProgressCallback? onProgress,
+  }) async {
+    try {
+      final result = await importWaderLogbookCsv(
+        content,
+        options: options,
+        reviewOptions: reviewOptions,
+        onProgress: onProgress,
+      );
+      return ImportOperationResult.success(result);
+    } on FormatException catch (error) {
+      return ImportOperationResult.failure(
+        ImportFailure(
+          type: ImportFailureType.invalidFormat,
+          message: error.message,
+          exception: error,
+        ),
+      );
+    } on Object catch (error) {
+      return ImportOperationResult.failure(
+        ImportFailure(
+          type: ImportFailureType.unexpected,
+          message: 'Unexpected Wader CSV import error.',
           exception: error,
         ),
       );

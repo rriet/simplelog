@@ -4,6 +4,7 @@ import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/data/import/logten_pro_import_models.dart';
 import 'package:simplelog/data/import/logten_pro_tsv_inspector.dart';
+import 'package:simplelog/features/database/presentation/widgets/import_wizard/sections/import_field_mapping_section.dart';
 
 /// Configuration dialog shown before importing a LogTen Pro export.
 class LogTenProImportOptionsDialog extends StatefulWidget {
@@ -81,46 +82,32 @@ class _LogTenProImportOptionsDialogState
     );
   }
 
-  Widget _buildAssociationDropdown({
-    required String column,
-    required LogTenFieldAssociation value,
-  }) {
-    return DropdownButtonFormField<LogTenFieldAssociation>(
-      initialValue: value,
-      isExpanded: true,
-      decoration: const InputDecoration(
-        border: OutlineInputBorder(),
-        isDense: true,
-      ),
-      selectedItemBuilder: (context) => [
-        for (final option in LogTenFieldAssociation.values)
-          Text(
-            option.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-      ],
-      items: [
-        for (final option in LogTenFieldAssociation.values)
-          DropdownMenuItem(
-            value: option,
-            child: Text(option.label),
-          ),
-      ],
-      onChanged: (selection) {
-        if (selection == null) return;
-        setState(() {
-          _assignments[column] = selection;
-        });
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final timezoneOptions = _buildTimezoneOptions();
-    final isCompact = MediaQuery.sizeOf(context).width < 760;
+    final mappingRows = widget.inspection.columns
+        .map((column) {
+          final value = _assignments[column] ?? LogTenFieldAssociation.ignore;
+          return ImportFieldMappingRow<LogTenFieldAssociation>(
+            sourceLabel: column,
+            value: value,
+            items: [
+              for (final option in LogTenFieldAssociation.values)
+                DropdownMenuItem(
+                  value: option,
+                  child: Text(option.label),
+                ),
+            ],
+            onChanged: (selection) {
+              setState(() {
+                _assignments[column] = selection;
+              });
+            },
+          );
+        })
+        .toList(growable: false);
+
     final body = Column(
       children: [
         Padding(
@@ -133,135 +120,44 @@ class _LogTenProImportOptionsDialogState
         Expanded(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
+            child: ImportFieldMappingSection<LogTenFieldAssociation>(
+              sourceHeaderLabel: l10n.logtenSourceColumnHeader,
+              mappingHeaderLabel: l10n.logtenAssociationHeader,
+              rows: mappingRows,
+              dropdownSelectedLabelBuilder: (value) => value.label,
+              footer: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  if (!isCompact)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                  Text(l10n.logtenTimezoneLabel),
+                  SizedBox(
+                    width: MediaQuery.sizeOf(context).width < 760
+                        ? double.infinity
+                        : 220,
+                    child: DropdownButtonFormField<int>(
+                      initialValue: _timezoneOffsetMinutes,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        isDense: true,
                       ),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Theme.of(context).colorScheme.outlineVariant,
+                      items: [
+                        for (final option in timezoneOptions)
+                          DropdownMenuItem(
+                            value: option.offsetMinutes,
+                            child: Text(option.label),
                           ),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          _HeaderCell(label: l10n.logtenSourceColumnHeader),
-                          const SizedBox(width: 16),
-                          _HeaderCell(label: l10n.logtenAssociationHeader),
-                        ],
-                      ),
-                    ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: widget.inspection.columns.length,
-                      itemBuilder: (context, index) {
-                        final column = widget.inspection.columns[index];
-                        final value =
-                            _assignments[column] ??
-                            LogTenFieldAssociation.ignore;
-                        return Container(
-                          color: index.isEven
-                              ? Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest
-                                    .withValues(alpha: 0.35)
-                              : null,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          child: isCompact
-                              ? Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      column,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _buildAssociationDropdown(
-                                      column: column,
-                                      value: value,
-                                    ),
-                                  ],
-                                )
-                              : Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        column,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: _buildAssociationDropdown(
-                                        column: column,
-                                        value: value,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        );
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => _timezoneOffsetMinutes = value);
                       },
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(l10n.logtenTimezoneLabel),
-              SizedBox(
-                width: isCompact ? double.infinity : 220,
-                child: DropdownButtonFormField<int>(
-                  initialValue: _timezoneOffsetMinutes,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  items: [
-                    for (final option in timezoneOptions)
-                      DropdownMenuItem(
-                        value: option.offsetMinutes,
-                        child: Text(option.label),
-                      ),
-                  ],
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _timezoneOffsetMinutes = value);
-                  },
-                ),
-              ),
-            ],
           ),
         ),
       ],
@@ -274,22 +170,6 @@ class _LogTenProImportOptionsDialogState
         TextButton(onPressed: _submit, child: Text(l10n.logtenImportAction)),
       ],
       contentView: body,
-    );
-  }
-}
-
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Text(
-        label,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
     );
   }
 }
