@@ -19,7 +19,9 @@ Enter the essentials, press **Calculate**, review, and save.
 > the time required to maintain and improve the app.
 >
 > If SimpleLog helps you, please consider supporting it with a donation.  
-> Donation link coming soon.
+> If SimpleLog is useful to you, consider supporting its development:
+>
+> https://github.com/sponsors/rriet
 
 ## Why SimpleLog
 
