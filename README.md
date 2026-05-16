@@ -18,7 +18,6 @@ Enter the essentials, press **Calculate**, review, and save.
 > To keep it alive, I need to cover ongoing costs like developer licenses and
 > the time required to maintain and improve the app.
 >
-> If SimpleLog helps you, please consider supporting it with a donation.  
 > If SimpleLog is useful to you, consider supporting its development:
 >
 > https://github.com/sponsors/rriet
