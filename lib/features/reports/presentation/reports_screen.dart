@@ -2545,7 +2545,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           const SizedBox(height: 10),
         ],
         Expanded(
-          child: _AnalysisList(groups: _analysisGroups),
+          child: _AnalysisList(
+            groups: _analysisGroups,
+            orderBy: _analysisOrderBy,
+          ),
         ),
       ],
     );
@@ -6259,9 +6262,13 @@ class _MetricWrap extends StatelessWidget {
 }
 
 class _AnalysisList extends StatelessWidget {
-  const _AnalysisList({required this.groups});
+  const _AnalysisList({
+    required this.groups,
+    required this.orderBy,
+  });
 
   final List<_AnalysisGroup> groups;
+  final _AnalysisOrderBy orderBy;
 
   @override
   Widget build(BuildContext context) {
@@ -6274,10 +6281,10 @@ class _AnalysisList extends StatelessWidget {
       );
     }
 
-    final maxTotal = groups.fold<int>(
+    final maxOrderValue = groups.fold<int>(
       0,
-      (maxValue, group) => group.totals.totalMinutes > maxValue
-          ? group.totals.totalMinutes
+      (maxValue, group) => _orderMetricValue(group) > maxValue
+          ? _orderMetricValue(group)
           : maxValue,
     );
 
@@ -6286,104 +6293,162 @@ class _AnalysisList extends StatelessWidget {
       separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final group = groups[index];
-        return Card(
-          margin: compact ? EdgeInsets.zero : const EdgeInsets.all(4),
-          child: ExpansionTile(
-            tilePadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 4,
-            ),
-            childrenPadding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-            title: _AnalysisBarRow(
-              label: group.title,
-              valueText: _formatMinutes(group.totals.totalMinutes),
-              ratio: maxTotal > 0 ? group.totals.totalMinutes / maxTotal : 0,
-              emphasized: true,
-            ),
-            children: [
-              _AnalysisBarRow(
-                label: l10n.reportsMetricPic,
-                valueText: _formatMinutes(group.totals.picMinutes),
-                ratio: group.totals.totalMinutes > 0
-                    ? group.totals.picMinutes / group.totals.totalMinutes
-                    : 0,
-              ),
-              _AnalysisBarRow(
-                label: l10n.reportsMetricPicus,
-                valueText: _formatMinutes(group.totals.picusMinutes),
-                ratio: group.totals.totalMinutes > 0
-                    ? group.totals.picusMinutes / group.totals.totalMinutes
-                    : 0,
-              ),
-              _AnalysisBarRow(
-                label: l10n.reportsMetricSic,
-                valueText: _formatMinutes(group.totals.sicMinutes),
-                ratio: group.totals.totalMinutes > 0
-                    ? group.totals.sicMinutes / group.totals.totalMinutes
-                    : 0,
-              ),
-              _AnalysisBarRow(
-                label: l10n.reportsMetricDual,
-                valueText: _formatMinutes(group.totals.dualMinutes),
-                ratio: group.totals.totalMinutes > 0
-                    ? group.totals.dualMinutes / group.totals.totalMinutes
-                    : 0,
-              ),
-              _AnalysisBarRow(
-                label: l10n.reportsMetricNight,
-                valueText: _formatMinutes(group.totals.nightMinutes),
-                ratio: group.totals.totalMinutes > 0
-                    ? group.totals.nightMinutes / group.totals.totalMinutes
-                    : 0,
-              ),
-              _AnalysisBarRow(
-                label: l10n.reportsMetricIfr,
-                valueText: _formatMinutes(group.totals.ifrMinutes),
-                ratio: group.totals.totalMinutes > 0
-                    ? group.totals.ifrMinutes / group.totals.totalMinutes
-                    : 0,
-              ),
-              _AnalysisBarRow(
-                label: l10n.reportsMetricLandings,
-                valueText: '${group.totals.landings}',
-                ratio: group.totals.operations > 0
-                    ? group.totals.landings / group.totals.operations
-                    : 0,
-              ),
-              _AnalysisBarRow(
-                label: l10n.reportsMetricTakeoff,
-                valueText: '${group.totals.takeoffs}',
-                ratio: group.totals.operations > 0
-                    ? group.totals.takeoffs / group.totals.operations
-                    : 0,
-              ),
-              _AnalysisBarRow(
-                label: l10n.reportsMetricOperations,
-                valueText: '${group.totals.operations}',
-                ratio: 1,
-              ),
-              const SizedBox(height: 8),
-              if (group.totals.firstFlightUtc != null)
-                Text(
-                  l10n.reportsFirstFlightAt(
-                    DateFormat(
-                      'dd MMM yyyy HH:mm',
-                    ).format(group.totals.firstFlightUtc!),
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 28,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 18),
+                child: Text(
+                  '${index + 1}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              if (group.totals.lastFlightUtc != null)
-                Text(
-                  l10n.reportsLastFlightAt(
-                    DateFormat(
-                      'dd MMM yyyy HH:mm',
-                    ).format(group.totals.lastFlightUtc!),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Card(
+                margin: compact ? EdgeInsets.zero : const EdgeInsets.all(4),
+                child: ExpansionTile(
+                  tilePadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
                   ),
+                  childrenPadding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                  title: _AnalysisBarRow(
+                    label: group.title,
+                    valueText: _headerValueForOrderBy(group),
+                    ratio: maxOrderValue > 0
+                        ? _orderMetricValue(group) / maxOrderValue
+                        : 0,
+                    emphasized: true,
+                  ),
+                  children: [
+                    _AnalysisBarRow(
+                      label: l10n.reportsMetricTotalBlock,
+                      valueText: _formatMinutes(group.totals.totalMinutes),
+                      ratio: group.totals.totalMinutes > 0 ? 1 : 0,
+                    ),
+                    _AnalysisBarRow(
+                      label: l10n.reportsMetricPic,
+                      valueText: _formatMinutes(group.totals.picMinutes),
+                      ratio: group.totals.totalMinutes > 0
+                          ? group.totals.picMinutes / group.totals.totalMinutes
+                          : 0,
+                    ),
+                    _AnalysisBarRow(
+                      label: l10n.reportsMetricPicus,
+                      valueText: _formatMinutes(group.totals.picusMinutes),
+                      ratio: group.totals.totalMinutes > 0
+                          ? group.totals.picusMinutes /
+                                group.totals.totalMinutes
+                          : 0,
+                    ),
+                    _AnalysisBarRow(
+                      label: l10n.reportsMetricSic,
+                      valueText: _formatMinutes(group.totals.sicMinutes),
+                      ratio: group.totals.totalMinutes > 0
+                          ? group.totals.sicMinutes / group.totals.totalMinutes
+                          : 0,
+                    ),
+                    _AnalysisBarRow(
+                      label: l10n.reportsMetricDual,
+                      valueText: _formatMinutes(group.totals.dualMinutes),
+                      ratio: group.totals.totalMinutes > 0
+                          ? group.totals.dualMinutes / group.totals.totalMinutes
+                          : 0,
+                    ),
+                    _AnalysisBarRow(
+                      label: l10n.reportsMetricNight,
+                      valueText: _formatMinutes(group.totals.nightMinutes),
+                      ratio: group.totals.totalMinutes > 0
+                          ? group.totals.nightMinutes /
+                                group.totals.totalMinutes
+                          : 0,
+                    ),
+                    _AnalysisBarRow(
+                      label: l10n.reportsMetricIfr,
+                      valueText: _formatMinutes(group.totals.ifrMinutes),
+                      ratio: group.totals.totalMinutes > 0
+                          ? group.totals.ifrMinutes / group.totals.totalMinutes
+                          : 0,
+                    ),
+                    _AnalysisBarRow(
+                      label: l10n.reportsMetricLandings,
+                      valueText: '${group.totals.landings}',
+                      ratio: group.totals.operations > 0
+                          ? group.totals.landings / group.totals.operations
+                          : 0,
+                    ),
+                    _AnalysisBarRow(
+                      label: l10n.reportsMetricTakeoff,
+                      valueText: '${group.totals.takeoffs}',
+                      ratio: group.totals.operations > 0
+                          ? group.totals.takeoffs / group.totals.operations
+                          : 0,
+                    ),
+                    _AnalysisBarRow(
+                      label: l10n.reportsMetricOperations,
+                      valueText: '${group.totals.operations}',
+                      ratio: 1,
+                    ),
+                    const SizedBox(height: 8),
+                    if (group.totals.firstFlightUtc != null)
+                      Text(
+                        l10n.reportsFirstFlightAt(
+                          DateFormat(
+                            'dd MMM yyyy HH:mm',
+                          ).format(group.totals.firstFlightUtc!),
+                        ),
+                      ),
+                    if (group.totals.lastFlightUtc != null)
+                      Text(
+                        l10n.reportsLastFlightAt(
+                          DateFormat(
+                            'dd MMM yyyy HH:mm',
+                          ).format(group.totals.lastFlightUtc!),
+                        ),
+                      ),
+                  ],
                 ),
-            ],
-          ),
+              ),
+            ),
+          ],
         );
       },
     );
+  }
+
+  String _headerValueForOrderBy(_AnalysisGroup group) {
+    switch (orderBy) {
+      case _AnalysisOrderBy.natural:
+      case _AnalysisOrderBy.hours:
+        return _formatMinutes(group.totals.totalMinutes);
+      case _AnalysisOrderBy.landings:
+        return '${group.totals.landings}';
+      case _AnalysisOrderBy.takeoff:
+        return '${group.totals.takeoffs}';
+      case _AnalysisOrderBy.operations:
+        return '${group.totals.operations}';
+    }
+  }
+
+  int _orderMetricValue(_AnalysisGroup group) {
+    switch (orderBy) {
+      case _AnalysisOrderBy.natural:
+      case _AnalysisOrderBy.hours:
+        return group.totals.totalMinutes;
+      case _AnalysisOrderBy.landings:
+        return group.totals.landings;
+      case _AnalysisOrderBy.takeoff:
+        return group.totals.takeoffs;
+      case _AnalysisOrderBy.operations:
+        return group.totals.operations;
+    }
   }
 }
 
