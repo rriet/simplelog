@@ -65,7 +65,7 @@ Supported formats:
 - LogTen Pro exports
 - SimpleLog Legacy CSV
 - Wader CSV exports
-- Generic CSV / spreadsheet logbooks
+- Additional airline and aviation logbook formats coming soon
 
 Flight data is automatically mapped into SimpleLog’s structure for fast migration and minimal cleanup.
 
