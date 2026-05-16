@@ -52,6 +52,21 @@ SimpleLog focuses on a practical cockpit-to-logbook workflow:
   - macOS
   - iOS
   - Android
+ 
+## Import Logbooks
+
+Import existing flight history without manual entry and migrate quickly from legacy systems.
+
+Supported formats:
+
+- SWAPA CSV reports
+- Qatar Airways XLSX reports
+- LogTen Pro exports
+- SimpleLog Legacy CSV
+- Wader CSV exports
+- Generic CSV / spreadsheet logbooks
+
+Flight data is automatically mapped into SimpleLog’s structure for fast migration and minimal cleanup.
 
 ## Privacy and Data Ownership
 
