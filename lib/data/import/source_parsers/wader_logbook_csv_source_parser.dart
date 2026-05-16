@@ -172,6 +172,7 @@ class WaderLogbookCsvSourceParser {
     String content, {
     WaderImportOptions options = const WaderImportOptions(),
     WaderImportReviewOptions reviewOptions = const WaderImportReviewOptions(),
+    Set<String> existingAirportIcaoCodes = const <String>{},
   }) {
     final rows = SimpleLogCsvSupport.parseCsv(content);
     if (rows.isEmpty) {
@@ -274,6 +275,7 @@ class WaderLogbookCsvSourceParser {
           row,
           options: options,
           reviewOptions: reviewOptions,
+          existingAirportIcaoCodes: existingAirportIcaoCodes,
         ),
       );
     }
@@ -477,6 +479,7 @@ List<WaderImportIssue> _validateResolvedRow(
   _WaderResolvedRow row, {
   required WaderImportOptions options,
   required WaderImportReviewOptions reviewOptions,
+  Set<String> existingAirportIcaoCodes = const <String>{},
 }) {
   final issues = <WaderImportIssue>[];
   final baseDate = _tryParseDate(row.dateText);
@@ -545,22 +548,50 @@ List<WaderImportIssue> _validateResolvedRow(
   }
 
   if (!_isAirportCode(row.depCode)) {
+    final code = row.depCode.trim().toUpperCase();
     issues.add(
       WaderImportIssue(
         lineNumber: row.lineNumber,
         association: WaderFieldAssociation.departureAirport,
         currentValue: row.depCode,
-        reason: 'Invalid departure airport.',
+        reason: code.isEmpty
+            ? 'Departure airport is missing.'
+            : 'Airport ICAO code $code is not valid.',
+      ),
+    );
+  } else if (existingAirportIcaoCodes.isNotEmpty &&
+      !existingAirportIcaoCodes.contains(row.depCode.trim().toUpperCase())) {
+    final code = row.depCode.trim().toUpperCase();
+    issues.add(
+      WaderImportIssue(
+        lineNumber: row.lineNumber,
+        association: WaderFieldAssociation.departureAirport,
+        currentValue: row.depCode,
+        reason: 'Airport $code does not exist in the database.',
       ),
     );
   }
   if (!_isAirportCode(row.arrCode)) {
+    final code = row.arrCode.trim().toUpperCase();
     issues.add(
       WaderImportIssue(
         lineNumber: row.lineNumber,
         association: WaderFieldAssociation.arrivalAirport,
         currentValue: row.arrCode,
-        reason: 'Invalid arrival airport.',
+        reason: code.isEmpty
+            ? 'Arrival airport is missing.'
+            : 'Airport ICAO code $code is not valid.',
+      ),
+    );
+  } else if (existingAirportIcaoCodes.isNotEmpty &&
+      !existingAirportIcaoCodes.contains(row.arrCode.trim().toUpperCase())) {
+    final code = row.arrCode.trim().toUpperCase();
+    issues.add(
+      WaderImportIssue(
+        lineNumber: row.lineNumber,
+        association: WaderFieldAssociation.arrivalAirport,
+        currentValue: row.arrCode,
+        reason: 'Airport $code does not exist in the database.',
       ),
     );
   }

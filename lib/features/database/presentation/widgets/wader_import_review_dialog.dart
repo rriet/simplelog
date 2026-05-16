@@ -1,21 +1,30 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:simplelog/core/constants/app_constants.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/clock_time_input_field.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/date_selector_input_field.dart';
+import 'package:simplelog/core/presentation/widgets/inputs/picker_with_add_input_field.dart';
 import 'package:simplelog/data/database/app_database.dart';
 import 'package:simplelog/data/import/wader_import_models.dart';
+import 'package:simplelog/features/airports/presentation/airport_edit_screen.dart';
 import 'package:simplelog/features/airports/presentation/widgets/airport_picker_dialog.dart';
 
 /// Dialog used to review and correct Wader import issues before import.
 class WaderImportReviewDialog extends StatefulWidget {
   /// Creates the dialog.
   const WaderImportReviewDialog({
+    required this.db,
     required this.issues,
     required this.initialOptions,
     super.key,
   });
+
+  /// App database used to fetch created airport records.
+  final AppDatabase db;
 
   /// Pending issues to review.
   final List<WaderImportIssue> issues;
@@ -26,10 +35,12 @@ class WaderImportReviewDialog extends StatefulWidget {
   /// Opens the review dialog and returns updated review options.
   static Future<WaderImportReviewOptions?> show(
     BuildContext context, {
+    required AppDatabase db,
     required List<WaderImportIssue> issues,
     required WaderImportReviewOptions initialOptions,
   }) {
     final screen = WaderImportReviewDialog(
+      db: db,
       issues: issues,
       initialOptions: initialOptions,
     );
@@ -58,6 +69,7 @@ class _WaderImportReviewDialogState extends State<WaderImportReviewDialog> {
   _controllers;
   late final Set<int> _ignoredLines;
   late final Map<int, WaderTotalTimeResolution> _totalTimeResolutions;
+  final Set<String> _knownAirportCodes = <String>{};
 
   @override
   void initState() {
@@ -81,6 +93,7 @@ class _WaderImportReviewDialogState extends State<WaderImportReviewDialog> {
             ),
           );
     }
+    unawaited(_loadKnownAirportCodes());
   }
 
   @override
@@ -161,8 +174,11 @@ class _WaderImportReviewDialogState extends State<WaderImportReviewDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final visibleIssues = widget.issues
+        .where((issue) => !_isIssueResolved(issue))
+        .toList(growable: false);
     final lineNumbers =
-        widget.issues.map((issue) => issue.lineNumber).toSet().toList()..sort();
+        visibleIssues.map((issue) => issue.lineNumber).toSet().toList()..sort();
     final body = ConstrainedBox(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.9,
@@ -190,7 +206,11 @@ class _WaderImportReviewDialogState extends State<WaderImportReviewDialog> {
                 final lineNumber = lineNumbers[index];
                 final lineIssues = widget.issues
                     .where((issue) => issue.lineNumber == lineNumber)
+                    .where((issue) => !_isIssueResolved(issue))
                     .toList(growable: false);
+                if (lineIssues.isEmpty) {
+                  return const SizedBox.shrink();
+                }
                 return _buildLineCard(
                   l10n: l10n,
                   lineNumber: lineNumber,
@@ -326,18 +346,44 @@ class _WaderImportReviewDialogState extends State<WaderImportReviewDialog> {
   }) {
     final label = _labelForAssociation(l10n, issue.association);
     if (_isAirportAssociation(issue.association)) {
-      return TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          border: const OutlineInputBorder(),
-          labelText: label,
-          helperText: l10n.waderReviewCorrectedValueLabel,
-          suffixIcon: IconButton(
-            tooltip: l10n.logtenSelectAirportTooltip,
-            onPressed: () => _pickAirportForIssue(issue, controller),
-            icon: const Icon(Icons.search),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          PickerWithAddInputField(
+            label: label,
+            valueText: controller.text.trim().isEmpty
+                ? l10n.logtenNotSelected
+                : controller.text.trim(),
+            onTap: () => _pickAirportForIssue(issue, controller),
+            onAdd: () => _createAirportForIssue(issue, controller),
+            addTooltip: l10n.logtenCreateAirportTooltip,
           ),
-        ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.waderReviewCorrectedValueLabel,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      );
+    }
+    if (_isClockTimeAssociation(issue.association) &&
+        issue.association != WaderFieldAssociation.totalTime &&
+        issue.association != WaderFieldAssociation.simTraineeTime &&
+        issue.association != WaderFieldAssociation.simTrainerTime) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClockTimeInputField(
+            controller: controller,
+            label: label,
+            allowEmpty: true,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.waderReviewCorrectedValueLabel,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
       );
     }
     if (issue.association == WaderFieldAssociation.date) {
@@ -501,6 +547,78 @@ class _WaderImportReviewDialogState extends State<WaderImportReviewDialog> {
     }
     controller.text = _airportReplacementCode(selected, issue.currentValue);
     setState(() {});
+  }
+
+  Future<void> _createAirportForIssue(
+    WaderImportIssue issue,
+    TextEditingController controller,
+  ) async {
+    final raw = issue.currentValue.trim().toUpperCase();
+    final result = await showDialog<dynamic>(
+      context: context,
+      builder: (_) => AirportEditScreen(
+        item: const Airport(
+          id: kPlaceholderId,
+          icao: '',
+          latitude: 0,
+          longitude: 0,
+          isFavorite: false,
+          isLocked: false,
+        ),
+        isCreate: true,
+        initialIcao: raw.length == 4 ? raw : '',
+        initialIata: raw.length == 3 ? raw : '',
+      ),
+    );
+    if (!mounted) return;
+    final airportId = result is int ? result : null;
+    if (airportId == null) return;
+    final created = await (widget.db.select(
+      widget.db.airports,
+    )..where((t) => t.id.equals(airportId))).getSingleOrNull();
+    if (!mounted || created == null) return;
+    final replacement = _airportReplacementCode(created, issue.currentValue);
+    controller.text = replacement;
+    _registerKnownAirport(created);
+    setState(() {});
+  }
+
+  Future<void> _loadKnownAirportCodes() async {
+    final airports = await widget.db.select(widget.db.airports).get();
+    if (!mounted) return;
+    setState(() {
+      for (final airport in airports) {
+        _knownAirportCodes.add(airport.icao.trim().toUpperCase());
+        final iata = (airport.iata ?? '').trim().toUpperCase();
+        if (iata.isNotEmpty) {
+          _knownAirportCodes.add(iata);
+        }
+      }
+    });
+  }
+
+  void _registerKnownAirport(Airport airport) {
+    _knownAirportCodes.add(airport.icao.trim().toUpperCase());
+    final iata = (airport.iata ?? '').trim().toUpperCase();
+    if (iata.isNotEmpty) {
+      _knownAirportCodes.add(iata);
+    }
+  }
+
+  bool _isIssueResolved(WaderImportIssue issue) {
+    if (!_isAirportAssociation(issue.association)) {
+      return false;
+    }
+    final override =
+        _controllers[issue.lineNumber]?[issue.association]?.text
+            .trim()
+            .toUpperCase() ??
+        '';
+    if (override.isNotEmpty && _knownAirportCodes.contains(override)) {
+      return true;
+    }
+    final original = issue.currentValue.trim().toUpperCase();
+    return original.isNotEmpty && _knownAirportCodes.contains(original);
   }
 
   String _airportReplacementCode(Airport airport, String originalValue) {

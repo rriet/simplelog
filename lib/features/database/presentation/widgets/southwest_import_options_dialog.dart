@@ -4,10 +4,8 @@ import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.dart';
-import 'package:simplelog/core/presentation/widgets/inputs/hour_input_field.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/import/southwest_import_options.dart';
-import 'package:simplelog/features/database/presentation/widgets/import_wizard/sections/import_recalculation_section.dart';
 
 /// Dialog to configure Southwest CSV import rules before processing.
 ///
@@ -59,52 +57,16 @@ class SouthwestImportOptionsDialog extends StatefulWidget {
 class _SouthwestImportOptionsDialogState
     extends State<SouthwestImportOptionsDialog> {
   late CrewPosition _defaultSelfPosition;
-  late bool _recalcBlock;
-  late bool _recalcNight;
-  late bool _recalcIfr;
-  late bool _recalcCrossCountry;
-  late bool _overrideExisting;
   late bool _addCopilotStaff;
   late bool _addFlightNumber;
-  var _showRecalculations = false;
-  late final TextEditingController _crossCountryController;
-  late final TextEditingController _ifrPercentController;
-  late final TextEditingController _ifrSubtractController;
-  late final TextEditingController _ifrMinController;
 
   @override
   void initState() {
     super.initState();
     final initial = widget.initial;
     _defaultSelfPosition = initial.defaultSelfPosition;
-    _recalcBlock = initial.recalculateBlockTime;
-    _recalcNight = initial.recalculateNightTime;
-    _recalcIfr = initial.recalculateIfrTime;
-    _recalcCrossCountry = initial.recalculateCrossCountry;
-    _overrideExisting = initial.overrideExistingData;
     _addCopilotStaff = initial.addCopilotStaffNumberToNotes;
     _addFlightNumber = initial.addFlightNumberToNotes;
-    _crossCountryController = TextEditingController(
-      text: initial.crossCountryThresholdNm.toString(),
-    );
-    _ifrPercentController = TextEditingController(
-      text: initial.ifrPercent.toString(),
-    );
-    _ifrSubtractController = TextEditingController(
-      text: HourInputField.formatHours(initial.ifrSubtractMinutes),
-    );
-    _ifrMinController = TextEditingController(
-      text: HourInputField.formatHours(initial.ifrMinimumMinutes),
-    );
-  }
-
-  @override
-  void dispose() {
-    _crossCountryController.dispose();
-    _ifrPercentController.dispose();
-    _ifrSubtractController.dispose();
-    _ifrMinController.dispose();
-    super.dispose();
   }
 
   void _submit() {
@@ -112,19 +74,15 @@ class _SouthwestImportOptionsDialogState
       context,
       SouthwestImportOptions(
         defaultSelfPosition: _defaultSelfPosition,
-        recalculateBlockTime: _recalcBlock,
-        recalculateNightTime: _recalcNight,
-        recalculateIfrTime: _recalcIfr,
-        ifrPercent: _parsePercent(_ifrPercentController),
-        ifrSubtractMinutes: _parseTime(_ifrSubtractController),
-        ifrMinimumMinutes: _parseTime(_ifrMinController),
-        recalculateCrossCountry: _recalcCrossCountry,
-        crossCountryThresholdNm:
-            int.tryParse(
-              _crossCountryController.text.trim(),
-            ) ??
-            50,
-        overrideExistingData: _overrideExisting,
+        recalculateBlockTime: widget.initial.recalculateBlockTime,
+        recalculateNightTime: widget.initial.recalculateNightTime,
+        recalculateIfrTime: widget.initial.recalculateIfrTime,
+        ifrPercent: widget.initial.ifrPercent,
+        ifrSubtractMinutes: widget.initial.ifrSubtractMinutes,
+        ifrMinimumMinutes: widget.initial.ifrMinimumMinutes,
+        recalculateCrossCountry: widget.initial.recalculateCrossCountry,
+        crossCountryThresholdNm: widget.initial.crossCountryThresholdNm,
+        overrideExistingData: widget.initial.overrideExistingData,
         addCopilotStaffNumberToNotes: _addCopilotStaff,
         addFlightNumberToNotes: _addFlightNumber,
       ),
@@ -169,42 +127,6 @@ class _SouthwestImportOptionsDialogState
             },
           ),
           const SizedBox(height: 12),
-          ImportRecalculationSection(
-            labels: ImportRecalculationSectionLabels(
-              title: l10n.simplelogRecalculationsTitle,
-              recalculateBlock: l10n.southwestRecalculateBlockTimeLabel,
-              recalculateNight: l10n.southwestCalculateNightTimeLabel,
-              recalculateIfr: l10n.southwestCalculateIfrTimeLabel,
-              recalculateCrossCountry:
-                  l10n.southwestCalculateCrossCountryTimeLabel,
-              crossCountryThreshold: l10n.southwestCrossCountryThresholdLabel,
-            ),
-            initiallyExpanded: _showRecalculations,
-            onExpansionChanged: (expanded) =>
-                setState(() => _showRecalculations = expanded),
-            recalcBlockValue: _recalcBlock,
-            onRecalcBlockChanged: (value) =>
-                setState(() => _recalcBlock = value),
-            recalcNightValue: _recalcNight,
-            onRecalcNightChanged: (value) =>
-                setState(() => _recalcNight = value),
-            recalcCrossCountryValue: _recalcCrossCountry,
-            onRecalcCrossCountryChanged: (value) =>
-                setState(() => _recalcCrossCountry = value),
-            crossCountryThresholdController: _crossCountryController,
-            recalcIfrValue: _recalcIfr,
-            onRecalcIfrChanged: (value) => setState(() => _recalcIfr = value),
-            ifrSubtractController: _ifrSubtractController,
-            ifrPercentController: _ifrPercentController,
-            ifrMinimumController: _ifrMinController,
-          ),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.southwestOverrideExistingDataLabel),
-            value: _overrideExisting,
-            onChanged: (value) => setState(() => _overrideExisting = value),
-          ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.southwestAddCopilotStaffNumberLabel),
@@ -228,14 +150,5 @@ class _SouthwestImportOptionsDialogState
       ],
       contentView: body,
     );
-  }
-
-  int _parsePercent(TextEditingController controller, {int fallback = 100}) {
-    final value = int.tryParse(controller.text.trim()) ?? fallback;
-    return value.clamp(0, 100);
-  }
-
-  int _parseTime(TextEditingController controller) {
-    return HourInputField.parseHours(controller.text.trim()) ?? 0;
   }
 }

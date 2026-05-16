@@ -40,6 +40,7 @@ class SouthwestImportOptions {
         SouthwestMissingAircraftTailPolicy.useTypeAsTail,
     this.skippedSourceLineNumbers = const <int>{},
     this.aircraftTypeMappings = const <String, String>{},
+    this.airportCodeOverrides = const <int, Map<String, String>>{},
   });
 
   /// Default crew position used when deriving "self" crew.
@@ -90,6 +91,9 @@ class SouthwestImportOptions {
   /// Raw Southwest type designator -> target aircraft type code mapping.
   final Map<String, String> aircraftTypeMappings;
 
+  /// Source line airport code overrides (`from` / `to` keys).
+  final Map<int, Map<String, String>> airportCodeOverrides;
+
   /// Returns a copy of this options object with some values changed.
   SouthwestImportOptions copyWith({
     CrewPosition? defaultSelfPosition,
@@ -108,6 +112,7 @@ class SouthwestImportOptions {
     SouthwestMissingAircraftTailPolicy? missingAircraftTailPolicy,
     Set<int>? skippedSourceLineNumbers,
     Map<String, String>? aircraftTypeMappings,
+    Map<int, Map<String, String>>? airportCodeOverrides,
   }) {
     return SouthwestImportOptions(
       defaultSelfPosition: defaultSelfPosition ?? this.defaultSelfPosition,
@@ -135,6 +140,11 @@ class SouthwestImportOptions {
       aircraftTypeMappings: Map<String, String>.from(
         aircraftTypeMappings ?? this.aircraftTypeMappings,
       ),
+      airportCodeOverrides: <int, Map<String, String>>{
+        for (final entry
+            in (airportCodeOverrides ?? this.airportCodeOverrides).entries)
+          entry.key: Map<String, String>.from(entry.value),
+      },
     );
   }
 }

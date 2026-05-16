@@ -397,8 +397,10 @@ class SouthwestCsvSourceParser {
             idx >= 0 && idx < row.length ? row[idx].trim() : '';
 
         final dateText = get(indices.date);
-        final fromCode = get(indices.from).toUpperCase();
-        final toCode = get(indices.to).toUpperCase();
+        final lineOverrides = options.airportCodeOverrides[sourceLineNumber];
+        final fromCode = (lineOverrides?['from'] ?? get(indices.from))
+            .toUpperCase();
+        final toCode = (lineOverrides?['to'] ?? get(indices.to)).toUpperCase();
         final departText = get(indices.depart);
         final arriveText = get(indices.arrive);
         if (dateText.isEmpty ||

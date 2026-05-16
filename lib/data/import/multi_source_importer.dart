@@ -207,10 +207,23 @@ class SimpleLogCsvImporter {
         if ((airport.iata ?? '').trim().isNotEmpty)
           airport.iata!.trim().toLowerCase(): airport,
     };
+    final existingTypes = await db.select(db.aircraftTypes).get();
+    final typeCodeById = <int, String>{
+      for (final type in existingTypes) type.id: type.code.trim().toUpperCase(),
+    };
+    final existingAircraft = await db.select(db.aircrafts).get();
+    final simulatorTypeCodesByRegistration = <String, String>{
+      for (final aircraft in existingAircraft)
+        if (aircraft.isSimulator)
+          aircraft.registration.trim().toLowerCase():
+              typeCodeById[aircraft.aircraftTypeId] ?? '',
+    };
     final batch = _qatarParser.parse(
       workbook,
       options: options,
       existingAirportsByIata: airportsByIata,
+      existingSimulatorTypeCodesByRegistration:
+          simulatorTypeCodesByRegistration,
     );
     return _persistence.importBatch(batch, onProgress: onProgress);
   }
@@ -357,15 +370,20 @@ class SimpleLogCsvImporter {
   }
 
   /// Validates Wader CSV rows without persisting data.
-  List<WaderImportIssue> validateWaderLogbookCsv(
+  Future<List<WaderImportIssue>> validateWaderLogbookCsv(
     String content, {
     WaderImportOptions options = const WaderImportOptions(),
     WaderImportReviewOptions reviewOptions = const WaderImportReviewOptions(),
-  }) {
+  }) async {
+    final existingAirports = await db.select(db.airports).get();
+    final airportCodes = <String>{
+      for (final airport in existingAirports) airport.icao.trim().toUpperCase(),
+    };
     return _waderParser.validate(
       content,
       options: options,
       reviewOptions: reviewOptions,
+      existingAirportIcaoCodes: airportCodes,
     );
   }
 

@@ -16,6 +16,7 @@ class QatarAirwaysXlsxSourceParser {
     QatarAirwaysWorkbookInspection workbook, {
     required QatarAirwaysImportOptions options,
     required Map<String, Airport> existingAirportsByIata,
+    required Map<String, String> existingSimulatorTypeCodesByRegistration,
   }) {
     final records = <NormalizedImportRecord>[];
     var skipped = 0;
@@ -51,6 +52,8 @@ class QatarAirwaysXlsxSourceParser {
             row,
             progressOrdinal: progressOrdinal,
             options: options,
+            existingSimulatorTypeCodesByRegistration:
+                existingSimulatorTypeCodesByRegistration,
           );
           if (simulatorRecord == null) {
             skipped += 1;
@@ -181,21 +184,30 @@ class QatarAirwaysXlsxSourceParser {
     QatarAirwaysWorkbookRow row, {
     required int progressOrdinal,
     required QatarAirwaysImportOptions options,
+    required Map<String, String> existingSimulatorTypeCodesByRegistration,
   }) {
     final dateText = row.read(_simDateColumn);
     final simulatorRegistration = _normalizedCode(row.read(_simTypeColumn));
-    final simulatorTypeCode = _normalizedCode(row.read(_aircraftTypeColumn));
+    final simulatorTypeCode =
+        _normalizedCode(
+          row.read(_aircraftTypeColumn),
+        ).isEmpty
+        ? existingSimulatorTypeCodesByRegistration[_normalizedKey(
+                simulatorRegistration,
+              )] ??
+              ''
+        : _normalizedCode(row.read(_aircraftTypeColumn));
     if (dateText.isEmpty || simulatorRegistration.isEmpty) {
+      return null;
+    }
+    if (simulatorTypeCode.isEmpty) {
       return null;
     }
     final timeTotal = _parseDurationMinutes(row.read(_simTotalTimeColumn));
     final startDateTime = _parseUtcDateTime(_parseDate(dateText), '00:00');
     return NormalizedSimulatorRecord(
       progressOrdinal: progressOrdinal,
-      aircraftType: _buildAircraftTypeDraft(
-        simulatorTypeCode.isEmpty ? 'SIM' : simulatorTypeCode,
-        true,
-      ),
+      aircraftType: _buildAircraftTypeDraft(simulatorTypeCode, true),
       aircraft: ImportedAircraftDraft(
         registration: simulatorRegistration,
         mtow: null,
