@@ -84,7 +84,6 @@ class EntityPickerDialog<T> extends ConsumerStatefulWidget {
 }
 
 class _EntityPickerDialogState<T> extends ConsumerState<EntityPickerDialog<T>> {
-  static const double _customKeyboardInset = 260;
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
   final List<FocusNode> _itemFocusNodes = [];
@@ -92,7 +91,6 @@ class _EntityPickerDialogState<T> extends ConsumerState<EntityPickerDialog<T>> {
   List<T> _visibleItems = const [];
   String _query = '';
   int _focusedIndex = -1;
-  bool _customKeyboardVisible = false;
 
   @override
   void dispose() {
@@ -127,10 +125,12 @@ class _EntityPickerDialogState<T> extends ConsumerState<EntityPickerDialog<T>> {
       _itemFocusNodes[index].requestFocus();
       final itemContext = _itemKeys[index].currentContext;
       if (itemContext != null) {
-        Scrollable.ensureVisible(
+        unawaited(
+          Scrollable.ensureVisible(
           itemContext,
           duration: const Duration(milliseconds: 120),
           alignment: 0.5,
+          ),
         );
       }
     });
@@ -195,11 +195,6 @@ class _EntityPickerDialogState<T> extends ConsumerState<EntityPickerDialog<T>> {
           controller: _searchController,
           focusNode: _searchFocusNode,
           autofocus: true,
-          useCustomKeyboard: true,
-          onCustomKeyboardVisibilityChanged: (visible) {
-            if (_customKeyboardVisible == visible) return;
-            setState(() => _customKeyboardVisible = visible);
-          },
           label:
               widget.searchLabelBuilder?.call(ref) ??
               widget.searchLabel ??
@@ -210,103 +205,95 @@ class _EntityPickerDialogState<T> extends ConsumerState<EntityPickerDialog<T>> {
             _selectItem(_visibleItems.first);
           },
           onKeyEvent: _onSearchKey,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           trailing: widget.searchTrailingBuilder?.call(context, ref),
         ),
         const SizedBox(height: 8),
         Expanded(
-          child: AnimatedPadding(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOut,
-            padding: EdgeInsets.only(
-              bottom: _customKeyboardVisible ? _customKeyboardInset : 0,
-            ),
-            child: itemsAsync.when(
-              data: (items) {
-                final list = widget.itemFilter == null
-                    ? items
-                    : items.where(widget.itemFilter!).toList();
-                if (list.isEmpty) {
-                  return Center(child: Text(widget.emptyText));
-                }
-                return ListView.separated(
-                  itemCount: list.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final item = list[index];
-                    final isFocused = _focusedIndex == index;
-                    final isActive = isFocused;
-                    final subtitle = widget.itemSubtitle?.call(item);
-                    final extraTrailing = widget.itemTrailingBuilder?.call(
-                      context,
-                      item,
-                    );
-                    final hasFavorite =
-                        widget.isFavorite != null &&
-                        widget.onToggleFavorite != null;
-                    final trailingWidgets = <Widget?>[
-                      extraTrailing,
-                      if (hasFavorite)
-                        IconButton(
-                          tooltip: widget.isFavorite!(item)
-                              ? 'Remove favorite'
-                              : 'Mark favorite',
-                          icon: Icon(
-                            widget.isFavorite!(item)
-                                ? Icons.star
-                                : Icons.star_border,
-                            color: widget.isFavorite!(item)
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.outline,
-                          ),
-                          onPressed: () async {
-                            await widget.onToggleFavorite!(ref, item);
-                          },
+          child: itemsAsync.when(
+            data: (items) {
+              final list = widget.itemFilter == null
+                  ? items
+                  : items.where(widget.itemFilter!).toList();
+              if (list.isEmpty) {
+                return Center(child: Text(widget.emptyText));
+              }
+              return ListView.separated(
+                itemCount: list.length,
+                separatorBuilder: (_, _) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final item = list[index];
+                  final isFocused = _focusedIndex == index;
+                  final isActive = isFocused;
+                  final subtitle = widget.itemSubtitle?.call(item);
+                  final extraTrailing = widget.itemTrailingBuilder?.call(
+                    context,
+                    item,
+                  );
+                  final hasFavorite =
+                      widget.isFavorite != null &&
+                      widget.onToggleFavorite != null;
+                  final trailingWidgets = <Widget?>[
+                    extraTrailing,
+                    if (hasFavorite)
+                      IconButton(
+                        tooltip: widget.isFavorite!(item)
+                            ? 'Remove favorite'
+                            : 'Mark favorite',
+                        icon: Icon(
+                          widget.isFavorite!(item)
+                              ? Icons.star
+                              : Icons.star_border,
+                          color: widget.isFavorite!(item)
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.outline,
                         ),
-                    ].whereType<Widget>().toList(growable: false);
-
-                    return Focus(
-                      key: _itemKeys[index],
-                      focusNode: _itemFocusNodes[index],
-                      onFocusChange: (hasFocus) {
-                        if (hasFocus && mounted) {
-                          setState(() => _focusedIndex = index);
-                        }
-                      },
-                      onKeyEvent: (node, event) =>
-                          _onRowKey(index, item, event),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 120),
-                        color: isActive
-                            ? Theme.of(context).colorScheme.primaryContainer
-                                  .withValues(alpha: 0.45)
-                            : Colors.transparent,
-                        child: ListTile(
-                          selected: isActive,
-                          title: Text(widget.itemTitle(item)),
-                          subtitle: subtitle == null ? null : Text(subtitle),
-                          trailing: trailingWidgets.isEmpty
-                              ? null
-                              : trailingWidgets.length == 1
-                              ? trailingWidgets.first
-                              : Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: trailingWidgets,
-                                ),
-                          onTap: () => _selectItem(item),
-                        ),
+                        onPressed: () async {
+                          await widget.onToggleFavorite!(ref, item);
+                        },
                       ),
-                    );
-                  },
-                );
-              },
-              loading: () =>
-                  widget.loadingWidget ??
-                  const Center(child: CircularProgressIndicator()),
-              error: (error, _) =>
-                  widget.errorBuilder?.call(context, error) ??
-                  Center(child: Text(error.toString())),
-            ),
+                  ].whereType<Widget>().toList(growable: false);
+
+                  return Focus(
+                    key: _itemKeys[index],
+                    focusNode: _itemFocusNodes[index],
+                    onFocusChange: (hasFocus) {
+                      if (hasFocus && mounted) {
+                        setState(() => _focusedIndex = index);
+                      }
+                    },
+                    onKeyEvent: (node, event) => _onRowKey(index, item, event),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 120),
+                      color: isActive
+                          ? Theme.of(context).colorScheme.primaryContainer
+                                .withValues(alpha: 0.45)
+                          : Colors.transparent,
+                      child: ListTile(
+                        selected: isActive,
+                        title: Text(widget.itemTitle(item)),
+                        subtitle: subtitle == null ? null : Text(subtitle),
+                        trailing: trailingWidgets.isEmpty
+                            ? null
+                            : trailingWidgets.length == 1
+                            ? trailingWidgets.first
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: trailingWidgets,
+                              ),
+                        onTap: () => _selectItem(item),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+            loading: () =>
+                widget.loadingWidget ??
+                const Center(child: CircularProgressIndicator()),
+            error: (error, _) =>
+                widget.errorBuilder?.call(context, error) ??
+                Center(child: Text(error.toString())),
           ),
         ),
       ],

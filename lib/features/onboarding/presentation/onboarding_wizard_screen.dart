@@ -33,10 +33,12 @@ class _OnboardingWizardScreenState
   }
 
   void _goToStep(int step) {
-    _pageController.animateToPage(
-      step,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
+    unawaited(
+      _pageController.animateToPage(
+        step,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      ),
     );
   }
 

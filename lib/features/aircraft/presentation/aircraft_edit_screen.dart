@@ -243,9 +243,15 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final controlsTheme = Theme.of(context).extension<AppFormControlsTheme>();
-    final addButtonSize = controlsTheme?.pickerAddButtonSize ?? 40;
+    final compactControlHeight = controlsTheme?.resolvedCompactFieldHeight(
+      context,
+      baseTextStyle: Theme.of(context).textTheme.bodyMedium,
+    );
+    final addButtonSize =
+        compactControlHeight ?? controlsTheme?.pickerAddButtonSize ?? 40;
     final addIconSize = controlsTheme?.pickerAddIconSize ?? 20;
     final addBorderRadius = controlsTheme?.pickerAddBorderRadius ?? 8;
+    final fieldVerticalInset = (controlsTheme?.fieldVerticalGap ?? 0) / 2;
     final types = ref.watch(aircraftTypesProvider(''));
     final form = Form(
       key: _formKey,
@@ -304,24 +310,29 @@ class _AircraftEditScreenState extends ConsumerState<AircraftEditScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Tooltip(
-                      message: l10n.createAircraftTypeTitle,
-                      child: InkWell(
-                        onTap: _createAircraftType,
-                        borderRadius: BorderRadius.circular(addBorderRadius),
-                        child: Container(
-                          width: addButtonSize,
-                          height: addButtonSize,
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Theme.of(context).colorScheme.outline,
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: fieldVerticalInset,
+                      ),
+                      child: Tooltip(
+                        message: l10n.createAircraftTypeTitle,
+                        child: InkWell(
+                          onTap: _createAircraftType,
+                          borderRadius: BorderRadius.circular(addBorderRadius),
+                          child: Container(
+                            width: addButtonSize,
+                            height: addButtonSize,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                addBorderRadius,
+                              ),
                             ),
-                            borderRadius: BorderRadius.circular(
-                              addBorderRadius,
-                            ),
+                            alignment: Alignment.center,
+                            child: Icon(Icons.add, size: addIconSize),
                           ),
-                          alignment: Alignment.center,
-                          child: Icon(Icons.add, size: addIconSize),
                         ),
                       ),
                     ),

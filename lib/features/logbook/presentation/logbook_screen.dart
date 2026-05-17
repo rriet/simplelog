@@ -1361,6 +1361,7 @@ class _GlobalFilterBar extends StatelessWidget {
                   )
                 : SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
+                    clipBehavior: Clip.none,
                     child: Row(
                       children: [
                         _buildDateSelector(
