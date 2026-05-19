@@ -207,9 +207,10 @@ class DatabaseSyncTrigger extends ConsumerWidget {
 
   Future<void> _importCsv(BuildContext context, WidgetRef ref) async {
     final isAndroid = Platform.isAndroid;
+    final isIOS = Platform.isIOS;
     final result = await FilePicker.platform.pickFiles(
-      type: isAndroid ? FileType.any : FileType.custom,
-      allowedExtensions: isAndroid
+      type: isAndroid || isIOS ? FileType.any : FileType.custom,
+      allowedExtensions: isAndroid || isIOS
           ? null
           : const [
               'csv',

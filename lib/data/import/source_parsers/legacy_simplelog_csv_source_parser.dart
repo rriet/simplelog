@@ -46,6 +46,8 @@ class LegacySimpleLogCsvSourceParser {
     final idxDate = readIndex('Date (DD/MM/YYYY)');
     final idxDepTime = readIndex('Departure Time (HH:MM)');
     final idxArrTime = readIndex('Arrival Time (HH:MM)');
+    final idxTakeoffTime = readIndex('Takeoff Time (HH:MM)');
+    final idxLandingTime = readIndex('Landing Time (HH:MM)');
     final idxDepEpoch = readIndex('Departure Epoch');
     final idxArrEpoch = readIndex('Arrival Epoch');
     final idxDepIcao = readIndex('Departure Icao');
@@ -102,6 +104,10 @@ class LegacySimpleLogCsvSourceParser {
     final idxCustom2 = readIndex('Custom Time 2 Minutes');
     final idxCustom3 = readIndex('Custom Time 3 Minutes');
     final idxCustom4 = readIndex('Custom Time 4 Minutes');
+    final idxEventType = readIndex('Event Type');
+    final idxDutyMinutes = readIndex('Duty Minutes');
+    final idxDutyFactoredMinutes = readIndex('Duty Factored Minutes');
+    final idxPositioningMinutes = readIndex('Positioning Minutes');
     final idxTotalMinutes = readIndex('Total Minutes');
 
     final dateFormat = DateFormat('dd/MM/yyyy');
@@ -118,21 +124,7 @@ class LegacySimpleLogCsvSourceParser {
       try {
         String get(int idx) => idx >= 0 && idx < row.length ? row[idx] : '';
 
-        final depIcao = _pickCode(get(idxDepIcao), get(idxDepIata));
-        final arrIcao = _pickCode(get(idxArrIcao), get(idxArrIata));
-        if (depIcao.isEmpty || arrIcao.isEmpty) {
-          skipped += 1;
-          continue;
-        }
-
-        final depLatRaw = get(idxDepLat);
-        final depLonRaw = get(idxDepLon);
-        final arrLatRaw = get(idxArrLat);
-        final arrLonRaw = get(idxArrLon);
-        final depLat = _parseDouble(depLatRaw);
-        final depLon = _parseDouble(depLonRaw);
-        final arrLat = _parseDouble(arrLatRaw);
-        final arrLon = _parseDouble(arrLonRaw);
+        final eventType = get(idxEventType).trim().toLowerCase();
 
         final departureDate = _resolveDepartureDateTime(
           depEpochText: get(idxDepEpoch),
@@ -152,6 +144,95 @@ class LegacySimpleLogCsvSourceParser {
           depTimeText: get(idxDepTime),
           arrTimeText: get(idxArrTime),
         );
+
+        if (eventType == 'duty') {
+          final dutyStart = departureDate;
+          final dutyEnd = arrivalDate ?? dutyStart;
+          if (dutyEnd.isBefore(dutyStart)) {
+            skipped += 1;
+            continue;
+          }
+          final calculatedDutyMinutes = dutyEnd.difference(dutyStart).inMinutes;
+          final dutyMinutes = _parseInt(get(idxDutyMinutes));
+          final dutyFactored = _parseInt(get(idxDutyFactoredMinutes));
+          records.add(
+            NormalizedDutyRecord(
+              progressOrdinal: progressOrdinal,
+              startDateTime: dutyStart,
+              endDateTime: dutyEnd,
+              timeDutyMinutes: dutyMinutes > 0
+                  ? dutyMinutes
+                  : max(0, calculatedDutyMinutes),
+              timeFactoredDutyMinutes: dutyFactored > 0
+                  ? dutyFactored
+                  : (dutyMinutes > 0
+                        ? dutyMinutes
+                        : max(0, calculatedDutyMinutes)),
+            ),
+          );
+          continue;
+        }
+
+        final isExplicitSimulator = eventType == 'simulator';
+        final depIcao = _pickCode(get(idxDepIcao), get(idxDepIata));
+        final arrIcao = _pickCode(get(idxArrIcao), get(idxArrIata));
+        if (!isExplicitSimulator && (depIcao.isEmpty || arrIcao.isEmpty)) {
+          skipped += 1;
+          continue;
+        }
+
+        final depLatRaw = get(idxDepLat);
+        final depLonRaw = get(idxDepLon);
+        final arrLatRaw = get(idxArrLat);
+        final arrLonRaw = get(idxArrLon);
+        final depLat = _parseDouble(depLatRaw);
+        final depLon = _parseDouble(depLonRaw);
+        final arrLat = _parseDouble(arrLatRaw);
+        final arrLon = _parseDouble(arrLonRaw);
+
+        if (eventType == 'positioning') {
+          if (depIcao.isEmpty || arrIcao.isEmpty) {
+            skipped += 1;
+            continue;
+          }
+          final totalMinutesRaw = _parseInt(get(idxTotalMinutes));
+          final positioningMinutes = _parseInt(get(idxPositioningMinutes));
+          final resolvedMinutes = positioningMinutes > 0
+              ? positioningMinutes
+              : totalMinutesRaw;
+          records.add(
+            NormalizedPositioningRecord(
+              progressOrdinal: progressOrdinal,
+              departureAirport: ImportedAirportDraft(
+                icao: depIcao,
+                iata: get(idxDepIata),
+                name: get(idxDepName),
+                city: get(idxDepCity),
+                country: get(idxDepCountry),
+                latitude: depLat,
+                longitude: depLon,
+                latitudeRaw: depLatRaw,
+                longitudeRaw: depLonRaw,
+              ),
+              arrivalAirport: ImportedAirportDraft(
+                icao: arrIcao,
+                iata: get(idxArrIata),
+                name: get(idxArrName),
+                city: get(idxArrCity),
+                country: get(idxArrCountry),
+                latitude: arrLat,
+                longitude: arrLon,
+                latitudeRaw: arrLatRaw,
+                longitudeRaw: arrLonRaw,
+              ),
+              departureDateTime: departureDate,
+              arrivalDateTime: arrivalDate,
+              timeTotalMinutes: resolvedMinutes,
+              notes: get(idxNotes),
+            ),
+          );
+          continue;
+        }
 
         final typeMtow = _parseInt(get(idxModelMtow));
         final typeMultiPilot = _parseBool(get(idxModelMultiPilot));
@@ -219,8 +300,22 @@ class LegacySimpleLogCsvSourceParser {
           arrLon,
         );
         final distanceNm = distanceValue.isFinite ? distanceValue.round() : 0;
+        final takeOffDateTime = _parseDateTime(
+          dateFormat,
+          get(idxDate),
+          get(idxTakeoffTime),
+        );
+        final landingDateTime = _resolveArrivalDateTime(
+          arrEpochText: '',
+          dateFormat: dateFormat,
+          dateText: get(idxDate),
+          depTimeText: _isMissingTime(get(idxTakeoffTime))
+              ? get(idxDepTime)
+              : get(idxTakeoffTime),
+          arrTimeText: get(idxLandingTime),
+        );
 
-        if (aircraft.isSimulator) {
+        if (aircraft.isSimulator || eventType == 'simulator') {
           final crewAssignments = _buildSimulatorCrewAssignments(
             picName: get(idxPicName),
             picEmail: get(idxPicEmail),
@@ -384,6 +479,8 @@ class LegacySimpleLogCsvSourceParser {
             aircraftType: aircraftType,
             aircraft: aircraft,
             departureDateTime: departureDate,
+            takeOffDateTime: takeOffDateTime,
+            landingDateTime: landingDateTime,
             arrivalDateTime: arrivalDate,
             timePicMinutes: picMinutes,
             timePicusMinutes: picusMinutes,

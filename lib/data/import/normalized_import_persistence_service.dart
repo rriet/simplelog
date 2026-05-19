@@ -94,6 +94,8 @@ class NormalizedImportPersistenceService {
               aircraftCache: aircraftCache,
               crewCache: crewCache,
             );
+          } else if (record is NormalizedDutyRecord) {
+            await _persistDuty(record, counters: counters);
           }
         } on Object catch (_) {
           counters.errors += 1;
@@ -447,6 +449,32 @@ class NormalizedImportPersistenceService {
       crewCache: crewCache,
     );
     counters.simulators += 1;
+  }
+
+  Future<void> _persistDuty(
+    NormalizedDutyRecord record, {
+    required _ImportCounters counters,
+  }) async {
+    final dutyMinutes = max(0, record.timeDutyMinutes);
+    final factoredMinutes = max(0, record.timeFactoredDutyMinutes);
+    final startTimelineId = await db
+        .into(db.timeLines)
+        .insert(TimeLinesCompanion.insert(eventDateTime: record.startDateTime));
+    final endTimelineId = await db
+        .into(db.timeLines)
+        .insert(TimeLinesCompanion.insert(eventDateTime: record.endDateTime));
+    await db
+        .into(db.dutyPeriods)
+        .insert(
+          DutyPeriodsCompanion.insert(
+            dutyStartTimeLineId: startTimelineId,
+            dutyEndTimeLineId: endTimelineId,
+            timeDutyMinutes: dutyMinutes,
+            timeFactoredDutyMinutes: factoredMinutes,
+            isLocked: false,
+          ),
+        );
+    counters.duties += 1;
   }
 
   Future<void> _persistFlightCrewAssignments(
@@ -1073,6 +1101,7 @@ class _ImportCounters {
   int flights = 0;
   int positionings = 0;
   int simulators = 0;
+  int duties = 0;
   int airports = 0;
   int aircraftTypes = 0;
   int aircrafts = 0;

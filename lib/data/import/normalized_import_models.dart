@@ -351,6 +351,23 @@ class NormalizedPositioningRecord extends NormalizedImportRecord {
   final bool overrideMatchedPositioning;
 }
 
+/// Shared normalized duty-period row.
+class NormalizedDutyRecord extends NormalizedImportRecord {
+  /// Creates a normalized duty record.
+  const NormalizedDutyRecord({
+    required int progressOrdinal,
+    required this.startDateTime,
+    required this.endDateTime,
+    required this.timeDutyMinutes,
+    required this.timeFactoredDutyMinutes,
+  }) : super(progressOrdinal);
+
+  final DateTime startDateTime;
+  final DateTime endDateTime;
+  final int timeDutyMinutes;
+  final int timeFactoredDutyMinutes;
+}
+
 /// Shared normalized simulator row.
 class NormalizedSimulatorRecord extends NormalizedImportRecord {
   /// Creates a normalized simulator record.

@@ -5,7 +5,7 @@ import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
 
-/// Exports flights and simulator sessions to the legacy SimpleLog CSV format.
+/// Exports timeline entries to the legacy SimpleLog CSV format.
 class SimpleLogCsvExporter {
   /// Creates an exporter using the provided application database.
   SimpleLogCsvExporter(this.db);
@@ -17,6 +17,8 @@ class SimpleLogCsvExporter {
     'Date (DD/MM/YYYY)',
     'Departure Time (HH:MM)',
     'Arrival Time (HH:MM)',
+    'Takeoff Time (HH:MM)',
+    'Landing Time (HH:MM)',
     'Departure Epoch',
     'Arrival Epoch',
     'Departure Icao',
@@ -75,7 +77,12 @@ class SimpleLogCsvExporter {
     'Custom Time 3 Minutes',
     'Custom Time 4 Minutes',
 
-    /// Total logged minutes (block for flights, total for simulators).
+    'Event Type',
+    'Duty Minutes',
+    'Duty Factored Minutes',
+    'Positioning Minutes',
+
+    /// Total logged minutes (block for flights, total for non-flight events).
     'Total Minutes',
   ];
 
@@ -83,6 +90,8 @@ class SimpleLogCsvExporter {
   Future<String> exportFlightsAndSimulatorsCsv() async {
     final flights = await db.select(db.flights).get();
     final simulators = await db.select(db.simulatorTrainings).get();
+    final positionings = await db.select(db.positionings).get();
+    final duties = await db.select(db.dutyPeriods).get();
     final aircrafts = await db.select(db.aircrafts).get();
     final aircraftTypes = await db.select(db.aircraftTypes).get();
     final airports = await db.select(db.airports).get();
@@ -148,6 +157,18 @@ class SimpleLogCsvExporter {
                     return flight.arrivalDateTime == null
                         ? '00:00'
                         : DateFormat('HH:mm').format(arrivalDateTime);
+                  case 'Takeoff Time (HH:MM)':
+                    return flight.takeOffDateTime == null
+                        ? ''
+                        : DateFormat(
+                            'HH:mm',
+                          ).format(_asUtcLiteral(flight.takeOffDateTime!));
+                  case 'Landing Time (HH:MM)':
+                    return flight.landingDateTime == null
+                        ? ''
+                        : DateFormat(
+                            'HH:mm',
+                          ).format(_asUtcLiteral(flight.landingDateTime!));
                   case 'Departure Epoch':
                     return (departureDateTime.millisecondsSinceEpoch ~/ 1000)
                         .toString();
@@ -274,6 +295,12 @@ class SimpleLogCsvExporter {
                     return flight.timeCustom3Minutes.toString();
                   case 'Custom Time 4 Minutes':
                     return flight.timeCustom4Minutes.toString();
+                  case 'Event Type':
+                    return 'flight';
+                  case 'Duty Minutes':
+                  case 'Duty Factored Minutes':
+                  case 'Positioning Minutes':
+                    return '';
                   case 'Total Minutes':
                     return flight.timeBlockMinutes.toString();
                   default:
@@ -311,6 +338,9 @@ class SimpleLogCsvExporter {
                     return DateFormat('HH:mm').format(startDateTime);
                   case 'Arrival Time (HH:MM)':
                     return DateFormat('HH:mm').format(endDateTime);
+                  case 'Takeoff Time (HH:MM)':
+                  case 'Landing Time (HH:MM)':
+                    return '';
                   case 'Departure Epoch':
                     return (startDateTime.millisecondsSinceEpoch ~/ 1000)
                         .toString();
@@ -365,13 +395,150 @@ class SimpleLogCsvExporter {
                     return simulator.notes;
                   case 'Simulator Minutes':
                     return simulator.timeTotal.toString();
-                  case 'Total Minutes':
+                  case 'Event Type':
+                    return 'simulator';
+                  case 'Duty Minutes':
+                  case 'Duty Factored Minutes':
+                    return '';
+                  case 'Positioning Minutes':
                     return '0';
+                  case 'Total Minutes':
+                    return simulator.timeTotal.toString();
                   default:
                     return '';
                 }
               })
-              .map((value) => value)
+              .toList(growable: false),
+        ),
+      );
+    }
+
+    for (final positioning in positionings) {
+      final departureTimeLine = timelineById[positioning.departureDateTimeId];
+      if (departureTimeLine == null) continue;
+      final departureDateTime = _asUtcLiteral(departureTimeLine.eventDateTime);
+      final arrivalDateTime = _asUtcLiteral(
+        positioning.arrivalDateTime ?? departureDateTime,
+      );
+      final depAirport = airportById[positioning.departurePlaceId];
+      final arrAirport = airportById[positioning.arrivalPlaceId];
+      rows.add(
+        _ExportRow(
+          sortDateTime: departureDateTime,
+          sortTimelineId: departureTimeLine.id,
+          values: _headers
+              .map((header) {
+                switch (header) {
+                  case 'Date (DD/MM/YYYY)':
+                    return DateFormat('dd/MM/yyyy').format(departureDateTime);
+                  case 'Departure Time (HH:MM)':
+                    return DateFormat('HH:mm').format(departureDateTime);
+                  case 'Arrival Time (HH:MM)':
+                    return DateFormat('HH:mm').format(arrivalDateTime);
+                  case 'Takeoff Time (HH:MM)':
+                  case 'Landing Time (HH:MM)':
+                    return '';
+                  case 'Departure Epoch':
+                    return (departureDateTime.millisecondsSinceEpoch ~/ 1000)
+                        .toString();
+                  case 'Arrival Epoch':
+                    return (arrivalDateTime.millisecondsSinceEpoch ~/ 1000)
+                        .toString();
+                  case 'Departure Icao':
+                    return depAirport?.icao ?? '';
+                  case 'Departure Iata':
+                    return depAirport?.iata ?? '';
+                  case 'Departure Airport Name':
+                    return depAirport?.name ?? '';
+                  case 'Departure City':
+                    return depAirport?.city ?? '';
+                  case 'Departure Country':
+                    return depAirport?.country ?? '';
+                  case 'Departure Latitude':
+                    return depAirport == null
+                        ? ''
+                        : depAirport.latitude.toString();
+                  case 'Departure Longitude':
+                    return depAirport == null
+                        ? ''
+                        : depAirport.longitude.toString();
+                  case 'Arrival Icao':
+                    return arrAirport?.icao ?? '';
+                  case 'Arrival Iata':
+                    return arrAirport?.iata ?? '';
+                  case 'Arrival Airport Name':
+                    return arrAirport?.name ?? '';
+                  case 'Arrival City':
+                    return arrAirport?.city ?? '';
+                  case 'Arrival Country':
+                    return arrAirport?.country ?? '';
+                  case 'Arrival Latitude':
+                    return arrAirport == null
+                        ? ''
+                        : arrAirport.latitude.toString();
+                  case 'Arrival Longitude':
+                    return arrAirport == null
+                        ? ''
+                        : arrAirport.longitude.toString();
+                  case 'Private notes':
+                    return positioning.notes;
+                  case 'Event Type':
+                    return 'positioning';
+                  case 'Duty Minutes':
+                  case 'Duty Factored Minutes':
+                    return '';
+                  case 'Positioning Minutes':
+                    return positioning.timeTotalMinutes.toString();
+                  case 'Total Minutes':
+                    return positioning.timeTotalMinutes.toString();
+                  default:
+                    return '';
+                }
+              })
+              .toList(growable: false),
+        ),
+      );
+    }
+
+    for (final duty in duties) {
+      final startTimeLine = timelineById[duty.dutyStartTimeLineId];
+      final endTimeLine = timelineById[duty.dutyEndTimeLineId];
+      if (startTimeLine == null || endTimeLine == null) continue;
+      final startDateTime = _asUtcLiteral(startTimeLine.eventDateTime);
+      final endDateTime = _asUtcLiteral(endTimeLine.eventDateTime);
+      rows.add(
+        _ExportRow(
+          sortDateTime: startDateTime,
+          sortTimelineId: startTimeLine.id,
+          values: _headers
+              .map((header) {
+                switch (header) {
+                  case 'Date (DD/MM/YYYY)':
+                    return DateFormat('dd/MM/yyyy').format(startDateTime);
+                  case 'Departure Time (HH:MM)':
+                    return DateFormat('HH:mm').format(startDateTime);
+                  case 'Arrival Time (HH:MM)':
+                    return DateFormat('HH:mm').format(endDateTime);
+                  case 'Departure Epoch':
+                    return (startDateTime.millisecondsSinceEpoch ~/ 1000)
+                        .toString();
+                  case 'Arrival Epoch':
+                    return (endDateTime.millisecondsSinceEpoch ~/ 1000)
+                        .toString();
+                  case 'Event Type':
+                    return 'duty';
+                  case 'Duty Minutes':
+                    return duty.timeDutyMinutes.toString();
+                  case 'Duty Factored Minutes':
+                    return duty.timeFactoredDutyMinutes.toString();
+                  case 'Positioning Minutes':
+                    return '0';
+                  case 'Total Minutes':
+                    return duty.timeDutyMinutes.toString();
+                  default:
+                    return '';
+                }
+              })
               .toList(growable: false),
         ),
       );
