@@ -18,8 +18,9 @@ Enter the essentials, press **Calculate**, review, and save.
 > To keep it alive, I need to cover ongoing costs like developer licenses and
 > the time required to maintain and improve the app.
 >
-> If SimpleLog helps you, please consider supporting it with a donation.  
-> Donation link coming soon.
+> If SimpleLog is useful to you, consider supporting its development:
+>
+> https://github.com/sponsors/rriet
 
 ## Why SimpleLog
 
@@ -52,6 +53,21 @@ SimpleLog focuses on a practical cockpit-to-logbook workflow:
   - macOS
   - iOS
   - Android
+ 
+## Import Logbooks
+
+Import existing flight history without manual entry and migrate quickly from legacy systems.
+
+Supported formats:
+
+- SWAPA CSV reports
+- Qatar Airways XLSX reports
+- LogTen Pro exports
+- SimpleLog Legacy CSV
+- Wader CSV exports
+- Additional airline and aviation logbook formats coming soon
+
+Flight data is automatically mapped into SimpleLog’s structure for fast migration and minimal cleanup.
 
 ## Privacy and Data Ownership
 
