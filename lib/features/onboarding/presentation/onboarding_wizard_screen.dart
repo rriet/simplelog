@@ -56,6 +56,13 @@ class _OnboardingWizardScreenState
     await ref.read(onboardingCompletedProvider.notifier).completeOnboarding();
   }
 
+  void _dismissKeyboard() {
+    final currentFocus = FocusScope.of(context);
+    if (!currentFocus.hasPrimaryFocus) {
+      currentFocus.unfocus();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -77,64 +84,56 @@ class _OnboardingWizardScreenState
               onPressed: isSaving ? null : _complete,
               child: Text(l10n.onboardingSkipAction),
             ),
-        ],
-      ),
-      body: Column(
-        children: [
-          const SizedBox(height: 8),
-          _StepDots(currentStep: _currentStep, stepCount: titles.length),
-          const SizedBox(height: 8),
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: (value) {
-                setState(() {
-                  _currentStep = value;
-                });
-              },
-              children: [
-                _WelcomeStep(
-                  title: l10n.onboardingWelcomeTitle,
-                  description: l10n.onboardingWelcomeBody,
-                ),
-                _PilotProfileAndRulesStep(
-                  title: l10n.onboardingPilotProfileTitle,
-                  description: l10n.onboardingPilotProfileBody,
-                ),
-                _FieldsStep(
-                  title: l10n.onboardingFieldsTitle,
-                  description: l10n.onboardingFieldsBody,
-                ),
-              ],
+          if (_currentStep > 0)
+            TextButton(
+              onPressed: isSaving ? null : _goBack,
+              child: Text(l10n.onboardingBackAction),
+            ),
+          TextButton(
+            onPressed: isSaving
+                ? null
+                : (_currentStep == _lastStepIndex ? _complete : _goNext),
+            child: Text(
+              _currentStep == _lastStepIndex
+                  ? l10n.onboardingFinishAction
+                  : l10n.onboardingNextAction,
             ),
           ),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: Row(
-            children: [
-              if (_currentStep > 0)
-                OutlinedButton(
-                  onPressed: isSaving ? null : _goBack,
-                  child: Text(l10n.onboardingBackAction),
-                )
-              else
-                const SizedBox.shrink(),
-              const Spacer(),
-              FilledButton(
-                onPressed: isSaving
-                    ? null
-                    : (_currentStep == _lastStepIndex ? _complete : _goNext),
-                child: Text(
-                  _currentStep == _lastStepIndex
-                      ? l10n.onboardingFinishAction
-                      : l10n.onboardingNextAction,
-                ),
+      body: GestureDetector(
+        onTap: _dismissKeyboard,
+        behavior: HitTestBehavior.translucent,
+        child: Column(
+          children: [
+            const SizedBox(height: 8),
+            _StepDots(currentStep: _currentStep, stepCount: titles.length),
+            const SizedBox(height: 8),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (value) {
+                  setState(() {
+                    _currentStep = value;
+                  });
+                },
+                children: [
+                  _WelcomeStep(
+                    title: l10n.onboardingWelcomeTitle,
+                    description: l10n.onboardingWelcomeBody,
+                  ),
+                  _PilotProfileAndRulesStep(
+                    title: l10n.onboardingPilotProfileTitle,
+                    description: l10n.onboardingPilotProfileBody,
+                  ),
+                  _FieldsStep(
+                    title: l10n.onboardingFieldsTitle,
+                    description: l10n.onboardingFieldsBody,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -220,6 +219,7 @@ class _PilotProfileAndRulesStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       children: [
         _StepHeader(title: title, description: description),
         const SizedBox(height: 16),

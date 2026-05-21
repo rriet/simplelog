@@ -129,6 +129,7 @@ class _TimeFieldsSettingsTabState extends ConsumerState<TimeFieldsSettingsTab> {
         constraints: const BoxConstraints(maxWidth: 760),
         child: ListView(
           padding: const EdgeInsets.all(16),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           children: [
             Text(
               AppLocalizations.of(context)!.settingsTabTimeFields,
