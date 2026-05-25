@@ -12,6 +12,13 @@ and keep your records accurate.
 
 Enter the essentials, press **Calculate**, review, and save.
 
+## Installation
+iPhone and iPad
+https://apps.apple.com/us/app/mysimplelog/id6761062475
+
+Windos, Mac and Android:
+https://github.com/rriet/simplelog/releases
+
 ## Support the Project
 
 > **SimpleLog is free and open source.**  
