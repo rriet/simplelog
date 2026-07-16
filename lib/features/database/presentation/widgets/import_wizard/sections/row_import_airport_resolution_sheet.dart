@@ -161,14 +161,17 @@ class _RowImportAirportResolutionSheetState
     if (selected == null || !mounted) {
       return;
     }
-    setState(() {
-      _replacements.putIfAbsent(issue.lineNumber, () => {});
-      _replacements[issue.lineNumber]![issue.field] = _replacementCodeForIssue(
-        issue,
-        selected,
-      );
-      _skippedLines.remove(issue.lineNumber);
-    });
+    if (mounted) {
+      setState(() {
+        _replacements.putIfAbsent(issue.lineNumber, () => {});
+        _replacements[issue.lineNumber]![issue.field] =
+            _replacementCodeForIssue(
+              issue,
+              selected,
+            );
+        _skippedLines.remove(issue.lineNumber);
+      });
+    }
     await _refreshPendingIssues();
   }
 
@@ -197,14 +200,17 @@ class _RowImportAirportResolutionSheetState
       widget.db.airports,
     )..where((t) => t.id.equals(airportId))).getSingleOrNull();
     if (!mounted || created == null) return;
-    setState(() {
-      _replacements.putIfAbsent(issue.lineNumber, () => {});
-      _replacements[issue.lineNumber]![issue.field] = _replacementCodeForIssue(
-        issue,
-        created,
-      );
-      _skippedLines.remove(issue.lineNumber);
-    });
+    if (mounted) {
+      setState(() {
+        _replacements.putIfAbsent(issue.lineNumber, () => {});
+        _replacements[issue.lineNumber]![issue.field] =
+            _replacementCodeForIssue(
+              issue,
+              created,
+            );
+        _skippedLines.remove(issue.lineNumber);
+      });
+    }
     await _refreshPendingIssues();
   }
 
@@ -236,11 +242,13 @@ class _RowImportAirportResolutionSheetState
       next.add(issue);
     }
     if (!mounted) return;
-    setState(() {
-      _pendingIssues
-        ..clear()
-        ..addAll(next);
-    });
+    if (mounted) {
+      setState(() {
+        _pendingIssues
+          ..clear()
+          ..addAll(next);
+      });
+    }
   }
 
   String _replacementCodeForIssue(

@@ -20,6 +20,19 @@ import 'package:simplelog/core/presentation/widgets/inputs/text_input_field.dart
 import 'package:simplelog/features/reports/presentation/providers/reports_preferences_provider.dart';
 import 'package:simplelog/features/settings/presentation/widgets/settings_expandable_info_trailing.dart';
 
+Widget _buildSignatureActionTile({
+  required BuildContext context,
+  required IconData icon,
+  required String title,
+  required _SignatureAction action,
+}) {
+  return ListTile(
+    leading: Icon(icon),
+    title: Text(title),
+    onTap: () => AppNavigator.pop(context, action),
+  );
+}
+
 /// Expandable settings card for pilot identity and signature preferences.
 class PilotProfileSettingsCard extends ConsumerStatefulWidget {
   /// Creates the settings card.
@@ -178,7 +191,9 @@ class _PilotProfileSettingsCardState
         if (bytes != null && mounted) {
           final normalized = await _normalizeSignatureBytes(bytes);
           if (!mounted) return;
-          setState(() => _signatureImage = normalized);
+          if (mounted) {
+            setState(() => _signatureImage = normalized);
+          }
           await _saveNow();
         }
       case _SignatureAction.camera:
@@ -186,23 +201,12 @@ class _PilotProfileSettingsCardState
       case _SignatureAction.file:
         await _pickFromFile();
       case _SignatureAction.clear:
-        setState(() => _signatureImage = null);
+        if (mounted) {
+          setState(() => _signatureImage = null);
+        }
         await _saveNow();
     }
     if (!mounted) return;
-  }
-
-  Widget _buildSignatureActionTile({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required _SignatureAction action,
-  }) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      onTap: () => AppNavigator.pop(context, action),
-    );
   }
 
   Future<void> _pickFromCamera() async {
@@ -217,7 +221,9 @@ class _PilotProfileSettingsCardState
       final bytes = await _cropOrReadBytes(sourcePath: sourcePath);
       final normalized = await _normalizeSignatureBytes(bytes);
       if (!mounted) return;
-      setState(() => _signatureImage = normalized);
+      if (mounted) {
+        setState(() => _signatureImage = normalized);
+      }
       await _saveNow();
     } on Object {
       if (!mounted) return;
@@ -243,7 +249,9 @@ class _PilotProfileSettingsCardState
       final bytes = await _cropOrReadBytes(sourcePath: sourcePath);
       final normalized = await _normalizeSignatureBytes(bytes);
       if (!mounted) return;
-      setState(() => _signatureImage = normalized);
+      if (mounted) {
+        setState(() => _signatureImage = normalized);
+      }
       await _saveNow();
     } on Object {
       if (!mounted) return;
@@ -677,19 +685,6 @@ class _PilotProfileEditorDialogState
           setState(() => _signatureImage = null);
         }
     }
-  }
-
-  Widget _buildSignatureActionTile({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required _SignatureAction action,
-  }) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      onTap: () => AppNavigator.pop(context, action),
-    );
   }
 
   Future<void> _pickFromCamera() async {

@@ -155,12 +155,12 @@ class DatabaseSyncTrigger extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             _DatabaseSectionCard(
-              title: 'Reset Database',
-              subtitle: 'Delete all data and restart as first app open.',
+              title: l10n.databaseResetTitle,
+              subtitle: l10n.databaseResetSubtitle,
               children: [
                 _DatabaseActionButton(
                   icon: Icons.delete_forever_outlined,
-                  label: 'Delete all data',
+                  label: l10n.databaseDeleteAllDataAction,
                   onPressed: () => _deleteAllData(context, ref),
                 ),
               ],
@@ -1283,21 +1283,21 @@ ${l10n.databaseErrorsLabel(stats.errors)}
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.table_view_outlined),
-              title: Text(l10n.databaseExportCsvAction),
+            _ExportChoiceTile(
+              icon: Icons.table_view_outlined,
+              label: l10n.databaseExportCsvAction,
               onTap: () =>
                   AppNavigator.pop(sheetContext, _DatabaseExportChoice.csv),
             ),
-            ListTile(
-              leading: const Icon(Icons.save_alt_outlined),
-              title: Text(l10n.databaseBackupLogbookAction),
+            _ExportChoiceTile(
+              icon: Icons.save_alt_outlined,
+              label: l10n.databaseBackupLogbookAction,
               onTap: () =>
                   AppNavigator.pop(sheetContext, _DatabaseExportChoice.backup),
             ),
-            ListTile(
-              leading: const Icon(Icons.close),
-              title: Text(l10n.cancelAction),
+            _ExportChoiceTile(
+              icon: Icons.close,
+              label: l10n.cancelAction,
               onTap: () => AppNavigator.pop(sheetContext),
             ),
           ],
@@ -1878,6 +1878,27 @@ enum _SouthwestMappingsReviewChoice {
 enum _DatabaseExportChoice {
   csv,
   backup,
+}
+
+class _ExportChoiceTile extends StatelessWidget {
+  const _ExportChoiceTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(label),
+      onTap: onTap,
+    );
+  }
 }
 
 class _DatabaseSectionCard extends StatelessWidget {

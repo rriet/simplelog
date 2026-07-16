@@ -16,9 +16,7 @@ class MyHomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final initialData = ref.watch(initialDataProvider);
     if (initialData.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const _HomeLoadingIndicator();
     }
 
     if (initialData.hasError) {
@@ -34,9 +32,7 @@ class MyHomePage extends ConsumerWidget {
 
     final onboarding = ref.watch(onboardingCompletedProvider);
     if (onboarding.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const _HomeLoadingIndicator();
     }
 
     if (onboarding.asData?.value != true) {
@@ -53,6 +49,17 @@ class MyHomePage extends ConsumerWidget {
 
         return const LargeScaffold();
       },
+    );
+  }
+}
+
+class _HomeLoadingIndicator extends StatelessWidget {
+  const _HomeLoadingIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 }

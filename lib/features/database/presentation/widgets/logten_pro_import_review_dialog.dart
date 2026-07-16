@@ -433,59 +433,36 @@ class _LogTenProImportReviewDialogState
                             Text(issue.reason),
                             const SizedBox(height: 12),
                             if (_isAirportIssue(issue))
-                              Opacity(
-                                opacity: ignored ? 0.6 : 1,
-                                child: IgnorePointer(
-                                  ignoring: ignored,
-                                  child: PickerWithAddInputField(
-                                    label: issue.association.label,
-                                    valueText:
-                                        _controllers[lineNumber]![issue
-                                                .association]!
-                                            .text
-                                            .trim()
-                                            .isEmpty
-                                        ? l10n.logtenNotSelected
-                                        : _controllers[lineNumber]![issue
-                                                  .association]!
-                                              .text
-                                              .trim(),
-                                    onTap: () => _pickAirport(issue),
-                                    onAdd: () => _createAirport(issue),
-                                    addTooltip: l10n.logtenCreateAirportTooltip,
-                                  ),
+                              _buildResolutionPicker(
+                                ignored: ignored,
+                                label: issue.association.label,
+                                valueText: _resolutionValueText(
+                                  lineNumber,
+                                  issue,
+                                  l10n,
                                 ),
+                                onTap: () => _pickAirport(issue),
+                                onAdd: () => _createAirport(issue),
+                                addTooltip: l10n.logtenCreateAirportTooltip,
                               )
                             else if (_isAircraftIssue(issue))
-                              Opacity(
-                                opacity: ignored ? 0.6 : 1,
-                                child: IgnorePointer(
-                                  ignoring: ignored,
-                                  child: PickerWithAddInputField(
-                                    label: l10n.screenAircraft,
-                                    valueText:
-                                        _controllers[lineNumber]![issue
-                                                .association]!
-                                            .text
-                                            .trim()
-                                            .isEmpty
-                                        ? l10n.logtenNotSelected
-                                        : _controllers[lineNumber]![issue
-                                                  .association]!
-                                              .text
-                                              .trim(),
-                                    onTap: () => _pickAircraft(
-                                      issue,
-                                      onlySimulators: simulatorSelected,
-                                    ),
-                                    onAdd: () => _createAircraft(
-                                      issue,
-                                      isSimulator: simulatorSelected,
-                                    ),
-                                    addTooltip:
-                                        l10n.logtenCreateAircraftTooltip,
-                                  ),
+                              _buildResolutionPicker(
+                                ignored: ignored,
+                                label: l10n.screenAircraft,
+                                valueText: _resolutionValueText(
+                                  lineNumber,
+                                  issue,
+                                  l10n,
                                 ),
+                                onTap: () => _pickAircraft(
+                                  issue,
+                                  onlySimulators: simulatorSelected,
+                                ),
+                                onAdd: () => _createAircraft(
+                                  issue,
+                                  isSimulator: simulatorSelected,
+                                ),
+                                addTooltip: l10n.logtenCreateAircraftTooltip,
                               )
                             else
                               TextField(
@@ -524,6 +501,38 @@ class _LogTenProImportReviewDialogState
           ),
         ],
         contentView: body,
+      ),
+    );
+  }
+
+  String _resolutionValueText(
+    int lineNumber,
+    LogTenImportIssue issue,
+    AppLocalizations l10n,
+  ) {
+    final value = _controllers[lineNumber]![issue.association]!.text.trim();
+    return value.isEmpty ? l10n.logtenNotSelected : value;
+  }
+
+  Widget _buildResolutionPicker({
+    required bool ignored,
+    required String label,
+    required String valueText,
+    required VoidCallback onTap,
+    required VoidCallback onAdd,
+    required String addTooltip,
+  }) {
+    return Opacity(
+      opacity: ignored ? 0.6 : 1,
+      child: IgnorePointer(
+        ignoring: ignored,
+        child: PickerWithAddInputField(
+          label: label,
+          valueText: valueText,
+          onTap: onTap,
+          onAdd: onAdd,
+          addTooltip: addTooltip,
+        ),
       ),
     );
   }

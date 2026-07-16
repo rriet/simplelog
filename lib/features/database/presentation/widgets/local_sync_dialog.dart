@@ -417,9 +417,11 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
       );
     } on Object catch (error) {
       if (!mounted) return;
-      setState(() {
-        _status = _friendlySyncError(error);
-      });
+      if (mounted) {
+        setState(() {
+          _status = _friendlySyncError(error);
+        });
+      }
     }
   }
 
@@ -671,8 +673,15 @@ class _LocalSyncDialogState extends ConsumerState<LocalSyncDialog> {
   Future<void> _notifyTransferComplete(DiscoveredDevice device) async {
     try {
       await _postToDevice(device, '/complete');
-    } on Object catch (_) {
-      // Best-effort notification only; transfer is already complete.
+    } on Object catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'local sync',
+          context: ErrorDescription('notifying peer of completed transfer'),
+        ),
+      );
     }
   }
 

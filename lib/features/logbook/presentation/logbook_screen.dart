@@ -584,39 +584,13 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
     if (isCompactDialogScreen(context)) {
       applied = await AppNavigator.pushMaterial<bool>(
         context,
-        (routeContext) => AdaptiveFormShell(
-          onClose: () => AppNavigator.pop(routeContext, false),
-          title: l10n.reportsTabFilters,
-          popupMaxWidth: 900,
-          actions: [
-            TextButton(
-              onPressed: () => AppNavigator.pop(routeContext, true),
-              child: Text(l10n.reportsDone),
-            ),
-          ],
-          contentView: const ReportsScreen(
-            section: ReportsPanelSection.filters,
-          ),
-        ),
+        (routeContext) => _buildFiltersShell(routeContext, l10n),
         rootNavigator: true,
       );
     } else {
       applied = await showDialog<bool>(
         context: context,
-        builder: (dialogContext) => AdaptiveFormShell(
-          onClose: () => AppNavigator.pop(dialogContext, false),
-          title: l10n.reportsTabFilters,
-          popupMaxWidth: 900,
-          actions: [
-            TextButton(
-              onPressed: () => AppNavigator.pop(dialogContext, true),
-              child: Text(l10n.reportsDone),
-            ),
-          ],
-          contentView: const ReportsScreen(
-            section: ReportsPanelSection.filters,
-          ),
-        ),
+        builder: (dialogContext) => _buildFiltersShell(dialogContext, l10n),
       );
     }
     if (applied != true) {
@@ -635,6 +609,21 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen>
         setState(() => _reportsPanelVersion++);
       }
     }
+  }
+
+  Widget _buildFiltersShell(BuildContext shellContext, AppLocalizations l10n) {
+    return AdaptiveFormShell(
+      onClose: () => AppNavigator.pop(shellContext, false),
+      title: l10n.reportsTabFilters,
+      popupMaxWidth: 900,
+      actions: [
+        TextButton(
+          onPressed: () => AppNavigator.pop(shellContext, true),
+          child: Text(l10n.reportsDone),
+        ),
+      ],
+      contentView: const ReportsScreen(section: ReportsPanelSection.filters),
+    );
   }
 
   ReportsRuntimeQueryState _cloneRuntimeQueryState(

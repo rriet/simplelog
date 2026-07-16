@@ -880,6 +880,24 @@ abstract class AppLocalizations {
   /// **'Disconnected from the other device.'**
   String get databaseSyncDisconnected;
 
+  /// No description provided for @databaseResetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Database'**
+  String get databaseResetTitle;
+
+  /// No description provided for @databaseResetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all data and restart as first app open.'**
+  String get databaseResetSubtitle;
+
+  /// No description provided for @databaseDeleteAllDataAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all data'**
+  String get databaseDeleteAllDataAction;
+
   /// No description provided for @reportsTabFlights.
   ///
   /// In en, this message translates to:
@@ -3939,6 +3957,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'These rules control automatic flight-time calculations and apply when calculations are run for filtered flights.\n\nCross-country NM: Minimum distance (NM) required to count cross-country time.\n\nIFR %: Percent of block time used for IFR calculation.\nMinus: Time deducted before IFR percentage is applied.\nMinimum: Minimum IFR time to enforce after percentage/reduction.\n\nIRP3 Reduction: Time deducted before IRP3 percentage is applied.\nIRP3 %: Percent applied for IRP3 after reduction.\n\nIRP4 Reduction: Time deducted before IRP4 percentage is applied.\nIRP4 %: Percent applied for IRP4 after reduction.'**
   String get settingsCalculationRulesHelpBody;
+
+  /// No description provided for @settingsCalculationRulesCrossCountryCalculationsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross-Country Calculations'**
+  String get settingsCalculationRulesCrossCountryCalculationsLabel;
+
+  /// No description provided for @settingsCalculationRulesIfrCalculationsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'IFR Calculations'**
+  String get settingsCalculationRulesIfrCalculationsLabel;
+
+  /// No description provided for @settingsCalculationRulesAugmentedCrewCalculationsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Augmented Crew Calculations'**
+  String get settingsCalculationRulesAugmentedCrewCalculationsLabel;
 
   /// No description provided for @settingsCalculationRulesMinusLabel.
   ///

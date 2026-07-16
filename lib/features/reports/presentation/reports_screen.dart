@@ -61,6 +61,7 @@ import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/duty_rules_settings_provider.dart';
 import 'package:simplelog/state/providers/flight_factoring_settings_provider.dart';
 import 'package:simplelog/state/providers/flight_form_settings_provider.dart';
+import 'package:simplelog/state/providers/flight_time_fields_visibility_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const _batchCalculateAllPreferencesKey =
@@ -2282,6 +2283,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     final customTimeLabels =
         ref.watch(customTimeLabelsProvider).valueOrNull ??
         const CustomTimeLabels();
+    final timeFieldVisibility =
+        ref.watch(flightTimeFieldsVisibilityProvider).valueOrNull ??
+        const FlightTimeFieldsVisibility();
+    final takeoffLandingEnabled =
+        ref.watch(flightFormTakeoffLandingLogProvider).valueOrNull ?? true;
     final logbookUseCases = ref.read(logbookUseCasesProvider);
 
     return LayoutBuilder(
@@ -2339,6 +2345,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                           _TotalsCard(
                             totals: _data.totals,
                             customTimeLabels: customTimeLabels,
+                            timeFieldVisibility: timeFieldVisibility,
+                            takeoffLandingEnabled: takeoffLandingEnabled,
                             firstFlightDate: _firstFlightDate,
                             lastFlightDate: _lastFlightDate,
                           ),
@@ -2356,6 +2364,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                         eventTypes: eventTypes,
                         savedQueries: savedQueries,
                         customTimeLabels: customTimeLabels,
+                        timeFieldVisibility: timeFieldVisibility,
+                        takeoffLandingEnabled: takeoffLandingEnabled,
                         logbookUseCases: logbookUseCases,
                       ),
               ),
@@ -2373,6 +2383,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     required ReportsEventTypesSelection eventTypes,
     required List<SavedReportsQuery> savedQueries,
     required CustomTimeLabels customTimeLabels,
+    required FlightTimeFieldsVisibility timeFieldVisibility,
+    required bool takeoffLandingEnabled,
     required LogbookUseCases logbookUseCases,
   }) {
     switch (section) {
@@ -2387,6 +2399,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         return _TotalsCard(
           totals: _data.totals,
           customTimeLabels: customTimeLabels,
+          timeFieldVisibility: timeFieldVisibility,
+          takeoffLandingEnabled: takeoffLandingEnabled,
           firstFlightDate: _firstFlightDate,
           lastFlightDate: _lastFlightDate,
         );
@@ -2408,6 +2422,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           eventTypes: eventTypes,
           savedQueries: savedQueries,
           customTimeLabels: customTimeLabels,
+          timeFieldVisibility: timeFieldVisibility,
+          takeoffLandingEnabled: takeoffLandingEnabled,
         );
     }
   }
@@ -2418,6 +2434,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
     required ReportsEventTypesSelection eventTypes,
     required List<SavedReportsQuery> savedQueries,
     required CustomTimeLabels customTimeLabels,
+    required FlightTimeFieldsVisibility timeFieldVisibility,
+    required bool takeoffLandingEnabled,
   }) {
     return Column(
       children: [
@@ -2431,6 +2449,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           child: _TotalsCard(
             totals: _data.totals,
             customTimeLabels: customTimeLabels,
+            timeFieldVisibility: timeFieldVisibility,
+            takeoffLandingEnabled: takeoffLandingEnabled,
             firstFlightDate: _firstFlightDate,
             lastFlightDate: _lastFlightDate,
           ),
@@ -5824,60 +5844,36 @@ class _FiltersCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (compact) ...[
-                          Row(
-                            children: [
-                              Expanded(
-                                child: EventTypeToggleButton(
-                                  label: l10n.logbookEventFlight,
-                                  selected: eventTypes.flights,
-                                  onTap: () => onEventTypesChanged(
-                                    eventTypes.copyWith(
-                                      flights: !eventTypes.flights,
-                                    ),
-                                  ),
-                                ),
+                          _buildEventTypeToggleRow(
+                            firstLabel: l10n.logbookEventFlight,
+                            firstSelected: eventTypes.flights,
+                            onFirstTap: () => onEventTypesChanged(
+                              eventTypes.copyWith(
+                                flights: !eventTypes.flights,
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: EventTypeToggleButton(
-                                  label: l10n.fieldIsSimulator,
-                                  selected: eventTypes.simulator,
-                                  onTap: () => onEventTypesChanged(
-                                    eventTypes.copyWith(
-                                      simulator: !eventTypes.simulator,
-                                    ),
-                                  ),
-                                ),
+                            ),
+                            secondLabel: l10n.fieldIsSimulator,
+                            secondSelected: eventTypes.simulator,
+                            onSecondTap: () => onEventTypesChanged(
+                              eventTypes.copyWith(
+                                simulator: !eventTypes.simulator,
                               ),
-                            ],
+                            ),
                           ),
                           const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: EventTypeToggleButton(
-                                  label: l10n.reportsMetricDuty,
-                                  selected: eventTypes.duty,
-                                  onTap: () => onEventTypesChanged(
-                                    eventTypes.copyWith(
-                                      duty: !eventTypes.duty,
-                                    ),
-                                  ),
-                                ),
+                          _buildEventTypeToggleRow(
+                            firstLabel: l10n.reportsMetricDuty,
+                            firstSelected: eventTypes.duty,
+                            onFirstTap: () => onEventTypesChanged(
+                              eventTypes.copyWith(duty: !eventTypes.duty),
+                            ),
+                            secondLabel: l10n.logbookEventPositioning,
+                            secondSelected: eventTypes.positioning,
+                            onSecondTap: () => onEventTypesChanged(
+                              eventTypes.copyWith(
+                                positioning: !eventTypes.positioning,
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: EventTypeToggleButton(
-                                  label: l10n.logbookEventPositioning,
-                                  selected: eventTypes.positioning,
-                                  onTap: () => onEventTypesChanged(
-                                    eventTypes.copyWith(
-                                      positioning: !eventTypes.positioning,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ] else
                           Row(
@@ -6050,18 +6046,51 @@ class _FiltersCard extends StatelessWidget {
       },
     );
   }
+
+  Widget _buildEventTypeToggleRow({
+    required String firstLabel,
+    required bool firstSelected,
+    required VoidCallback onFirstTap,
+    required String secondLabel,
+    required bool secondSelected,
+    required VoidCallback onSecondTap,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: EventTypeToggleButton(
+            label: firstLabel,
+            selected: firstSelected,
+            onTap: onFirstTap,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: EventTypeToggleButton(
+            label: secondLabel,
+            selected: secondSelected,
+            onTap: onSecondTap,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _TotalsCard extends StatelessWidget {
   const _TotalsCard({
     required this.totals,
     required this.customTimeLabels,
+    required this.timeFieldVisibility,
+    required this.takeoffLandingEnabled,
     this.firstFlightDate,
     this.lastFlightDate,
   });
 
   final ReportsTotals totals;
   final CustomTimeLabels customTimeLabels;
+  final FlightTimeFieldsVisibility timeFieldVisibility;
+  final bool takeoffLandingEnabled;
   final DateTime? firstFlightDate;
   final DateTime? lastFlightDate;
 
@@ -6069,38 +6098,185 @@ class _TotalsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final compact = MediaQuery.sizeOf(context).width < 600;
-    final operations = <(String, String)>[
-      (l10n.reportsMetricDistanceNm, _formatCount(totals.distanceNM)),
-      (l10n.reportsMetricIfrApproaches, _formatCount(totals.ifrApproaches)),
-      (l10n.reportsMetricTakeoffDay, _formatCount(totals.takeoffsDay)),
-      (l10n.reportsMetricTakeoffNight, _formatCount(totals.takeoffsNight)),
-      (l10n.reportsMetricLandingDay, _formatCount(totals.landingsDay)),
-      (l10n.reportsMetricLandingNight, _formatCount(totals.landingsNight)),
+    final operationsAll = <(String, String, bool)>[
+      (
+        l10n.reportsMetricDistanceNm,
+        _formatCount(totals.distanceNM),
+        _shouldShowCountMetric(
+          value: totals.distanceNM,
+          preferenceEnabled: timeFieldVisibility.crossCountry,
+        ),
+      ),
+      (
+        l10n.reportsMetricIfrApproaches,
+        _formatCount(totals.ifrApproaches),
+        _shouldShowCountMetric(
+          value: totals.ifrApproaches,
+          preferenceEnabled: timeFieldVisibility.ifr,
+        ),
+      ),
+      (
+        l10n.reportsMetricTakeoffDay,
+        _formatCount(totals.takeoffsDay),
+        _shouldShowCountMetric(
+          value: totals.takeoffsDay,
+          preferenceEnabled: true,
+        ),
+      ),
+      (
+        l10n.reportsMetricTakeoffNight,
+        _formatCount(totals.takeoffsNight),
+        _shouldShowCountMetric(
+          value: totals.takeoffsNight,
+          preferenceEnabled: true,
+        ),
+      ),
+      (
+        l10n.reportsMetricLandingDay,
+        _formatCount(totals.landingsDay),
+        _shouldShowCountMetric(
+          value: totals.landingsDay,
+          preferenceEnabled: true,
+        ),
+      ),
+      (
+        l10n.reportsMetricLandingNight,
+        _formatCount(totals.landingsNight),
+        _shouldShowCountMetric(
+          value: totals.landingsNight,
+          preferenceEnabled: true,
+        ),
+      ),
     ];
-    final times = <(String, String)>[
-      (l10n.reportsMetricPic, _formatMinutes(totals.picMinutes)),
-      (l10n.reportsMetricPicus, _formatMinutes(totals.picusMinutes)),
-      (l10n.reportsMetricSic, _formatMinutes(totals.sicMinutes)),
-      (l10n.reportsMetricDual, _formatMinutes(totals.dualMinutes)),
-      (l10n.reportsMetricInstructor, _formatMinutes(totals.instructorMinutes)),
-      (l10n.reportsMetricIfr, _formatMinutes(totals.ifrMinutes)),
-      (l10n.reportsMetricNight, _formatMinutes(totals.nightMinutes)),
+    final operations = operationsAll
+        .where((metric) => metric.$3)
+        .map((metric) => (metric.$1, metric.$2))
+        .toList(growable: false);
+    final timesAll = <(String, String, bool)>[
+      (
+        l10n.reportsMetricPic,
+        _formatMinutes(totals.picMinutes),
+        _shouldShowMinutesMetric(
+          value: totals.picMinutes,
+          preferenceEnabled: timeFieldVisibility.pic,
+        ),
+      ),
+      (
+        l10n.reportsMetricPicus,
+        _formatMinutes(totals.picusMinutes),
+        _shouldShowMinutesMetric(
+          value: totals.picusMinutes,
+          preferenceEnabled: timeFieldVisibility.picus,
+        ),
+      ),
+      (
+        l10n.reportsMetricSic,
+        _formatMinutes(totals.sicMinutes),
+        _shouldShowMinutesMetric(
+          value: totals.sicMinutes,
+          preferenceEnabled: timeFieldVisibility.sic,
+        ),
+      ),
+      (
+        l10n.reportsMetricDual,
+        _formatMinutes(totals.dualMinutes),
+        _shouldShowMinutesMetric(
+          value: totals.dualMinutes,
+          preferenceEnabled: timeFieldVisibility.dual,
+        ),
+      ),
+      (
+        l10n.reportsMetricInstructor,
+        _formatMinutes(totals.instructorMinutes),
+        _shouldShowMinutesMetric(
+          value: totals.instructorMinutes,
+          preferenceEnabled: timeFieldVisibility.instructor,
+        ),
+      ),
+      (
+        l10n.reportsMetricIfr,
+        _formatMinutes(totals.ifrMinutes),
+        _shouldShowMinutesMetric(
+          value: totals.ifrMinutes,
+          preferenceEnabled: timeFieldVisibility.ifr,
+        ),
+      ),
+      (
+        l10n.reportsMetricNight,
+        _formatMinutes(totals.nightMinutes),
+        _shouldShowMinutesMetric(
+          value: totals.nightMinutes,
+          preferenceEnabled: timeFieldVisibility.night,
+        ),
+      ),
       (
         l10n.reportsMetricCrossCountry,
         _formatMinutes(totals.crossCountryMinutes),
+        _shouldShowMinutesMetric(
+          value: totals.crossCountryMinutes,
+          preferenceEnabled: timeFieldVisibility.crossCountry,
+        ),
       ),
-      (customTimeLabels.custom1, _formatMinutes(totals.custom1Minutes)),
-      (customTimeLabels.custom2, _formatMinutes(totals.custom2Minutes)),
-      (customTimeLabels.custom3, _formatMinutes(totals.custom3Minutes)),
-      (customTimeLabels.custom4, _formatMinutes(totals.custom4Minutes)),
+      (
+        customTimeLabels.custom1,
+        _formatMinutes(totals.custom1Minutes),
+        _shouldShowMinutesMetric(
+          value: totals.custom1Minutes,
+          preferenceEnabled: timeFieldVisibility.custom1,
+        ),
+      ),
+      (
+        customTimeLabels.custom2,
+        _formatMinutes(totals.custom2Minutes),
+        _shouldShowMinutesMetric(
+          value: totals.custom2Minutes,
+          preferenceEnabled: timeFieldVisibility.custom2,
+        ),
+      ),
+      (
+        customTimeLabels.custom3,
+        _formatMinutes(totals.custom3Minutes),
+        _shouldShowMinutesMetric(
+          value: totals.custom3Minutes,
+          preferenceEnabled: timeFieldVisibility.custom3,
+        ),
+      ),
+      (
+        customTimeLabels.custom4,
+        _formatMinutes(totals.custom4Minutes),
+        _shouldShowMinutesMetric(
+          value: totals.custom4Minutes,
+          preferenceEnabled: timeFieldVisibility.custom4,
+        ),
+      ),
       (
         l10n.reportsFilterFieldFlightTime,
         _formatMinutes(totals.flightMinutes),
+        _shouldShowMinutesMetric(
+          value: totals.flightMinutes,
+          preferenceEnabled: takeoffLandingEnabled,
+        ),
       ),
-      (l10n.reportsMetricTotalBlock, _formatMinutes(totals.totalMinutes)),
-      (l10n.reportsMetricSimulator, _formatMinutes(totals.simulatorMinutes)),
-      (l10n.reportsMetricDuty, _formatMinutes(totals.dutyMinutes)),
+      (
+        l10n.reportsMetricTotalBlock,
+        _formatMinutes(totals.totalMinutes),
+        true,
+      ),
+      (
+        l10n.reportsMetricSimulator,
+        _formatMinutes(totals.simulatorMinutes),
+        true,
+      ),
+      (
+        l10n.reportsMetricDuty,
+        _formatMinutes(totals.dutyMinutes),
+        true,
+      ),
     ];
+    final times = timesAll
+        .where((metric) => metric.$3)
+        .map((metric) => (metric.$1, metric.$2))
+        .toList(growable: false);
     final dateFormatter = DateFormat('dd/MMM/yyyy');
     final firstDateLabel = firstFlightDate == null
         ? '-'
@@ -6177,9 +6353,11 @@ class _TotalsCard extends StatelessWidget {
                     child: Column(
                       children: [
                         _MetricWrap(metrics: operations),
-                        const SizedBox(height: 10),
-                        const Divider(height: 1),
-                        const SizedBox(height: 10),
+                        if (operations.isNotEmpty && times.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          const Divider(height: 1),
+                          const SizedBox(height: 10),
+                        ],
                         _MetricWrap(metrics: times),
                       ],
                     ),
@@ -6191,6 +6369,20 @@ class _TotalsCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  bool _shouldShowCountMetric({
+    required int value,
+    required bool preferenceEnabled,
+  }) {
+    return value > 0 || preferenceEnabled;
+  }
+
+  bool _shouldShowMinutesMetric({
+    required int value,
+    required bool preferenceEnabled,
+  }) {
+    return value > 0 || preferenceEnabled;
   }
 }
 

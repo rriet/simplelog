@@ -41,6 +41,8 @@
 	<string>We use the local network to sync your logbook between devices.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need photo library access to select crew photos.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access is used to retrieve current Wi-Fi network details for local network sync discovery.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

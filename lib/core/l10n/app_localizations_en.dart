@@ -419,6 +419,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get databaseSyncDisconnected => 'Disconnected from the other device.';
 
   @override
+  String get databaseResetTitle => 'Reset Database';
+
+  @override
+  String get databaseResetSubtitle =>
+      'Delete all data and restart as first app open.';
+
+  @override
+  String get databaseDeleteAllDataAction => 'Delete all data';
+
+  @override
   String get reportsTabFlights => 'Flights';
 
   @override
@@ -2002,6 +2012,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsCalculationRulesHelpBody =>
       'These rules control automatic flight-time calculations and apply when calculations are run for filtered flights.\n\nCross-country NM: Minimum distance (NM) required to count cross-country time.\n\nIFR %: Percent of block time used for IFR calculation.\nMinus: Time deducted before IFR percentage is applied.\nMinimum: Minimum IFR time to enforce after percentage/reduction.\n\nIRP3 Reduction: Time deducted before IRP3 percentage is applied.\nIRP3 %: Percent applied for IRP3 after reduction.\n\nIRP4 Reduction: Time deducted before IRP4 percentage is applied.\nIRP4 %: Percent applied for IRP4 after reduction.';
+
+  @override
+  String get settingsCalculationRulesCrossCountryCalculationsLabel =>
+      'Cross-Country Calculations';
+
+  @override
+  String get settingsCalculationRulesIfrCalculationsLabel => 'IFR Calculations';
+
+  @override
+  String get settingsCalculationRulesAugmentedCrewCalculationsLabel =>
+      'Augmented Crew Calculations';
 
   @override
   String get settingsCalculationRulesMinusLabel => 'Minus';

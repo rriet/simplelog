@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:simplelog/features/reports/presentation/providers/reports_preferences_provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('reports event type selection defaults positioning to true', () {
     const selection = ReportsEventTypesSelection();
     expect(selection.positioning, isTrue);

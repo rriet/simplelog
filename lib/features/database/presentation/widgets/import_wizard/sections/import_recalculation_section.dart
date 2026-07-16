@@ -182,29 +182,17 @@ class ImportRecalculationSection extends StatelessWidget {
             irp3SubtractController != null &&
             irp4PercentController != null &&
             irp4SubtractController != null) ...[
-          _CompactFieldRow(
-            fields: [
-              _CompactFieldSpec.number(
-                label: labels.irp3Percent!,
-                controller: irp3PercentController!,
-              ),
-              _CompactFieldSpec.time(
-                label: labels.irp3Time!,
-                controller: irp3SubtractController!,
-              ),
-            ],
+          _buildAugmentedCrewFields(
+            percentLabel: labels.irp3Percent!,
+            percentController: irp3PercentController!,
+            timeLabel: labels.irp3Time!,
+            timeController: irp3SubtractController!,
           ),
-          _CompactFieldRow(
-            fields: [
-              _CompactFieldSpec.number(
-                label: labels.irp4Percent!,
-                controller: irp4PercentController!,
-              ),
-              _CompactFieldSpec.time(
-                label: labels.irp4Time!,
-                controller: irp4SubtractController!,
-              ),
-            ],
+          _buildAugmentedCrewFields(
+            percentLabel: labels.irp4Percent!,
+            percentController: irp4PercentController!,
+            timeLabel: labels.irp4Time!,
+            timeController: irp4SubtractController!,
           ),
         ],
         if (labels.recalculateBlock != null &&
@@ -281,6 +269,23 @@ class ImportRecalculationSection extends StatelessWidget {
       title: Text(title),
       value: value,
       onChanged: onChanged,
+    );
+  }
+
+  Widget _buildAugmentedCrewFields({
+    required String percentLabel,
+    required TextEditingController percentController,
+    required String timeLabel,
+    required TextEditingController timeController,
+  }) {
+    return _CompactFieldRow(
+      fields: [
+        _CompactFieldSpec.number(
+          label: percentLabel,
+          controller: percentController,
+        ),
+        _CompactFieldSpec.time(label: timeLabel, controller: timeController),
+      ],
     );
   }
 }

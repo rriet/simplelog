@@ -155,6 +155,10 @@ class _FlightFactoringSettingsCardState
               ),
         childrenPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         children: [
+          _sectionLabel(
+            context,
+            l10n.settingsCalculationRulesCrossCountryCalculationsLabel,
+          ),
           _compactFieldRow(
             fields: [
               _CompactFieldSpec.number(
@@ -164,12 +168,20 @@ class _FlightFactoringSettingsCardState
             ],
           ),
           const Divider(height: 20),
+          _sectionLabel(
+            context,
+            l10n.settingsCalculationRulesIfrCalculationsLabel,
+          ),
           IfrFactoringFieldsRow(
             subtractController: _ifrSubtractController,
             percentController: _ifrPercentController,
             minimumController: _ifrMinController,
           ),
           const Divider(height: 20),
+          _sectionLabel(
+            context,
+            l10n.settingsCalculationRulesAugmentedCrewCalculationsLabel,
+          ),
           _compactFieldRow(
             fields: [
               _CompactFieldSpec.time(
@@ -195,6 +207,21 @@ class _FlightFactoringSettingsCardState
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _sectionLabel(BuildContext context, String text) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

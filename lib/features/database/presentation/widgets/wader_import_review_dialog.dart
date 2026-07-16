@@ -370,20 +370,13 @@ class _WaderImportReviewDialogState extends State<WaderImportReviewDialog> {
         issue.association != WaderFieldAssociation.totalTime &&
         issue.association != WaderFieldAssociation.simTraineeTime &&
         issue.association != WaderFieldAssociation.simTrainerTime) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClockTimeInputField(
-            controller: controller,
-            label: label,
-            allowEmpty: true,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            l10n.waderReviewCorrectedValueLabel,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
+      return _buildCorrectedValueField(
+        l10n: l10n,
+        child: ClockTimeInputField(
+          controller: controller,
+          label: label,
+          allowEmpty: true,
+        ),
       );
     }
     if (issue.association == WaderFieldAssociation.date) {
@@ -407,20 +400,13 @@ class _WaderImportReviewDialogState extends State<WaderImportReviewDialog> {
       );
     }
     if (_isClockTimeAssociation(issue.association)) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClockTimeInputField(
-            controller: controller,
-            label: label,
-            allowEmpty: true,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            l10n.waderReviewCorrectedValueLabel,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
+      return _buildCorrectedValueField(
+        l10n: l10n,
+        child: ClockTimeInputField(
+          controller: controller,
+          label: label,
+          allowEmpty: true,
+        ),
       );
     }
     return TextField(
@@ -430,6 +416,23 @@ class _WaderImportReviewDialogState extends State<WaderImportReviewDialog> {
         labelText: label,
         helperText: l10n.waderReviewCorrectedValueLabel,
       ),
+    );
+  }
+
+  Widget _buildCorrectedValueField({
+    required AppLocalizations l10n,
+    required Widget child,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        child,
+        const SizedBox(height: 4),
+        Text(
+          l10n.waderReviewCorrectedValueLabel,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
     );
   }
 
@@ -494,7 +497,9 @@ class _WaderImportReviewDialogState extends State<WaderImportReviewDialog> {
     final yyyy = picked.year.toString().padLeft(4, '0');
     final mm = picked.month.toString().padLeft(2, '0');
     final dd = picked.day.toString().padLeft(2, '0');
-    setState(() => controller.text = '$yyyy-$mm-$dd');
+    if (mounted) {
+      setState(() => controller.text = '$yyyy-$mm-$dd');
+    }
   }
 
   DateTime? _tryParseWaderDate(String value) {
@@ -546,7 +551,9 @@ class _WaderImportReviewDialogState extends State<WaderImportReviewDialog> {
       return;
     }
     controller.text = _airportReplacementCode(selected, issue.currentValue);
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _createAirportForIssue(
@@ -580,21 +587,25 @@ class _WaderImportReviewDialogState extends State<WaderImportReviewDialog> {
     final replacement = _airportReplacementCode(created, issue.currentValue);
     controller.text = replacement;
     _registerKnownAirport(created);
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _loadKnownAirportCodes() async {
     final airports = await widget.db.select(widget.db.airports).get();
     if (!mounted) return;
-    setState(() {
-      for (final airport in airports) {
-        _knownAirportCodes.add(airport.icao.trim().toUpperCase());
-        final iata = (airport.iata ?? '').trim().toUpperCase();
-        if (iata.isNotEmpty) {
-          _knownAirportCodes.add(iata);
+    if (mounted) {
+      setState(() {
+        for (final airport in airports) {
+          _knownAirportCodes.add(airport.icao.trim().toUpperCase());
+          final iata = (airport.iata ?? '').trim().toUpperCase();
+          if (iata.isNotEmpty) {
+            _knownAirportCodes.add(iata);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   void _registerKnownAirport(Airport airport) {

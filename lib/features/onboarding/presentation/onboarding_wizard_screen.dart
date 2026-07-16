@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/presentation/widgets/dialogs/info_help_button.dart';
 import 'package:simplelog/features/settings/presentation/widgets/duty_rules_settings_card.dart';
 import 'package:simplelog/features/settings/presentation/widgets/flight_factoring_settings_card.dart';
 import 'package:simplelog/features/settings/presentation/widgets/pilot_profile_settings_card.dart';
+import 'package:simplelog/features/settings/presentation/widgets/simulator_default_position_selector.dart';
 import 'package:simplelog/features/settings/presentation/widgets/time_fields_settings_tab.dart';
 import 'package:simplelog/state/providers/onboarding_provider.dart';
 
@@ -122,10 +124,7 @@ class _OnboardingWizardScreenState
                     title: l10n.onboardingWelcomeTitle,
                     description: l10n.onboardingWelcomeBody,
                   ),
-                  _PilotProfileAndRulesStep(
-                    title: l10n.onboardingPilotProfileTitle,
-                    description: l10n.onboardingPilotProfileBody,
-                  ),
+                  const _PilotProfileAndRulesStep(),
                   _FieldsStep(
                     title: l10n.onboardingFieldsTitle,
                     description: l10n.onboardingFieldsBody,
@@ -207,13 +206,7 @@ class _WelcomeStep extends StatelessWidget {
 }
 
 class _PilotProfileAndRulesStep extends StatelessWidget {
-  const _PilotProfileAndRulesStep({
-    required this.title,
-    required this.description,
-  });
-
-  final String title;
-  final String description;
+  const _PilotProfileAndRulesStep();
 
   @override
   Widget build(BuildContext context) {
@@ -221,23 +214,21 @@ class _PilotProfileAndRulesStep extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       children: [
-        _StepHeader(title: title, description: description),
-        const SizedBox(height: 16),
+        _OnboardingCrewFunctionCard(
+          title: AppLocalizations.of(context)!.settingsDefaultCrewFunctionTitle,
+          helpTitle: AppLocalizations.of(
+            context,
+          )!.settingsDefaultCrewFunctionHelpTitle,
+          helpMessage: AppLocalizations.of(
+            context,
+          )!.settingsDefaultCrewFunctionHelpBody,
+        ),
+        const SizedBox(height: 12),
         const PilotProfileSettingsCard(),
         const SizedBox(height: 12),
-        Text(
-          AppLocalizations.of(context)!.onboardingRulesTitle,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          AppLocalizations.of(context)!.onboardingRulesBody,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+        const FlightFactoringSettingsCard(),
         const SizedBox(height: 12),
-        const FlightFactoringSettingsCard(initiallyExpanded: true),
-        const SizedBox(height: 12),
-        const DutyRulesSettingsCard(initiallyExpanded: true),
+        const DutyRulesSettingsCard(),
       ],
     );
   }
@@ -280,6 +271,53 @@ class _StepHeader extends StatelessWidget {
         const SizedBox(height: 8),
         Text(description, style: Theme.of(context).textTheme.bodyMedium),
       ],
+    );
+  }
+}
+
+class _OnboardingCrewFunctionCard extends StatelessWidget {
+  const _OnboardingCrewFunctionCard({
+    required this.title,
+    required this.helpTitle,
+    required this.helpMessage,
+  });
+
+  final String title;
+  final String helpTitle;
+  final String helpMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                InfoHelpButton(
+                  title: helpTitle,
+                  message: helpMessage,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            const SimulatorDefaultPositionSelector(labelText: null),
+          ],
+        ),
+      ),
     );
   }
 }

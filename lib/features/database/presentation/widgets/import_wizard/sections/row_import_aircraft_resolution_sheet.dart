@@ -159,12 +159,14 @@ class _RowImportAircraftResolutionSheetState
     if (selected == null || !mounted) {
       return;
     }
-    setState(() {
-      _replacements[issue.lineNumber] = selected.registration
-          .trim()
-          .toUpperCase();
-      _skippedLines.remove(issue.lineNumber);
-    });
+    if (mounted) {
+      setState(() {
+        _replacements[issue.lineNumber] = selected.registration
+            .trim()
+            .toUpperCase();
+        _skippedLines.remove(issue.lineNumber);
+      });
+    }
     await _refreshPendingIssues();
   }
 
@@ -199,10 +201,12 @@ class _RowImportAircraftResolutionSheetState
     if (!mounted || row == null) {
       return;
     }
-    setState(() {
-      _replacements[issue.lineNumber] = row.registration.trim().toUpperCase();
-      _skippedLines.remove(issue.lineNumber);
-    });
+    if (mounted) {
+      setState(() {
+        _replacements[issue.lineNumber] = row.registration.trim().toUpperCase();
+        _skippedLines.remove(issue.lineNumber);
+      });
+    }
     await _refreshPendingIssues();
   }
 
@@ -236,11 +240,13 @@ class _RowImportAircraftResolutionSheetState
     if (!mounted) {
       return;
     }
-    setState(() {
-      _pendingIssues
-        ..clear()
-        ..addAll(next);
-    });
+    if (mounted) {
+      setState(() {
+        _pendingIssues
+          ..clear()
+          ..addAll(next);
+      });
+    }
   }
 
   String _aircraftIdentityKey(String registration, bool isSimulator) {

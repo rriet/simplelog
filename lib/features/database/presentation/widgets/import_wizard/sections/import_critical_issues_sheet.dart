@@ -319,12 +319,14 @@ class _ImportCriticalPendingItemsSheetState<T>
     if (!mounted) {
       return;
     }
-    setState(() {
-      _busy = false;
-      if (resolved) {
-        _pendingItems.remove(item);
-      }
-    });
+    if (mounted) {
+      setState(() {
+        _busy = false;
+        if (resolved) {
+          _pendingItems.remove(item);
+        }
+      });
+    }
   }
 
   @override

@@ -85,7 +85,12 @@ class LocalSyncDiscovery {
     }
 
     if (event is BonsoirDiscoveryServiceFoundEvent) {
-      unawaited(_discovery?.serviceResolver.resolveService(event.service));
+      final resolving = _discovery?.serviceResolver.resolveService(
+        event.service,
+      );
+      if (resolving is Future<void>) {
+        unawaited(resolving);
+      }
       return;
     }
 
@@ -100,7 +105,7 @@ class LocalSyncDiscovery {
   }
 
   void _upsertResolvedService(BonsoirService service) {
-    final host = service.host;
+    final host = service.hostAddress ?? service.hostname;
     if (host == null || host.isEmpty) {
       return;
     }
