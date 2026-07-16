@@ -898,6 +898,12 @@ abstract class AppLocalizations {
   /// **'Delete all data'**
   String get databaseDeleteAllDataAction;
 
+  /// No description provided for @foreFlightImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import ForeFlight'**
+  String get foreFlightImportTitle;
+
   /// No description provided for @reportsTabFlights.
   ///
   /// In en, this message translates to:

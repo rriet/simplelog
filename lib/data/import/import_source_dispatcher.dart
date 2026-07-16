@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:simplelog/data/import/logten_pro_tsv_inspector.dart';
 import 'package:simplelog/data/import/qatar_airways_workbook_inspector.dart';
 import 'package:simplelog/data/import/simplelog_csv_support.dart';
+import 'package:simplelog/data/import/source_parsers/foreflight_csv_source_parser.dart';
 
 /// Supported import source kinds.
 enum ImportSourceKind {
@@ -14,6 +15,7 @@ enum ImportSourceKind {
   qatarAirwaysXlsx,
   logTenProTsv,
   waderLogbookCsv,
+  foreFlightCsv,
   unknown,
 }
 
@@ -24,6 +26,7 @@ class ImportSourceDispatcher {
 
   static const _logTenProInspector = LogTenProTsvInspector();
   static const _qatarAirwaysInspector = QatarAirwaysWorkbookInspector();
+  static const _foreFlightParser = ForeFlightCsvSourceParser();
   static const Set<String> _waderRequiredHeaders = <String>{
     'ispreviousexperience',
     'issimulator',
@@ -78,6 +81,9 @@ class ImportSourceDispatcher {
     if (lines.isEmpty) return ImportSourceKind.unknown;
 
     final first = lines.first.trim();
+    if (_foreFlightParser.recognizes(content)) {
+      return ImportSourceKind.foreFlightCsv;
+    }
     if (_isWaderCsvHeader(first)) {
       return ImportSourceKind.waderLogbookCsv;
     }
@@ -128,6 +134,7 @@ class ImportSourceDispatcher {
       ImportSourceKind.qatarAirwaysXlsx => 'Qatar Airways',
       ImportSourceKind.logTenProTsv => 'LogTen Pro',
       ImportSourceKind.waderLogbookCsv => 'Wader Logbook CSV',
+      ImportSourceKind.foreFlightCsv => 'ForeFlight',
       ImportSourceKind.unknown => 'Unknown file',
     };
   }

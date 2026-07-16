@@ -189,6 +189,7 @@
   "databaseResetTitle": "Reset Database",
   "databaseResetSubtitle": "Delete all data and restart as first app open.",
   "databaseDeleteAllDataAction": "Delete all data",
+  "foreFlightImportTitle": "Import ForeFlight",
   "reportsTabFlights": "Flights",
   "reportsTabTotals": "Totals",
   "reportsTabAnalyses": "Analyses",

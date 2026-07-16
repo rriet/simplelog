@@ -18,6 +18,7 @@ import 'package:simplelog/data/database/enums/aircraft_category.dart';
 import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
 import 'package:simplelog/data/export/simplelog_csv_exporter.dart';
+import 'package:simplelog/data/import/foreflight_import_options.dart';
 import 'package:simplelog/data/import/import_operation_result.dart';
 import 'package:simplelog/data/import/import_source_dispatcher.dart';
 import 'package:simplelog/data/import/legacy_simplelog_db_importer.dart';
@@ -467,6 +468,53 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       if (!outcome.isSuccess) {
         final message = _buildImportErrorMessage(outcome.failure);
         await _showInfoDialog(context, message);
+        return;
+      }
+      await _showImportSummary(context, outcome.data!);
+    } else if (type == ImportSourceKind.foreFlightCsv) {
+      final importer = SimpleLogCsvImporter(db);
+      var options = ForeFlightImportOptions(unified: preOptions);
+      while (true) {
+        final issues = await importer.validateForeFlightCsv(
+          content,
+          options: options,
+        );
+        if (!context.mounted) return;
+        if (issues.isEmpty) break;
+        final review = await WaderImportReviewDialog.show(
+          context,
+          db: db,
+          issues: issues,
+          initialOptions: options.review,
+        );
+        if (review == null || !context.mounted) return;
+        options = options.copyWith(review: review);
+      }
+      final progress = ValueNotifier<_ImportProgress>(
+        const _ImportProgress(processed: 0, total: 0),
+      );
+      _showImportProgressDialog(context, progress);
+      ImportOperationResult<SimpleLogImportResult>? outcome;
+      try {
+        outcome = await importer.importForeFlightCsvSafely(
+          content,
+          options: options,
+          onProgress: (processed, total) => progress.value = _ImportProgress(
+            processed: processed,
+            total: total,
+          ),
+        );
+      } finally {
+        progress.dispose();
+      }
+      if (!context.mounted) return;
+      AppNavigator.popRoot(context);
+      if (!context.mounted) return;
+      if (!outcome.isSuccess) {
+        await _showInfoDialog(
+          context,
+          _buildImportErrorMessage(outcome.failure),
+        );
         return;
       }
       await _showImportSummary(context, outcome.data!);
@@ -1850,6 +1898,7 @@ ${l10n.databaseErrorsLabel(stats.errors)}
       ImportSourceKind.qatarAirwaysXlsx => l10n.qatarImportTitle,
       ImportSourceKind.logTenProTsv => l10n.logtenImportTitle,
       ImportSourceKind.waderLogbookCsv => l10n.waderImportOptionsTitle,
+      ImportSourceKind.foreFlightCsv => l10n.foreFlightImportTitle,
       ImportSourceKind.unknown => l10n.databaseImportFileAction,
     };
   }

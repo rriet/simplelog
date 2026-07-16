@@ -1,4 +1,5 @@
 import 'package:simplelog/data/database/app_database.dart';
+import 'package:simplelog/data/import/foreflight_import_options.dart';
 import 'package:simplelog/data/import/import_operation_result.dart';
 import 'package:simplelog/data/import/logten_pro_import_models.dart';
 import 'package:simplelog/data/import/normalized_import_persistence_service.dart';
@@ -6,6 +7,7 @@ import 'package:simplelog/data/import/qatar_airways_import_options.dart';
 import 'package:simplelog/data/import/qatar_airways_workbook_inspector.dart';
 import 'package:simplelog/data/import/simplelog_import_options.dart';
 import 'package:simplelog/data/import/simplelog_import_result.dart';
+import 'package:simplelog/data/import/source_parsers/foreflight_csv_source_parser.dart';
 import 'package:simplelog/data/import/source_parsers/legacy_simplelog_csv_source_parser.dart';
 import 'package:simplelog/data/import/source_parsers/logten_pro_tsv_source_parser.dart';
 import 'package:simplelog/data/import/source_parsers/qatar_airways_xlsx_source_parser.dart';
@@ -26,6 +28,7 @@ class SimpleLogCsvImporter {
       _qatarParser = const QatarAirwaysXlsxSourceParser(),
       _southwestParser = const SouthwestCsvSourceParser(),
       _waderParser = const WaderLogbookCsvSourceParser(),
+      _foreFlightParser = const ForeFlightCsvSourceParser(),
       _persistence = NormalizedImportPersistenceService(db);
 
   /// Database used as the target for the import.
@@ -36,7 +39,82 @@ class SimpleLogCsvImporter {
   final QatarAirwaysXlsxSourceParser _qatarParser;
   final SouthwestCsvSourceParser _southwestParser;
   final WaderLogbookCsvSourceParser _waderParser;
+  final ForeFlightCsvSourceParser _foreFlightParser;
   final NormalizedImportPersistenceService _persistence;
+
+  /// Validates ForeFlight rows without persisting data.
+  Future<List<WaderImportIssue>> validateForeFlightCsv(
+    String content, {
+    required ForeFlightImportOptions options,
+  }) async {
+    final existingAirports = await db.select(db.airports).get();
+    final airportCodes = <String>{
+      for (final airport in existingAirports) airport.icao.trim().toUpperCase(),
+      for (final airport in existingAirports)
+        if ((airport.iata ?? '').trim().isNotEmpty)
+          airport.iata!.trim().toUpperCase(),
+    };
+    return _foreFlightParser.validate(
+      content,
+      options: options,
+      existingAirportCodes: airportCodes,
+    );
+  }
+
+  /// Imports a ForeFlight two-table CSV export.
+  Future<SimpleLogImportResult> importForeFlightCsv(
+    String content, {
+    required ForeFlightImportOptions options,
+    ImportProgressCallback? onProgress,
+  }) async {
+    final existingAirports = await db.select(db.airports).get();
+    final airportsByCode = <String, Airport>{
+      for (final airport in existingAirports)
+        airport.icao.trim().toUpperCase(): airport,
+      for (final airport in existingAirports)
+        if ((airport.iata ?? '').trim().isNotEmpty)
+          airport.iata!.trim().toUpperCase(): airport,
+    };
+    final batch = _foreFlightParser.parse(
+      content,
+      options: options,
+      existingAirportsByCode: airportsByCode,
+    );
+    return _persistence.importBatch(batch, onProgress: onProgress);
+  }
+
+  /// Safe variant of [importForeFlightCsv].
+  Future<ImportOperationResult<SimpleLogImportResult>>
+  importForeFlightCsvSafely(
+    String content, {
+    required ForeFlightImportOptions options,
+    ImportProgressCallback? onProgress,
+  }) async {
+    try {
+      final result = await importForeFlightCsv(
+        content,
+        options: options,
+        onProgress: onProgress,
+      );
+      return ImportOperationResult.success(result);
+    } on FormatException catch (error) {
+      return ImportOperationResult.failure(
+        ImportFailure(
+          type: ImportFailureType.invalidFormat,
+          message: error.message,
+          exception: error,
+        ),
+      );
+    } on Object catch (error) {
+      return ImportOperationResult.failure(
+        ImportFailure(
+          type: ImportFailureType.unexpected,
+          message: 'Unexpected ForeFlight import error.',
+          exception: error,
+        ),
+      );
+    }
+  }
 
   /// Inspects Southwest CSV rows and reports preflight issues.
   SouthwestCsvPreflightReport inspectSouthwestCsv(String content) {

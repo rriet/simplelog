@@ -429,6 +429,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get databaseDeleteAllDataAction => 'Delete all data';
 
   @override
+  String get foreFlightImportTitle => 'Import ForeFlight';
+
+  @override
   String get reportsTabFlights => 'Flights';
 
   @override
