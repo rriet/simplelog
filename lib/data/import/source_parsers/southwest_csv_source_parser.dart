@@ -275,7 +275,10 @@ class SouthwestCsvSourceParser {
   }
 
   /// Inspects Southwest CSV rows and reports missing required values.
-  SouthwestCsvPreflightReport inspect(String content) {
+  SouthwestCsvPreflightReport inspect(
+    String content, {
+    SouthwestImportOptions options = const SouthwestImportOptions(),
+  }) {
     final rows = SimpleLogCsvSupport.parseCsv(content);
     final headerRowIndex = _findHeaderRowIndex(rows);
     if (headerRowIndex < 0) {
@@ -300,14 +303,20 @@ class SouthwestCsvSourceParser {
           idx >= 0 && idx < row.length ? row[idx].trim() : '';
 
       final sourceLineNumber = rowIndex + 1;
+      if (options.skippedSourceLineNumbers.contains(sourceLineNumber)) {
+        continue;
+      }
+      final lineOverrides = options.airportCodeOverrides[sourceLineNumber];
+      final fromCode = lineOverrides?['from'] ?? get(indices.from);
+      final toCode = lineOverrides?['to'] ?? get(indices.to);
       final missing = <SouthwestMissingRequiredField>{};
       if (get(indices.date).isEmpty) {
         missing.add(SouthwestMissingRequiredField.date);
       }
-      if (get(indices.from).isEmpty) {
+      if (fromCode.trim().isEmpty) {
         missing.add(SouthwestMissingRequiredField.departureAirport);
       }
-      if (get(indices.to).isEmpty) {
+      if (toCode.trim().isEmpty) {
         missing.add(SouthwestMissingRequiredField.arrivalAirport);
       }
       if (get(indices.depart).isEmpty) {
@@ -340,8 +349,8 @@ class SouthwestCsvSourceParser {
           SouthwestMissingAircraftTailIssue(
             sourceLineNumber: sourceLineNumber,
             date: get(indices.date),
-            fromCode: get(indices.from).toUpperCase(),
-            toCode: get(indices.to).toUpperCase(),
+            fromCode: fromCode.toUpperCase(),
+            toCode: toCode.toUpperCase(),
             aircraftTypeCode: typeCode,
           ),
         );

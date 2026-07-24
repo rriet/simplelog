@@ -215,10 +215,15 @@ class _RowImportAirportResolutionSheetState
   }
 
   Future<void> _refreshPendingIssues() async {
-    final knownCodes = <String>{
-      for (final airport in await widget.db.select(widget.db.airports).get())
-        airport.icao.trim().toUpperCase(),
-    };
+    final knownIcaoCodes = <String>{};
+    final knownIataCodes = <String>{};
+    for (final airport in await widget.db.select(widget.db.airports).get()) {
+      knownIcaoCodes.add(airport.icao.trim().toUpperCase());
+      final iata = (airport.iata ?? '').trim().toUpperCase();
+      if (iata.isNotEmpty) {
+        knownIataCodes.add(iata);
+      }
+    }
     final next = <RowImportAirportIssue>[];
     for (final issue in _pendingIssues) {
       if (_skippedLines.contains(issue.lineNumber)) {
@@ -236,6 +241,9 @@ class _RowImportAirportResolutionSheetState
       final validCode = issue.codeKind == RowImportAirportCodeKind.iata
           ? RegExp(r'^[A-Z0-9]{3}$').hasMatch(code)
           : RegExp(r'^[A-Z0-9]{4}$').hasMatch(code);
+      final knownCodes = issue.codeKind == RowImportAirportCodeKind.iata
+          ? knownIataCodes
+          : knownIcaoCodes;
       if (!missing && validCode && knownCodes.contains(code)) {
         continue;
       }

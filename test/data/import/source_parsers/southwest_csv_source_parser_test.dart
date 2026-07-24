@@ -58,6 +58,69 @@ void main() {
     );
   });
 
+  test('inspect applies airport overrides before required-field checks', () {
+    final content = csv([
+      header,
+      [
+        '2026-03-01',
+        '123',
+        '',
+        '',
+        '08:00',
+        'KDAL',
+        '09:00',
+        '0100',
+        'N123SW',
+        'B737-700',
+        '1',
+        '1',
+        '',
+      ],
+    ]);
+
+    final report = parser.inspect(
+      content,
+      options: const SouthwestImportOptions(
+        airportCodeOverrides: <int, Map<String, String>>{
+          2: <String, String>{'from': 'KHOU'},
+        },
+      ),
+    );
+
+    expect(report.missingRequiredIssues, isEmpty);
+  });
+
+  test('inspect ignores skipped source lines', () {
+    final content = csv([
+      header,
+      [
+        '2026-03-01',
+        '123',
+        '',
+        '',
+        '08:00',
+        'KDAL',
+        '09:00',
+        '0100',
+        '',
+        '',
+        '1',
+        '1',
+        '',
+      ],
+    ]);
+
+    final report = parser.inspect(
+      content,
+      options: const SouthwestImportOptions(
+        skippedSourceLineNumbers: <int>{2},
+      ),
+    );
+
+    expect(report.missingRequiredIssues, isEmpty);
+    expect(report.missingAircraftTailIssues, isEmpty);
+  });
+
   test('inspect reports missing type and tail for flight rows', () {
     final content = csv([
       header,

@@ -117,8 +117,11 @@ class SimpleLogCsvImporter {
   }
 
   /// Inspects Southwest CSV rows and reports preflight issues.
-  SouthwestCsvPreflightReport inspectSouthwestCsv(String content) {
-    return _southwestParser.inspect(content);
+  SouthwestCsvPreflightReport inspectSouthwestCsv(
+    String content, {
+    SouthwestImportOptions options = const SouthwestImportOptions(),
+  }) {
+    return _southwestParser.inspect(content, options: options);
   }
 
   /// Returns unique raw Southwest aircraft type designators from source file.

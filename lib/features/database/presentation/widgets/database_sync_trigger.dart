@@ -932,7 +932,10 @@ ${l10n.databaseErrorsLabel(stats.errors)}
     required SouthwestImportOptions initialOptions,
   }) async {
     final l10n = AppLocalizations.of(context)!;
-    final report = importer.inspectSouthwestCsv(content);
+    final report = importer.inspectSouthwestCsv(
+      content,
+      options: initialOptions,
+    );
     final hasBlockingIssues =
         report.missingRequiredIssues.isNotEmpty ||
         report.missingAircraftTailIssues.isNotEmpty;
@@ -942,11 +945,10 @@ ${l10n.databaseErrorsLabel(stats.errors)}
             SouthwestMissingAircraftTypePolicy.useUnknown,
         missingAircraftTailPolicy:
             SouthwestMissingAircraftTailPolicy.useTypeAsTail,
-        skippedSourceLineNumbers: const <int>{},
       );
     }
 
-    final skippedLines = <int>{};
+    final skippedLines = <int>{...initialOptions.skippedSourceLineNumbers};
     var tailPolicy = SouthwestMissingAircraftTailPolicy.useTypeAsTail;
 
     if (report.missingRequiredIssues.isNotEmpty) {
