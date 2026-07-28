@@ -1,3 +1,5 @@
+import 'package:latlong2/latlong.dart';
+
 /// Parameters used when querying report data from the repository.
 class ReportsQuery {
   /// Creates a new reports query for a date range and filters.
@@ -720,6 +722,133 @@ class ReportsFlightRow {
 
   /// Total landings for the flight.
   final int landings;
+}
+
+/// Flight animation camera/route style selected by the user.
+enum FlightAnimationStyle {
+  /// Camera starts at fit-all, then user can freely pan and zoom.
+  manualZoom,
+
+  /// Camera follows flights automatically with look-behind/ahead windows.
+  automatic,
+}
+
+/// One coordinate-complete flight prepared for animation phases.
+class FlightAnimationFlight {
+  /// Creates an animation-ready flight row.
+  const FlightAnimationFlight({
+    required this.flightId,
+    required this.date,
+    required this.departureAirport,
+    required this.arrivalAirport,
+    required this.departureLatitude,
+    required this.departureLongitude,
+    required this.arrivalLatitude,
+    required this.arrivalLongitude,
+    required this.totalMinutes,
+    required this.aircraftFamily,
+  });
+
+  /// Identifier of the source flight.
+  final int flightId;
+
+  /// Departure date/time in UTC.
+  final DateTime date;
+
+  /// Departure airport display code.
+  final String departureAirport;
+
+  /// Arrival airport display code.
+  final String arrivalAirport;
+
+  /// Departure latitude in decimal degrees.
+  final double departureLatitude;
+
+  /// Departure longitude in decimal degrees.
+  final double departureLongitude;
+
+  /// Arrival latitude in decimal degrees.
+  final double arrivalLatitude;
+
+  /// Arrival longitude in decimal degrees.
+  final double arrivalLongitude;
+
+  /// Total block time in minutes.
+  final int totalMinutes;
+
+  /// Aircraft model family (e.g. "A320", "B738").
+  final String aircraftFamily;
+}
+
+/// Phase-one setup output passed to the future animation screen.
+class FlightAnimationSetupResult {
+  /// Creates a setup result.
+  const FlightAnimationSetupResult({
+    required this.durationMinutes,
+    required this.style,
+    required this.flights,
+    this.lookBehindPercent = 1.0,
+    this.lookAheadPercent = 1.0,
+    this.cameraSpeed = 0.01,
+    this.cameraPadding = 1.8,
+    this.fadePastFlights = false,
+    this.fadeDurationPercent = 5,
+    this.finalFadeLevelPercent = 5,
+  });
+
+  /// Total animation duration chosen by the user.
+  final int durationMinutes;
+
+  /// Animation style chosen by the user.
+  final FlightAnimationStyle style;
+
+  /// Coordinate-complete flights sorted oldest first.
+  final List<FlightAnimationFlight> flights;
+
+  /// Percentage of total animation duration the camera should look behind.
+  final double lookBehindPercent;
+
+  /// Percentage of total animation duration the camera should look ahead.
+  final double lookAheadPercent;
+
+  /// Camera interpolation speed per tick (0.01 slow, 0.2 snappy).
+  final double cameraSpeed;
+
+  /// Padding in degrees around the flight area boundary.
+  final double cameraPadding;
+
+  /// Whether to fade completed flights over time.
+  final bool fadePastFlights;
+
+  /// Percentage of total animation duration for the fade transition.
+  final double fadeDurationPercent;
+
+  /// Final opacity level after fade completes
+  /// (0 = invisible, 100 = fully visible).
+  final double finalFadeLevelPercent;
+}
+
+/// Pre-computed route data for a single flight.
+class FlightRoute {
+  /// Creates a flight route with pre-computed great-circle points.
+  const FlightRoute({
+    required this.flight,
+    required this.from,
+    required this.to,
+    required this.points,
+  });
+
+  /// Source flight data.
+  final FlightAnimationFlight flight;
+
+  /// Departure coordinate.
+  final LatLng from;
+
+  /// Arrival coordinate.
+  final LatLng to;
+
+  /// Great-circle intermediate points (including endpoints).
+  final List<LatLng> points;
 }
 
 /// Single airport point used by map visualizations.

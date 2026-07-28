@@ -50,6 +50,8 @@ import 'package:simplelog/features/logbook/presentation/widgets/logbook_entries_
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_entry_dialogs.dart';
 import 'package:simplelog/features/logbook/presentation/widgets/logbook_list_item.dart';
 import 'package:simplelog/features/reports/application/report_pdf_application_service.dart';
+import 'package:simplelog/features/reports/presentation/flight_animation_screen.dart';
+import 'package:simplelog/features/reports/presentation/flight_animation_setup_screen.dart';
 import 'package:simplelog/features/reports/presentation/providers/report_pdf_application_service_provider.dart';
 import 'package:simplelog/features/reports/presentation/providers/reports_preferences_provider.dart';
 import 'package:simplelog/features/reports/presentation/providers/reports_repository_provider.dart';
@@ -1146,6 +1148,31 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         fullscreen: true,
         initialShowLines: _showPathOnMap,
       ),
+    );
+  }
+
+  Future<void> _openFlightAnimationSetup() async {
+    if (_from.isAfter(_to)) {
+      await _showInfoDialog(
+        AppLocalizations.of(context)!.reportsStartBeforeEndError,
+      );
+      return;
+    }
+    final result = await FlightAnimationSetupScreen.show(
+      context,
+      query: ReportsQuery(
+        from: _from,
+        to: _to,
+        includePreviousExperience: false,
+        filterMatchMode: _filterMatchMode,
+        filters: List<ReportsFilterCondition>.from(_filters),
+      ),
+    );
+    if (!mounted || result == null) return;
+    await AppNavigator.pushCustom<void>(
+      context,
+      (_, _, _) => FlightAnimationScreen(result: result),
+      rootNavigator: true,
     );
   }
 
@@ -2721,6 +2748,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            _ReportsActionButton(
+              icon: Icons.movie_filter_outlined,
+              label: AppLocalizations.of(context)!.reportsAnimatePeriod,
+              onPressed: _isGeneratingPdf ? null : _openFlightAnimationSetup,
             ),
           ],
         ),

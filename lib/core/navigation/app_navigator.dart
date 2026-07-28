@@ -51,4 +51,30 @@ class AppNavigator {
       ),
     );
   }
+
+  /// Pushes a route with a custom [PageRouteBuilder].
+  static Future<T?> pushCustom<T extends Object?>(
+    BuildContext context,
+    Widget Function(
+      BuildContext context,
+      Animation<double> a1,
+      Animation<double> a2,
+    )
+    builder, {
+    bool rootNavigator = false,
+    Duration transitionDuration = Duration.zero,
+    Duration reverseTransitionDuration = Duration.zero,
+  }) {
+    return Navigator.of(
+      context,
+      rootNavigator: rootNavigator,
+    ).push<T>(
+      PageRouteBuilder(
+        pageBuilder: builder,
+        transitionDuration: transitionDuration,
+        reverseTransitionDuration: reverseTransitionDuration,
+        transitionsBuilder: (_, _, _, child) => child,
+      ),
+    );
+  }
 }

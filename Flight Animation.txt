@@ -1,0 +1,146 @@
+Acceptance criteria: The complete feature feels polished, handles errors gracefully, and is ready to ship.
+
+After each phase the agent should pause, present a short summary of what was implemented, and wait for confirmation before starting the next phase.
+
+Phase 1 – Data Layer & Selection UI
+Goal: Add a button in the reports tab of the logbook. On click, let the user choose animation duration and style, then fetch the corresponding flights with coordinates.
+
+style options
+The three possible animation styles that should be offered in the selection UI are:
+
+ZoomToEach
+Camera zooms and pans to each individual flight in sequence. The path of the current flight is animated, then the camera moves to the next flight.
+
+FitAll
+Camera zooms out once at the beginning so that every flight in the selected period fits on screen. The camera stays fixed while all routes are animated (sequentially or staggered).
+
+Hybrid
+Starts with a FitAll overview, then switches to ZoomToEach behaviour (or zooms into logical groups of flights) for the rest of the animation.
+
+These three options should be presented to the user as a clear selector (e.g. dropdown) and passed to the next phases.
+
+Instructions for the agent:
+
+Create a new screen (or modal) called something like FlightAnimationSetupScreen.
+Add UI controls for:
+Date range comes from the filters
+Animation total duration (e.g. number picker in minutes: 10–30 min).
+Animation style selector with three options:
+ZoomToEach
+FitAll
+Hybrid
+
+
+When the user confirms, query the existing pilot logbook database for all flights whose date falls inside the selected range.
+For every flight return at least: date, departure airport, arrival airport, departure coordinates (lat/lng), arrival coordinates (lat/lng).
+If coordinates are stored only on the airport table, join them correctly.
+Return a clean list/model of flights sorted by date (oldest first).
+Pass this list + the chosen duration + the chosen style to the next screen/phase.
+Handle empty results gracefully (show a message and do not proceed).
+
+Acceptance criteria: User can select parameters and receive a correctly filtered, ordered list of flights with coordinates.
+
+Phase 2 – Map Setup & Route Calculation
+Goal: Display a map and pre-calculate the visual routes for every flight.
+Instructions for the agent:
+
+Create a new screen FlightAnimationScreen that receives the flight list, duration and style.
+Integrate a map widget (prefer flutter_map + OpenStreetMap or google_maps_flutter – choose one and stay consistent).
+For each flight calculate a realistic flight path:
+Prefer a great-circle route between departure and arrival coordinates.
+Store the path as a list of LatLng points (enough points for smooth animation, e.g. 50–100).
+
+Calculate the overall geographic bounds of all points (needed for FitAll and Hybrid styles).
+Display all airports as markers (or at least the ones that appear in the selected flights).
+Draw the complete routes (great circle navigation) as static polylines in a light/transparent color so the user can see the full picture before the animation starts.
+Keep the map interactive at this stage (user can still pan/zoom manually).
+
+Acceptance criteria: Map shows all relevant airports and the full set of routes for the selected period. Bounds are correctly calculated.
+
+Phase 3 – Core Animation Engine
+Goal: Animate the flights according to the chosen style and total duration.
+Instructions for the agent:
+
+Duration:
+The timeline must be realisticaly spaced. Example, if there are 10 year to display in 10 min, there is 1 min per year, if the year 1 has 10 flights, the 10 flights get displayed in 1 min, and if year 2 has 30 fligths, the flights get displayed much faster.
+Also short flights get displayed faster, and long flihgts take longer time. Use the flight time to create a realistice proportion of how long the flight takes.
+
+
+Implement a single AnimationController (or a timeline) whose total duration matches the user-selected length.
+Support the three styles:ZoomToEach
+Divide the total duration among the flights ( weight by flight duration).
+For each flight in sequence:
+Move/zoom the camera to fit that single route (with some padding).
+Animate the drawing of that route’s polyline (or a moving aircraft marker along the path).
+
+FitAll
+Once at the beginning, set the camera to the overall bounds calculated in Phase 2.
+Keep the camera fixed.
+Animate all routes either sequentially or with a staggered start so the whole period plays inside the fixed view.
+Hybrid
+Start with a FitAll overview for a short time.
+Then switch to ZoomToEach behaviour for the remaining time (or zoom into logical groups of flights).
+
+Visual feedback during animation:
+Progressively reveal or thicken the active route.
+Optionally show a small aircraft icon that moves along the current path.
+Optionally display a progress indicator or current flight info overlay.
+
+Provide Play / Pause / Restart controls.
+Ensure the animation can be cancelled cleanly when the user leaves the screen.
+
+Acceptance criteria: Choosing any of the three styles produces a smooth, timed animation that respects the selected total duration and correctly moves the camera / draws the paths.
+
+Phase 4 – Frame Capture System
+Goal: Capture a sequence of high-quality images of the map while the animation runs, ready for video encoding.
+Instructions for the agent:
+
+Wrap the map widget (and any overlays that should appear in the video) inside a RepaintBoundary (or equivalent reliable capture mechanism).
+While the animation is playing, capture frames at a consistent frame rate (recommend 30 fps).
+Convert each captured frame into an image (PNG or JPEG) and store them temporarily (in memory for short videos, or on disk for longer ones).
+Make the capture optional / toggleable so the user can preview the animation without generating frames.
+Show a clear progress indicator while frames are being captured (“Recording 45 %…”).
+Handle memory carefully; if the number of frames becomes too large, write them to temporary files instead of keeping everything in RAM.
+After the animation finishes (or is stopped), return the ordered list of frame files/paths.
+
+Acceptance criteria: Running the animation with capture enabled produces a complete, correctly ordered sequence of images that visually match what the user saw on screen.
+
+Phase 5 – Video Encoding & Export
+Goal: Turn the captured frames into a playable video file and let the user save/share it.
+Instructions for the agent:
+
+Integrate an FFmpeg solution (ffmpeg_kit_flutter is preferred).
+When the user taps “Save Video”:
+Take the ordered frames from Phase 4.
+Encode them into an MP4 file (H.264 video, reasonable quality, 30 fps).
+Optionally add a simple fade-in/fade-out or keep the original timing.
+
+Save the finished video to a sensible location (app documents or cache).
+Offer the user the ability to:
+Save the video to the device gallery.
+Share the video via the system share sheet.
+
+Show progress while encoding and a success/error message at the end.
+Clean up temporary frame files after a successful encode (or after the user dismisses the result).
+Request the necessary platform permissions (storage / photos) at the right moment and handle denial gracefully.
+
+Acceptance criteria: User can generate a video of the animation, save it to the gallery, and share it. The video plays correctly on the device and matches the on-screen animation.
+
+Phase 6 – Polish, Edge Cases & Integration
+Goal: Make the feature production-ready and integrate it cleanly into the existing app.
+Instructions for the agent:
+
+Add loading states, error handling and empty-state messages throughout.
+Handle edge cases:
+Very few or very many flights.
+Extremely short or long animation durations.
+Flights with identical departure/arrival coordinates.
+Missing or invalid coordinates.
+
+Make the feature accessible from the main logbook (e.g. a button “Animate period”).
+Persist the last-used settings (duration + style) if useful.
+Test on both Android and iOS; fix any platform-specific map or permission issues.
+Add basic analytics or logging if the rest of the app already uses them.
+Write short developer comments or a small README section explaining how the animation styles and video pipeline work.
+Ensure the whole flow can be cancelled at any point without leaving orphaned files or controllers.
+

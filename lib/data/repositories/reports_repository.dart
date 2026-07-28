@@ -531,6 +531,54 @@ class ReportsRepository {
     return ReportsData(totals: totals, flights: flights);
   }
 
+  /// Loads coordinate-complete flights for flight animation setup.
+  Future<List<FlightAnimationFlight>> loadFlightsForAnimation(
+    ReportsQuery query,
+  ) async {
+    final data = await load(
+      ReportsQuery(
+        from: query.from,
+        to: query.to,
+        includePreviousExperience: false,
+        filterMatchMode: query.filterMatchMode,
+        filters: query.filters,
+      ),
+    );
+    final flights = <FlightAnimationFlight>[];
+    for (final row in data.flights) {
+      final fromLatitude = row.fromLatitude;
+      final fromLongitude = row.fromLongitude;
+      final toLatitude = row.toLatitude;
+      final toLongitude = row.toLongitude;
+      if (fromLatitude == null ||
+          fromLongitude == null ||
+          toLatitude == null ||
+          toLongitude == null) {
+        continue;
+      }
+      flights.add(
+        FlightAnimationFlight(
+          flightId: row.flightId,
+          date: row.departureDateTime,
+          departureAirport: row.fromIcao,
+          arrivalAirport: row.toIcao,
+          departureLatitude: fromLatitude,
+          departureLongitude: fromLongitude,
+          arrivalLatitude: toLatitude,
+          arrivalLongitude: toLongitude,
+          totalMinutes: row.totalMinutes,
+          aircraftFamily: row.modelFamily,
+        ),
+      );
+    }
+    flights.sort((left, right) {
+      final byDate = left.date.compareTo(right.date);
+      if (byDate != 0) return byDate;
+      return left.flightId.compareTo(right.flightId);
+    });
+    return flights;
+  }
+
   /// Loads only flight rows needed by the Analyses tab.
   Future<List<ReportsFlightRow>> loadFlightsForAnalysis({
     required DateTime from,

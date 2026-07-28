@@ -1091,5 +1091,34 @@
   "previousExperienceSaveAnywayAction": "Save anyway",
   "previousExperienceSelectAircraftType": "Select aircraft type.",
   "previousExperienceFirstFlightRequired": "First Flight is required.",
-  "previousExperienceLastFlightRequired": "Last Flight is required."
+  "previousExperienceLastFlightRequired": "Last Flight is required.",
+  "flightAnimationTitle": "Flight Animation",
+  "flightAnimationBrand": "SimpleLog",
+  "flightAnimationRestart": "Restart",
+  "flightAnimationPause": "Pause",
+  "flightAnimationPlay": "Play",
+  "flightAnimationOk": "OK",
+  "flightAnimationSetupLoading": "Loading...",
+  "flightAnimationSetupContinue": "Continue",
+  "flightAnimationSetupDateRange": "Date range",
+  "flightAnimationSetupFiltersApplied": "{count} report filter(s) will be applied.",
+  "@flightAnimationSetupFiltersApplied": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "flightAnimationSetupDurationLabel": "Duration (minutes)",
+  "flightAnimationSetupDurationError": "Enter a value from 1 to 30.",
+  "flightAnimationSetupStyleLabel": "Animation style",
+  "flightAnimationSetupLookBehindLabel": "Look-behind (%)",
+  "flightAnimationSetupLookAheadLabel": "Look-ahead (%)",
+  "flightAnimationSetupCameraSpeedLabel": "Camera speed",
+  "flightAnimationSetupCameraPaddingLabel": "Boundary padding",
+  "flightAnimationSetupPercentError": "Enter a value from 0 to 100.",
+  "flightAnimationSetupNoFlights": "No flights",
+  "flightAnimationSetupNoFlightsMessage": "No flights with departure and arrival coordinates were found for the selected reports filters.",
+  "flightAnimationSetupFadePastFlights": "Fade past flights",
+  "flightAnimationSetupFadeDurationLabel": "Fade duration",
+  "flightAnimationSetupFinalFadeLevelLabel": "Final fade level",
+  "reportsAnimatePeriod": "Animate period"
 }

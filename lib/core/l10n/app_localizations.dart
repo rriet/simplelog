@@ -4800,6 +4800,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last Flight is required.'**
   String get previousExperienceLastFlightRequired;
+
+  /// No description provided for @flightAnimationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Flight Animation'**
+  String get flightAnimationTitle;
+
+  /// No description provided for @flightAnimationBrand.
+  ///
+  /// In en, this message translates to:
+  /// **'SimpleLog'**
+  String get flightAnimationBrand;
+
+  /// No description provided for @flightAnimationRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart'**
+  String get flightAnimationRestart;
+
+  /// No description provided for @flightAnimationPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get flightAnimationPause;
+
+  /// No description provided for @flightAnimationPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get flightAnimationPlay;
+
+  /// No description provided for @flightAnimationOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get flightAnimationOk;
+
+  /// No description provided for @flightAnimationSetupLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get flightAnimationSetupLoading;
+
+  /// No description provided for @flightAnimationSetupContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get flightAnimationSetupContinue;
+
+  /// No description provided for @flightAnimationSetupDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Date range'**
+  String get flightAnimationSetupDateRange;
+
+  /// No description provided for @flightAnimationSetupFiltersApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} report filter(s) will be applied.'**
+  String flightAnimationSetupFiltersApplied(int count);
+
+  /// No description provided for @flightAnimationSetupDurationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration (minutes)'**
+  String get flightAnimationSetupDurationLabel;
+
+  /// No description provided for @flightAnimationSetupDurationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a value from 1 to 30.'**
+  String get flightAnimationSetupDurationError;
+
+  /// No description provided for @flightAnimationSetupStyleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Animation style'**
+  String get flightAnimationSetupStyleLabel;
+
+  /// No description provided for @flightAnimationSetupLookBehindLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Look-behind (%)'**
+  String get flightAnimationSetupLookBehindLabel;
+
+  /// No description provided for @flightAnimationSetupLookAheadLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Look-ahead (%)'**
+  String get flightAnimationSetupLookAheadLabel;
+
+  /// No description provided for @flightAnimationSetupCameraSpeedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera speed'**
+  String get flightAnimationSetupCameraSpeedLabel;
+
+  /// No description provided for @flightAnimationSetupCameraPaddingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Boundary padding'**
+  String get flightAnimationSetupCameraPaddingLabel;
+
+  /// No description provided for @flightAnimationSetupPercentError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a value from 0 to 100.'**
+  String get flightAnimationSetupPercentError;
+
+  /// No description provided for @flightAnimationSetupNoFlights.
+  ///
+  /// In en, this message translates to:
+  /// **'No flights'**
+  String get flightAnimationSetupNoFlights;
+
+  /// No description provided for @flightAnimationSetupNoFlightsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No flights with departure and arrival coordinates were found for the selected reports filters.'**
+  String get flightAnimationSetupNoFlightsMessage;
+
+  /// No description provided for @flightAnimationSetupFadePastFlights.
+  ///
+  /// In en, this message translates to:
+  /// **'Fade past flights'**
+  String get flightAnimationSetupFadePastFlights;
+
+  /// No description provided for @flightAnimationSetupFadeDurationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fade duration'**
+  String get flightAnimationSetupFadeDurationLabel;
+
+  /// No description provided for @flightAnimationSetupFinalFadeLevelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Final fade level'**
+  String get flightAnimationSetupFinalFadeLevelLabel;
+
+  /// No description provided for @reportsAnimatePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Animate period'**
+  String get reportsAnimatePeriod;
 }
 
 class _AppLocalizationsDelegate

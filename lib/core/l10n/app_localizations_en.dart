@@ -2518,4 +2518,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get previousExperienceLastFlightRequired => 'Last Flight is required.';
+
+  @override
+  String get flightAnimationTitle => 'Flight Animation';
+
+  @override
+  String get flightAnimationBrand => 'SimpleLog';
+
+  @override
+  String get flightAnimationRestart => 'Restart';
+
+  @override
+  String get flightAnimationPause => 'Pause';
+
+  @override
+  String get flightAnimationPlay => 'Play';
+
+  @override
+  String get flightAnimationOk => 'OK';
+
+  @override
+  String get flightAnimationSetupLoading => 'Loading...';
+
+  @override
+  String get flightAnimationSetupContinue => 'Continue';
+
+  @override
+  String get flightAnimationSetupDateRange => 'Date range';
+
+  @override
+  String flightAnimationSetupFiltersApplied(int count) {
+    return '$count report filter(s) will be applied.';
+  }
+
+  @override
+  String get flightAnimationSetupDurationLabel => 'Duration (minutes)';
+
+  @override
+  String get flightAnimationSetupDurationError => 'Enter a value from 1 to 30.';
+
+  @override
+  String get flightAnimationSetupStyleLabel => 'Animation style';
+
+  @override
+  String get flightAnimationSetupLookBehindLabel => 'Look-behind (%)';
+
+  @override
+  String get flightAnimationSetupLookAheadLabel => 'Look-ahead (%)';
+
+  @override
+  String get flightAnimationSetupCameraSpeedLabel => 'Camera speed';
+
+  @override
+  String get flightAnimationSetupCameraPaddingLabel => 'Boundary padding';
+
+  @override
+  String get flightAnimationSetupPercentError => 'Enter a value from 0 to 100.';
+
+  @override
+  String get flightAnimationSetupNoFlights => 'No flights';
+
+  @override
+  String get flightAnimationSetupNoFlightsMessage =>
+      'No flights with departure and arrival coordinates were found for the selected reports filters.';
+
+  @override
+  String get flightAnimationSetupFadePastFlights => 'Fade past flights';
+
+  @override
+  String get flightAnimationSetupFadeDurationLabel => 'Fade duration';
+
+  @override
+  String get flightAnimationSetupFinalFadeLevelLabel => 'Final fade level';
+
+  @override
+  String get reportsAnimatePeriod => 'Animate period';
 }
