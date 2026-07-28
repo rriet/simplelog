@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/theme/app_theme.dart';
 import 'package:simplelog/features/home/presentation/home_page.dart';
+import 'package:simplelog/features/settings/presentation/widgets/startup_update_checker.dart';
 import 'package:simplelog/state/providers/database_provider.dart';
 import 'package:simplelog/state/providers/initial_data_provider.dart';
 import 'package:simplelog/state/providers/locale_provider.dart';
@@ -47,7 +48,7 @@ class _MyAppState extends ConsumerState<MyApp> {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const MyHomePage(),
+      home: const StartupUpdateChecker(child: MyHomePage()),
     );
   }
 }

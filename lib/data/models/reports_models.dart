@@ -733,6 +733,16 @@ enum FlightAnimationStyle {
   automatic,
 }
 
+/// Controls how flights are positioned on the animation timeline.
+enum TimingMode {
+  /// Sequential timing – each flight starts after the previous one finishes.
+  sequential,
+
+  /// Real-time proportional – flights appear at positions matching their
+  /// real calendar dates within the total animation duration.
+  timeBased,
+}
+
 /// One coordinate-complete flight prepared for animation phases.
 class FlightAnimationFlight {
   /// Creates an animation-ready flight row.
@@ -794,6 +804,7 @@ class FlightAnimationSetupResult {
     this.fadePastFlights = false,
     this.fadeDurationPercent = 5,
     this.finalFadeLevelPercent = 5,
+    this.timingMode = TimingMode.sequential,
   });
 
   /// Total animation duration chosen by the user.
@@ -826,6 +837,9 @@ class FlightAnimationSetupResult {
   /// Final opacity level after fade completes
   /// (0 = invisible, 100 = fully visible).
   final double finalFadeLevelPercent;
+
+  /// Controls how flights are positioned on the timeline.
+  final TimingMode timingMode;
 }
 
 /// Pre-computed route data for a single flight.

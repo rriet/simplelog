@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
+import 'package:simplelog/core/riverpod/async_value_compat_extensions.dart';
 import 'package:simplelog/state/aircraft_state.dart';
 import 'package:simplelog/state/providers/app_version_provider.dart';
+import 'package:simplelog/state/providers/update_checker_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Main navigation drawer listing all top-level app screens.
 class AppDrawer extends ConsumerWidget {
@@ -34,15 +39,18 @@ class AppDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final menuBackground = Theme.of(
-      context,
-    ).colorScheme.surfaceContainerHighest;
+    final colorScheme = Theme.of(context).colorScheme;
+    final menuBackground =
+        colorScheme.surfaceContainerHighest;
     final versionLabelAsync = ref.watch(appVersionLabelProvider);
     final versionLabel = versionLabelAsync.when(
       data: (value) => value.trim(),
       error: (error, stackTrace) => '',
       loading: () => '',
     );
+
+    final update = ref.watch(rawUpdateProvider).valueOrNull;
+    final hasUpdate = update != null;
 
     return Drawer(
       backgroundColor: menuBackground,
@@ -65,13 +73,63 @@ class AppDrawer extends ConsumerWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding:
+                  const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: versionLabel.isEmpty
                   ? const SizedBox.shrink()
-                  : Text(
-                      l10n.menuVersionLabel(versionLabel),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    : GestureDetector(
+                        onTap: hasUpdate
+                            ? () {
+                                final url =
+                                    update.downloadUrl ??
+                                    update.releasePageUrl;
+                                if (url != null) {
+                                  unawaited(
+                                    launchUrl(
+                                      Uri.parse(url),
+                                      mode: LaunchMode
+                                          .externalApplication,
+                                    ),
+                                  );
+                                }
+                              }
+                            : null,
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.menuVersionLabel(versionLabel),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: hasUpdate
+                                        ? colorScheme.error
+                                        : colorScheme
+                                            .onSurfaceVariant,
+                                    fontWeight: hasUpdate
+                                        ? FontWeight.w600
+                                        : null,
+                                  ),
+                            ),
+                            if (hasUpdate)
+                              Text(
+                                l10n.menuDownloadUpdateLabel(
+                                  update.latestVersion,
+                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: colorScheme.error,
+                                      fontWeight:
+                                          FontWeight.w600,
+                                    ),
+                              ),
+                          ],
+                        ),
+                      ),
             ),
           ],
         ),

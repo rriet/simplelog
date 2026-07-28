@@ -2558,6 +2558,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get flightAnimationSetupDurationError => 'Enter a value from 1 to 30.';
 
   @override
+  String get flightAnimationSetupTimingModeLabel => 'Timing';
+
+  @override
   String get flightAnimationSetupStyleLabel => 'Animation style';
 
   @override
@@ -2593,4 +2596,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportsAnimatePeriod => 'Animate period';
+
+  @override
+  String get settingsCheckForUpdates => 'Check for updates on startup';
+
+  @override
+  String updateDialogTitle(String version) {
+    return 'Update available (v$version)';
+  }
+
+  @override
+  String get updateDialogReleaseNotes => 'Release notes:';
+
+  @override
+  String get updateDialogSkipAction => 'Skip this version';
+
+  @override
+  String get updateDialogLaterAction => 'Later';
+
+  @override
+  String get updateDialogDownloadAction => 'Download';
+
+  @override
+  String get updateDialogShowMore => 'Show more';
+
+  @override
+  String get updateDialogShowLess => 'Show less';
+
+  @override
+  String menuDownloadUpdateLabel(String version) {
+    return 'Download latest version: $version';
+  }
 }

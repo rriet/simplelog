@@ -4873,6 +4873,12 @@ abstract class AppLocalizations {
   /// **'Enter a value from 1 to 30.'**
   String get flightAnimationSetupDurationError;
 
+  /// No description provided for @flightAnimationSetupTimingModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Timing'**
+  String get flightAnimationSetupTimingModeLabel;
+
   /// No description provided for @flightAnimationSetupStyleLabel.
   ///
   /// In en, this message translates to:
@@ -4944,6 +4950,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Animate period'**
   String get reportsAnimatePeriod;
+
+  /// No description provided for @settingsCheckForUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates on startup'**
+  String get settingsCheckForUpdates;
+
+  /// No description provided for @updateDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update available (v{version})'**
+  String updateDialogTitle(String version);
+
+  /// No description provided for @updateDialogReleaseNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Release notes:'**
+  String get updateDialogReleaseNotes;
+
+  /// No description provided for @updateDialogSkipAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip this version'**
+  String get updateDialogSkipAction;
+
+  /// No description provided for @updateDialogLaterAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get updateDialogLaterAction;
+
+  /// No description provided for @updateDialogDownloadAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get updateDialogDownloadAction;
+
+  /// No description provided for @updateDialogShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get updateDialogShowMore;
+
+  /// No description provided for @updateDialogShowLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get updateDialogShowLess;
+
+  /// No description provided for @menuDownloadUpdateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Download latest version: {version}'**
+  String menuDownloadUpdateLabel(String version);
 }
 
 class _AppLocalizationsDelegate

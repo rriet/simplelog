@@ -1109,6 +1109,7 @@
   },
   "flightAnimationSetupDurationLabel": "Duration (minutes)",
   "flightAnimationSetupDurationError": "Enter a value from 1 to 30.",
+  "flightAnimationSetupTimingModeLabel": "Timing",
   "flightAnimationSetupStyleLabel": "Animation style",
   "flightAnimationSetupLookBehindLabel": "Look-behind (%)",
   "flightAnimationSetupLookAheadLabel": "Look-ahead (%)",
@@ -1120,5 +1121,28 @@
   "flightAnimationSetupFadePastFlights": "Fade past flights",
   "flightAnimationSetupFadeDurationLabel": "Fade duration",
   "flightAnimationSetupFinalFadeLevelLabel": "Final fade level",
-  "reportsAnimatePeriod": "Animate period"
+  "reportsAnimatePeriod": "Animate period",
+  "settingsCheckForUpdates": "Check for updates on startup",
+  "updateDialogTitle": "Update available (v{version})",
+  "@updateDialogTitle": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDialogReleaseNotes": "Release notes:",
+  "updateDialogSkipAction": "Skip this version",
+  "updateDialogLaterAction": "Later",
+  "updateDialogDownloadAction": "Download",
+  "updateDialogShowMore": "Show more",
+  "updateDialogShowLess": "Show less",
+  "menuDownloadUpdateLabel": "Download latest version: {version}",
+  "@menuDownloadUpdateLabel": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  }
 }

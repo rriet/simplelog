@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +11,7 @@ import 'package:simplelog/core/presentation/widgets/inputs/dropdown_input_field.
 import 'package:simplelog/core/presentation/widgets/inputs/number_input_field.dart';
 import 'package:simplelog/data/models/reports_models.dart';
 import 'package:simplelog/features/reports/presentation/providers/reports_repository_provider.dart';
+import 'package:simplelog/state/providers/flight_animation_preferences_provider.dart';
 
 /// Phase-one setup UI for flight animation parameters.
 class FlightAnimationSetupScreen extends ConsumerStatefulWidget {
@@ -51,6 +54,7 @@ class FlightAnimationSetupScreen extends ConsumerStatefulWidget {
 class _FlightAnimationSetupScreenState
     extends ConsumerState<FlightAnimationSetupScreen> {
   final _durationController = TextEditingController(text: '3');
+  TimingMode _timingMode = TimingMode.sequential;
   FlightAnimationStyle _style = FlightAnimationStyle.manualZoom;
   double _lookBehind = 1;
   double _lookAhead = 1;
@@ -63,13 +67,60 @@ class _FlightAnimationSetupScreenState
   String? _durationError;
 
   @override
+  void initState() {
+    super.initState();
+    // Read immediately in case already loaded.
+    final current = ref.read(flightAnimationPrefsProvider).asData?.value;
+    if (current != null) _applyPrefs(current);
+  }
+
+  void _applyPrefs(FlightAnimationPrefs prefs) {
+    setState(() {
+      _timingMode = prefs.timingMode;
+      _style = prefs.style;
+      _lookBehind = prefs.lookBehind;
+      _lookAhead = prefs.lookAhead;
+      _cameraSpeed = prefs.cameraSpeed;
+      _cameraPadding = prefs.cameraPadding;
+      _fadePastFlights = prefs.fadePastFlights;
+      _fadeDurationPercent = prefs.fadeDuration;
+      _finalFadeLevelPercent = prefs.finalFadeLevel;
+      _durationController.text = prefs.durationMinutes.toString();
+    });
+  }
+
+  @override
   void dispose() {
     _durationController.dispose();
     super.dispose();
   }
 
+  Future<void> _persistPrefs() async {
+    final duration =
+        int.tryParse(_durationController.text) ?? 3;
+    await ref.read(flightAnimationPrefsProvider.notifier).save(
+          FlightAnimationPrefs(
+            timingMode: _timingMode,
+            style: _style,
+            lookBehind: _lookBehind,
+            lookAhead: _lookAhead,
+            cameraSpeed: _cameraSpeed,
+            cameraPadding: _cameraPadding,
+            fadePastFlights: _fadePastFlights,
+            fadeDuration: _fadeDurationPercent,
+            finalFadeLevel: _finalFadeLevelPercent,
+            durationMinutes: duration,
+          ),
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Apply persisted prefs once the async load completes.
+    ref.listen(flightAnimationPrefsProvider, (prev, next) {
+      final data = next.asData;
+      if (data != null) _applyPrefs(data.value);
+    });
     final l10n = AppLocalizations.of(context)!;
     final dateFormat = DateFormat.yMMMd();
     final rangeText =
@@ -119,6 +170,26 @@ class _FlightAnimationSetupScreenState
             },
           ),
           const SizedBox(height: 14),
+          DropdownInputField<TimingMode>(
+            label: l10n.flightAnimationSetupTimingModeLabel,
+            value: _timingMode,
+            items: TimingMode.values
+                .map(
+                  (mode) => DropdownMenuItem<TimingMode>(
+                    value: mode,
+                    child: Text(_timingModeLabel(mode)),
+                  ),
+                )
+                .toList(growable: false),
+            onChanged: _loading
+                ? (_) {}
+                : (value) {
+                    if (value == null) return;
+                    setState(() => _timingMode = value);
+                    unawaited(_persistPrefs());
+                  },
+          ),
+          const SizedBox(height: 14),
           DropdownInputField<FlightAnimationStyle>(
             label: l10n.flightAnimationSetupStyleLabel,
             value: _style,
@@ -135,6 +206,7 @@ class _FlightAnimationSetupScreenState
                 : (value) {
                     if (value == null) return;
                     setState(() => _style = value);
+                    unawaited(_persistPrefs());
                   },
           ),
           if (_style == FlightAnimationStyle.automatic) ...[
@@ -149,7 +221,10 @@ class _FlightAnimationSetupScreenState
               max: 5,
               divisions: 50,
               label: _lookBehind.toStringAsFixed(1),
-              onChanged: (v) => setState(() => _lookBehind = v),
+              onChanged: (v) {
+                setState(() => _lookBehind = v);
+                unawaited(_persistPrefs());
+              },
             ),
             const SizedBox(height: 8),
             Text(
@@ -162,7 +237,10 @@ class _FlightAnimationSetupScreenState
               max: 5,
               divisions: 50,
               label: _lookAhead.toStringAsFixed(1),
-              onChanged: (v) => setState(() => _lookAhead = v),
+              onChanged: (v) {
+                setState(() => _lookAhead = v);
+                unawaited(_persistPrefs());
+              },
             ),
             const SizedBox(height: 8),
             Text(
@@ -176,7 +254,10 @@ class _FlightAnimationSetupScreenState
               max: 0.070,
               divisions: 69,
               label: _cameraSpeed.toStringAsFixed(3),
-              onChanged: (v) => setState(() => _cameraSpeed = v),
+              onChanged: (v) {
+                setState(() => _cameraSpeed = v);
+                unawaited(_persistPrefs());
+              },
             ),
             const SizedBox(height: 8),
             Text(
@@ -190,7 +271,10 @@ class _FlightAnimationSetupScreenState
               max: 8,
               divisions: 79,
               label: _cameraPadding.toStringAsFixed(1),
-              onChanged: (v) => setState(() => _cameraPadding = v),
+              onChanged: (v) {
+                setState(() => _cameraPadding = v);
+                unawaited(_persistPrefs());
+              },
             ),
           ],
           const SizedBox(height: 14),
@@ -198,7 +282,10 @@ class _FlightAnimationSetupScreenState
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.flightAnimationSetupFadePastFlights),
             value: _fadePastFlights,
-            onChanged: (v) => setState(() => _fadePastFlights = v),
+            onChanged: (v) {
+              setState(() => _fadePastFlights = v);
+              unawaited(_persistPrefs());
+            },
           ),
           if (_fadePastFlights) ...[
             const SizedBox(height: 8),
@@ -213,7 +300,10 @@ class _FlightAnimationSetupScreenState
               max: 100,
               divisions: 99,
               label: '${_fadeDurationPercent.toStringAsFixed(0)}%',
-              onChanged: (v) => setState(() => _fadeDurationPercent = v),
+              onChanged: (v) {
+                setState(() => _fadeDurationPercent = v);
+                unawaited(_persistPrefs());
+              },
             ),
             const SizedBox(height: 8),
             Text(
@@ -226,8 +316,10 @@ class _FlightAnimationSetupScreenState
               max: 100,
               divisions: 100,
               label: '${_finalFadeLevelPercent.toStringAsFixed(0)}%',
-              onChanged: (v) =>
-                  setState(() => _finalFadeLevelPercent = v),
+              onChanged: (v) {
+                setState(() => _finalFadeLevelPercent = v);
+                unawaited(_persistPrefs());
+              },
             ),
           ],
           if (_loading) ...[
@@ -278,6 +370,7 @@ class _FlightAnimationSetupScreenState
           fadePastFlights: _fadePastFlights,
           fadeDurationPercent: _fadeDurationPercent,
           finalFadeLevelPercent: _finalFadeLevelPercent,
+          timingMode: _timingMode,
         ),
       );
     } on Object catch (error) {
@@ -299,6 +392,13 @@ class _FlightAnimationSetupScreenState
     return switch (style) {
       FlightAnimationStyle.manualZoom => 'Manual Zoom',
       FlightAnimationStyle.automatic => 'Automatic',
+    };
+  }
+
+  String _timingModeLabel(TimingMode mode) {
+    return switch (mode) {
+      TimingMode.sequential => 'Sequential',
+      TimingMode.timeBased => 'Time-based',
     };
   }
 }

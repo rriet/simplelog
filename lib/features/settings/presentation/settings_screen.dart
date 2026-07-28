@@ -10,6 +10,7 @@ import 'package:simplelog/features/settings/presentation/widgets/previous_experi
 import 'package:simplelog/features/settings/presentation/widgets/simulator_default_position_selector.dart';
 import 'package:simplelog/features/settings/presentation/widgets/theme_mode_selector.dart';
 import 'package:simplelog/features/settings/presentation/widgets/time_fields_settings_tab.dart';
+import 'package:simplelog/features/settings/presentation/widgets/update_check_toggle.dart';
 
 /// Root settings screen with general, experience, and time-fields tabs.
 class SettingsScreen extends ConsumerWidget {
@@ -47,6 +48,8 @@ class SettingsScreen extends ConsumerWidget {
                           subtitle: l10n.settingsAppearanceSubtitle,
                           children: const [
                             ThemeModeSelector(),
+                            SizedBox(height: 12),
+                            UpdateCheckToggle(),
                           ],
                         ),
                         const SizedBox(height: 12),

@@ -57,6 +57,7 @@ class _FlightAnimationScreenState extends State<FlightAnimationScreen>
     _timeline = _FlightTimeline(
       routes: _routes,
       totalMinutes: widget.result.durationMinutes,
+      timingMode: widget.result.timingMode,
     );
   }
 
@@ -173,11 +174,10 @@ class _FlightAnimationScreenState extends State<FlightAnimationScreen>
     final windowStart = (animValue - behindFraction).clamp(0.0, 1.0);
     final windowEnd = (animValue + aheadFraction).clamp(0.0, 1.0);
 
-    // Find flights whose time window overlaps [windowStart, windowEnd].
+    // Collect coordinates of flights in the time window.
     var minLat = 90.0;
     var maxLat = -90.0;
-    var minLon = 180.0;
-    var maxLon = -180.0;
+    final lons = <double>[];
     for (final entry in _timeline.entries) {
       if (entry.endFraction > windowStart &&
           entry.startFraction < windowEnd) {
@@ -185,18 +185,29 @@ class _FlightAnimationScreenState extends State<FlightAnimationScreen>
         for (final p in [r.from, r.to]) {
           minLat = math.min(minLat, p.latitude);
           maxLat = math.max(maxLat, p.latitude);
-          minLon = math.min(minLon, p.longitude);
-          maxLon = math.max(maxLon, p.longitude);
+          lons.add(p.longitude);
         }
       }
     }
+    if (lons.isEmpty) return;
+
+    // Antimeridian-safe longitude centre and half-span.
+    final centerLon = _antimeridianCenter(lons);
+    var halfSpan = 0.0;
+    for (final lon in lons) {
+      final dist = _lonDistance(lon, centerLon);
+      if (dist > halfSpan) halfSpan = dist;
+    }
+
     final pad = widget.result.cameraPadding;
-    final targetCenter = _latLngBounds(
-      minLat - pad, minLon - pad, maxLat + pad, maxLon + pad,
-    ).center;
-    final targetZoom = _zoomForBounds(_latLngBounds(
-      minLat - pad, minLon - pad, maxLat + pad, maxLon + pad,
-    ));
+    final targetCenter = LatLng(
+      (minLat + maxLat) / 2,
+      centerLon,
+    );
+    final targetZoom = _zoomForSpan(
+      maxLat - minLat + pad * 2,
+      halfSpan * 2 + pad * 2,
+    );
 
     // Initialize on first call.
     if (_camTarget == null) {
@@ -206,20 +217,71 @@ class _FlightAnimationScreenState extends State<FlightAnimationScreen>
       return;
     }
 
-    // Lerp toward the target.
+    // Lerp toward the target (antimeridian-safe for longitude).
     final t = widget.result.cameraSpeed;
     final newLat =
         _camTarget!.latitude +
         (targetCenter.latitude - _camTarget!.latitude) * t;
-    final newLng =
-        _camTarget!.longitude +
-        (targetCenter.longitude - _camTarget!.longitude) * t;
+    final newLng = _lerpLongitude(
+      _camTarget!.longitude,
+      targetCenter.longitude,
+      t,
+    );
     final newZoom =
         _camTargetZoom! +
         (targetZoom - _camTargetZoom!) * t;
     _camTarget = LatLng(newLat, newLng);
     _camTargetZoom = newZoom;
     _mapController.move(_camTarget!, newZoom);
+  }
+
+  /// Returns the angular shortest-path distance between two longitudes.
+  static double _lonDistance(double a, double b) {
+    var d = (a - b).abs();
+    if (d > 180) d = 360 - d;
+    return d;
+  }
+
+  /// Computes the centre longitude of [lons] taking the shortest arc.
+  static double _antimeridianCenter(List<double> lons) {
+    if (lons.length == 1) return lons.first;
+    // Normalise all longitudes relative to the first.
+    final ref = lons.first;
+    var sinSum = 0.0;
+    var cosSum = 0.0;
+    for (final lon in lons) {
+      var diff = lon - ref;
+      if (diff > 180) diff -= 360;
+      if (diff < -180) diff += 360;
+      final rad = diff * math.pi / 180;
+      sinSum += math.sin(rad);
+      cosSum += math.cos(rad);
+    }
+    final avgRad = math.atan2(sinSum / lons.length, cosSum / lons.length);
+    var result = ref + avgRad * 180 / math.pi;
+    if (result > 180) result -= 360;
+    if (result < -180) result += 360;
+    return result;
+  }
+
+  /// Lerps between two longitudes via the shortest path.
+  static double _lerpLongitude(double a, double b, double t) {
+    var diff = b - a;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    var result = a + diff * t;
+    if (result > 180) result -= 360;
+    if (result < -180) result += 360;
+    return result;
+  }
+
+  /// Zoom that fits a lat span and lon span.
+  static double _zoomForSpan(double latSpan, double lonSpan) {
+    final maxSpan = math.max(latSpan, lonSpan);
+    if (maxSpan <= 0 || maxSpan.isNaN) return 5;
+    final z = math.log(1125 / maxSpan) / math.ln2;
+    if (z.isNaN || z.isInfinite) return 5;
+    return z.clamp(1.0, 18.0);
   }
 
   double _zoomForBounds(LatLngBounds bounds) {
@@ -569,7 +631,30 @@ class _FlightAnimationScreenState extends State<FlightAnimationScreen>
     final hasFlight =
         _currentFlightIndex >= 0 && _currentFlightIndex < _routes.length;
     final flight = hasFlight ? _routes[_currentFlightIndex].flight : null;
-    final date = flight?.date;
+
+    // Date: sequential shows the current flight's date; time-based
+    // interpolates linearly across the real calendar span.
+    DateTime? date;
+    if (widget.result.timingMode == TimingMode.timeBased &&
+        _routes.length > 1) {
+      final firstMs = _routes.first.flight.date.millisecondsSinceEpoch;
+      final lastMs = _routes.last.flight.date.millisecondsSinceEpoch;
+      date = DateTime.fromMillisecondsSinceEpoch(
+        (firstMs + (lastMs - firstMs) * _animValue).round(),
+      );
+    } else {
+      date = flight?.date;
+    }
+
+    // Aircraft: show current flight, or the last drawn flight during gaps.
+    var aircraftFamily = flight?.aircraftFamily;
+    if (aircraftFamily == null && _currentFlightIndex >= 0) {
+      // Between flights — walk backward to find the last drawn.
+      for (var i = _currentFlightIndex - 1; i >= 0; i--) {
+        aircraftFamily = _routes[i].flight.aircraftFamily;
+        if (aircraftFamily.isNotEmpty) break;
+      }
+    }
     final dateStr = date != null
         ? '${date.day.toString().padLeft(2, '0')}/'
           '${date.month.toString().padLeft(2, '0')}/'
@@ -587,10 +672,10 @@ class _FlightAnimationScreenState extends State<FlightAnimationScreen>
                     fontWeight: FontWeight.bold,
                   ),
             ),
-            if (flight != null) ...[
+            if (aircraftFamily != null && aircraftFamily.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
-                flight.aircraftFamily,
+                aircraftFamily,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
@@ -734,53 +819,92 @@ class _FlightTimeline {
   _FlightTimeline({
     required List<FlightRoute> routes,
     required int totalMinutes,
-  }) : entries = _buildEntries(routes, totalMinutes);
+    required TimingMode timingMode,
+  }) : entries = _buildEntries(routes, totalMinutes, timingMode);
 
   final List<_FlightTimelineEntry> entries;
 
   static List<_FlightTimelineEntry> _buildEntries(
     List<FlightRoute> routes,
     int totalMinutes,
+    TimingMode timingMode,
   ) {
     if (routes.isEmpty) return const [];
-    final totalBlock = routes.fold<int>(
-      0,
-      (sum, r) => sum + math.max(1, r.flight.totalMinutes),
-    );
     final totalMs = totalMinutes * 60 * 1000;
     final entries = <_FlightTimelineEntry>[];
-    var startMs = 0;
-    for (var i = 0; i < routes.length; i++) {
-      final flightMin = math.max(1, routes[i].flight.totalMinutes);
-      final fraction = flightMin / totalBlock;
-      final durationMs = (totalMs * fraction).round();
-      final startFraction = startMs / totalMs;
-      final endFraction = (startMs + durationMs) / totalMs;
-      entries.add(
-        _FlightTimelineEntry(
-          index: i,
-          route: routes[i],
-          startFraction: startFraction,
-          endFraction: endFraction,
-        ),
-      );
-      startMs += durationMs;
+
+    if (timingMode == TimingMode.timeBased && routes.length > 1) {
+      final firstDate = routes.first.flight.date;
+      final lastDate = routes.last.flight.date;
+      final calendarSpanMs =
+          lastDate.millisecondsSinceEpoch - firstDate.millisecondsSinceEpoch;
+      // Each flight is placed at its calendar-mapped position. No overlap
+      // prevention — dense clusters naturally overlap and entryAt picks
+      // the latest-starting flight ≤ the current time.
+      final slotSize = 1.0 / routes.length;
+      for (var i = 0; i < routes.length; i++) {
+        final dateMs = routes[i].flight.date.millisecondsSinceEpoch;
+        final offset =
+            calendarSpanMs > 0
+                ? (dateMs - firstDate.millisecondsSinceEpoch) /
+                    calendarSpanMs
+                : i / (routes.length - 1);
+        final start = offset < 0 ? 0.0 : (offset > 1 ? 1.0 : offset);
+        entries.add(
+          _FlightTimelineEntry(
+            index: i,
+            route: routes[i],
+            startFraction: start,
+            endFraction: (start + slotSize).clamp(0.0, 1.0),
+          ),
+        );
+      }
+    } else {
+      final totalBlockSum = totalBlock(routes);
+      var startMs = 0;
+      for (var i = 0; i < routes.length; i++) {
+        final flightMin = math.max(1, routes[i].flight.totalMinutes);
+        final fraction = flightMin / totalBlockSum;
+        final durationMs = (totalMs * fraction).round();
+        final startFraction = startMs / totalMs;
+        final endFraction = (startMs + durationMs) / totalMs;
+        entries.add(
+          _FlightTimelineEntry(
+            index: i,
+            route: routes[i],
+            startFraction: startFraction,
+            endFraction: endFraction,
+          ),
+        );
+        startMs += durationMs;
+      }
     }
     return entries;
   }
+
+  static int totalBlock(List<FlightRoute> routes) => routes.fold<int>(
+    0,
+    (sum, r) => sum + math.max(1, r.flight.totalMinutes),
+  );
 
   /// Returns the timeline entry and local progress for a global [value]
   /// in the range 0..1.
   _FlightTimelineEntry? entryAt(double value) {
     if (entries.isEmpty) return null;
+    // Find the last entry whose start is ≤ value. Entries may overlap
+    // in chronological mode so we want the latest-starting one.
+    _FlightTimelineEntry? best;
     for (final entry in entries) {
-      if (value <= entry.endFraction || entry == entries.last) {
-        final span = entry.endFraction - entry.startFraction;
-        final progress = span > 0
-            ? ((value - entry.startFraction) / span).clamp(0.0, 1.0)
-            : 1.0;
-        return entry..progress = progress;
+      if (entry.startFraction <= value) {
+        best = entry;
       }
+    }
+    if (best != null) {
+      final span = best.endFraction - best.startFraction;
+      best.progress = span > 0
+          ? ((value - best.startFraction) / span).clamp(0.0, 1.0)
+          : 1.0;
+      return best;
     }
     return null;
   }
