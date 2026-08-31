@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:simplelog/core/date/db_date_time.dart';
+import 'package:simplelog/core/date/flight_time_formatter.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/presentation/widgets/display/slidable_actions.dart';
 import 'package:simplelog/data/database/app_database.dart';
@@ -338,15 +339,11 @@ class LogbookListItem extends StatelessWidget {
     final monthText = dateFormat.format(
       DateTime(utcDate.year, utcDate.month, utcDate.day),
     );
-    final depTime = _formatFlightTime(
-      fallback: date,
-      explicit: flight?.takeOffDateTime,
-      treatMidnightAsMissing: _isMissingFlightTime(flight),
-    );
-    final arrTime = _formatFlightTime(
-      fallback: flight?.arrivalDateTime,
-      explicit: flight?.arrivalDateTime,
-      treatMidnightAsMissing: true,
+    final chocksOff = date;
+    final chocksOn = flight?.arrivalDateTime;
+    final (depTime, arrTime) = FlightTimeFormatter.formatChocksPair(
+      chocksOff: chocksOff,
+      chocksOn: chocksOn,
     );
 
     final rightColumn = _buildFlightRightColumn(context, flight);
@@ -433,12 +430,6 @@ class LogbookListItem extends StatelessWidget {
     return '$hours:${mins.toString().padLeft(2, '0')}';
   }
 
-  String _formatTimeOfDay(TimeOfDay time) {
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
-
   Widget _buildFlightRightColumn(BuildContext context, Flight? flight) {
     final textStyle = Theme.of(context).textTheme.bodySmall;
     final position = _flightPositionLabel(flight);
@@ -486,22 +477,12 @@ class LogbookListItem extends StatelessWidget {
     required DateTime? explicit,
     required bool treatMidnightAsMissing,
   }) {
-    final timeSource = explicit ?? fallback;
-    if (timeSource == null) return '--:--';
-    final utcTime = DbDateTime.dbToUtc(timeSource);
-    if (treatMidnightAsMissing && utcTime.hour == 0 && utcTime.minute == 0) {
-      return '--:--';
-    }
-    return _formatTimeOfDay(
-      TimeOfDay(hour: utcTime.hour, minute: utcTime.minute),
+    // Kept for positioning only; flight chocks times now use FlightTimeFormatter.
+    return FlightTimeFormatter.formatFlightTimeLegacy(
+      fallback: fallback,
+      explicit: explicit,
+      treatMidnightAsMissing: treatMidnightAsMissing,
     );
-  }
-
-  bool _isMissingFlightTime(Flight? flight) {
-    if (flight == null) return false;
-    return flight.takeOffDateTime == null &&
-        flight.landingDateTime == null &&
-        flight.arrivalDateTime == null;
   }
 
   String _eventLabel(AppLocalizations l10n, LogbookEntry entry) {

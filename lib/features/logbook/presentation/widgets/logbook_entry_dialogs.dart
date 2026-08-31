@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:simplelog/core/date/flight_time_formatter.dart';
 import 'package:simplelog/core/l10n/app_localizations.dart';
 import 'package:simplelog/core/navigation/app_navigator.dart';
 import 'package:simplelog/core/presentation/widgets/dialogs/adaptive_form_shell.dart';
@@ -192,8 +193,10 @@ class LogbookEntryDialogs {
 
     final date = entry.timeLine.eventDateTime;
     final dateLabel = DateFormat('dd/MMM yyyy', locale).format(_asUtc(date));
-    final depTime = _formatTime(entry.flight?.takeOffDateTime, date);
-    final arrTime = _formatTime(entry.flight?.arrivalDateTime, null);
+    final (depTime, arrTime) = FlightTimeFormatter.formatChocksPair(
+      chocksOff: date,
+      chocksOn: entry.flight?.arrivalDateTime,
+    );
 
     final typeName =
         entry.aircraftType?.longName ?? entry.aircraftType?.code ?? '-';
