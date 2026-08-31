@@ -1,2 +1,1 @@
-#include? "Pods/Target Support Files/Pods-SimpleLog/Pods-SimpleLog.release.xcconfig"
 #include "ephemeral/Flutter-Generated.xcconfig"

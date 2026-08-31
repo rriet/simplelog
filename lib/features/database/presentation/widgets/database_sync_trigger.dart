@@ -184,7 +184,6 @@ class DatabaseSyncTrigger extends ConsumerWidget {
     final db = ref.read(databaseProvider);
     await db.clearAllData();
     ref
-      ..invalidate(databaseProvider)
       ..invalidate(initialDataProvider)
       ..invalidate(onboardingCompletedProvider)
       ..invalidate(flightFactoringSettingsProvider)
@@ -359,7 +358,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         );
         return;
       }
-      _logLogTenProColumns(inspection);
+      //_logLogTenProColumns(inspection);
       final options = await LogTenProImportOptionsDialog.show(
         context,
         fileName: file.name,
@@ -1501,16 +1500,16 @@ ${l10n.databaseErrorsLabel(stats.errors)}
     }
   }
 
-  void _logLogTenProColumns(LogTenProTsvInspection inspection) {
-    debugPrint(
-      'LogTen Pro export detected. Columns: ${inspection.columns.length}',
-    );
-    for (var index = 0; index < inspection.columns.length; index++) {
-      debugPrint(
-        'LogTen Pro column ${index + 1}: ${inspection.columns[index]}',
-      );
-    }
-  }
+  // void _logLogTenProColumns(LogTenProTsvInspection inspection) {
+  //   debugPrint(
+  //     'LogTen Pro export detected. Columns: ${inspection.columns.length}',
+  //   );
+  //   for (var index = 0; index < inspection.columns.length; index++) {
+  //     debugPrint(
+  //       'LogTen Pro column ${index + 1}: ${inspection.columns[index]}',
+  //     );
+  //   }
+  // }
 
   LogTenProTsvInspection? _inspectionFromCsv(String content) {
     final rows = SimpleLogCsvSupport.parseCsv(content);
