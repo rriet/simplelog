@@ -72,12 +72,32 @@ class _LogTenProImportReviewDialogState
   _controllers;
   late final Set<int> _ignoredLines;
   late final Set<int> _simulatorLines;
+  final Set<String> _resolvedAirportIssueKeys = <String>{};
+
+  String _issueKey(LogTenImportIssue issue) =>
+      '${issue.lineNumber}|${issue.association.name}';
 
   void _setFieldResolution({
     required LogTenImportIssue issue,
     required String replacement,
   }) {
     setState(() {
+      if (_isAirportIssue(issue)) {
+        final originalCode = issue.currentValue.trim().toUpperCase();
+        for (final matchingIssue in widget.issues.where(
+          (candidate) =>
+              _isAirportIssue(candidate) &&
+              candidate.currentValue.trim().toUpperCase() == originalCode,
+        )) {
+          _controllers[matchingIssue.lineNumber]![matchingIssue.association]!
+                  .text =
+              replacement;
+          _resolvedAirportIssueKeys.add(_issueKey(matchingIssue));
+          _ignoredLines.remove(matchingIssue.lineNumber);
+          _simulatorLines.remove(matchingIssue.lineNumber);
+        }
+        return;
+      }
       _controllers[issue.lineNumber]![issue.association]!.text = replacement;
       _ignoredLines.remove(issue.lineNumber);
       _simulatorLines.remove(issue.lineNumber);
@@ -316,8 +336,11 @@ class _LogTenProImportReviewDialogState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final visibleIssues = widget.issues
+        .where((issue) => !_resolvedAirportIssueKeys.contains(_issueKey(issue)))
+        .toList(growable: false);
     final lineNumbers =
-        widget.issues.map((issue) => issue.lineNumber).toSet().toList()..sort();
+        visibleIssues.map((issue) => issue.lineNumber).toSet().toList()..sort();
     final body = ConstrainedBox(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.9,
@@ -344,7 +367,7 @@ class _LogTenProImportReviewDialogState
               itemCount: lineNumbers.length,
               itemBuilder: (context, index) {
                 final lineNumber = lineNumbers[index];
-                final lineIssues = widget.issues
+                final lineIssues = visibleIssues
                     .where((issue) => issue.lineNumber == lineNumber)
                     .toList(growable: false);
                 final supportsSimulatorChoice = _lineSupportsSimulatorChoice(

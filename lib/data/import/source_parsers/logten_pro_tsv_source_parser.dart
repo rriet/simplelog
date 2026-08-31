@@ -5,6 +5,7 @@ import 'package:simplelog/data/database/enums/crew_position.dart';
 import 'package:simplelog/data/database/enums/engine_type.dart';
 import 'package:simplelog/data/import/logten_pro_import_models.dart';
 import 'package:simplelog/data/import/normalized_import_models.dart';
+import 'package:simplelog/data/import/simplelog_csv_support.dart';
 
 /// Parses LogTen Pro tab-separated exports into normalized import records.
 class LogTenProTsvSourceParser {
@@ -19,7 +20,42 @@ class LogTenProTsvSourceParser {
     required Map<String, Airport> existingAirportsByIata,
     bool includeIgnoredLineIssues = false,
   }) {
-    final rows = _parseTsv(content);
+    return _parseRows(
+      _parseTsv(content),
+      options: options,
+      existingAirportsByIcao: existingAirportsByIcao,
+      existingAirportsByIata: existingAirportsByIata,
+      includeIgnoredLineIssues: includeIgnoredLineIssues,
+      allowUnknownAirports: false,
+    );
+  }
+
+  /// Parses a CSV export that uses the same field mapping and review flow.
+  LogTenParseResult parseCsv(
+    String content, {
+    required LogTenImportOptions options,
+    required Map<String, Airport> existingAirportsByIcao,
+    required Map<String, Airport> existingAirportsByIata,
+    bool includeIgnoredLineIssues = false,
+  }) {
+    return _parseRows(
+      SimpleLogCsvSupport.parseCsv(content),
+      options: options,
+      existingAirportsByIcao: existingAirportsByIcao,
+      existingAirportsByIata: existingAirportsByIata,
+      includeIgnoredLineIssues: includeIgnoredLineIssues,
+      allowUnknownAirports: false,
+    );
+  }
+
+  LogTenParseResult _parseRows(
+    List<List<String>> rows, {
+    required LogTenImportOptions options,
+    required Map<String, Airport> existingAirportsByIcao,
+    required Map<String, Airport> existingAirportsByIata,
+    required bool includeIgnoredLineIssues,
+    required bool allowUnknownAirports,
+  }) {
     if (rows.isEmpty) {
       return const LogTenParseResult(
         batch: NormalizedImportBatch(
@@ -93,6 +129,7 @@ class LogTenProTsvSourceParser {
             timezoneOffsetMinutes: options.timezoneOffsetMinutes,
             existingAirportsByIcao: existingAirportsByIcao,
             existingAirportsByIata: existingAirportsByIata,
+            allowUnknownAirports: allowUnknownAirports,
           );
           if (record == null) {
             skipped += 1;
@@ -107,6 +144,7 @@ class LogTenProTsvSourceParser {
             timezoneOffsetMinutes: options.timezoneOffsetMinutes,
             existingAirportsByIcao: existingAirportsByIcao,
             existingAirportsByIata: existingAirportsByIata,
+            allowUnknownAirports: allowUnknownAirports,
           );
           if (record == null) {
             skipped += 1;
@@ -145,6 +183,7 @@ class LogTenProTsvSourceParser {
             timezoneOffsetMinutes: options.timezoneOffsetMinutes,
             existingAirportsByIcao: existingAirportsByIcao,
             existingAirportsByIata: existingAirportsByIata,
+            allowUnknownAirports: allowUnknownAirports,
           ),
         ];
         final hasAirportIssue = lineIssues.any(
@@ -200,6 +239,7 @@ class LogTenProTsvSourceParser {
     required int timezoneOffsetMinutes,
     required Map<String, Airport> existingAirportsByIcao,
     required Map<String, Airport> existingAirportsByIata,
+    required bool allowUnknownAirports,
   }) {
     final issues = <LogTenImportIssue>[];
 
@@ -234,6 +274,7 @@ class LogTenProTsvSourceParser {
           association: LogTenFieldAssociation.fromAirport,
           existingAirportsByIcao: existingAirportsByIcao,
           existingAirportsByIata: existingAirportsByIata,
+          allowUnknownAirports: allowUnknownAirports,
         );
       });
       collect(() {
@@ -243,6 +284,7 @@ class LogTenProTsvSourceParser {
           association: LogTenFieldAssociation.toAirport,
           existingAirportsByIcao: existingAirportsByIcao,
           existingAirportsByIata: existingAirportsByIata,
+          allowUnknownAirports: allowUnknownAirports,
         );
       });
       return issues;
@@ -307,6 +349,7 @@ class LogTenProTsvSourceParser {
     required int timezoneOffsetMinutes,
     required Map<String, Airport> existingAirportsByIcao,
     required Map<String, Airport> existingAirportsByIata,
+    required bool allowUnknownAirports,
   }) {
     final date = _parseDate(
       row.requiredValue(LogTenFieldAssociation.date),
@@ -320,6 +363,7 @@ class LogTenProTsvSourceParser {
       association: LogTenFieldAssociation.fromAirport,
       existingAirportsByIcao: existingAirportsByIcao,
       existingAirportsByIata: existingAirportsByIata,
+      allowUnknownAirports: allowUnknownAirports,
     );
     final arrivalAirport = _resolveAirport(
       row.requiredValue(LogTenFieldAssociation.toAirport),
@@ -327,6 +371,7 @@ class LogTenProTsvSourceParser {
       association: LogTenFieldAssociation.toAirport,
       existingAirportsByIcao: existingAirportsByIcao,
       existingAirportsByIata: existingAirportsByIata,
+      allowUnknownAirports: allowUnknownAirports,
     );
     final departureDateTime =
         _parseOptionalDateTime(
@@ -457,7 +502,14 @@ class LogTenProTsvSourceParser {
             LogTenFieldAssociation.dualGivenTime,
           ) ??
           0,
-      timeIfrMinutes: 0,
+      timeIfrMinutes:
+          _parseOptionalDuration(
+            row.firstValue(LogTenFieldAssociation.ifrTime),
+            timeFormat,
+            row.lineNumber,
+            LogTenFieldAssociation.ifrTime,
+          ) ??
+          0,
       timeNightMinutes:
           _parseOptionalDuration(
             row.firstValue(LogTenFieldAssociation.nightTime),
@@ -542,6 +594,7 @@ class LogTenProTsvSourceParser {
     required int timezoneOffsetMinutes,
     required Map<String, Airport> existingAirportsByIcao,
     required Map<String, Airport> existingAirportsByIata,
+    required bool allowUnknownAirports,
   }) {
     final date = _parseDate(
       row.requiredValue(LogTenFieldAssociation.date),
@@ -555,6 +608,7 @@ class LogTenProTsvSourceParser {
       association: LogTenFieldAssociation.fromAirport,
       existingAirportsByIcao: existingAirportsByIcao,
       existingAirportsByIata: existingAirportsByIata,
+      allowUnknownAirports: allowUnknownAirports,
     );
     final arrivalAirport = _resolveAirport(
       row.requiredValue(LogTenFieldAssociation.toAirport),
@@ -562,6 +616,7 @@ class LogTenProTsvSourceParser {
       association: LogTenFieldAssociation.toAirport,
       existingAirportsByIcao: existingAirportsByIcao,
       existingAirportsByIata: existingAirportsByIata,
+      allowUnknownAirports: allowUnknownAirports,
     );
     final departureDateTime =
         _parseOptionalDateTime(
@@ -696,6 +751,7 @@ class LogTenProTsvSourceParser {
       ),
       engineType: _mapEngineType(
         row.firstValue(LogTenFieldAssociation.aircraftTypeEngineType),
+        aircraftTypeCode: code,
         lineNumber: row.lineNumber,
         association: LogTenFieldAssociation.aircraftTypeEngineType,
       ),
@@ -775,6 +831,7 @@ class LogTenProTsvSourceParser {
     required LogTenFieldAssociation association,
     required Map<String, Airport> existingAirportsByIcao,
     required Map<String, Airport> existingAirportsByIata,
+    required bool allowUnknownAirports,
   }) {
     final code = rawCode.trim().toUpperCase();
     if (code.isEmpty) {
@@ -788,6 +845,9 @@ class LogTenProTsvSourceParser {
     if (code.length == 4) {
       final existing = existingAirportsByIcao[code.toLowerCase()];
       if (existing == null) {
+        if (allowUnknownAirports) {
+          return _unknownAirportDraft(code);
+        }
         throw _LogTenRowIssue(
           lineNumber: lineNumber,
           association: association,
@@ -800,6 +860,9 @@ class LogTenProTsvSourceParser {
     if (code.length == 3) {
       final existing = existingAirportsByIata[code.toLowerCase()];
       if (existing == null) {
+        if (allowUnknownAirports) {
+          return _unknownAirportDraft(code, iata: code);
+        }
         throw _LogTenRowIssue(
           lineNumber: lineNumber,
           association: association,
@@ -814,6 +877,13 @@ class LogTenProTsvSourceParser {
       association: association,
       currentValue: rawCode,
       reason: 'Invalid airport code "$code". Expected ICAO (4) or IATA (3).',
+    );
+  }
+
+  ImportedAirportDraft _unknownAirportDraft(String icao, {String iata = ''}) {
+    return ImportedAirportDraft(
+      icao: icao,
+      iata: iata,
     );
   }
 
@@ -885,7 +955,9 @@ class LogTenProTsvSourceParser {
         reason: 'Missing date.',
       );
     }
-    final parts = trimmed.split('-');
+    final dashParts = trimmed.split('-');
+    final slashParts = trimmed.split('/');
+    final parts = dashParts.length == 3 ? dashParts : slashParts;
     if (parts.length != 3) {
       throw _LogTenRowIssue(
         lineNumber: lineNumber,
@@ -894,11 +966,24 @@ class LogTenProTsvSourceParser {
         reason: 'Invalid date "$trimmed".',
       );
     }
-    return DateTime.utc(
-      int.parse(parts[0]),
-      int.parse(parts[1]),
-      int.parse(parts[2]),
-    ).subtract(Duration(minutes: timezoneOffsetMinutes));
+    try {
+      final isSlashDate = slashParts.length == 3 && dashParts.length != 3;
+      final year = int.parse(isSlashDate ? parts[2] : parts[0]);
+      final month = int.parse(isSlashDate ? parts[0] : parts[1]);
+      final day = int.parse(isSlashDate ? parts[1] : parts[2]);
+      return DateTime.utc(
+        year,
+        month,
+        day,
+      ).subtract(Duration(minutes: timezoneOffsetMinutes));
+    } on FormatException {
+      throw _LogTenRowIssue(
+        lineNumber: lineNumber,
+        association: association,
+        currentValue: value,
+        reason: 'Invalid date "$trimmed".',
+      );
+    }
   }
 
   DateTime? _parseOptionalDateTime(
@@ -1014,12 +1099,21 @@ class LogTenProTsvSourceParser {
 
   EngineType _mapEngineType(
     String value, {
+    required String aircraftTypeCode,
     required int lineNumber,
     required LogTenFieldAssociation association,
   }) {
     final normalized = value.trim().toLowerCase();
     return switch (normalized) {
-      '' => EngineType.unknown,
+      '' =>
+        _inferEngineType(aircraftTypeCode) ??
+            (throw _LogTenRowIssue(
+              lineNumber: lineNumber,
+              association: association,
+              currentValue: value,
+              reason:
+                  'Missing engine type for aircraft type "$aircraftTypeCode".',
+            )),
       'jet' => EngineType.jet,
       'reciprocating' => EngineType.piston,
       'turboprop' => EngineType.turboprop,
@@ -1032,6 +1126,20 @@ class LogTenProTsvSourceParser {
         reason: 'Unsupported engine type "$value".',
       ),
     };
+  }
+
+  EngineType? _inferEngineType(String aircraftTypeCode) {
+    final code = aircraftTypeCode.trim().toUpperCase();
+    if (code.isEmpty) return null;
+    if (RegExp(
+      '^(737|B[0-9]|A[0-9]|MD-|T-1|T-37|T-38|AT-38|EF-|F-|E-3)',
+    ).hasMatch(code)) {
+      return EngineType.jet;
+    }
+    if (RegExp('^(PA-|C-|T-34|T-41)').hasMatch(code)) {
+      return EngineType.piston;
+    }
+    return null;
   }
 
   AircraftCategory _mapCategory(
@@ -1070,6 +1178,7 @@ class LogTenProTsvSourceParser {
       LogTenFieldAssociation.sicTime,
       LogTenFieldAssociation.nightTime,
       LogTenFieldAssociation.crossCountryTime,
+      LogTenFieldAssociation.ifrTime,
       LogTenFieldAssociation.dualReceivedTime,
       LogTenFieldAssociation.dualGivenTime,
       LogTenFieldAssociation.simulatorTime,
@@ -1156,6 +1265,19 @@ class _LogTenRow {
       if (index == null || index >= values.length) continue;
       final value = values[index].trim();
       if (value.isNotEmpty) return value;
+    }
+    if (association == LogTenFieldAssociation.fromAirport ||
+        association == LogTenFieldAssociation.toAirport) {
+      final route = firstValue(LogTenFieldAssociation.route);
+      final stops = route
+          .split(RegExp(r'\s*(?:-|→|>)\s*|\s+'))
+          .where((value) => value.trim().isNotEmpty)
+          .toList(growable: false);
+      if (stops.isNotEmpty) {
+        return association == LogTenFieldAssociation.fromAirport
+            ? stops.first
+            : stops.last;
+      }
     }
     return '';
   }

@@ -403,6 +403,98 @@ class SimpleLogCsvImporter {
     return parseResult.issues;
   }
 
+  /// Validates a Pro Flight Logbook CSV export without persisting rows.
+  Future<List<LogTenImportIssue>> validateProFlightLogbookCsv(
+    String content, {
+    required LogTenImportOptions options,
+  }) => _validateMappedCsv(content, options: options);
+
+  /// Imports a Pro Flight Logbook CSV export using the LogTen mapping flow.
+  Future<LogTenImportResult> importProFlightLogbookCsv(
+    String content, {
+    required LogTenImportOptions options,
+    ImportProgressCallback? onProgress,
+  }) async {
+    final parseResult = await _parseMappedCsv(
+      content,
+      options: options,
+      includeIgnoredLineIssues: true,
+    );
+    if (parseResult.issues.any(
+      (issue) => issue.reason.toLowerCase() != 'ignored by user.',
+    )) {
+      throw const FormatException(
+        'Pro Flight Logbook import has unresolved validation issues.',
+      );
+    }
+    final summary = await _persistence.importBatch(
+      parseResult.batch,
+      onProgress: onProgress,
+    );
+    return LogTenImportResult(summary: summary, issues: parseResult.issues);
+  }
+
+  /// Safe variant of [importProFlightLogbookCsv].
+  Future<ImportOperationResult<LogTenImportResult>>
+  importProFlightLogbookCsvSafely(
+    String content, {
+    required LogTenImportOptions options,
+    ImportProgressCallback? onProgress,
+  }) async {
+    try {
+      return ImportOperationResult.success(
+        await importProFlightLogbookCsv(
+          content,
+          options: options,
+          onProgress: onProgress,
+        ),
+      );
+    } on FormatException catch (error) {
+      return ImportOperationResult.failure(
+        ImportFailure(
+          type: ImportFailureType.parseError,
+          message: error.message,
+          exception: error,
+        ),
+      );
+    } on Object catch (error) {
+      return ImportOperationResult.failure(
+        ImportFailure(
+          type: ImportFailureType.unexpected,
+          message: 'Unexpected Pro Flight Logbook import error.',
+          exception: error,
+        ),
+      );
+    }
+  }
+
+  Future<List<LogTenImportIssue>> _validateMappedCsv(
+    String content, {
+    required LogTenImportOptions options,
+  }) async => (await _parseMappedCsv(content, options: options)).issues;
+
+  Future<LogTenParseResult> _parseMappedCsv(
+    String content, {
+    required LogTenImportOptions options,
+    bool includeIgnoredLineIssues = false,
+  }) async {
+    final airports = await db.select(db.airports).get();
+    return _logTenProParser.parseCsv(
+      content,
+      options: options,
+      existingAirportsByIcao: {
+        for (final airport in airports)
+          airport.icao.trim().toLowerCase(): airport,
+      },
+      existingAirportsByIata: {
+        for (final airport in airports)
+          if ((airport.iata ?? '').trim().isNotEmpty)
+            airport.iata!.trim().toLowerCase(): airport,
+      },
+      includeIgnoredLineIssues: includeIgnoredLineIssues,
+    );
+  }
+
   /// Safe variant of [importLogTenProTsv].
   Future<ImportOperationResult<LogTenImportResult>> importLogTenProTsvSafely(
     String content, {

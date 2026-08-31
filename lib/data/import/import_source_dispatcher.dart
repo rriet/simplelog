@@ -14,6 +14,7 @@ enum ImportSourceKind {
   southwestCsv,
   qatarAirwaysXlsx,
   logTenProTsv,
+  proFlightLogbookCsv,
   waderLogbookCsv,
   foreFlightCsv,
   unknown,
@@ -37,6 +38,14 @@ class ImportSourceDispatcher {
     'aircrafttailnumber',
     'aircrafttype',
     'totaltime',
+  };
+  static const Set<String> _proFlightLogbookRequiredHeaders = <String>{
+    'date',
+    'aircraft make & model',
+    'aircraft ident',
+    'route of flight',
+    'duration',
+    'remarks',
   };
   static final Set<String> _legacySimpleLogRequiredHeaders = () {
     final parsed = SimpleLogCsvSupport.parseCsv(
@@ -87,6 +96,9 @@ class ImportSourceDispatcher {
     if (_isWaderCsvHeader(first)) {
       return ImportSourceKind.waderLogbookCsv;
     }
+    if (_isProFlightLogbookCsvHeader(first)) {
+      return ImportSourceKind.proFlightLogbookCsv;
+    }
     if (_isLegacySimpleLogHeader(first)) {
       return ImportSourceKind.legacySimpleLogCsv;
     }
@@ -126,6 +138,15 @@ class ImportSourceDispatcher {
     return _waderRequiredHeaders.every(normalized.contains);
   }
 
+  bool _isProFlightLogbookCsvHeader(String headerLine) {
+    final parsed = SimpleLogCsvSupport.parseCsv(headerLine);
+    if (parsed.isEmpty) return false;
+    final normalized = parsed.first
+        .map((value) => value.trim().toLowerCase())
+        .toSet();
+    return _proFlightLogbookRequiredHeaders.every(normalized.contains);
+  }
+
   /// Human-readable label used by the UI.
   String labelFor(ImportSourceKind kind) {
     return switch (kind) {
@@ -133,6 +154,7 @@ class ImportSourceDispatcher {
       ImportSourceKind.southwestCsv => 'SWAPA',
       ImportSourceKind.qatarAirwaysXlsx => 'Qatar Airways',
       ImportSourceKind.logTenProTsv => 'LogTen Pro',
+      ImportSourceKind.proFlightLogbookCsv => 'Pro Flight Logbook',
       ImportSourceKind.waderLogbookCsv => 'Wader Logbook CSV',
       ImportSourceKind.foreFlightCsv => 'ForeFlight',
       ImportSourceKind.unknown => 'Unknown file',

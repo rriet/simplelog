@@ -58,4 +58,13 @@ void main() {
 
     expect(result, ImportSourceKind.waderLogbookCsv);
   });
+
+  test('detectCsv identifies Pro Flight Logbook CSV header', () {
+    const content =
+        'DATE,AIRCRAFT MAKE & MODEL, AIRCRAFT IDENT, ROUTE OF FLIGHT, '
+        'DURATION,REMARKS\n'
+        '9/15/1987,PA-38,N91392,EDAR EDAR,1.1,Training\n';
+
+    expect(dispatcher.detectCsv(content), ImportSourceKind.proFlightLogbookCsv);
+  });
 }

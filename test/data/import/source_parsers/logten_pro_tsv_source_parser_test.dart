@@ -132,4 +132,63 @@ void main() {
       isTrue,
     );
   });
+
+  test('parses Pro Flight Logbook CSV dates and route columns', () {
+    const proFlightHeader = <String>[
+      'DATE',
+      'AIRCRAFT MAKE & MODEL',
+      'AIRCRAFT IDENT',
+      'ROUTE OF FLIGHT',
+      'DURATION',
+      'INSTRUMENT',
+      'REMARKS',
+    ];
+    const content =
+        'DATE,AIRCRAFT MAKE & MODEL, AIRCRAFT IDENT, ROUTE OF FLIGHT, '
+        'DURATION,INSTRUMENT,REMARKS\n'
+        '9/15/1987,PA-38,N91392,KMIA KFLL,1.1,0.2,Training\n';
+
+    final result = parser.parseCsv(
+      content,
+      options: optionsForHeader(proFlightHeader),
+      existingAirportsByIcao: existingAirportsByIcao,
+      existingAirportsByIata: const {},
+    );
+
+    expect(result.issues, isEmpty);
+    final record = result.batch.records.single as NormalizedFlightRecord;
+    expect(record.departureAirport.icao, 'KMIA');
+    expect(record.arrivalAirport.icao, 'KFLL');
+    expect(record.timeBlockMinutes, 66);
+    expect(record.timeIfrMinutes, 12);
+    expect(record.departureDateTime, DateTime.utc(1987, 9, 15));
+  });
+
+  test('reports missing Pro Flight Logbook airport codes for review', () {
+    const content =
+        'DATE,AIRCRAFT MAKE & MODEL,AIRCRAFT IDENT,ROUTE OF FLIGHT,DURATION\n'
+        '9/15/1987,PA-38,N91392,KXYZ KABC,1.1\n';
+
+    final result = parser.parseCsv(
+      content,
+      options: optionsForHeader([
+        'DATE',
+        'AIRCRAFT MAKE & MODEL',
+        'AIRCRAFT IDENT',
+        'ROUTE OF FLIGHT',
+        'DURATION',
+      ]),
+      existingAirportsByIcao: const {},
+      existingAirportsByIata: const {},
+    );
+
+    expect(result.batch.records, isEmpty);
+    expect(
+      result.issues.map((issue) => issue.association),
+      containsAll(<LogTenFieldAssociation>[
+        LogTenFieldAssociation.fromAirport,
+        LogTenFieldAssociation.toAirport,
+      ]),
+    );
+  });
 }

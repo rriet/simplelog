@@ -344,10 +344,19 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         inspection: resolvedAircraftInspection,
         options: options,
       );
-    } else if (type == ImportSourceKind.logTenProTsv) {
-      final inspection = _logTenProInspector.inspect(content);
+    } else if (type == ImportSourceKind.logTenProTsv ||
+        type == ImportSourceKind.proFlightLogbookCsv) {
+      final isProFlightLogbook = type == ImportSourceKind.proFlightLogbookCsv;
+      final inspection = isProFlightLogbook
+          ? _inspectionFromCsv(content)
+          : _logTenProInspector.inspect(content);
       if (inspection == null) {
-        await _showInfoDialog(context, 'Unsupported LogTen Pro export.');
+        await _showInfoDialog(
+          context,
+          isProFlightLogbook
+              ? 'Unsupported Pro Flight Logbook CSV export.'
+              : 'Unsupported LogTen Pro export.',
+        );
         return;
       }
       _logLogTenProColumns(inspection);
@@ -368,6 +377,7 @@ class DatabaseSyncTrigger extends ConsumerWidget {
         fileName: file.name,
         inspection: inspection,
         initialOptions: options,
+        isProFlightLogbook: isProFlightLogbook,
       );
       if (validatedOptions == null || !context.mounted) return;
       final progress = ValueNotifier<_ImportProgress>(
@@ -376,14 +386,19 @@ class DatabaseSyncTrigger extends ConsumerWidget {
       _showImportProgressDialog(context, progress);
       ImportOperationResult<LogTenImportResult>? outcome;
       try {
-        outcome = await importer.importLogTenProTsvSafely(
-          content,
-          options: validatedOptions,
-          onProgress: (processed, total) => progress.value = _ImportProgress(
-            processed: processed,
-            total: total,
-          ),
-        );
+        outcome = isProFlightLogbook
+            ? await importer.importProFlightLogbookCsvSafely(
+                content,
+                options: validatedOptions,
+                onProgress: (processed, total) => progress.value =
+                    _ImportProgress(processed: processed, total: total),
+              )
+            : await importer.importLogTenProTsvSafely(
+                content,
+                options: validatedOptions,
+                onProgress: (processed, total) => progress.value =
+                    _ImportProgress(processed: processed, total: total),
+              );
       } finally {
         progress.dispose();
       }
@@ -857,13 +872,16 @@ ${l10n.databaseErrorsLabel(stats.errors)}
     required String fileName,
     required LogTenProTsvInspection inspection,
     required LogTenImportOptions initialOptions,
+    required bool isProFlightLogbook,
   }) async {
     var options = initialOptions;
     while (true) {
-      final issues = await importer.validateLogTenProTsv(
-        content,
-        options: options,
-      );
+      final issues = isProFlightLogbook
+          ? await importer.validateProFlightLogbookCsv(
+              content,
+              options: options,
+            )
+          : await importer.validateLogTenProTsv(content, options: options);
       if (!context.mounted) return null;
       if (issues.isEmpty) {
         return options;
@@ -1494,6 +1512,14 @@ ${l10n.databaseErrorsLabel(stats.errors)}
     }
   }
 
+  LogTenProTsvInspection? _inspectionFromCsv(String content) {
+    final rows = SimpleLogCsvSupport.parseCsv(content);
+    if (rows.isEmpty) return null;
+    return LogTenProTsvInspection(
+      columns: rows.first.map((value) => value.trim()).toList(growable: false),
+    );
+  }
+
   Future<CrewData?> _loadSelfCrew(AppDatabase db) async {
     final crew = await (db.select(
       db.crew,
@@ -1899,6 +1925,7 @@ ${l10n.databaseErrorsLabel(stats.errors)}
       ImportSourceKind.southwestCsv => l10n.southwestImportOptionsTitle,
       ImportSourceKind.qatarAirwaysXlsx => l10n.qatarImportTitle,
       ImportSourceKind.logTenProTsv => l10n.logtenImportTitle,
+      ImportSourceKind.proFlightLogbookCsv => 'Import Pro Flight Logbook',
       ImportSourceKind.waderLogbookCsv => l10n.waderImportOptionsTitle,
       ImportSourceKind.foreFlightCsv => l10n.foreFlightImportTitle,
       ImportSourceKind.unknown => l10n.databaseImportFileAction,
